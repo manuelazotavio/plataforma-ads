@@ -31,13 +31,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [router])
 
   if (!ready) return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-50">
+    <div className="min-h-screen flex items-center justify-center bg-white">
       <p className="text-sm text-zinc-500">Verificando acesso...</p>
     </div>
   )
 
   return (
-    <div className="min-h-screen bg-zinc-50 flex">
+    <div className="min-h-screen bg-white flex">
       <aside className="w-52 bg-white border-r border-zinc-200 flex flex-col shrink-0 fixed h-full z-10">
         <div className="px-4 py-5 border-b border-zinc-100">
           <p className="text-xs font-semibold text-zinc-900 mb-0.5">Painel Admin</p>

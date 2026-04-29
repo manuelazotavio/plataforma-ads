@@ -9,7 +9,7 @@ export default async function CursoPage() {
     .order('display_order', { ascending: true })
 
   return (
-    <div className="px-10 py-8 flex flex-col gap-12 max-w-5xl">
+    <div className="px-10 py-8 flex flex-col gap-12 max-w-5xl mx-auto w-full bg-white">
 
      
       <section>

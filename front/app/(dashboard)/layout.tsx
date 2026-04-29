@@ -55,7 +55,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [router])
 
   if (loading) {
-    return <div className="min-h-screen bg-zinc-50" />
+    return <div className="min-h-screen bg-white" />
   }
 
   return (
@@ -181,7 +181,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
        
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto bg-white">
           {children}
         </main>
       </div>
