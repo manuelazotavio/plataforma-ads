@@ -1,10 +1,12 @@
-import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
+import CurriculumTabs from './CurriculumTabs'
+import InfrastructureSection from './InfrastructureSection'
+import ProfessorsSection from './ProfessorsSection'
 
 export default async function CursoPage() {
   const { data: professors } = await supabase
     .from('professors')
-    .select('id, name, avatar_url, bio, cargo, years_at_if, email, whatsapp')
+    .select('id, name, avatar_url, bio, cargo, years_at_if, email, whatsapp, linkedin, cnpq')
     .eq('is_active', true)
     .order('display_order', { ascending: true })
 
@@ -14,7 +16,7 @@ export default async function CursoPage() {
      
       <section>
         <SectionTitle>Sobre o curso</SectionTitle>
-        <div className="rounded-2xl border border-zinc-200 bg-white p-8 flex flex-col gap-6">
+        <div className="rounded-2xl bg-white p-8 flex flex-col gap-6">
           <p className="text-base text-zinc-600 leading-relaxed">
             O curso Tecnológico em <strong className="text-zinc-900">Análise e Desenvolvimento de Sistemas (ADS)</strong> forma
             profissionais capazes de desenvolver, implantar e manter sistemas computacionais. Com foco em soluções práticas e
@@ -59,134 +61,25 @@ export default async function CursoPage() {
     
       <section>
         <SectionTitle>Matriz curricular</SectionTitle>
-        <div className="flex flex-col gap-4">
-          {curriculum.map((sem) => (
-            <div key={sem.semester} className="rounded-2xl border border-zinc-200 bg-white overflow-hidden">
-              <div className="px-6 py-3 border-b border-zinc-100 flex items-center gap-3" style={{ backgroundColor: '#f0fdf4' }}>
-                <span className="text-sm font-bold" style={{ color: '#0B7A3B' }}>{sem.semester}º Semestre</span>
-              </div>
-              <div className="px-6 py-4 grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-2">
-                {sem.subjects.map((s) => (
-                  <p key={s} className="text-sm text-zinc-600 flex items-center gap-2">
-                    <span className="w-1 h-1 rounded-full bg-zinc-300 shrink-0" />
-                    {s}
-                  </p>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+        <CurriculumTabs curriculum={curriculum} />
       </section>
 
      
       <section>
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold text-zinc-900 mb-3">Conheça os professores</h2>
-          <p className="text-sm text-zinc-500 max-w-md mx-auto leading-relaxed">
-            Profissionais experientes e dedicados, comprometidos com a formação de qualidade dos alunos do curso de ADS.
-          </p>
-        </div>
-
+        <SectionTitle>Professores</SectionTitle>
         {!professors || professors.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-zinc-200 p-10 text-center">
             <p className="text-sm text-zinc-400">Nenhum professor cadastrado ainda.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
-            {professors.map((prof) => (
-              <div key={prof.id} className="group rounded-2xl overflow-hidden border border-zinc-200 flex flex-col hover:shadow-md transition-shadow cursor-pointer">
-
-                {/* Foto */}
-                <div className="relative h-52 bg-zinc-100 shrink-0">
-                  {prof.avatar_url ? (
-                    <Image src={prof.avatar_url} alt={prof.name} fill className="object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-5xl text-zinc-300 font-bold">
-                      {prof.name.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                </div>
-
-               
-                <div className="px-4 py-4 flex flex-col gap-1 bg-white group-hover:bg-[#0B7A3B] transition-colors duration-200">
-                  <p className="text-sm font-bold truncate text-zinc-900 group-hover:text-white transition-colors">
-                    {prof.name}
-                  </p>
-                  {prof.cargo && (
-                    <p className="text-xs font-semibold uppercase tracking-wider text-[#0B7A3B] group-hover:text-green-200 transition-colors">
-                      {prof.cargo}
-                    </p>
-                  )}
-
-                  
-                  <div className="flex gap-3 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-0 group-hover:h-auto overflow-hidden">
-                    {prof.email && (
-                      <a
-                        href={`mailto:${prof.email}`}
-                        className="text-green-200 hover:text-white transition text-xs"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        ✉ Email
-                      </a>
-                    )}
-                    {prof.whatsapp && (
-                      <a
-                        href={`https://wa.me/${prof.whatsapp.replace(/\D/g, '')}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-green-200 hover:text-white transition text-xs"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        WhatsApp ↗
-                      </a>
-                    )}
-                  </div>
-                </div>
-
-              </div>
-            ))}
-          </div>
+          <ProfessorsSection professors={professors} />
         )}
       </section>
 
      
       <section>
         <SectionTitle>Infraestrutura</SectionTitle>
-        <div className="flex flex-col gap-4">
-          {infrastructure.map((item, i) => (
-            <div key={item.title} className="rounded-2xl border border-zinc-200 bg-white px-8 py-7 grid grid-cols-[auto_1fr_200px_1fr] gap-8 items-center">
-
-              
-              <span className="w-11 h-11 rounded-full bg-zinc-100 flex items-center justify-center text-sm font-bold text-zinc-400 shrink-0">
-                {String(i + 1).padStart(2, '0')}
-              </span>
-
-              
-              <div className="flex flex-col gap-2">
-                <p className="text-xl font-bold text-zinc-900">{item.title}</p>
-                <p className="text-sm text-zinc-500 leading-relaxed">{item.description}</p>
-              </div>
-
-             
-              <div className="w-full h-28 rounded-xl overflow-hidden flex items-center justify-center text-5xl shrink-0" style={{ backgroundColor: item.bg }}>
-                {item.icon}
-              </div>
-
-            
-              <div className="flex flex-col gap-2">
-                <p className="text-sm font-semibold text-zinc-700 mb-1">Destaques</p>
-                <div className="flex flex-wrap gap-2">
-                  {item.tags.map((tag) => (
-                    <span key={tag} className="rounded-full border border-zinc-200 px-3 py-1 text-xs text-zinc-600 bg-white">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-            </div>
-          ))}
-        </div>
+        <InfrastructureSection infrastructure={infrastructure} />
       </section>
 
     </div>
