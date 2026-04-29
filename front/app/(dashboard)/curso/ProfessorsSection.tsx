@@ -23,7 +23,7 @@ function ProfessorCard({ prof }: { prof: Professor }) {
       onMouseLeave={() => setHovered(false)}
       className="relative shrink-0 w-52 h-72 rounded-2xl overflow-hidden cursor-default bg-zinc-100"
     >
-      {/* Foto */}
+      
       {prof.avatar_url ? (
         <Image
           src={prof.avatar_url}
@@ -41,7 +41,7 @@ function ProfessorCard({ prof }: { prof: Professor }) {
         </div>
       )}
 
-      {/* Overlay que sobe no hover */}
+      
       <div
         className="absolute inset-x-0 bottom-0 flex flex-col gap-1 px-5 py-5"
         style={{
@@ -103,7 +103,7 @@ function ProfessorCard({ prof }: { prof: Professor }) {
         </div>
       </div>
 
-      {/* Nome sempre visível no fundo (sem hover) */}
+     
       <div
         className="absolute inset-x-0 bottom-0 px-5 py-4"
         style={{
