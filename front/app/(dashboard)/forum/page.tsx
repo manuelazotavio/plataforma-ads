@@ -65,8 +65,9 @@ export default async function ForumPage({
       {filtered.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-200 p-16 text-center">
           <p className="text-sm text-zinc-400">Nenhum tópico ainda.</p>
-          <Link href="/forum/novo" className="mt-3 inline-block text-sm text-[#0B7A3B] font-medium hover:opacity-70">
-            Criar o primeiro →
+          <Link href="/forum/novo" className="mt-3 inline-flex items-center gap-1 text-sm text-[#0B7A3B] font-medium hover:opacity-70">
+            Criar o primeiro
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
           </Link>
         </div>
       ) : (

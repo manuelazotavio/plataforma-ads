@@ -36,8 +36,9 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
   return (
     <div className="px-10 py-8 max-w-4xl mx-auto w-full">
 
-      <Link href="/eventos" className="text-sm text-zinc-400 hover:text-zinc-700 transition mb-8 inline-block">
-        ← Eventos
+      <Link href="/eventos" className="text-sm text-zinc-400 hover:text-zinc-700 transition mb-8 inline-flex items-center gap-1.5">
+        <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+        Eventos
       </Link>
 
       
@@ -132,8 +133,9 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
               )
             })}
           </div>
-          <Link href={`/projetos?category=${event.category}`} className="text-sm text-[#0B7A3B] hover:opacity-70 transition mt-4 inline-block">
-            Ver todos →
+          <Link href={`/projetos?category=${event.category}`} className="text-sm text-[#0B7A3B] hover:opacity-70 transition mt-4 inline-flex items-center gap-1">
+            Ver todos
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
           </Link>
         </section>
       )}

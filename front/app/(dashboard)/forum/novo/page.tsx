@@ -94,8 +94,9 @@ export default function NovoTopicoPage() {
 
   return (
     <div className="px-10 py-8 max-w-3xl mx-auto w-full">
-      <Link href="/forum" className="text-sm text-zinc-400 hover:text-zinc-700 transition mb-8 inline-block">
-        ← Fórum
+      <Link href="/forum" className="text-sm text-zinc-400 hover:text-zinc-700 transition mb-8 inline-flex items-center gap-1.5">
+        <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+        Fórum
       </Link>
 
       <h1 className="text-2xl font-bold text-zinc-900 mb-8">Novo tópico</h1>

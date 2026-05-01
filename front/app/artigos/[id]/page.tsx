@@ -24,8 +24,9 @@ export default async function ArtigoDetalhe({ params }: { params: Promise<{ id: 
     <div className="min-h-screen bg-white py-12 px-4">
       <div className="w-full max-w-2xl mx-auto">
 
-        <Link href="/artigos" className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-900 transition mb-6">
-          ← Todos os artigos
+        <Link href="/artigos" className="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition mb-6">
+          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+          Todos os artigos
         </Link>
 
         {article.cover_image_url && (
@@ -50,8 +51,8 @@ export default async function ArtigoDetalhe({ params }: { params: Promise<{ id: 
           <div className="flex items-center justify-between pb-6 border-b border-zinc-100">
             <div className="flex items-center gap-2">
               {author?.avatar_url
-                ? <Image src={author.avatar_url} alt={author.name} width={28} height={28} className="rounded-full object-cover" />
-                : <div className="w-7 h-7 rounded-full bg-zinc-200" />
+                ? <Image src={author.avatar_url} alt={author.name} width={28} height={28} className="w-7 h-7 rounded-full object-cover shrink-0" />
+                : <div className="w-7 h-7 rounded-full bg-zinc-200 shrink-0" />
               }
               <span className="text-sm text-zinc-600 font-medium">{author?.name}</span>
               {article.published_at && (

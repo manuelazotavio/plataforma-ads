@@ -165,16 +165,18 @@ export default function InicioPage() {
               <ProjectsIcon />
               Projetos em destaque
             </h2>
-            <Link href="/projetos" className="text-sm text-green-600 hover:text-green-700 font-medium transition">
-              Ver todos →
+            <Link href="/projetos" className="text-sm text-green-600 hover:text-green-700 font-medium transition flex items-center gap-1">
+              Ver todos
+              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
             </Link>
           </div>
 
           {featuredProjects.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-zinc-200 p-10 text-center">
               <p className="text-sm text-zinc-400">Nenhum projeto cadastrado ainda.</p>
-              <Link href="/projetos/novo" className="mt-3 inline-block text-sm text-green-600 font-medium hover:underline">
-                Criar o primeiro projeto →
+              <Link href="/projetos/novo" className="mt-3 inline-flex items-center gap-1 text-sm text-green-600 font-medium hover:underline">
+                Criar o primeiro projeto
+                <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
               </Link>
             </div>
           ) : (
@@ -220,8 +222,9 @@ export default function InicioPage() {
               <TopicsIcon />
               Discussões Recentes
             </h2>
-            <Link href="/forum" className="text-sm text-green-600 hover:text-green-700 font-medium transition">
-              Ver todas →
+            <Link href="/forum" className="text-sm text-green-600 hover:text-green-700 font-medium transition flex items-center gap-1">
+              Ver todas
+              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
             </Link>
           </div>
 

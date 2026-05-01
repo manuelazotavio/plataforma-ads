@@ -110,7 +110,7 @@ export default async function ArtigosPage({
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center gap-2">
                         {author?.avatar_url
-                          ? <Image src={author.avatar_url} alt={author.name} width={16} height={16} className="rounded-full object-cover" />
+                          ? <Image src={author.avatar_url} alt={author.name} width={16} height={16} className="w-4 h-4 rounded-full object-cover shrink-0" />
                           : <div className="w-4 h-4 rounded-full bg-zinc-200" />
                         }
                         <span className="text-xs text-zinc-400">{author?.name}</span>

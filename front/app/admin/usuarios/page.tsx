@@ -72,7 +72,7 @@ export default function AdminUsuariosPage() {
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2.5">
                     {user.avatar_url
-                      ? <Image src={user.avatar_url} alt={user.name} width={28} height={28} className="rounded-full object-cover shrink-0" />
+                      ? <Image src={user.avatar_url} alt={user.name} width={28} height={28} className="w-7 h-7 rounded-full object-cover shrink-0" />
                       : <div className="w-7 h-7 rounded-full bg-zinc-200 flex items-center justify-center text-xs font-semibold text-zinc-500 shrink-0">
                           {user.name?.charAt(0).toUpperCase()}
                         </div>

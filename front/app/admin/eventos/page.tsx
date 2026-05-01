@@ -283,7 +283,7 @@ export default function AdminEventosPage() {
                 {(event.start_date || event.end_date) && (
                   <p className="text-xs text-zinc-400 mt-0.5">
                     {event.start_date && new Date(event.start_date).toLocaleDateString('pt-BR')}
-                    {event.end_date && ` → ${new Date(event.end_date).toLocaleDateString('pt-BR')}`}
+                    {event.end_date && ` – ${new Date(event.end_date).toLocaleDateString('pt-BR')}`}
                   </p>
                 )}
                 <div className="flex gap-2 mt-2">
