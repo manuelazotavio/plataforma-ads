@@ -11,6 +11,10 @@ export default function CadastroPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [semester, setSemester] = useState('')
+  const [isEgresso, setIsEgresso] = useState(false)
+  const [graduationYear, setGraduationYear] = useState('')
+  const [role, setRole] = useState('')
+  const [company, setCompany] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -33,7 +37,7 @@ export default function CadastroPage() {
       email,
       password_hash: 'managed_by_supabase_auth',
       role: 'aluno',
-      semester: semester ? parseInt(semester) : null,
+      semester: !isEgresso && semester ? parseInt(semester) : null,
     })
 
     if (dbError) {
@@ -42,7 +46,18 @@ export default function CadastroPage() {
       return
     }
 
-    router.push('/perfil')
+    if (isEgresso) {
+      await supabase.from('egressos').insert({
+        user_id: data.user.id,
+        name,
+        graduation_year: graduationYear ? parseInt(graduationYear) : null,
+        role: role || null,
+        company: company || null,
+        is_active: true,
+      })
+    }
+
+    router.push('/inicio')
   }
 
   return (
@@ -101,21 +116,74 @@ export default function CadastroPage() {
             />
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label htmlFor="semester" className="text-sm font-medium text-zinc-700">
-              Semestre <span className="text-zinc-400">(opcional)</span>
-            </label>
-            <input
-              id="semester"
-              type="number"
-              min={1}
-              max={8}
-              value={semester}
-              onChange={(e) => setSemester(e.target.value)}
-              className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 transition"
-              placeholder="Ex: 3"
-            />
+          
+          <div className="flex rounded-lg border border-zinc-200 overflow-hidden text-sm font-medium">
+            <button
+              type="button"
+              onClick={() => setIsEgresso(false)}
+              className={`flex-1 py-2 transition-colors ${!isEgresso ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:text-zinc-900'}`}
+            >
+              Sou aluno
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsEgresso(true)}
+              className={`flex-1 py-2 transition-colors ${isEgresso ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:text-zinc-900'}`}
+            >
+              Sou egresso
+            </button>
           </div>
+
+          {!isEgresso ? (
+            <div className="flex flex-col gap-1">
+              <label htmlFor="semester" className="text-sm font-medium text-zinc-700">
+                Semestre <span className="text-zinc-400">(opcional)</span>
+              </label>
+              <input
+                id="semester"
+                type="number"
+                min={1}
+                max={8}
+                value={semester}
+                onChange={(e) => setSemester(e.target.value)}
+                className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 transition"
+                placeholder="Ex: 3"
+              />
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-zinc-700">Ano de formatura</label>
+                <input
+                  type="number"
+                  value={graduationYear}
+                  onChange={(e) => setGraduationYear(e.target.value)}
+                  className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 transition"
+                  placeholder="Ex: 2023"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium text-zinc-700">Cargo atual</label>
+                  <input
+                    value={role}
+                    onChange={(e) => setRole(e.target.value)}
+                    className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 transition"
+                    placeholder="Ex: Dev Frontend"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium text-zinc-700">Empresa</label>
+                  <input
+                    value={company}
+                    onChange={(e) => setCompany(e.target.value)}
+                    className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 transition"
+                    placeholder="Ex: Google"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           {error && (
             <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">

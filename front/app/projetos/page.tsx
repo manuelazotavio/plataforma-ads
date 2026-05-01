@@ -2,21 +2,30 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 import ProjectFilters from '@/app/components/ProjectFilters'
+import { DEFAULT_PROJECT_TAGS, PROJECT_TAG_OPTIONS_TABLE, uniqueTagNames } from '@/app/lib/projectTags'
+
+const CATEGORIES = [
+  { value: 'hackathon', label: 'Hackathon' },
+  { value: 'maratona', label: 'Maratona' },
+  { value: 'extensao', label: 'Extensão' },
+  { value: 'iniciacao_cientifica', label: 'Iniciação Científica' },
+]
 
 export default async function ProjetosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tag?: string; semester?: string; aluno?: string }>
+  searchParams: Promise<{ tag?: string | string[]; semester?: string; aluno?: string; category?: string }>
 }) {
-  const { tag, semester, aluno } = await searchParams
+  const { tag, semester, aluno, category } = await searchParams
+  const selectedTags = Array.isArray(tag) ? tag : tag ? [tag] : []
 
  
   let tagProjectIds: string[] | null = null
-  if (tag) {
+  if (selectedTags.length > 0) {
     const { data } = await supabase
       .from('project_tags')
       .select('project_id')
-      .eq('tag_name', tag)
+      .in('tag_name', selectedTags)
     tagProjectIds = data?.map((r) => r.project_id) ?? []
   }
 
@@ -33,16 +42,26 @@ export default async function ProjetosPage({
   }
   if (semester) query = query.eq('semester', parseInt(semester))
   if (aluno) query = query.eq('user_id', aluno)
+  if (category) query = query.eq('category', category)
 
-  const [{ data: projects }, { data: tagRows }, { data: semesterRows }, { data: studentRows }] =
+  const [
+    { data: projects },
+    { data: tagRows },
+    { data: configuredTagRows, error: configuredTagError },
+    { data: semesterRows },
+    { data: studentRows },
+  ] =
     await Promise.all([
       query,
       supabase.from('project_tags').select('tag_name'),
+      supabase.from(PROJECT_TAG_OPTIONS_TABLE).select('name').eq('is_active', true).order('display_order'),
       supabase.from('projects').select('semester').not('semester', 'is', null),
       supabase.from('projects').select('user_id, users(id, name)').not('user_id', 'is', null),
     ])
 
-  const allTags = [...new Set((tagRows ?? []).map((r) => r.tag_name))].sort()
+  const configuredTags = configuredTagError ? [] : uniqueTagNames((configuredTagRows ?? []).map((r) => r.name))
+  const usedTags = uniqueTagNames((tagRows ?? []).map((r) => r.tag_name)).sort()
+  const allTags = configuredTags.length > 0 ? configuredTags : usedTags.length > 0 ? usedTags : DEFAULT_PROJECT_TAGS
   const allSemesters = [...new Set((semesterRows ?? []).map((r) => r.semester as number))].sort((a, b) => a - b)
 
   type StudentRow = { user_id: string; users: { id: string; name: string } | null }
@@ -53,7 +72,7 @@ export default async function ProjetosPage({
     .sort((a, b) => a.name.localeCompare(b.name))
 
   return (
-    <div className="min-h-screen bg-zinc-50 py-12 px-4">
+    <div className="min-h-screen bg-white py-12 px-4">
       <div className="w-full max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -68,6 +87,31 @@ export default async function ProjetosPage({
           >
             Meus projetos
           </Link>
+        </div>
+
+        
+        <div className="flex gap-2 mb-6">
+          <Link
+            href="/projetos"
+            className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors cursor-pointer ${
+              !category ? 'text-white' : 'text-zinc-400 hover:text-zinc-700'
+            }`}
+            style={!category ? { backgroundColor: '#0B7A3B' } : undefined}
+          >
+            Todos
+          </Link>
+          {CATEGORIES.map((cat) => (
+            <Link
+              key={cat.value}
+              href={`/projetos?category=${cat.value}`}
+              className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors cursor-pointer ${
+                category === cat.value ? 'text-white' : 'text-zinc-400 hover:text-zinc-700'
+              }`}
+              style={category === cat.value ? { backgroundColor: '#0B7A3B' } : undefined}
+            >
+              {cat.label}
+            </Link>
+          ))}
         </div>
 
         <ProjectFilters tags={allTags} semesters={allSemesters} students={allStudents} />

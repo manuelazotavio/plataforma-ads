@@ -14,17 +14,35 @@ type Props = {
 
 export default function Select({ value, onChange, options, placeholder, className }: Props) {
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const [rect, setRect] = useState<DOMRect | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const btnRef = useRef<HTMLButtonElement>(null)
 
   const selected = options.find((o) => o.value === value)
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
     }
     document.addEventListener('mousedown', onClickOutside)
     return () => document.removeEventListener('mousedown', onClickOutside)
   }, [])
+
+  useEffect(() => {
+    if (!open) return
+    function onScroll() { setOpen(false) }
+    window.addEventListener('scroll', onScroll, true)
+    return () => window.removeEventListener('scroll', onScroll, true)
+  }, [open])
+
+  function handleToggle() {
+    if (!open && btnRef.current) {
+      setRect(btnRef.current.getBoundingClientRect())
+    }
+    setOpen((v) => !v)
+  }
 
   function pick(val: string) {
     onChange(val)
@@ -32,10 +50,11 @@ export default function Select({ value, onChange, options, placeholder, classNam
   }
 
   return (
-    <div ref={ref} className={`relative ${className ?? ''}`}>
+    <div ref={containerRef} className={`relative ${className ?? ''}`}>
       <button
+        ref={btnRef}
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={handleToggle}
         className="w-full flex items-center justify-between gap-2 rounded-lg border border-zinc-200 bg-white pl-3 pr-2.5 py-2 text-sm text-left outline-none focus:border-zinc-400 focus:ring-2 focus:ring-zinc-100 transition"
       >
         <span className={selected ? 'text-zinc-700 truncate' : 'text-zinc-400'}>
@@ -43,24 +62,29 @@ export default function Select({ value, onChange, options, placeholder, classNam
         </span>
         <svg
           className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform duration-150 ${open ? 'rotate-180' : ''}`}
-          viewBox="0 0 20 20"
-          fill="currentColor"
-          aria-hidden="true"
+          viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"
         >
           <path fillRule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
         </svg>
       </button>
 
-      {open && (
-        <div className="absolute z-20 mt-1 w-full min-w-max rounded-xl border border-zinc-200 bg-white shadow-lg py-1 max-h-60 overflow-y-auto">
+      {open && rect && (
+        <div
+          style={{
+            position: 'fixed',
+            top: rect.bottom + 4,
+            left: rect.left,
+            width: rect.width,
+            zIndex: 9999,
+          }}
+          className="min-w-max rounded-xl border border-zinc-200 bg-white shadow-lg py-1 max-h-60 overflow-y-auto"
+        >
           {placeholder !== undefined && (
             <button
               type="button"
               onClick={() => pick('')}
               className={`w-full text-left px-3 py-2 text-sm transition-colors ${
-                value === ''
-                  ? 'text-zinc-900 font-medium bg-zinc-50'
-                  : 'text-zinc-400 hover:bg-zinc-50'
+                value === '' ? 'text-zinc-900 font-medium bg-zinc-50' : 'text-zinc-400 hover:bg-zinc-50'
               }`}
             >
               {placeholder}

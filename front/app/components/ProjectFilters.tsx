@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import Select from '@/app/components/Select'
 
@@ -18,27 +19,37 @@ export default function ProjectFilters({ tags, semesters, students }: Props) {
     const params = new URLSearchParams(searchParams.toString())
     if (value) params.set(key, value)
     else params.delete(key)
-    router.push(`${pathname}?${params.toString()}`)
+    const query = params.toString()
+    router.push(query ? `${pathname}?${query}` : pathname)
   }
 
+  function updateTags(values: string[]) {
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete('tag')
+    values.forEach((value) => params.append('tag', value))
+    const query = params.toString()
+    router.push(query ? `${pathname}?${query}` : pathname)
+  }
+
+  const selectedTags = searchParams.getAll('tag')
   const hasFilters =
     searchParams.has('tag') || searchParams.has('semester') || searchParams.has('aluno')
 
   return (
     <div className="flex flex-wrap items-center gap-2 mb-6">
-      <Select
-        value={searchParams.get('tag') ?? ''}
-        onChange={(v) => update('tag', v)}
+      <MultiSelect
+        values={selectedTags}
+        onChange={updateTags}
         placeholder="Todas as tecnologias"
         options={tags.map((t) => ({ value: t, label: t }))}
-        className="w-48"
+        className="w-56"
       />
       <Select
         value={searchParams.get('semester') ?? ''}
         onChange={(v) => update('semester', v)}
         placeholder="Todos os semestres"
         options={semesters.map((s) => ({ value: String(s), label: `${s}º semestre` }))}
-        className="w-44"
+        className="w-52"
       />
       <Select
         value={searchParams.get('aluno') ?? ''}
@@ -54,6 +65,113 @@ export default function ProjectFilters({ tags, semesters, students }: Props) {
         >
           Limpar ×
         </button>
+      )}
+    </div>
+  )
+}
+
+type MultiSelectOption = { value: string; label: string }
+
+function MultiSelect({
+  values,
+  onChange,
+  options,
+  placeholder,
+  className,
+}: {
+  values: string[]
+  onChange: (values: string[]) => void
+  options: MultiSelectOption[]
+  placeholder: string
+  className?: string
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const selected = options.filter((option) => values.includes(option.value))
+
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [])
+
+  function toggle(value: string) {
+    onChange(
+      values.includes(value)
+        ? values.filter((current) => current !== value)
+        : [...values, value]
+    )
+  }
+
+  const label =
+    selected.length === 0
+      ? placeholder
+      : selected.length === 1
+        ? selected[0].label
+        : `${selected.length} tecnologias`
+
+  return (
+    <div ref={ref} className={`relative ${className ?? ''}`}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between gap-2 rounded-lg border border-zinc-200 bg-white pl-3 pr-2.5 py-2 text-sm text-left outline-none focus:border-zinc-400 focus:ring-2 focus:ring-zinc-100 transition"
+      >
+        <span className={selected.length > 0 ? 'text-zinc-700 truncate' : 'text-zinc-400'}>
+          {label}
+        </span>
+        <svg
+          className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform duration-150 ${open ? 'rotate-180' : ''}`}
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path fillRule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute z-20 mt-1 w-full min-w-max rounded-xl border border-zinc-200 bg-white shadow-lg py-1 max-h-64 overflow-y-auto">
+          <button
+            type="button"
+            onClick={() => onChange([])}
+            className={`w-full text-left px-3 py-2 text-sm transition-colors ${
+              selected.length === 0
+                ? 'text-zinc-900 font-medium bg-zinc-50'
+                : 'text-zinc-400 hover:bg-zinc-50'
+            }`}
+          >
+            {placeholder}
+          </button>
+          {options.map((option) => {
+            const active = values.includes(option.value)
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => toggle(option.value)}
+                className={`w-full flex items-center gap-3 px-3 py-2 text-sm transition-colors ${
+                  active ? 'text-zinc-900 font-medium bg-zinc-50' : 'text-zinc-700 hover:bg-zinc-50'
+                }`}
+              >
+                <span
+                  className={`grid h-4 w-4 shrink-0 place-items-center rounded border ${
+                    active ? 'border-[#0B7A3B] bg-[#0B7A3B]' : 'border-zinc-300 bg-white'
+                  }`}
+                >
+                  {active && (
+                    <svg className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                      <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                </span>
+                {option.label}
+              </button>
+            )
+          })}
+        </div>
       )}
     </div>
   )

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
@@ -10,31 +10,47 @@ type UserProfile = {
   name: string
   avatar_url: string | null
   semester: number | null
+  role: string | null
 }
 
 const sidebarItems = [
   { href: '/inicio', label: 'Início', icon: <IconHome /> },
-  { href: '/curso', label: 'O curso', icon: <IconBook /> },
+  {
+    href: '/curso',
+    label: 'O curso',
+    icon: <IconBook />,
+    children: [
+      { href: '/curso#sobre-o-curso', label: 'Sobre o curso' },
+      { href: '/curso#matriz-curricular', label: 'Matriz curricular' },
+      { href: '/curso#professores', label: 'Professores' },
+      { href: '/curso#infraestrutura', label: 'Infraestrutura' },
+    ],
+  },
   { href: '/projetos', label: 'Projetos', icon: <IconGrid /> },
   { href: '/eventos', label: 'Eventos', icon: <IconCalendar /> },
+  { href: '/calendario', label: 'Calendário', icon: <IconCalendarGrid /> },
   { href: '/vagas', label: 'Oportunidades', icon: <IconBriefcase /> },
   { href: '/egressos', label: 'Egressos', icon: <IconUsers /> },
-  { href: '/perfil', label: 'Área do aluno', icon: <IconPerson /> },
+  {
+    href: '/area-aluno',
+    label: 'Área do Aluno',
+    icon: <IconPerson />,
+    children: [
+      { href: '/area-aluno#materiais', label: 'Materiais' },
+      { href: '/area-aluno#orientacoes-academicas', label: 'Orientações acadêmicas' },
+      { href: '/area-aluno#links-uteis', label: 'Links úteis' },
+    ],
+  },
   { href: '/contato', label: 'Contato', icon: <IconMessage /> },
 ]
 
-const topNavItems = [
-  { href: '/inicio', label: 'Início', icon: <IconHome size={16} /> },
-  { href: '/projetos', label: 'Projetos', icon: <IconGrid size={16} /> },
-  { href: '/forum', label: 'Fórum', icon: <IconChat size={16} /> },
-  { href: '/alunos', label: 'Alunos', icon: <IconUsers size={16} /> },
-]
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
   const [user, setUser] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [openItems, setOpenItems] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     async function loadUser() {
@@ -45,7 +61,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       }
       const { data: profile } = await supabase
         .from('users')
-        .select('name, avatar_url, semester')
+        .select('name, avatar_url, semester, role')
         .eq('id', authUser.id)
         .single()
       setUser(profile)
@@ -77,114 +93,195 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
 
         
-        <nav className="flex flex-col gap-1 px-3 py-4 flex-1 overflow-y-auto">
+        <nav className="sidebar-nav flex flex-col gap-1 px-3 py-4 flex-1 overflow-y-auto">
           {sidebarItems.map((item, i) => {
             const active = pathname === item.href || pathname.startsWith(item.href + '/')
-            const dividerBefore = i === 5
+            const hasChildren = 'children' in item && item.children && item.children.length > 0
+            const open = hasChildren && (openItems[item.href] ?? active)
+            const dividerBefore = i === 6
             return (
               <div key={item.href}>
                 {dividerBefore && <div className="my-2 border-t border-zinc-100" />}
-                <Link
-                  href={item.href}
-                  className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-colors ${
-                    active
-                      ? 'text-white'
-                      : 'text-zinc-900 hover:bg-zinc-100'
-                  }`}
-                  style={active ? { backgroundColor: '#0B7A3B' } : undefined}
-                >
-                  <span className="shrink-0">{item.icon}</span>
-                  {item.label}
-                </Link>
+                {hasChildren ? (
+                  <button
+                    type="button"
+                    aria-expanded={open}
+                    onClick={() => setOpenItems((prev) => ({ ...prev, [item.href]: !open }))}
+                    className={`flex w-full min-w-0 items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-colors ${
+                      active
+                        ? 'text-white'
+                        : 'text-zinc-900 hover:bg-zinc-100'
+                    }`}
+                    style={active ? { backgroundColor: '#0B7A3B' } : undefined}
+                  >
+                    <span className="shrink-0">{item.icon}</span>
+                    <span className="min-w-0 flex-1 truncate text-left">{item.label}</span>
+                    <svg
+                      className={`h-4 w-4 shrink-0 transition-transform ${open ? 'rotate-90' : ''}`}
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path fillRule="evenodd" d="M7.22 4.22a.75.75 0 0 1 1.06 0l5.25 5.25a.75.75 0 0 1 0 1.06l-5.25 5.25a.75.75 0 1 1-1.06-1.06L11.94 10 7.22 5.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                ) : (
+                  <Link
+                    href={item.href}
+                    className={`flex min-w-0 items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-colors ${
+                      active
+                        ? 'text-white'
+                        : 'text-zinc-900 hover:bg-zinc-100'
+                    }`}
+                    style={active ? { backgroundColor: '#0B7A3B' } : undefined}
+                  >
+                    <span className="shrink-0">{item.icon}</span>
+                    <span className="truncate">{item.label}</span>
+                  </Link>
+                )}
+                {hasChildren && open && (
+                  <div className="ml-8 mt-1 flex flex-col gap-1 border-l border-zinc-100 pl-3">
+                    {item.children.map((child) => (
+                      <Link
+                        key={child.href}
+                        href={child.href}
+                        className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-500 transition hover:bg-zinc-50 hover:text-zinc-900"
+                      >
+                        {child.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
             )
           })}
         </nav>
+
+        {user?.role === 'admin' && (
+          <div className="px-3 pb-4">
+            <Link
+              href="/admin"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition-colors"
+            >
+              <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+              </svg>
+              Painel Admin
+            </Link>
+          </div>
+        )}
       </aside>
 
-      
       <div className="flex flex-col flex-1 ml-56 min-w-0">
-       
-        <header className="h-16 bg-white border-b border-zinc-100 flex items-stretch px-6 sticky top-0 z-10 shrink-0">
+        <header className="h-16 bg-white border-b border-zinc-100 flex items-center justify-end px-6 sticky top-0 z-10 shrink-0 gap-4">
 
-          {/* Nav links com underline no item ativo */}
-          <nav className="flex items-stretch gap-1 mr-auto">
-            {topNavItems.map((item) => {
-              const active = pathname === item.href
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-2 px-4 text-sm font-semibold transition-colors border-b-2 ${
-                    active
-                      ? 'text-green-600 border-green-600'
-                      : 'text-zinc-500 border-transparent hover:text-zinc-900'
-                  }`}
-                >
-                  {item.icon}
-                  {item.label}
-                </Link>
-              )
-            })}
-          </nav>
+          
+          <div className="relative">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+              <circle cx={11} cy={11} r={8} /><path d="m21 21-4.35-4.35" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Buscar projetos, tópicos..."
+              className="rounded-full bg-zinc-100 pl-8 pr-4 py-2 text-sm text-zinc-500 outline-none focus:bg-zinc-200 transition w-64 placeholder:text-zinc-400"
+            />
+          </div>
 
-          {/* Direita: busca + sino + usuário */}
-          <div className="flex items-center gap-4">
+          
+          <button className="relative text-zinc-400 hover:text-zinc-700 transition">
+            <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 border-2 border-white" />
+          </button>
 
-            {/* Busca */}
-            <div className="relative">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                <circle cx={11} cy={11} r={8} /><path d="m21 21-4.35-4.35" />
-              </svg>
-              <input
-                type="text"
-                placeholder="Buscar projetos, tópicos..."
-                className="rounded-full bg-zinc-100 pl-8 pr-4 py-2 text-sm text-zinc-500 outline-none focus:bg-zinc-200 transition w-64 placeholder:text-zinc-400"
-              />
+         
+          <div className="flex items-center gap-3 pl-4 border-l border-zinc-100">
+            <div className="text-right leading-tight">
+              <p className="text-sm font-semibold text-zinc-900">{user?.name}</p>
+              <p className="text-xs text-zinc-400 mt-0.5">
+                {user?.semester ? `${user.semester}º Semestre` : 'Aluno'}
+              </p>
             </div>
-
-            {/* Sino */}
-            <button className="relative text-zinc-400 hover:text-zinc-700 transition">
-              <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-              </svg>
-              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 border-2 border-white" />
-            </button>
-
-            {/* Usuário */}
-            <div className="flex items-center gap-3 pl-4 border-l border-zinc-100">
-              <div className="text-right leading-tight">
-                <p className="text-sm font-semibold text-zinc-900">{user?.name}</p>
-                <p className="text-xs text-zinc-400 mt-0.5">
-                  {user?.semester ? `${user.semester}º Semestre` : 'Aluno'}
-                </p>
-              </div>
-              <div className="w-9 h-9 rounded-full overflow-hidden bg-zinc-200 shrink-0 ring-2 ring-zinc-100">
-                {user?.avatar_url ? (
-                  <Image
-                    src={user.avatar_url}
-                    alt={user.name}
-                    width={36}
-                    height={36}
-                    className="object-cover w-full h-full"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-zinc-500 text-sm font-semibold">
-                    {user?.name?.charAt(0)?.toUpperCase()}
-                  </div>
-                )}
-              </div>
+            <div className="w-9 h-9 rounded-full overflow-hidden bg-zinc-200 shrink-0 ring-2 ring-zinc-100">
+              {user?.avatar_url ? (
+                <Image src={user.avatar_url} alt={user.name} width={36} height={36} className="object-cover w-full h-full" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-zinc-500 text-sm font-semibold">
+                  {user?.name?.charAt(0)?.toUpperCase()}
+                </div>
+              )}
             </div>
-
           </div>
         </header>
 
-       
         <main className="flex-1 overflow-y-auto bg-white">
           {children}
+          <footer className="border-t border-zinc-100 px-10 py-6 mt-8">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-zinc-400">
+              <Link href="/regras" className="hover:text-zinc-700 transition">Regras do ADS Comunica</Link>
+              <Link href="/privacidade" className="hover:text-zinc-700 transition">Política de Privacidade</Link>
+              <Link href="/contrato" className="hover:text-zinc-700 transition">Contrato de Usuário</Link>
+              <Link href="/acessibilidade" className="hover:text-zinc-700 transition">Acessibilidade</Link>
+              <span className="ml-auto">ADS Comunica, Inc. © 2026. Todos os direitos reservados.</span>
+            </div>
+          </footer>
         </main>
+        <QuickCreateMenu />
       </div>
+    </div>
+  )
+}
+
+const quickCreateItems = [
+  { href: '/projetos/novo', label: 'Novo projeto' },
+  { href: '/artigos/novo', label: 'Novo artigo' },
+  { href: '/forum/novo', label: 'Novo tópico' },
+]
+
+function QuickCreateMenu() {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <div className="fixed bottom-6 right-6 z-30 flex flex-col items-end gap-3">
+      {open && (
+        <div className="w-56 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg">
+          {quickCreateItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={() => setOpen(false)}
+              className="block cursor-pointer border-b border-zinc-100 px-4 py-3 text-sm font-medium text-zinc-700 transition last:border-b-0 hover:bg-zinc-50 hover:text-zinc-900"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      )}
+
+      <button
+        type="button"
+        aria-label={open ? 'Fechar ações rápidas' : 'Abrir ações rápidas'}
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+        className="grid h-14 w-14 cursor-pointer place-items-center rounded-full text-white shadow-lg transition hover:scale-105"
+        style={{ backgroundColor: '#0B7A3B' }}
+      >
+        <svg
+          className={`h-7 w-7 transition-transform ${open ? 'rotate-45' : ''}`}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M12 5v14" />
+          <path d="M5 12h14" />
+        </svg>
+      </button>
     </div>
   )
 }
@@ -266,10 +363,22 @@ function IconMessage({ size = 18 }: { size?: number }) {
   )
 }
 
-function IconChat({ size = 18 }: { size?: number }) {
+function IconCalendarGrid({ size = 18 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+      <rect x={3} y={4} width={18} height={18} rx={2} ry={2} />
+      <line x1={16} y1={2} x2={16} y2={6} />
+      <line x1={8} y1={2} x2={8} y2={6} />
+      <line x1={3} y1={10} x2={21} y2={10} />
+      <line x1={8} y1={14} x2={8} y2={14} />
+      <line x1={12} y1={14} x2={12} y2={14} />
+      <line x1={16} y1={14} x2={16} y2={14} />
+      <line x1={8} y1={18} x2={8} y2={18} />
+      <line x1={12} y1={18} x2={12} y2={18} />
     </svg>
   )
 }
+
+
+
+

@@ -87,14 +87,14 @@ export default function EditarProjetoPage() {
 
   if (!initial || !userId) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-50">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <p className="text-sm text-zinc-500">Carregando...</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 py-12 px-4">
+    <div className="min-h-screen bg-white py-12 px-4">
       <div className="w-full max-w-2xl mx-auto">
         <h1 className="text-2xl font-semibold text-zinc-900 mb-1">Editar projeto</h1>
         <p className="text-sm text-zinc-500 mb-8">Atualize as informações do projeto</p>

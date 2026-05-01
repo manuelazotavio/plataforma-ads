@@ -58,14 +58,14 @@ export default function MeusProjetosPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-50">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <p className="text-sm text-zinc-500">Carregando...</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 py-12 px-4">
+    <div className="min-h-screen bg-white py-12 px-4">
       <div className="w-full max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>

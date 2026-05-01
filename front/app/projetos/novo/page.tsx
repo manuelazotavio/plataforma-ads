@@ -61,7 +61,7 @@ export default function NovoProjetoPage() {
   if (!userId) return null
 
   return (
-    <div className="min-h-screen bg-zinc-50 py-12 px-4">
+    <div className="min-h-screen bg-white py-12 px-4">
       <div className="w-full max-w-2xl mx-auto">
         <h1 className="text-2xl font-semibold text-zinc-900 mb-1">Novo projeto</h1>
         <p className="text-sm text-zinc-500 mb-8">Adicione um projeto ao seu portfólio</p>

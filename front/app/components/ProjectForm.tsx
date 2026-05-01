@@ -1,8 +1,9 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
+import { DEFAULT_PROJECT_TAGS, PROJECT_TAG_OPTIONS_TABLE, uniqueTagNames } from '@/app/lib/projectTags'
 
 export type ProjectFormData = {
   title: string
@@ -30,12 +31,38 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
   const [deployUrl, setDeployUrl] = useState(initial?.deploy_url ?? '')
   const [semester, setSemester] = useState(initial?.semester ?? '')
   const [isFeatured, setIsFeatured] = useState(initial?.is_featured ?? false)
-  const [tags, setTags] = useState<string[]>(initial?.tags ?? [])
-  const [newTag, setNewTag] = useState('')
+  const [technologyTags, setTechnologyTags] = useState(DEFAULT_PROJECT_TAGS)
+  const [tags, setTags] = useState<string[]>(uniqueTagNames(initial?.tags ?? []))
   const [images, setImages] = useState<{ url: string; type: 'image' | 'video' }[]>(initial?.images ?? [])
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadTechnologyTags() {
+      const { data, error } = await supabase
+        .from(PROJECT_TAG_OPTIONS_TABLE)
+        .select('name')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true })
+        .order('name', { ascending: true })
+
+      if (cancelled || error) return
+
+      const configuredTags = uniqueTagNames((data ?? []).map((item) => item.name))
+      if (configuredTags.length > 0) {
+        setTechnologyTags(configuredTags)
+      }
+    }
+
+    loadTechnologyTags()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   async function handleMediaChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? [])
@@ -68,21 +95,19 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
     setImages((prev) => prev.filter((_, i) => i !== index))
   }
 
-  function addTag() {
-    const trimmed = newTag.trim()
-    if (!trimmed || tags.includes(trimmed)) return
-    setTags((prev) => [...prev, trimmed])
-    setNewTag('')
-  }
-
-  function removeTag(tag: string) {
-    setTags((prev) => prev.filter((t) => t !== tag))
+  function toggleTag(tag: string) {
+    setTags((prev) => (
+      prev.includes(tag)
+        ? prev.filter((current) => current !== tag)
+        : [...prev, tag]
+    ))
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!formRef.current?.reportValidity()) return
-    onSave({ title, description, repo_url: repoUrl, deploy_url: deployUrl, semester, is_featured: isFeatured, tags, images })
+    const validTags = tags.filter((tag) => technologyTags.includes(tag))
+    onSave({ title, description, repo_url: repoUrl, deploy_url: deployUrl, semester, is_featured: isFeatured, tags: validTags, images })
   }
 
   return (
@@ -186,34 +211,29 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
         />
       </Field>
 
-      <Field label="Tags">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newTag}
-            onChange={(e) => setNewTag(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-            className={inputClass + ' flex-1'}
-            placeholder="Ex: React, Node, Python..."
-          />
-          <button
-            type="button"
-            onClick={addTag}
-            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 transition"
-          >
-            Adicionar
-          </button>
-        </div>
-        {tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-2">
-            {tags.map((tag) => (
-              <span key={tag} className="flex items-center gap-1 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700">
+      <Field label="Tecnologias">
+        <div className="flex flex-wrap gap-2">
+          {technologyTags.map((tag) => {
+            const active = tags.includes(tag)
+            return (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => toggleTag(tag)}
+                className={`cursor-pointer rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                  active
+                    ? 'border-[#0B7A3B] bg-[#0B7A3B] text-white'
+                    : 'border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50'
+                }`}
+              >
                 {tag}
-                <button type="button" onClick={() => removeTag(tag)} className="text-zinc-400 hover:text-zinc-700 transition">×</button>
-              </span>
-            ))}
-          </div>
-        )}
+              </button>
+            )
+          })}
+        </div>
+        <p className="mt-2 text-xs text-zinc-400">
+          Selecione apenas tecnologias da lista para manter os filtros organizados.
+        </p>
       </Field>
 
       <label className="flex items-center gap-2 cursor-pointer w-fit">

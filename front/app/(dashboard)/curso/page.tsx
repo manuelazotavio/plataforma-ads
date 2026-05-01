@@ -14,7 +14,7 @@ export default async function CursoPage() {
     <div className="px-10 py-8 flex flex-col gap-12 max-w-5xl mx-auto w-full bg-white">
 
      
-      <section>
+      <section id="sobre-o-curso" className="scroll-mt-24">
         <SectionTitle>Sobre o curso</SectionTitle>
         <div className="rounded-2xl bg-white p-8 flex flex-col gap-6">
           <p className="text-base text-zinc-600 leading-relaxed">
@@ -59,13 +59,13 @@ export default async function CursoPage() {
       </section>
 
     
-      <section>
+      <section id="matriz-curricular" className="scroll-mt-24">
         <SectionTitle>Matriz curricular</SectionTitle>
         <CurriculumTabs curriculum={curriculum} />
       </section>
 
      
-      <section>
+      <section id="professores" className="scroll-mt-24">
         <SectionTitle>Professores</SectionTitle>
         {!professors || professors.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-zinc-200 p-10 text-center">
@@ -77,7 +77,7 @@ export default async function CursoPage() {
       </section>
 
      
-      <section>
+      <section id="infraestrutura" className="scroll-mt-24">
         <SectionTitle>Infraestrutura</SectionTitle>
         <InfrastructureSection infrastructure={infrastructure} />
       </section>

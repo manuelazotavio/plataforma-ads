@@ -3,6 +3,12 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/app/lib/supabase'
 
+const CATEGORIES = [
+  { value: 'estagio', label: 'Estágio' },
+  { value: 'bolsa', label: 'Bolsa' },
+  { value: 'evento_externo', label: 'Evento externo' },
+]
+
 type Job = {
   id: string
   position: string
@@ -10,6 +16,7 @@ type Job = {
   location: string | null
   job_type: string | null
   work_mode: string | null
+  category: string | null
   is_active: boolean
   created_at: string
   job_tags: { tag_name: string }[]
@@ -94,6 +101,11 @@ export default function AdminVagasPage() {
                     <p className="text-xs text-zinc-400">
                       {job.company}{job.location ? ` · ${job.location}` : ''} · {new Date(job.created_at).toLocaleDateString('pt-BR')}
                     </p>
+                    {job.category && (
+                      <span className="text-xs font-semibold text-[#0B7A3B]">
+                        {CATEGORIES.find((c) => c.value === job.category)?.label}
+                      </span>
+                    )}
                   </div>
                   <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
                     job.is_active ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'

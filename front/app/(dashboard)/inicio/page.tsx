@@ -147,7 +147,7 @@ export default function InicioPage() {
               + Novo Projeto
             </Link>
             <Link
-              href="/artigos/novo"
+              href="/forum/novo"
               className="flex items-center gap-2 rounded-lg bg-white border border-zinc-200 px-6 py-3 text-base font-semibold text-zinc-700 hover:bg-zinc-50 transition shadow-sm"
             >
               <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -163,7 +163,7 @@ export default function InicioPage() {
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-lg font-semibold text-zinc-900 flex items-center gap-2">
               <ProjectsIcon />
-              Projetos em Destaque
+              Projetos em destaque
             </h2>
             <Link href="/projetos" className="text-sm text-green-600 hover:text-green-700 font-medium transition">
               Ver todos →

@@ -21,7 +21,7 @@ export default async function ArtigoDetalhe({ params }: { params: Promise<{ id: 
   const tags = article.article_tags as { tag_name: string }[]
 
   return (
-    <div className="min-h-screen bg-zinc-50 py-12 px-4">
+    <div className="min-h-screen bg-white py-12 px-4">
       <div className="w-full max-w-2xl mx-auto">
 
         <Link href="/artigos" className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-900 transition mb-6">

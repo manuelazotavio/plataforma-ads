@@ -86,15 +86,15 @@ export default async function HomePage() {
       </nav>
 
       
-      <section className="bg-zinc-950 text-white py-20 px-4">
+      <section className="bg-white text-zinc-900 py-20 px-4">
         <div className="max-w-6xl mx-auto">
-          <p className="text-xs font-medium text-zinc-400 uppercase tracking-widest mb-4">
+          <p className="text-xs font-medium text-zinc-500 uppercase tracking-widest mb-4">
             Análise e Desenvolvimento de Sistemas
           </p>
           <h1 className="text-4xl sm:text-5xl font-semibold leading-tight mb-4 max-w-2xl">
             A plataforma dos alunos de ADS
           </h1>
-          <p className="text-zinc-400 text-lg max-w-xl mb-10">
+          <p className="text-zinc-500 text-lg max-w-xl mb-10">
             Compartilhe projetos, publique artigos, conecte-se com colegas e encontre oportunidades no mercado.
           </p>
           <div className="flex flex-wrap gap-3 mb-16">
@@ -120,7 +120,7 @@ export default async function HomePage() {
 
       
       {(featuredProjects?.length ?? 0) > 0 && (
-        <section className="py-16 px-4 bg-zinc-50">
+        <section className="py-16 px-4 bg-white">
           <div className="max-w-6xl mx-auto">
             <SectionHeader title="Projetos mais curtidos" href="/projetos" />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -214,7 +214,7 @@ export default async function HomePage() {
       )}
 
       
-      <section className="py-16 px-4 bg-zinc-50">
+      <section className="py-16 px-4 bg-white">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12">
 
         

@@ -14,6 +14,8 @@ type Professor = {
   avatar_url: string | null
   email: string | null
   whatsapp: string | null
+  linkedin: string | null
+  cnpq: string | null
   is_active: boolean
   display_order: number
 }
@@ -25,6 +27,8 @@ const EMPTY_FORM = {
   bio: '',
   email: '',
   whatsapp: '',
+  linkedin: '',
+  cnpq: '',
   is_active: true,
   display_order: '0',
 }
@@ -97,6 +101,8 @@ export default function AdminCorpoDocentePage() {
       bio: form.bio || null,
       email: form.email || null,
       whatsapp: form.whatsapp || null,
+      linkedin: form.linkedin || null,
+      cnpq: form.cnpq || null,
       is_active: form.is_active,
       display_order: parseInt(form.display_order) || professors.length,
     })
@@ -116,6 +122,8 @@ export default function AdminCorpoDocentePage() {
       bio: prof.bio ?? '',
       email: prof.email ?? '',
       whatsapp: prof.whatsapp ?? '',
+      linkedin: prof.linkedin ?? '',
+      cnpq: prof.cnpq ?? '',
       is_active: prof.is_active,
       display_order: prof.display_order?.toString() ?? '0',
     })
@@ -132,6 +140,8 @@ export default function AdminCorpoDocentePage() {
       bio: editState.bio || null,
       email: editState.email || null,
       whatsapp: editState.whatsapp || null,
+      linkedin: editState.linkedin || null,
+      cnpq: editState.cnpq || null,
       is_active: editState.is_active,
       display_order: parseInt(editState.display_order) || 0,
       updated_at: new Date().toISOString(),
@@ -170,16 +180,11 @@ export default function AdminCorpoDocentePage() {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-50">
-        <p className="text-sm text-zinc-500">Carregando...</p>
-      </div>
-    )
+    return <p className="text-sm text-zinc-500">Carregando...</p>
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 py-12 px-4">
-      <div className="w-full max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto">
 
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -224,6 +229,14 @@ export default function AdminCorpoDocentePage() {
                 </Field>
                 <Field label="WhatsApp (com DDD)">
                   <input type="text" value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} className={inputClass} placeholder="Ex: 5511999999999" />
+                </Field>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="LinkedIn">
+                  <input type="url" value={form.linkedin} onChange={(e) => setForm({ ...form, linkedin: e.target.value })} className={inputClass} placeholder="https://linkedin.com/in/..." />
+                </Field>
+                <Field label="CNPq (URL do currículo)">
+                  <input type="url" value={form.cnpq} onChange={(e) => setForm({ ...form, cnpq: e.target.value })} className={inputClass} placeholder="http://lattes.cnpq.br/..." />
                 </Field>
               </div>
               <div className="flex items-center justify-between pt-1">
@@ -325,6 +338,14 @@ export default function AdminCorpoDocentePage() {
                         <input type="text" value={editState.whatsapp} onChange={(e) => setEditState({ ...editState, whatsapp: e.target.value })} className={inputClass} placeholder="Ex: 5511999999999" />
                       </Field>
                     </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Field label="LinkedIn">
+                        <input type="url" value={editState.linkedin} onChange={(e) => setEditState({ ...editState, linkedin: e.target.value })} className={inputClass} placeholder="https://linkedin.com/in/..." />
+                      </Field>
+                      <Field label="CNPq (URL do currículo)">
+                        <input type="url" value={editState.cnpq} onChange={(e) => setEditState({ ...editState, cnpq: e.target.value })} className={inputClass} placeholder="http://lattes.cnpq.br/..." />
+                      </Field>
+                    </div>
                     <div className="flex items-center justify-between pt-1">
                       <label className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer">
                         <input type="checkbox" checked={editState.is_active} onChange={(e) => setEditState({ ...editState, is_active: e.target.checked })} />
@@ -354,7 +375,6 @@ export default function AdminCorpoDocentePage() {
             ))}
           </div>
         )}
-      </div>
 
       <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
     </div>

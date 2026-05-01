@@ -38,6 +38,12 @@ export default function PerfilPage() {
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const [isEgresso, setIsEgresso] = useState(false)
+  const [egressoId, setEgressoId] = useState<string | null>(null)
+  const [egressoForm, setEgressoForm] = useState({ graduation_year: '', role: '', company: '' })
+  const [savingEgresso, setSavingEgresso] = useState(false)
+  const [egressoSuccess, setEgressoSuccess] = useState(false)
+
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
@@ -74,6 +80,22 @@ export default function PerfilPage() {
 
       if (skillsData) {
         setSkills(skillsData.map((s) => s.skill_name))
+      }
+
+      const { data: egressoData } = await supabase
+        .from('egressos')
+        .select('id, graduation_year, role, company')
+        .eq('user_id', user.id)
+        .single()
+
+      if (egressoData) {
+        setIsEgresso(true)
+        setEgressoId(egressoData.id)
+        setEgressoForm({
+          graduation_year: egressoData.graduation_year?.toString() ?? '',
+          role: egressoData.role ?? '',
+          company: egressoData.company ?? '',
+        })
       }
 
       setLoading(false)
@@ -120,6 +142,34 @@ export default function PerfilPage() {
 
   function removeSkill(skill: string) {
     setSkills((prev) => prev.filter((s) => s !== skill))
+  }
+
+  async function handleSaveEgresso() {
+    if (!userId) return
+    setSavingEgresso(true)
+    setEgressoSuccess(false)
+
+    const payload = {
+      user_id: userId,
+      name: profile.name,
+      avatar_url: profile.avatar_url || null,
+      graduation_year: egressoForm.graduation_year ? parseInt(egressoForm.graduation_year) : null,
+      role: egressoForm.role || null,
+      company: egressoForm.company || null,
+      linkedin: profile.linkedin_url || null,
+      bio: profile.bio || null,
+      is_active: true,
+    }
+
+    if (egressoId) {
+      await supabase.from('egressos').update(payload).eq('id', egressoId)
+    } else {
+      const { data } = await supabase.from('egressos').insert(payload).select('id').single()
+      if (data) setEgressoId(data.id)
+    }
+
+    setEgressoSuccess(true)
+    setSavingEgresso(false)
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -170,14 +220,14 @@ export default function PerfilPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-50">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <p className="text-sm text-zinc-500">Carregando...</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 py-12 px-4">
+    <div className="min-h-screen bg-white py-12 px-4">
       <div className="w-full max-w-lg mx-auto bg-white rounded-2xl shadow-sm border border-zinc-200 p-8">
         <div className="flex items-center justify-between mb-1">
           <h1 className="text-2xl font-semibold text-zinc-900">Meu perfil</h1>
@@ -354,6 +404,72 @@ export default function PerfilPage() {
             {saving ? 'Salvando...' : 'Salvar perfil'}
           </button>
         </form>
+      </div>
+
+      
+      <div className="w-full max-w-lg mx-auto mt-6 bg-white rounded-2xl border border-zinc-200 p-8">
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="text-lg font-semibold text-zinc-900">Sou egresso</h2>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <span className="text-sm text-zinc-500">{isEgresso ? 'Ativo' : 'Inativo'}</span>
+            <div
+              onClick={() => setIsEgresso((v) => !v)}
+              className={`w-10 h-5 rounded-full transition-colors relative ${isEgresso ? 'bg-[#0B7A3B]' : 'bg-zinc-200'}`}
+            >
+              <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${isEgresso ? 'translate-x-5' : 'translate-x-0.5'}`} />
+            </div>
+          </label>
+        </div>
+        <p className="text-sm text-zinc-400 mb-6">Apareça na página de egressos do curso.</p>
+
+        {isEgresso && (
+          <div className="flex flex-col gap-4">
+            <Field label="Ano de formatura">
+              <input
+                type="number"
+                value={egressoForm.graduation_year}
+                onChange={(e) => setEgressoForm((f) => ({ ...f, graduation_year: e.target.value }))}
+                className={inputClass}
+                placeholder="Ex: 2024"
+              />
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Cargo atual">
+                <input
+                  value={egressoForm.role}
+                  onChange={(e) => setEgressoForm((f) => ({ ...f, role: e.target.value }))}
+                  className={inputClass}
+                  placeholder="Ex: Dev Frontend"
+                />
+              </Field>
+              <Field label="Empresa">
+                <input
+                  value={egressoForm.company}
+                  onChange={(e) => setEgressoForm((f) => ({ ...f, company: e.target.value }))}
+                  className={inputClass}
+                  placeholder="Ex: Google"
+                />
+              </Field>
+            </div>
+            <p className="text-xs text-zinc-400">Nome, foto, bio e LinkedIn são puxados do seu perfil.</p>
+
+            {egressoSuccess && (
+              <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                Dados de egresso salvos!
+              </p>
+            )}
+
+            <button
+              type="button"
+              onClick={handleSaveEgresso}
+              disabled={savingEgresso}
+              className="rounded-lg py-2.5 text-sm font-medium text-white disabled:opacity-50 transition"
+              style={{ backgroundColor: '#0B7A3B' }}
+            >
+              {savingEgresso ? 'Salvando...' : 'Salvar dados de egresso'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
