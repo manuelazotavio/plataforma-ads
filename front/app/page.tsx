@@ -2,7 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 import PublicQuickCreateMenu from '@/app/components/PublicQuickCreateMenu'
-import { PublicHeaderAuth, PublicProfileCard } from '@/app/components/PublicAuthControls'
+import { PublicHeaderAuth, PublicProfileCard, PublicWelcomeCard } from '@/app/components/PublicAuthControls'
 
 type Project = {
   id: string
@@ -97,7 +97,7 @@ export default async function HomePage() {
         <main className="flex-1 overflow-y-auto bg-white">
           <div className="grid grid-cols-1 gap-7 px-5 py-6 lg:px-8 xl:grid-cols-[minmax(0,750px)_290px_300px]">
             <div className="flex min-w-0 flex-col gap-7">
-              <WelcomeCard studentsCount={studentsCount ?? 0} projectsCount={projectsCount ?? 0} />
+              <PublicWelcomeCard studentsCount={studentsCount ?? 0} projectsCount={projectsCount ?? 0} />
               <ProjectsSection projects={featuredProjects} />
               <TopicsSection topics={recentTopics} />
             </div>
@@ -203,31 +203,6 @@ function PublicHeader() {
   )
 }
 
-function WelcomeCard({ studentsCount, projectsCount }: { studentsCount: number; projectsCount: number }) {
-  return (
-    <div className="rounded-2xl border border-zinc-100 px-10 py-8" style={{ background: 'linear-gradient(120deg, #f0fdf4 0%, #ffffff 55%, #fdf2f8 100%)' }}>
-      <h1 className="mb-3 text-3xl font-bold tracking-tight text-zinc-900">Bem-vindo(a) ao ADS Comunica!</h1>
-      <p className="mb-8 max-w-xl text-base text-zinc-500">
-        Veja projetos, acompanhe discussões e conheça as oportunidades da comunidade de ADS.
-      </p>
-      <div className="flex flex-wrap gap-3">
-        <Link href="/cadastro" className="flex items-center gap-2 rounded-lg px-6 py-3 text-base font-semibold text-white shadow-sm transition" style={{ backgroundColor: '#0B7A3B' }}>
-          <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-          Novo Projeto
-        </Link>
-        <Link href="/login" className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-6 py-3 text-base font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-50">
-          <IconMessage size={16} />
-          Criar Tópico
-        </Link>
-      </div>
-      <div className="mt-8 flex gap-8 border-t border-white/70 pt-5">
-        <Stat label="Alunos" value={studentsCount} />
-        <Stat label="Projetos" value={projectsCount} />
-      </div>
-    </div>
-  )
-}
-
 function ProjectsSection({ projects }: { projects: Project[] }) {
   return (
     <section>
@@ -271,16 +246,16 @@ function ProjectsSection({ projects }: { projects: Project[] }) {
 function TopicsSection({ topics }: { topics: Topic[] }) {
   return (
     <section>
-      <SectionHeader title="Discussões Recentes" icon={<TopicsIcon />} href="/login" action="Participar" />
+      <SectionHeader title="Discussões Recentes" icon={<TopicsIcon />} href="/forum" action="Participar" />
       {topics.length === 0 ? (
-        <EmptyCard text="Nenhum tópico no fórum ainda." action="Criar tópico" href="/login" />
+        <EmptyCard text="Nenhum tópico no fórum ainda." action="Criar tópico" href="/forum/novo" />
       ) : (
         <div className="flex flex-col gap-3">
           {topics.map((topic) => {
             const author = firstRelation(topic.users)
             const category = firstRelation(topic.forum_categories)
             return (
-              <Link key={topic.id} href="/login" className="flex items-start justify-between gap-4 rounded-2xl border border-zinc-200 bg-white px-6 py-5 transition hover:border-zinc-300">
+              <Link key={topic.id} href={`/forum/${topic.id}`} className="flex items-start justify-between gap-4 rounded-2xl border border-zinc-200 bg-white px-6 py-5 transition hover:border-zinc-300">
                 <div className="flex min-w-0 flex-col gap-1.5">
                   <p className="truncate text-base font-semibold text-zinc-900">{topic.title}</p>
                   <div className="flex flex-wrap items-center gap-2">
