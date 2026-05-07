@@ -106,7 +106,7 @@ export default function NotificationBell({ userId }: { userId: string | null }) 
       target_title: n.target_title,
       read: n.read,
       created_at: n.created_at,
-      actor: n.users as { name: string; avatar_url: string | null } | null,
+      actor: n.users as unknown as { name: string; avatar_url: string | null } | null,
     }))
     setNotifications(mapped)
     setUnread(mapped.filter((n) => !n.read).length)

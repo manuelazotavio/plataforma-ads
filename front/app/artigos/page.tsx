@@ -47,7 +47,7 @@ export default async function ArtigosPage({
 
   type AuthorRow = { user_id: string; users: { id: string; name: string } | null }
   const seenIds = new Set<string>()
-  const allAuthors = (authorRows as AuthorRow[] ?? [])
+  const allAuthors = (authorRows as unknown as AuthorRow[] ?? [])
     .filter((r) => r.users && !seenIds.has(r.user_id) && seenIds.add(r.user_id))
     .map((r) => ({ id: r.users!.id, name: r.users!.name }))
     .sort((a, b) => a.name.localeCompare(b.name))
@@ -79,7 +79,7 @@ export default async function ArtigosPage({
         ) : (
           <div className="flex flex-col gap-4">
             {articles.map((article) => {
-              const author = article.users as { name: string; avatar_url: string | null } | null
+              const author = article.users as unknown as { name: string; avatar_url: string | null } | null
               const tags = article.article_tags as { tag_name: string }[]
 
               return (

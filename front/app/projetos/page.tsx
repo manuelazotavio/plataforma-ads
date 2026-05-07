@@ -68,7 +68,7 @@ export default async function ProjetosPage({
 
   type StudentRow = { user_id: string; users: { id: string; name: string } | null }
   const seenIds = new Set<string>()
-  const allStudents = (studentRows as StudentRow[] ?? [])
+  const allStudents = (studentRows as unknown as StudentRow[] ?? [])
     .filter((r) => r.users && !seenIds.has(r.user_id) && seenIds.add(r.user_id))
     .map((r) => ({ id: r.users!.id, name: r.users!.name }))
     .sort((a, b) => a.name.localeCompare(b.name))
@@ -128,7 +128,7 @@ export default async function ProjetosPage({
               const cover = (project.project_images as { image_url: string; display_order: number }[])
                 .sort((a, b) => a.display_order - b.display_order)[0]
               const tags = project.project_tags as { tag_name: string }[]
-              const author = project.users as { name: string; avatar_url: string | null } | null
+              const author = project.users as unknown as { name: string; avatar_url: string | null } | null
 
               return (
                 <Link

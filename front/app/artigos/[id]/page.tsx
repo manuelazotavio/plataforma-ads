@@ -19,7 +19,7 @@ export default async function ArtigoDetalhe({ params }: { params: Promise<{ id: 
 
   if (!article) notFound()
 
-  const author = article.users as { name: string; avatar_url: string | null } | null
+  const author = article.users as unknown as { name: string; avatar_url: string | null } | null
   const tags = article.article_tags as { tag_name: string }[]
 
   return (

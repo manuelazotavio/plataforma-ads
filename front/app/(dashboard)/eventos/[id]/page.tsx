@@ -113,7 +113,7 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
           <div className="flex flex-col gap-3">
             {relatedProjects.map((project) => {
               const tags = project.project_tags as { tag_name: string }[]
-              const author = project.users as { name: string } | null
+              const author = project.users as unknown as { name: string } | null
               return (
                 <Link
                   key={project.id}

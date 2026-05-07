@@ -20,7 +20,7 @@ export default async function ForumPage({
 
   const filtered = category
     ? (topics ?? []).filter((t) => {
-        const cat = t.forum_categories as { id: string } | null
+        const cat = t.forum_categories as unknown as { id: string } | null
         return cat?.id === category
       })
     : (topics ?? [])
@@ -76,8 +76,8 @@ export default async function ForumPage({
       ) : (
         <div className="divide-y divide-zinc-100">
           {filtered.map((topic) => {
-            const author = topic.users as { name: string } | null
-            const cat = topic.forum_categories as { id: string; name: string } | null
+            const author = topic.users as unknown as { name: string } | null
+            const cat = topic.forum_categories as unknown as { id: string; name: string } | null
             return (
               <Link
                 key={topic.id}

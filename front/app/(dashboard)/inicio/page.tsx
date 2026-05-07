@@ -135,8 +135,8 @@ export default function InicioPage() {
         nextLevel,
         levelProgress,
       })
-      setFeaturedProjects((projects ?? []) as Project[])
-      setRecentTopics((topics ?? []) as Topic[])
+      setFeaturedProjects((projects ?? []) as unknown as Project[])
+      setRecentTopics((topics ?? []) as unknown as Topic[])
 
       const tagSet = new Set<string>()
       tags?.forEach((t) => tagSet.add(t.tag_name))

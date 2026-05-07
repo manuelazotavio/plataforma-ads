@@ -37,7 +37,7 @@ export default function AdminArtigosPage() {
         .select('id, title, summary, status, cover_image_url, created_at, users(name, avatar_url), article_tags(tag_name)')
         .neq('status', 'rascunho')
         .order('created_at', { ascending: false })
-      setArticles((data as Article[]) ?? [])
+      setArticles((data as unknown as Article[]) ?? [])
       setLoading(false)
     }
     load()
@@ -153,7 +153,7 @@ export default function AdminArtigosPage() {
                     rel="noopener noreferrer"
                     className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs text-center font-medium text-zinc-500 hover:bg-zinc-50 transition"
                   >
-                    Ver ↗
+                    Ver
                   </a>
                 </div>
               </div>

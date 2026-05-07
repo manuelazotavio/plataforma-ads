@@ -29,7 +29,7 @@ export default function AdminProjetosPage() {
         .from('projects')
         .select('id, title, description, approved, created_at, users(name, avatar_url), project_tags(tag_name), project_images(image_url, display_order)')
         .order('created_at', { ascending: false })
-      setProjects((data as Project[]) ?? [])
+      setProjects((data as unknown as Project[]) ?? [])
       setLoading(false)
     }
     load()
@@ -96,7 +96,7 @@ export default function AdminProjetosPage() {
                 <div className="relative w-20 h-16 rounded-lg overflow-hidden bg-zinc-100 shrink-0">
                   {cover
                     ? <Image src={cover.image_url} alt={project.title} fill className="object-cover" />
-                    : <div className="w-full h-full flex items-center justify-center text-zinc-300 text-xl">◻</div>
+                    : <div className="w-full h-full flex items-center justify-center text-zinc-300 text-xs">sem imagem</div>
                   }
                 </div>
 
@@ -149,7 +149,7 @@ export default function AdminProjetosPage() {
                     rel="noopener noreferrer"
                     className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs text-center font-medium text-zinc-500 hover:bg-zinc-50 transition"
                   >
-                    Ver ↗
+                    Ver
                   </a>
                 </div>
               </div>

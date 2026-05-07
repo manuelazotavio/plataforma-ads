@@ -144,7 +144,7 @@ export default function Comments({ type, targetId }: Props) {
       .eq(field, targetId)
       .order('created_at', { ascending: true })
 
-    const all = (data as Comment[]) ?? []
+    const all = (data as unknown as Comment[]) ?? []
     const roots = all.filter(c => !c.parent_id)
     const built: CommentWithReplies[] = roots.map(r => ({
       ...r,
@@ -189,7 +189,7 @@ export default function Comments({ type, targetId }: Props) {
       .select('id, content, created_at, parent_id, users(id, name, avatar_url)')
       .single()
     if (!error && data) {
-      setThreads(prev => [...prev, { ...(data as Comment), replies: [] }])
+      setThreads(prev => [...prev, { ...(data as unknown as Comment), replies: [] }])
       setText('')
     }
     setSubmitting(false)
@@ -207,7 +207,7 @@ export default function Comments({ type, targetId }: Props) {
       .single()
     if (!error && data) {
       setThreads(prev => prev.map(t =>
-        t.id === replyingTo.id ? { ...t, replies: [...t.replies, data as Comment] } : t
+        t.id === replyingTo.id ? { ...t, replies: [...t.replies, data as unknown as Comment] } : t
       ))
       setReplyText('')
       setReplyingTo(null)
