@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
@@ -28,12 +28,24 @@ type PublicHomeData = {
 export function PublicHeaderAuth() {
   const [data, setData] = useState<PublicHomeData | null>(null)
   const [loaded, setLoaded] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     loadHomeData().then((value) => {
       setData(value)
       setLoaded(true)
     })
+  }, [])
+
+  useEffect(() => {
+    function close(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
   }, [])
 
   if (!loaded) return <div className="h-9 w-28 rounded-lg bg-zinc-100" />
@@ -52,17 +64,16 @@ export function PublicHeaderAuth() {
   }
 
   return (
-    <div className="flex items-center gap-3 pl-4 border-l border-zinc-100">
-      {data.role === 'admin' && (
-        <Link href="/admin" className="hidden rounded-lg border border-zinc-200 px-3 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 sm:inline-flex">
-          Painel Admin
-        </Link>
-      )}
+    <div ref={menuRef} className="relative flex items-center gap-3 pl-4 border-l border-zinc-100">
       <div className="hidden sm:block text-right leading-tight">
         <p className="text-sm font-semibold text-zinc-900">{data.name}</p>
         <p className="mt-0.5 text-xs text-zinc-400">{profileLabel(data)}</p>
       </div>
-      <Link href="/perfil" className="h-9 w-9 overflow-hidden rounded-full bg-zinc-200 ring-2 ring-zinc-100">
+      <button
+        type="button"
+        onClick={() => setMenuOpen((v) => !v)}
+        className="h-9 w-9 overflow-hidden rounded-full bg-zinc-200 ring-2 ring-zinc-100"
+      >
         {data.avatar_url ? (
           <Image src={data.avatar_url} alt={data.name} width={36} height={36} className="h-full w-full object-cover" />
         ) : (
@@ -70,7 +81,46 @@ export function PublicHeaderAuth() {
             {data.name.charAt(0).toUpperCase()}
           </span>
         )}
-      </Link>
+      </button>
+
+      {menuOpen && (
+        <div className="absolute right-0 top-full mt-2 w-52 rounded-xl border border-zinc-200 bg-white shadow-lg py-1 z-50">
+          <div className="px-4 py-2.5 border-b border-zinc-100">
+            <p className="text-sm font-semibold text-zinc-900 truncate">{data.name}</p>
+            <p className="text-xs text-zinc-400 mt-0.5">{profileLabel(data)}</p>
+          </div>
+          <div className="py-1">
+            <Link href="/perfil" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50 transition">
+              <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 shrink-0"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx={12} cy={7} r={4}/></svg>
+              Meu perfil
+            </Link>
+            <Link href="/meus-projetos" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50 transition">
+              <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 shrink-0"><rect x={3} y={3} width={7} height={7}/><rect x={14} y={3} width={7} height={7}/><rect x={14} y={14} width={7} height={7}/><rect x={3} y={14} width={7} height={7}/></svg>
+              Meus projetos
+            </Link>
+            <Link href="/meus-artigos" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50 transition">
+              <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Meus artigos
+            </Link>
+            {data.role === 'admin' && (
+              <Link href="/admin" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50 transition">
+                <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 shrink-0"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                Painel Admin
+              </Link>
+            )}
+          </div>
+          <div className="border-t border-zinc-100 py-1">
+            <button
+              type="button"
+              onClick={async () => { await supabase.auth.signOut(); window.location.href = '/login' }}
+              className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition"
+            >
+              <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1={21} y1={12} x2={9} y2={12}/></svg>
+              Sair
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -172,7 +222,6 @@ export function PublicProfileCard() {
         </div>
       </div>
       <div className="flex flex-col gap-3 border-t border-zinc-100 pt-4">
-        {data.role === 'admin' && <Link href="/admin" className="rounded-lg border border-zinc-200 px-3 py-2 text-center text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50">Painel Admin</Link>}
         <Metric label="XP total" value={data.xp} />
         <Metric label="Projetos criados" value={data.projectsCount} />
         <Metric label="Artigos publicados" value={data.articlesCount} />
