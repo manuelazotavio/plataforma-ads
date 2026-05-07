@@ -17,6 +17,7 @@ type User = {
 
 const roleOptions = [
   { value: 'aluno', label: 'Aluno' },
+  { value: 'professor', label: 'Professor' },
   { value: 'moderador', label: 'Moderador' },
   { value: 'admin', label: 'Admin' },
 ]

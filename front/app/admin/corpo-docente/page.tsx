@@ -18,6 +18,7 @@ type Professor = {
   cnpq: string | null
   is_active: boolean
   display_order: number
+  user_id: string | null
 }
 
 const EMPTY_FORM = {
@@ -54,6 +55,11 @@ export default function AdminCorpoDocentePage() {
   const [uploadingId, setUploadingId] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const targetProfId = useRef<string | null>(null)
+
+  const [accessFormId, setAccessFormId] = useState<string | null>(null)
+  const [accessForm, setAccessForm] = useState({ email: '', password: '' })
+  const [accessSaving, setAccessSaving] = useState(false)
+  const [accessError, setAccessError] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -185,6 +191,32 @@ export default function AdminCorpoDocentePage() {
     if (!confirm(`Excluir "${name}"?`)) return
     await supabase.from('professors').delete().eq('id', id)
     setProfessors((prev) => prev.filter((p) => p.id !== id))
+  }
+
+  function openAccessForm(profId: string) {
+    setAccessFormId(profId)
+    setAccessForm({ email: '', password: '' })
+    setAccessError(null)
+  }
+
+  async function createAccess(profId: string) {
+    if (!accessForm.email.trim() || !accessForm.password.trim()) {
+      setAccessError('Preencha e-mail e senha.')
+      return
+    }
+    setAccessSaving(true)
+    setAccessError(null)
+    const { data, error } = await supabase.functions.invoke('create-professor-user', {
+      body: { professor_id: profId, email: accessForm.email.trim(), password: accessForm.password },
+    })
+    if (error || data?.error) {
+      setAccessError(data?.error ?? error?.message ?? 'Erro ao criar acesso.')
+      setAccessSaving(false)
+      return
+    }
+    setProfessors((prev) => prev.map((p) => p.id === profId ? { ...p, user_id: data.user_id } : p))
+    setAccessFormId(null)
+    setAccessSaving(false)
   }
 
   if (loading) {
@@ -370,13 +402,67 @@ export default function AdminCorpoDocentePage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="mt-3 flex justify-end gap-2">
-                    <button onClick={() => startEdit(prof)} className="rounded-lg border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition">
-                      Editar
-                    </button>
-                    <button onClick={() => handleDelete(prof.id, prof.name)} className="rounded-lg border border-red-200 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50 transition">
-                      Excluir
-                    </button>
+                  <div className="mt-3 border-t border-zinc-100 pt-3 flex flex-col gap-3">
+                    {prof.user_id ? (
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
+                          Acesso vinculado
+                        </span>
+                        <span className="text-xs text-zinc-400">O professor pode fazer login e editar o próprio perfil.</span>
+                      </div>
+                    ) : accessFormId === prof.id ? (
+                      <div className="flex flex-col gap-2">
+                        <p className="text-xs font-medium text-zinc-700">Criar acesso de login para este professor</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            type="email"
+                            placeholder="E-mail"
+                            value={accessForm.email}
+                            onChange={(e) => setAccessForm((f) => ({ ...f, email: e.target.value }))}
+                            className={inputClass}
+                          />
+                          <input
+                            type="password"
+                            placeholder="Senha inicial"
+                            value={accessForm.password}
+                            onChange={(e) => setAccessForm((f) => ({ ...f, password: e.target.value }))}
+                            className={inputClass}
+                          />
+                        </div>
+                        {accessError && <p className="text-xs text-red-600">{accessError}</p>}
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => createAccess(prof.id)}
+                            disabled={accessSaving}
+                            className="rounded-lg bg-[#0B7A3B] px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50 transition"
+                          >
+                            {accessSaving ? 'Criando...' : 'Criar acesso'}
+                          </button>
+                          <button
+                            onClick={() => setAccessFormId(null)}
+                            className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => openAccessForm(prof.id)}
+                        className="self-start rounded-lg border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-500 hover:bg-zinc-50 transition"
+                      >
+                        Criar acesso de login
+                      </button>
+                    )}
+
+                    <div className="flex justify-end gap-2">
+                      <button onClick={() => startEdit(prof)} className="rounded-lg border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition">
+                        Editar
+                      </button>
+                      <button onClick={() => handleDelete(prof.id, prof.name)} className="rounded-lg border border-red-200 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50 transition">
+                        Excluir
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

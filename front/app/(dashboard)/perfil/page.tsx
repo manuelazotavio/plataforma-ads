@@ -16,6 +16,15 @@ type Profile = {
   avatar_url: string
 }
 
+type ProfessorData = {
+  id: string
+  cargo: string
+  whatsapp: string
+  linkedin: string
+  cnpq: string
+  years_at_if: string
+}
+
 const EMPTY_PROFILE: Profile = {
   name: '',
   bio: '',
@@ -24,6 +33,15 @@ const EMPTY_PROFILE: Profile = {
   linkedin_url: '',
   portfolio_url: '',
   avatar_url: '',
+}
+
+const EMPTY_PROFESSOR: ProfessorData = {
+  id: '',
+  cargo: '',
+  whatsapp: '',
+  linkedin: '',
+  cnpq: '',
+  years_at_if: '',
 }
 
 export default function PerfilPage() {
@@ -40,9 +58,18 @@ export default function PerfilPage() {
   const [submitted, setSubmitted] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const [role, setRole] = useState<string | null>(null)
+  const [professorData, setProfessorData] = useState<ProfessorData>(EMPTY_PROFESSOR)
+
   const [isEgresso, setIsEgresso] = useState(false)
   const [egressoId, setEgressoId] = useState<string | null>(null)
   const [egressoForm, setEgressoForm] = useState({ graduation_year: '', role: '', company: '' })
+
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordSaving, setPasswordSaving] = useState(false)
+  const [passwordError, setPasswordError] = useState<string | null>(null)
+  const [passwordSuccess, setPasswordSuccess] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -52,11 +79,12 @@ export default function PerfilPage() {
 
       const { data: profileData } = await supabase
         .from('users')
-        .select('name, bio, semester, github_url, linkedin_url, portfolio_url, avatar_url')
+        .select('name, bio, semester, github_url, linkedin_url, portfolio_url, avatar_url, role')
         .eq('id', user.id)
         .single()
 
       if (profileData) {
+        setRole(profileData.role ?? null)
         setProfile({
           name: profileData.name ?? '',
           bio: profileData.bio ?? '',
@@ -66,6 +94,24 @@ export default function PerfilPage() {
           portfolio_url: profileData.portfolio_url ?? '',
           avatar_url: profileData.avatar_url ?? '',
         })
+
+        if (profileData.role === 'professor') {
+          const { data: pd } = await supabase
+            .from('professors')
+            .select('id, cargo, whatsapp, linkedin, cnpq, years_at_if')
+            .eq('user_id', user.id)
+            .single()
+          if (pd) {
+            setProfessorData({
+              id: pd.id,
+              cargo: pd.cargo ?? '',
+              whatsapp: pd.whatsapp ?? '',
+              linkedin: pd.linkedin ?? '',
+              cnpq: pd.cnpq ?? '',
+              years_at_if: pd.years_at_if?.toString() ?? '',
+            })
+          }
+        }
       }
 
       const { data: skillsData } = await supabase
@@ -118,6 +164,21 @@ export default function PerfilPage() {
     setSkills((prev) => prev.filter((s) => s !== skill))
   }
 
+  async function handlePasswordChange() {
+    if (!newPassword.trim()) { setPasswordError('Digite a nova senha.'); return }
+    if (newPassword.length < 6) { setPasswordError('A senha deve ter ao menos 6 caracteres.'); return }
+    if (newPassword !== confirmPassword) { setPasswordError('As senhas não coincidem.'); return }
+    setPasswordSaving(true)
+    setPasswordError(null)
+    setPasswordSuccess(false)
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    if (error) { setPasswordError(error.message); setPasswordSaving(false); return }
+    setNewPassword('')
+    setConfirmPassword('')
+    setPasswordSuccess(true)
+    setPasswordSaving(false)
+  }
+
   async function handleSave(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setSubmitted(true)
@@ -129,7 +190,7 @@ export default function PerfilPage() {
     const { error: updateError } = await supabase.from('users').update({
       name: profile.name,
       bio: profile.bio || null,
-      semester: profile.semester ? parseInt(profile.semester) : null,
+      semester: role === 'professor' ? null : (profile.semester ? parseInt(profile.semester) : null),
       github_url: profile.github_url || null,
       linkedin_url: profile.linkedin_url || null,
       portfolio_url: profile.portfolio_url || null,
@@ -138,6 +199,21 @@ export default function PerfilPage() {
     }).eq('id', userId)
 
     if (updateError) { setError('Erro ao salvar perfil: ' + updateError.message); setSaving(false); return }
+
+    if (role === 'professor' && professorData.id) {
+      const { error: profError } = await supabase.from('professors').update({
+        name: profile.name,
+        bio: profile.bio || null,
+        cargo: professorData.cargo || null,
+        whatsapp: professorData.whatsapp || null,
+        linkedin: professorData.linkedin || null,
+        cnpq: professorData.cnpq || null,
+        years_at_if: professorData.years_at_if ? parseInt(professorData.years_at_if) : null,
+        avatar_url: profile.avatar_url || null,
+        updated_at: new Date().toISOString(),
+      }).eq('id', professorData.id)
+      if (profError) { setError('Erro ao salvar dados do professor: ' + profError.message); setSaving(false); return }
+    }
 
     await supabase.from('user_skills').delete().eq('user_id', userId)
     if (skills.length > 0) {
@@ -192,13 +268,10 @@ export default function PerfilPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6 items-start">
 
-        {/* Preview card */}
         <div className="lg:sticky lg:top-6 flex flex-col gap-4">
           <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden">
-            {/* Header banner */}
             <div className="h-24 w-full" style={{ background: 'linear-gradient(135deg, #0B7A3B 0%, #0d9444 60%, #34d399 100%)' }} />
 
-            {/* Avatar + name */}
             <div className="px-6 pb-6">
               <div className="relative -mt-10 mb-4">
                 <div className="w-20 h-20 rounded-full border-4 border-white bg-zinc-100 overflow-hidden shadow-sm">
@@ -270,7 +343,6 @@ export default function PerfilPage() {
             </div>
           </div>
 
-          {/* Quick links */}
           <div className="bg-white rounded-2xl border border-zinc-200 p-4 flex flex-col gap-1">
             <Link href="/meus-projetos" className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 transition">
               <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400"><rect x={3} y={3} width={7} height={7}/><rect x={14} y={3} width={7} height={7}/><rect x={14} y={14} width={7} height={7}/><rect x={3} y={14} width={7} height={7}/></svg>
@@ -283,7 +355,6 @@ export default function PerfilPage() {
           </div>
         </div>
 
-        {/* Edit form */}
         <form onSubmit={handleSave} className="flex flex-col gap-5">
 
           <div className="bg-white rounded-2xl border border-zinc-200 p-6">
@@ -331,19 +402,77 @@ export default function PerfilPage() {
                 />
               </Field>
 
-              <Field label="Semestre">
-                <input
-                  type="number"
-                  min={1}
-                  max={8}
-                  value={profile.semester}
-                  onChange={(e) => handleChange('semester', e.target.value)}
-                  className={inputClass}
-                  placeholder="Ex: 3"
-                />
-              </Field>
+              {role !== 'professor' && (
+                <Field label="Semestre">
+                  <input
+                    type="number"
+                    min={1}
+                    max={8}
+                    value={profile.semester}
+                    onChange={(e) => handleChange('semester', e.target.value)}
+                    className={inputClass}
+                    placeholder="Ex: 3"
+                  />
+                </Field>
+              )}
             </div>
           </div>
+
+          {role === 'professor' && (
+            <div className="bg-white rounded-2xl border border-zinc-200 p-6">
+              <h3 className="text-sm font-semibold text-zinc-900 mb-5">Dados profissionais</h3>
+              <div className="flex flex-col gap-4">
+                <Field label="Cargo">
+                  <input
+                    type="text"
+                    value={professorData.cargo}
+                    onChange={(e) => setProfessorData((p) => ({ ...p, cargo: e.target.value }))}
+                    className={inputClass}
+                    placeholder="Ex: Professor Efetivo"
+                  />
+                </Field>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Anos no IF">
+                    <input
+                      type="number"
+                      min={0}
+                      value={professorData.years_at_if}
+                      onChange={(e) => setProfessorData((p) => ({ ...p, years_at_if: e.target.value }))}
+                      className={inputClass}
+                      placeholder="Ex: 8"
+                    />
+                  </Field>
+                  <Field label="WhatsApp (com DDD)">
+                    <input
+                      type="text"
+                      value={professorData.whatsapp}
+                      onChange={(e) => setProfessorData((p) => ({ ...p, whatsapp: e.target.value }))}
+                      className={inputClass}
+                      placeholder="5511999999999"
+                    />
+                  </Field>
+                </div>
+                <Field label="LinkedIn">
+                  <input
+                    type="url"
+                    value={professorData.linkedin}
+                    onChange={(e) => setProfessorData((p) => ({ ...p, linkedin: e.target.value }))}
+                    className={inputClass}
+                    placeholder="https://linkedin.com/in/..."
+                  />
+                </Field>
+                <Field label="CNPq / Lattes">
+                  <input
+                    type="url"
+                    value={professorData.cnpq}
+                    onChange={(e) => setProfessorData((p) => ({ ...p, cnpq: e.target.value }))}
+                    className={inputClass}
+                    placeholder="http://lattes.cnpq.br/..."
+                  />
+                </Field>
+              </div>
+            </div>
+          )}
 
           <div className="bg-white rounded-2xl border border-zinc-200 p-6">
             <h3 className="text-sm font-semibold text-zinc-900 mb-5">Redes sociais</h3>
@@ -440,6 +569,46 @@ export default function PerfilPage() {
           </button>
 
         </form>
+
+        <div className="bg-white rounded-2xl border border-zinc-200 p-6 mt-6 lg:col-start-2">
+          <h3 className="text-sm font-semibold text-zinc-900 mb-1">Alterar senha</h3>
+          <p className="text-xs text-zinc-400 mb-5">Deixe em branco para manter a senha atual.</p>
+          <div className="flex flex-col gap-4">
+            <Field label="Nova senha">
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className={inputClass}
+                placeholder="Mínimo 6 caracteres"
+              />
+            </Field>
+            <Field label="Confirmar nova senha">
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className={inputClass}
+                placeholder="Repita a nova senha"
+              />
+            </Field>
+            {passwordError && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{passwordError}</p>
+            )}
+            {passwordSuccess && (
+              <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">Senha alterada com sucesso!</p>
+            )}
+            <button
+              type="button"
+              onClick={handlePasswordChange}
+              disabled={passwordSaving || !newPassword}
+              className="self-start rounded-xl px-5 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-40 transition"
+              style={{ backgroundColor: '#0B7A3B' }}
+            >
+              {passwordSaving ? 'Salvando...' : 'Alterar senha'}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )
