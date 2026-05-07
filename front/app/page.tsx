@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 import PublicQuickCreateMenu from '@/app/components/PublicQuickCreateMenu'
 import { PublicHeaderAuth, PublicProfileCard, PublicWelcomeCard } from '@/app/components/PublicAuthControls'
+import AppSidebar from '@/app/components/AppSidebar'
 
 type Project = {
   id: string
@@ -30,28 +31,6 @@ type Contributor = {
   semester: number | null
   totalLikes: number
 }
-
-const sidebarItems = [
-  { href: '/', label: 'Início', icon: <IconHome /> },
-  {
-    href: '/curso',
-    label: 'O curso',
-    icon: <IconBook />,
-    children: ['Sobre o curso', 'Matriz curricular', 'Professores', 'Infraestrutura'],
-  },
-  { href: '/projetos', label: 'Projetos', icon: <IconGrid /> },
-  { href: '/eventos', label: 'Eventos', icon: <IconCalendar /> },
-  { href: '/calendario', label: 'Calendário', icon: <IconCalendarGrid /> },
-  { href: '/vagas', label: 'Oportunidades', icon: <IconBriefcase /> },
-  { href: '/egressos', label: 'Egressos', icon: <IconUsers /> },
-  {
-    href: '/area-aluno',
-    label: 'Área do Aluno',
-    icon: <IconPerson />,
-    children: ['Materiais', 'Orientações acadêmicas', 'Links úteis'],
-  },
-  { href: '/contato', label: 'Contato', icon: <IconMessage /> },
-]
 
 export default async function HomePage() {
   const [
@@ -89,7 +68,7 @@ export default async function HomePage() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-white">
-      <PublicSidebar />
+      <AppSidebar />
 
       <div className="flex min-w-0 flex-1 flex-col ml-56">
         <PublicHeader />
@@ -127,60 +106,6 @@ export default async function HomePage() {
         <PublicQuickCreateMenu />
       </div>
     </div>
-  )
-}
-
-function PublicSidebar() {
-  return (
-    <aside className="fixed z-20 flex h-full w-56 shrink-0 flex-col border-r border-zinc-100 bg-white">
-      <div className="flex h-16 items-center gap-2.5 border-b border-zinc-100 px-5">
-        <div className="grid h-7 w-7 shrink-0 grid-cols-2 gap-0.5">
-          <div className="rounded-sm bg-green-500" />
-          <div className="rounded-sm bg-blue-400" />
-          <div className="rounded-sm bg-yellow-400" />
-          <div className="rounded-sm bg-red-400" />
-        </div>
-        <div className="leading-tight">
-          <span className="block text-sm font-bold text-zinc-900">ADS</span>
-          <span className="block text-sm font-bold text-zinc-900">Comunica</span>
-        </div>
-      </div>
-
-      <nav className="sidebar-nav flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
-        {sidebarItems.map((item, i) => {
-          const active = item.href === '/'
-          const dividerBefore = i === 6
-          return (
-            <div key={item.href}>
-              {dividerBefore && <div className="my-2 border-t border-zinc-100" />}
-              <Link
-                href={item.href}
-                className={`flex min-w-0 items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-colors ${
-                  active ? 'text-white' : 'text-zinc-900 hover:bg-zinc-100'
-                }`}
-                style={active ? { backgroundColor: '#0B7A3B' } : undefined}
-              >
-                <span className="shrink-0">{item.icon}</span>
-                <span className="min-w-0 flex-1 truncate">{item.label}</span>
-              </Link>
-              {'children' in item && item.children && (
-                <div className="ml-8 mt-1 flex flex-col gap-1 border-l border-zinc-100 pl-3">
-                  {item.children.map((child) => (
-                    <Link
-                      key={child}
-                      href={`${item.href}#${slugify(child)}`}
-                      className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-500 transition hover:bg-zinc-50 hover:text-zinc-900"
-                    >
-                      {child}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </nav>
-    </aside>
   )
 }
 
@@ -428,9 +353,6 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })
 }
 
-function slugify(value: string) {
-  return value.toLowerCase().replace(/\s+/g, '-')
-}
 
 function ArrowIcon() {
   return <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>

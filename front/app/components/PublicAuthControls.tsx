@@ -53,6 +53,11 @@ export function PublicHeaderAuth() {
 
   return (
     <div className="flex items-center gap-3 pl-4 border-l border-zinc-100">
+      {data.role === 'admin' && (
+        <Link href="/admin" className="hidden rounded-lg border border-zinc-200 px-3 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 sm:inline-flex">
+          Painel Admin
+        </Link>
+      )}
       <div className="hidden sm:block text-right leading-tight">
         <p className="text-sm font-semibold text-zinc-900">{data.name}</p>
         <p className="mt-0.5 text-xs text-zinc-400">{profileLabel(data)}</p>
@@ -167,6 +172,7 @@ export function PublicProfileCard() {
         </div>
       </div>
       <div className="flex flex-col gap-3 border-t border-zinc-100 pt-4">
+        {data.role === 'admin' && <Link href="/admin" className="rounded-lg border border-zinc-200 px-3 py-2 text-center text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50">Painel Admin</Link>}
         <Metric label="XP total" value={data.xp} />
         <Metric label="Projetos criados" value={data.projectsCount} />
         <Metric label="Artigos publicados" value={data.articlesCount} />

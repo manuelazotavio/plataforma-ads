@@ -2,13 +2,32 @@ import { supabase } from '@/app/lib/supabase'
 import CurriculumTabs from './CurriculumTabs'
 import InfrastructureSection from './InfrastructureSection'
 import ProfessorsSection from './ProfessorsSection'
+import {
+  CURRICULUM_SUBJECTS_TABLE,
+  DEFAULT_CURRICULUM,
+  CurriculumSubject,
+  groupCurriculumSubjects,
+} from '@/app/lib/curriculum'
 
 export default async function CursoPage() {
-  const { data: professors } = await supabase
-    .from('professors')
-    .select('id, name, avatar_url, bio, cargo, years_at_if, email, whatsapp, linkedin, cnpq')
-    .eq('is_active', true)
-    .order('display_order', { ascending: true })
+  const [{ data: professors }, { data: subjects, error: subjectsError }] = await Promise.all([
+    supabase
+      .from('professors')
+      .select('id, name, avatar_url, bio, cargo, years_at_if, email, whatsapp, linkedin, cnpq')
+      .eq('is_active', true)
+      .order('display_order', { ascending: true }),
+    supabase
+      .from(CURRICULUM_SUBJECTS_TABLE)
+      .select('id, semester, name, workload_hours, display_order, is_active')
+      .eq('is_active', true)
+      .order('semester', { ascending: true })
+      .order('display_order', { ascending: true })
+      .order('name', { ascending: true }),
+  ])
+
+  const curriculum = !subjectsError && subjects?.length
+    ? groupCurriculumSubjects(subjects as CurriculumSubject[])
+    : DEFAULT_CURRICULUM
 
   return (
     <div className="px-4 md:px-10 py-8 flex flex-col gap-12 max-w-5xl mx-auto w-full bg-white">
@@ -91,33 +110,6 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
     <h2 className="text-xl font-bold text-zinc-900 mb-4">{children}</h2>
   )
 }
-
-const curriculum = [
-  {
-    semester: 1,
-    subjects: ['Lógica de Programação', 'Algoritmos e Estruturas de Dados', 'Matemática Discreta', 'Inglês Técnico', 'Comunicação e Expressão', 'Fundamentos de TI'],
-  },
-  {
-    semester: 2,
-    subjects: ['Programação Orientada a Objetos', 'Banco de Dados I', 'Redes de Computadores', 'Sistemas Operacionais', 'Engenharia de Software I'],
-  },
-  {
-    semester: 3,
-    subjects: ['Desenvolvimento Web Front-end', 'Banco de Dados II', 'Padrões de Projeto', 'Segurança da Informação', 'Engenharia de Software II'],
-  },
-  {
-    semester: 4,
-    subjects: ['Desenvolvimento Web Back-end', 'Desenvolvimento Mobile', 'Cloud Computing', 'Inteligência Artificial', 'Gestão de Projetos'],
-  },
-  {
-    semester: 5,
-    subjects: ['DevOps e CI/CD', 'Ciência de Dados', 'Empreendedorismo em TI', 'Projeto Integrador I', 'Estágio Supervisionado I'],
-  },
-  {
-    semester: 6,
-    subjects: ['Tópicos Avançados em TI', 'Projeto Integrador II', 'Estágio Supervisionado II', 'Trabalho de Conclusão de Curso'],
-  },
-]
 
 const infrastructure = [
   {
