@@ -215,7 +215,8 @@ function WelcomeCard({ studentsCount, projectsCount }: { studentsCount: number; 
       </p>
       <div className="flex flex-wrap gap-3">
         <Link href="/cadastro" className="flex items-center gap-2 rounded-lg px-6 py-3 text-base font-semibold text-white shadow-sm transition" style={{ backgroundColor: '#0B7A3B' }}>
-          + Novo Projeto
+          <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+          Novo Projeto
         </Link>
         <Link href="/login" className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-6 py-3 text-base font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-50">
           <IconMessage size={16} />

@@ -1,6 +1,8 @@
 import { supabase } from '@/app/lib/supabase'
 import EgressosList from './EgressosList'
 
+export const dynamic = 'force-dynamic'
+
 export default async function EgressosPage() {
   const { data: egressos } = await supabase
     .from('egressos')
@@ -11,7 +13,7 @@ export default async function EgressosPage() {
   const years = [...new Set((egressos ?? []).map((e) => e.graduation_year).filter(Boolean))].sort((a, b) => (b ?? 0) - (a ?? 0))
 
   return (
-    <div className="px-10 py-8 max-w-4xl mx-auto w-full">
+    <div className="px-4 md:px-10 py-8 max-w-4xl mx-auto w-full">
       <div className="flex items-end justify-between mb-10">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900">Egressos</h1>

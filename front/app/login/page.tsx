@@ -11,12 +11,16 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    setSubmitted(true)
+    if (!email || !password) return
+
     setError(null)
     setLoading(true)
-    
+
     const { error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
@@ -37,7 +41,7 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
             <label htmlFor="email" className="text-sm font-medium text-zinc-700">
-              E-mail
+              E-mail <span className="text-red-500">*</span>
             </label>
             <input
               id="email"
@@ -46,14 +50,14 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 transition"
+              className={ic(submitted && !email)}
               placeholder="seu@email.com"
             />
           </div>
 
           <div className="flex flex-col gap-1">
             <label htmlFor="password" className="text-sm font-medium text-zinc-700">
-              Senha
+              Senha <span className="text-red-500">*</span>
             </label>
             <input
               id="password"
@@ -62,7 +66,7 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 transition"
+              className={ic(submitted && !password)}
               placeholder="••••••••"
             />
           </div>
@@ -76,7 +80,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="mt-1 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50 transition"
+            className="mt-1 rounded-lg bg-[#0B7A3B] px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 transition"
           >
             {loading ? 'Entrando...' : 'Entrar'}
           </button>
@@ -90,4 +94,10 @@ export default function LoginPage() {
       </div>
     </div>
   )
+}
+
+function ic(invalid: boolean) {
+  return invalid
+    ? 'rounded-lg border border-red-400 bg-red-50/30 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 transition w-full'
+    : 'rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 transition w-full'
 }

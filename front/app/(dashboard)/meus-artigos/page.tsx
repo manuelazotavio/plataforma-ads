@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -73,7 +73,7 @@ export default function MeusArtigosPage() {
             </Link>
             <Link
               href="/artigos/novo"
-              className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 transition"
+              className="rounded-lg bg-[#0B7A3B] px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition"
             >
               Novo artigo
             </Link>

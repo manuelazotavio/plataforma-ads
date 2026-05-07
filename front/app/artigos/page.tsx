@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 import ArticleFilters from '@/app/components/ArticleFilters'
 
+export const dynamic = 'force-dynamic'
+
 export default async function ArtigosPage({
   searchParams,
 }: {

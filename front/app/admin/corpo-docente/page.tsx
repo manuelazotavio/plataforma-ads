@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -42,11 +42,13 @@ export default function AdminCorpoDocentePage() {
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [creating, setCreating] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
 
-  
+
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editState, setEditState] = useState<typeof EMPTY_FORM | null>(null)
   const [saving, setSaving] = useState(false)
+  const [editSubmitted, setEditSubmitted] = useState(false)
 
   
   const [uploadingId, setUploadingId] = useState<string | null>(null)
@@ -91,6 +93,7 @@ export default function AdminCorpoDocentePage() {
   }
 
   async function handleCreate() {
+    setSubmitted(true)
     if (!form.name.trim()) return
     setCreating(true)
 
@@ -108,12 +111,14 @@ export default function AdminCorpoDocentePage() {
     })
 
     setForm(EMPTY_FORM)
+    setSubmitted(false)
     setShowForm(false)
     await loadProfessors()
     setCreating(false)
   }
 
   function startEdit(prof: Professor) {
+    setEditSubmitted(false)
     setEditingId(prof.id)
     setEditState({
       name: prof.name,
@@ -131,6 +136,8 @@ export default function AdminCorpoDocentePage() {
 
   async function saveEdit(id: string) {
     if (!editState) return
+    setEditSubmitted(true)
+    if (!editState.name.trim()) return
     setSaving(true)
 
     await supabase.from('professors').update({
@@ -150,6 +157,7 @@ export default function AdminCorpoDocentePage() {
     await loadProfessors()
     setEditingId(null)
     setEditState(null)
+    setEditSubmitted(false)
     setSaving(false)
   }
 
@@ -192,8 +200,8 @@ export default function AdminCorpoDocentePage() {
             <p className="text-sm text-zinc-500 mt-0.5">{professors.length} professor{professors.length !== 1 ? 'es' : ''}</p>
           </div>
           <button
-            onClick={() => setShowForm((v) => !v)}
-            className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 transition"
+            onClick={() => { if (showForm) { setForm(EMPTY_FORM); setSubmitted(false) } setShowForm((v) => !v) }}
+            className="rounded-lg bg-[#0B7A3B] px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition"
           >
             {showForm ? 'Cancelar' : 'Adicionar professor'}
           </button>
@@ -205,8 +213,8 @@ export default function AdminCorpoDocentePage() {
             <h2 className="text-sm font-semibold text-zinc-900 mb-4">Novo professor</h2>
             <div className="flex flex-col gap-3">
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Nome *">
-                  <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={inputClass} placeholder="Nome completo" />
+                <Field label="Nome" required>
+                  <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={submitted && !form.name.trim() ? inputErrorClass : inputClass} placeholder="Nome completo" />
                 </Field>
                 <Field label="Cargo">
                   <input type="text" value={form.cargo} onChange={(e) => setForm({ ...form, cargo: e.target.value })} className={inputClass} placeholder="Ex: Professor Efetivo" />
@@ -241,13 +249,13 @@ export default function AdminCorpoDocentePage() {
               </div>
               <div className="flex items-center justify-between pt-1">
                 <label className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer">
-                  <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} />
+                  <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} className="w-4.5 h-4.5 accent-[#0B7A3B]" />
                   Visível na página pública
                 </label>
                 <button
                   onClick={handleCreate}
                   disabled={creating || !form.name.trim()}
-                  className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50 transition"
+                  className="rounded-lg bg-[#0B7A3B] px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 transition"
                 >
                   {creating ? 'Salvando...' : 'Salvar'}
                 </button>
@@ -312,8 +320,8 @@ export default function AdminCorpoDocentePage() {
                 {editingId === prof.id && editState ? (
                   <div className="mt-4 pt-4 border-t border-zinc-100 flex flex-col gap-3">
                     <div className="grid grid-cols-2 gap-3">
-                      <Field label="Nome">
-                        <input type="text" value={editState.name} onChange={(e) => setEditState({ ...editState, name: e.target.value })} className={inputClass} />
+                      <Field label="Nome" required>
+                        <input type="text" value={editState.name} onChange={(e) => setEditState({ ...editState, name: e.target.value })} className={editSubmitted && !editState.name.trim() ? inputErrorClass : inputClass} />
                       </Field>
                       <Field label="Cargo">
                         <input type="text" value={editState.cargo} onChange={(e) => setEditState({ ...editState, cargo: e.target.value })} className={inputClass} placeholder="Ex: Professor Efetivo" />
@@ -348,14 +356,14 @@ export default function AdminCorpoDocentePage() {
                     </div>
                     <div className="flex items-center justify-between pt-1">
                       <label className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer">
-                        <input type="checkbox" checked={editState.is_active} onChange={(e) => setEditState({ ...editState, is_active: e.target.checked })} />
+                        <input type="checkbox" checked={editState.is_active} onChange={(e) => setEditState({ ...editState, is_active: e.target.checked })} className="w-4.5 h-4.5 accent-[#0B7A3B]" />
                         Visível na página pública
                       </label>
                       <div className="flex gap-2">
-                        <button onClick={() => { setEditingId(null); setEditState(null) }} className="text-sm text-zinc-500 hover:text-zinc-900 transition px-3 py-1.5">
+                        <button onClick={() => { setEditingId(null); setEditState(null); setEditSubmitted(false) }} className="text-sm text-zinc-500 hover:text-zinc-900 transition px-3 py-1.5">
                           Cancelar
                         </button>
-                        <button onClick={() => saveEdit(prof.id)} disabled={saving} className="rounded-lg bg-zinc-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50 transition">
+                        <button onClick={() => saveEdit(prof.id)} disabled={saving} className="rounded-lg bg-[#0B7A3B] px-4 py-1.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 transition">
                           {saving ? 'Salvando...' : 'Salvar'}
                         </button>
                       </div>
@@ -383,10 +391,14 @@ export default function AdminCorpoDocentePage() {
 
 const inputClass = 'rounded-lg border border-zinc-300 px-3 py-2 text-xs text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 transition w-full'
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+const inputErrorClass = 'rounded-lg border border-red-400 bg-red-50/30 px-3 py-2 text-xs text-zinc-900 outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 transition w-full'
+
+function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs font-medium text-zinc-600">{label}</label>
+      <label className="text-xs font-medium text-zinc-600">
+        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
       {children}
     </div>
   )

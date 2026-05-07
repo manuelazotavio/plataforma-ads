@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { supabase } from '@/app/lib/supabase'
 import LikeButton from '@/app/components/LikeButton'
+
+export const dynamic = 'force-dynamic'
 import Comments from '@/app/components/Comments'
 
 export default async function ArtigoDetalhe({ params }: { params: Promise<{ id: string }> }) {

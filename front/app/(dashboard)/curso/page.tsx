@@ -11,12 +11,12 @@ export default async function CursoPage() {
     .order('display_order', { ascending: true })
 
   return (
-    <div className="px-10 py-8 flex flex-col gap-12 max-w-5xl mx-auto w-full bg-white">
+    <div className="px-4 md:px-10 py-8 flex flex-col gap-12 max-w-5xl mx-auto w-full bg-white">
 
      
       <section id="sobre-o-curso" className="scroll-mt-24">
         <SectionTitle>Sobre o curso</SectionTitle>
-        <div className="rounded-2xl bg-white p-8 flex flex-col gap-6">
+        <div className="rounded-2xl bg-white p-4 md:p-8 flex flex-col gap-6">
           <p className="text-base text-zinc-600 leading-relaxed">
             O curso Tecnológico em <strong className="text-zinc-900">Análise e Desenvolvimento de Sistemas (ADS)</strong> forma
             profissionais capazes de desenvolver, implantar e manter sistemas computacionais. Com foco em soluções práticas e

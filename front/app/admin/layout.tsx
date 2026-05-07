@@ -23,6 +23,7 @@ const nav = [
   { href: '/admin/egressos', label: 'Egressos', icon: <IconGraduation /> },
   { href: '/admin/corpo-docente', label: 'Corpo Docente', icon: <IconPerson /> },
   { href: '/admin/forum', label: 'Fórum', icon: <IconChat /> },
+  { href: '/admin/niveis', label: 'Níveis', icon: <IconStar /> },
   { href: '/admin/permissoes', label: 'Permissões', icon: <IconShield /> },
 ]
 
@@ -124,18 +125,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </header>
 
         <main className="flex-1 overflow-y-auto bg-white">
-          <div className="p-8">
-            {children}
-          </div>
-          <footer className="border-t border-zinc-100 px-8 py-6 mt-4">
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-zinc-400">
-              <Link href="/regras" className="hover:text-zinc-700 transition">Regras do ADS Comunica</Link>
-              <Link href="/privacidade" className="hover:text-zinc-700 transition">Politica de Privacidade</Link>
-              <Link href="/contrato" className="hover:text-zinc-700 transition">Contrato de Usuario</Link>
-              <Link href="/acessibilidade" className="hover:text-zinc-700 transition">Acessibilidade</Link>
-              <span className="ml-auto">ADS Comunica, Inc. © 2026. Todos os direitos reservados.</span>
+          <div className="flex flex-col min-h-full">
+            <div className="flex-1 p-8">
+              {children}
             </div>
-          </footer>
+            <footer className="border-t border-zinc-100 px-8 py-6 mt-4">
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-zinc-400">
+                <Link href="/regras" className="hover:text-zinc-700 transition">Regras do ADS Comunica</Link>
+                <Link href="/privacidade" className="hover:text-zinc-700 transition">Política de Privacidade</Link>
+                <Link href="/contrato" className="hover:text-zinc-700 transition">Contrato de Usuário</Link>
+                <Link href="/acessibilidade" className="hover:text-zinc-700 transition">Acessibilidade</Link>
+                <span className="ml-auto">ADS Comunica, Inc. © 2026. Todos os direitos reservados.</span>
+              </div>
+            </footer>
+          </div>
         </main>
       </div>
     </div>
@@ -222,6 +225,14 @@ function IconChat() {
   return (
     <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+    </svg>
+  )
+}
+
+function IconStar() {
+  return (
+    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
     </svg>
   )
 }

@@ -1,10 +1,12 @@
 ﻿'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
+import NotificationBell from '@/app/components/NotificationBell'
+import SearchBar from '@/app/components/SearchBar'
 
 type UserProfile = {
   name: string
@@ -46,19 +48,25 @@ const sidebarItems = [
 
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter()
   const pathname = usePathname()
   const [user, setUser] = useState<UserProfile | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({})
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const navRef = useRef<HTMLElement>(null)
+  const itemRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const userMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     async function loadUser() {
       const { data: { user: authUser } } = await supabase.auth.getUser()
       if (!authUser) {
-        router.push('/login')
+        setLoading(false)
         return
       }
+      setUserId(authUser.id)
       const { data: profile } = await supabase
         .from('users')
         .select('name, avatar_url, semester, role')
@@ -68,7 +76,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       setLoading(false)
     }
     loadUser()
-  }, [router])
+  }, [])
+
+  useEffect(() => {
+    setSidebarOpen(false)
+    setUserMenuOpen(false)
+  }, [pathname])
+
+  useEffect(() => {
+    function close(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [])
 
   if (loading) {
     return <div className="min-h-screen bg-white" />
@@ -76,8 +99,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex h-screen overflow-hidden">
-      
-      <aside className="w-56 shrink-0 bg-white border-r border-zinc-100 flex flex-col fixed h-full z-20">
+
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-20 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <aside className={`w-56 shrink-0 bg-white border-r border-zinc-100 flex flex-col fixed h-full z-30 transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         
         <div className="h-16 flex items-center px-5 border-b border-zinc-100 gap-2.5">
           <div className="grid grid-cols-2 gap-0.5 w-7 h-7 shrink-0">
@@ -93,20 +123,38 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
 
         
-        <nav className="sidebar-nav flex flex-col gap-1 px-3 py-4 flex-1 overflow-y-auto">
+        <nav ref={navRef} className="sidebar-nav flex flex-col gap-1 px-3 py-4 flex-1 overflow-y-auto">
           {sidebarItems.map((item, i) => {
             const active = pathname === item.href || pathname.startsWith(item.href + '/')
             const hasChildren = 'children' in item && item.children && item.children.length > 0
             const open = hasChildren && (openItems[item.href] ?? active)
             const dividerBefore = i === 6
+
+            function handleToggle() {
+              const opening = !open
+              setOpenItems(prev => ({ ...prev, [item.href]: opening }))
+              if (opening) {
+                requestAnimationFrame(() => {
+                  const itemEl = itemRefs.current[item.href]
+                  const navEl = navRef.current
+                  if (!itemEl || !navEl) return
+                  const navRect = navEl.getBoundingClientRect()
+                  const itemRect = itemEl.getBoundingClientRect()
+                  if (itemRect.bottom > navRect.bottom) {
+                    navEl.scrollTop += itemRect.bottom - navRect.bottom + 12
+                  }
+                })
+              }
+            }
+
             return (
-              <div key={item.href}>
+              <div key={item.href} ref={el => { itemRefs.current[item.href] = el }}>
                 {dividerBefore && <div className="my-2 border-t border-zinc-100" />}
                 {hasChildren ? (
                   <button
                     type="button"
                     aria-expanded={open}
-                    onClick={() => setOpenItems((prev) => ({ ...prev, [item.href]: !open }))}
+                    onClick={handleToggle}
                     className={`flex w-full min-w-0 items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-colors ${
                       active
                         ? 'text-white'
@@ -172,61 +220,111 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         )}
       </aside>
 
-      <div className="flex flex-col flex-1 ml-56 min-w-0">
-        <header className="h-16 bg-white border-b border-zinc-100 flex items-center justify-end px-6 sticky top-0 z-10 shrink-0 gap-4">
+      <div className="flex flex-col flex-1 ml-0 md:ml-56 min-w-0">
+        <header className="h-16 bg-white border-b border-zinc-100 flex items-center justify-end px-4 md:px-6 sticky top-0 z-10 shrink-0 gap-3 md:gap-4">
 
-          
-          <div className="relative">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-              <circle cx={11} cy={11} r={8} /><path d="m21 21-4.35-4.35" />
+          <button
+            type="button"
+            aria-label="Abrir menu"
+            onClick={() => setSidebarOpen(true)}
+            className="md:hidden p-2 rounded-lg text-zinc-500 hover:bg-zinc-100 transition shrink-0"
+          >
+            <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <line x1={3} y1={6} x2={21} y2={6} />
+              <line x1={3} y1={12} x2={21} y2={12} />
+              <line x1={3} y1={18} x2={21} y2={18} />
             </svg>
-            <input
-              type="text"
-              placeholder="Buscar projetos, tópicos..."
-              className="rounded-full bg-zinc-100 pl-8 pr-4 py-2 text-sm text-zinc-500 outline-none focus:bg-zinc-200 transition w-64 placeholder:text-zinc-400"
-            />
-          </div>
-
-          
-          <button className="relative text-zinc-400 hover:text-zinc-700 transition">
-            <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-            </svg>
-            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 border-2 border-white" />
           </button>
 
-         
-          <div className="flex items-center gap-3 pl-4 border-l border-zinc-100">
-            <div className="text-right leading-tight">
-              <p className="text-sm font-semibold text-zinc-900">{user?.name}</p>
-              <p className="text-xs text-zinc-400 mt-0.5">
-                {user?.semester ? `${user.semester}º Semestre` : 'Aluno'}
-              </p>
-            </div>
-            <div className="w-9 h-9 rounded-full overflow-hidden bg-zinc-200 shrink-0 ring-2 ring-zinc-100">
-              {user?.avatar_url ? (
-                <Image src={user.avatar_url} alt={user.name} width={36} height={36} className="object-cover w-full h-full" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-zinc-500 text-sm font-semibold">
-                  {user?.name?.charAt(0)?.toUpperCase()}
+          <SearchBar />
+
+
+          <NotificationBell userId={userId} />
+
+          {user ? (
+            <div ref={userMenuRef} className="relative pl-3 md:pl-4 border-l border-zinc-100">
+              <button
+                type="button"
+                onClick={() => setUserMenuOpen(v => !v)}
+                className="flex items-center gap-3 rounded-xl px-2 py-1.5 hover:bg-zinc-50 transition"
+              >
+                <div className="hidden md:block text-right leading-tight">
+                  <p className="text-sm font-semibold text-zinc-900">{user.name}</p>
+                  <p className="text-xs text-zinc-400 mt-0.5">
+                    {user.semester ? `${user.semester}º Semestre` : 'Aluno'}
+                  </p>
+                </div>
+                <div className="w-9 h-9 rounded-full overflow-hidden bg-zinc-200 shrink-0 ring-2 ring-zinc-100">
+                  {user.avatar_url ? (
+                    <Image src={user.avatar_url} alt={user.name} width={36} height={36} className="object-cover w-full h-full" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-zinc-500 text-sm font-semibold">
+                      {user.name?.charAt(0)?.toUpperCase()}
+                    </div>
+                  )}
+                </div>
+              </button>
+
+              {userMenuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-52 rounded-xl border border-zinc-200 bg-white shadow-lg py-1 z-50">
+                  <div className="px-4 py-2.5 border-b border-zinc-100">
+                    <p className="text-sm font-semibold text-zinc-900 truncate">{user.name}</p>
+                    <p className="text-xs text-zinc-400 mt-0.5">
+                      {user.semester ? `${user.semester}º Semestre` : 'Aluno'}
+                    </p>
+                  </div>
+                  <div className="py-1">
+                    <Link href="/perfil" className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50 transition">
+                      <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 shrink-0"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx={12} cy={7} r={4}/></svg>
+                      Meu perfil
+                    </Link>
+                    <Link href="/meus-projetos" className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50 transition">
+                      <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 shrink-0"><rect x={3} y={3} width={7} height={7}/><rect x={14} y={3} width={7} height={7}/><rect x={14} y={14} width={7} height={7}/><rect x={3} y={14} width={7} height={7}/></svg>
+                      Meus projetos
+                    </Link>
+                    <Link href="/meus-artigos" className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50 transition">
+                      <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1={16} y1={13} x2={8} y2={13}/><line x1={16} y1={17} x2={8} y2={17}/><polyline points="10 9 9 9 8 9"/></svg>
+                      Meus artigos
+                    </Link>
+                  </div>
+                  <div className="border-t border-zinc-100 py-1">
+                    <button
+                      type="button"
+                      onClick={async () => { await supabase.auth.signOut(); window.location.href = '/login' }}
+                      className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition"
+                    >
+                      <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1={21} y1={12} x2={9} y2={12}/></svg>
+                      Sair
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
-          </div>
+          ) : (
+            <Link
+              href="/login"
+              className="pl-4 border-l border-zinc-100 text-sm font-medium text-zinc-600 hover:text-zinc-900 transition"
+            >
+              Entrar
+            </Link>
+          )}
         </header>
 
         <main className="flex-1 overflow-y-auto bg-white">
-          {children}
-          <footer className="border-t border-zinc-100 px-10 py-6 mt-8">
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-zinc-400">
-              <Link href="/regras" className="hover:text-zinc-700 transition">Regras do ADS Comunica</Link>
-              <Link href="/privacidade" className="hover:text-zinc-700 transition">Política de Privacidade</Link>
-              <Link href="/contrato" className="hover:text-zinc-700 transition">Contrato de Usuário</Link>
-              <Link href="/acessibilidade" className="hover:text-zinc-700 transition">Acessibilidade</Link>
-              <span className="ml-auto">ADS Comunica, Inc. © 2026. Todos os direitos reservados.</span>
+          <div className="flex flex-col min-h-full">
+            <div className="flex-1">
+              {children}
             </div>
-          </footer>
+            <footer className="border-t border-zinc-100 px-4 md:px-10 py-6 mt-8">
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-zinc-400">
+                <Link href="/regras" className="hover:text-zinc-700 transition">Regras do ADS Comunica</Link>
+                <Link href="/privacidade" className="hover:text-zinc-700 transition">Política de Privacidade</Link>
+                <Link href="/contrato" className="hover:text-zinc-700 transition">Contrato de Usuário</Link>
+                <Link href="/acessibilidade" className="hover:text-zinc-700 transition">Acessibilidade</Link>
+                <span className="ml-auto">ADS Comunica, Inc. © 2026. Todos os direitos reservados.</span>
+              </div>
+            </footer>
+          </div>
         </main>
         <QuickCreateMenu />
       </div>

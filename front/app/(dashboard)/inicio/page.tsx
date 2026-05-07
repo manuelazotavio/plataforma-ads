@@ -23,10 +23,19 @@ type Topic = {
   forum_categories: { name: string } | null
 }
 
+type Level = { id: number; name: string; min_xp: number }
+
 type UserStats = {
   firstName: string
   topicsCount: number
   projectsCount: number
+  articlesCount: number
+  commentsCount: number
+  likesReceived: number
+  xp: number
+  level: Level | null
+  nextLevel: Level | null
+  levelProgress: number
 }
 
 type Contributor = {
@@ -54,14 +63,25 @@ export default function InicioPage() {
         { data: profile },
         { count: topicsCount },
         { count: projectsCount },
+        { count: articlesCount },
+        { count: projCommentsCount },
+        { count: artCommentsCount },
+        { data: ownProjects },
+        { data: ownArticles },
         { data: projects },
         { data: topics },
         { data: tags },
         { data: topProjects },
+        { data: levelsData },
       ] = await Promise.all([
         supabase.from('users').select('name').eq('id', user.id).single(),
         supabase.from('forum_topics').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
         supabase.from('projects').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('articles').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'publicado'),
+        supabase.from('project_comments').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('article_comments').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('projects').select('like_count').eq('user_id', user.id),
+        supabase.from('articles').select('like_count').eq('user_id', user.id),
         supabase
           .from('projects')
           .select('id, title, description, updated_at, like_count, project_tags(tag_name), users(name)')
@@ -78,10 +98,43 @@ export default function InicioPage() {
           .select('like_count, users(id, name, avatar_url, semester)')
           .order('like_count', { ascending: false })
           .limit(50),
+        supabase.from('levels').select('id, name, min_xp').order('min_xp', { ascending: true }),
       ])
 
+      const likesReceived =
+        (ownProjects ?? []).reduce((s, p) => s + (p.like_count ?? 0), 0) +
+        (ownArticles ?? []).reduce((s, a) => s + (a.like_count ?? 0), 0)
+
+      const commentsCount = (projCommentsCount ?? 0) + (artCommentsCount ?? 0)
+
+      const xp =
+        (projectsCount ?? 0) * 50 +
+        (articlesCount ?? 0) * 40 +
+        (topicsCount ?? 0) * 20 +
+        commentsCount * 10 +
+        likesReceived * 5
+
+      const allLevels = (levelsData ?? []) as Level[]
+      const currentLevel = [...allLevels].reverse().find((l) => xp >= l.min_xp) ?? allLevels[0] ?? null
+      const currentIdx = currentLevel ? allLevels.findIndex((l) => l.id === currentLevel.id) : -1
+      const nextLevel = currentIdx >= 0 && currentIdx < allLevels.length - 1 ? allLevels[currentIdx + 1] : null
+      const levelProgress = nextLevel && currentLevel
+        ? Math.min(100, Math.round(((xp - currentLevel.min_xp) / (nextLevel.min_xp - currentLevel.min_xp)) * 100))
+        : 100
+
       const firstName = profile?.name?.split(' ')[0] ?? 'Aluno'
-      setStats({ firstName, topicsCount: topicsCount ?? 0, projectsCount: projectsCount ?? 0 })
+      setStats({
+        firstName,
+        topicsCount: topicsCount ?? 0,
+        projectsCount: projectsCount ?? 0,
+        articlesCount: articlesCount ?? 0,
+        commentsCount,
+        likesReceived,
+        xp,
+        level: currentLevel,
+        nextLevel,
+        levelProgress,
+      })
       setFeaturedProjects((projects ?? []) as Project[])
       setRecentTopics((topics ?? []) as Topic[])
 
@@ -123,7 +176,7 @@ export default function InicioPage() {
   }
 
   return (
-    <div className="px-8 py-8 grid grid-cols-[minmax(0,750px)_290px_300px] gap-7 items-start">
+    <div className="px-4 md:px-8 py-6 md:py-8 grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_290px_300px] gap-7 items-start">
 
       <div className="flex flex-col gap-7 min-w-0">
 
@@ -138,13 +191,14 @@ export default function InicioPage() {
           <p className="text-base text-zinc-500 mb-8">
             Há novos artigos e projetos para visualizar.
           </p>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <Link
               href="/projetos/novo"
               className="flex items-center gap-2 rounded-lg px-6 py-3 text-base font-semibold text-white transition shadow-sm"
               style={{ backgroundColor: '#0B7A3B' }}
             >
-              + Novo Projeto
+              <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+              Novo Projeto
             </Link>
             <Link
               href="/forum/novo"
@@ -180,7 +234,7 @@ export default function InicioPage() {
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               {featuredProjects.map((project) => {
                 const tags = project.project_tags as { tag_name: string }[]
                 const author = project.users as { name: string } | null
@@ -283,32 +337,42 @@ export default function InicioPage() {
                   cx={28} cy={28} r={22}
                   fill="none" stroke="#16a34a" strokeWidth={6}
                   strokeDasharray={`${2 * Math.PI * 22}`}
-                  strokeDashoffset={`${2 * Math.PI * 22 * 0.25}`}
+                  strokeDashoffset={`${2 * Math.PI * 22 * (1 - (stats?.levelProgress ?? 0) / 100)}`}
                   strokeLinecap="round"
                 />
               </svg>
               <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-green-700">
-                75%
+                {stats?.levelProgress ?? 0}%
               </span>
             </div>
             <div>
-              <p className="text-sm font-semibold text-zinc-900">Nível 4: Desbravador</p>
-              <p className="text-xs text-zinc-400 mt-0.5">250 XP para o próximo nível</p>
+              <p className="text-sm font-semibold text-zinc-900">
+                {stats?.level ? stats.level.name : 'Sem nível'}
+              </p>
+              <p className="text-xs text-zinc-400 mt-0.5">
+                {stats?.nextLevel
+                  ? `${stats.nextLevel.min_xp - stats.xp} XP para ${stats.nextLevel.name}`
+                  : `${stats?.xp ?? 0} XP total`}
+              </p>
             </div>
           </div>
 
           <div className="flex flex-col gap-3 border-t border-zinc-100 pt-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-zinc-500">Tópicos criados</span>
-              <span className="text-xs font-semibold text-zinc-900">{stats?.topicsCount}</span>
+              <span className="text-xs text-zinc-500">XP total</span>
+              <span className="text-xs font-semibold text-zinc-900">{stats?.xp ?? 0}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-xs text-zinc-500">Projetos criados</span>
-              <span className="text-xs font-semibold text-zinc-900">{stats?.projectsCount}</span>
+              <span className="text-xs font-semibold text-zinc-900">{stats?.projectsCount ?? 0}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-zinc-500">Projetos ativos</span>
-              <span className="text-xs font-semibold text-zinc-900">—</span>
+              <span className="text-xs text-zinc-500">Artigos publicados</span>
+              <span className="text-xs font-semibold text-zinc-900">{stats?.articlesCount ?? 0}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-zinc-500">Tópicos no fórum</span>
+              <span className="text-xs font-semibold text-zinc-900">{stats?.topicsCount ?? 0}</span>
             </div>
           </div>
         </div>

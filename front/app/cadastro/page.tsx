@@ -10,6 +10,7 @@ export default function CadastroPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [semester, setSemester] = useState('')
   const [isEgresso, setIsEgresso] = useState(false)
   const [graduationYear, setGraduationYear] = useState('')
@@ -17,18 +18,39 @@ export default function CadastroPage() {
   const [company, setCompany] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    setSubmitted(true)
     setError(null)
+
+    if (!name || !email || !password || !confirmPassword) return
+
+    if (password !== confirmPassword) {
+      setError('As senhas não coincidem.')
+      return
+    }
+
     setLoading(true)
 
     const { data, error: authError } = await supabase.auth.signUp({ email, password })
 
     if (authError || !data.user) {
-      setError(authError?.message ?? 'Erro ao criar conta.')
+      setError(friendlyAuthError(authError?.message))
       setLoading(false)
       return
+    }
+
+    // signUp may not establish a session (e.g. email confirmation required).
+    // Sign in explicitly so auth.uid() is available for subsequent DB operations.
+    if (!data.session) {
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+      if (signInError) {
+        setError('Conta criada! Confirme seu e-mail para continuar.')
+        setLoading(false)
+        return
+      }
     }
 
     const { error: dbError } = await supabase.from('users').insert({
@@ -47,14 +69,18 @@ export default function CadastroPage() {
     }
 
     if (isEgresso) {
-      await supabase.from('egressos').insert({
-        user_id: data.user.id,
-        name,
-        graduation_year: graduationYear ? parseInt(graduationYear) : null,
-        role: role || null,
-        company: company || null,
-        is_active: true,
+      const { error: egressoError } = await supabase.rpc('upsert_own_egresso', {
+        p_name: name,
+        p_graduation_year: graduationYear ? parseInt(graduationYear) : null,
+        p_role: role || null,
+        p_company: company || null,
       })
+
+      if (egressoError) {
+        setError('Conta criada, mas erro ao salvar dados de egresso: ' + egressoError.message)
+        setLoading(false)
+        return
+      }
     }
 
     router.push('/inicio')
@@ -69,7 +95,7 @@ export default function CadastroPage() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
             <label htmlFor="name" className="text-sm font-medium text-zinc-700">
-              Nome completo
+              Nome completo <span className="text-red-500">*</span>
             </label>
             <input
               id="name"
@@ -78,14 +104,14 @@ export default function CadastroPage() {
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 transition"
+              className={ic(submitted && !name)}
               placeholder="Seu nome"
             />
           </div>
 
           <div className="flex flex-col gap-1">
             <label htmlFor="email" className="text-sm font-medium text-zinc-700">
-              E-mail
+              E-mail <span className="text-red-500">*</span>
             </label>
             <input
               id="email"
@@ -94,14 +120,14 @@ export default function CadastroPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 transition"
+              className={ic(submitted && !email)}
               placeholder="seu@email.com"
             />
           </div>
 
           <div className="flex flex-col gap-1">
             <label htmlFor="password" className="text-sm font-medium text-zinc-700">
-              Senha
+              Senha <span className="text-red-500">*</span>
             </label>
             <input
               id="password"
@@ -111,24 +137,43 @@ export default function CadastroPage() {
               minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 transition"
+              className={ic(submitted && !password)}
               placeholder="Mínimo 6 caracteres"
             />
           </div>
 
-          
+          <div className="flex flex-col gap-1">
+            <label htmlFor="confirmPassword" className="text-sm font-medium text-zinc-700">
+              Confirmar senha <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="confirmPassword"
+              type="password"
+              autoComplete="new-password"
+              required
+              minLength={6}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className={ic(submitted && (!confirmPassword || confirmPassword !== password))}
+              placeholder="Repita a senha"
+            />
+            {submitted && confirmPassword && confirmPassword !== password && (
+              <p className="text-xs text-red-500 mt-0.5">As senhas não coincidem</p>
+            )}
+          </div>
+
           <div className="flex rounded-lg border border-zinc-200 overflow-hidden text-sm font-medium">
             <button
               type="button"
               onClick={() => setIsEgresso(false)}
-              className={`flex-1 py-2 transition-colors ${!isEgresso ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:text-zinc-900'}`}
+              className={`flex-1 py-2 transition-colors ${!isEgresso ? 'bg-[#0B7A3B] text-white' : 'text-zinc-500 hover:text-zinc-900'}`}
             >
               Sou aluno
             </button>
             <button
               type="button"
               onClick={() => setIsEgresso(true)}
-              className={`flex-1 py-2 transition-colors ${isEgresso ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:text-zinc-900'}`}
+              className={`flex-1 py-2 transition-colors ${isEgresso ? 'bg-[#0B7A3B] text-white' : 'text-zinc-500 hover:text-zinc-900'}`}
             >
               Sou egresso
             </button>
@@ -146,7 +191,7 @@ export default function CadastroPage() {
                 max={8}
                 value={semester}
                 onChange={(e) => setSemester(e.target.value)}
-                className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 transition"
+                className={normalInputClass}
                 placeholder="Ex: 3"
               />
             </div>
@@ -158,7 +203,7 @@ export default function CadastroPage() {
                   type="number"
                   value={graduationYear}
                   onChange={(e) => setGraduationYear(e.target.value)}
-                  className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 transition"
+                  className={normalInputClass}
                   placeholder="Ex: 2023"
                 />
               </div>
@@ -168,7 +213,7 @@ export default function CadastroPage() {
                   <input
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
-                    className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 transition"
+                    className={normalInputClass}
                     placeholder="Ex: Dev Frontend"
                   />
                 </div>
@@ -177,7 +222,7 @@ export default function CadastroPage() {
                   <input
                     value={company}
                     onChange={(e) => setCompany(e.target.value)}
-                    className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 transition"
+                    className={normalInputClass}
                     placeholder="Ex: Google"
                   />
                 </div>
@@ -194,7 +239,7 @@ export default function CadastroPage() {
           <button
             type="submit"
             disabled={loading}
-            className="mt-1 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50 transition"
+            className="mt-1 rounded-lg bg-[#0B7A3B] px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 transition"
           >
             {loading ? 'Criando conta...' : 'Criar conta'}
           </button>
@@ -209,4 +254,27 @@ export default function CadastroPage() {
       </div>
     </div>
   )
+}
+
+function friendlyAuthError(msg?: string): string {
+  if (!msg) return 'Erro ao criar conta. Tente novamente.'
+  const m = msg.toLowerCase()
+  if (m.includes('already registered') || m.includes('already exists'))
+    return 'Este e-mail já está cadastrado. Faça login ou use outro e-mail.'
+  if (m.includes('invalid email') || m.includes('unable to validate email'))
+    return 'Endereço de e-mail inválido.'
+  if (m.includes('password') && m.includes('6'))
+    return 'A senha deve ter no mínimo 6 caracteres.'
+  if (m.includes('signup') && m.includes('disabled'))
+    return 'Cadastros desativados no momento. Contate o administrador.'
+  return 'Erro ao criar conta. Tente novamente.'
+}
+
+const normalInputClass =
+  'rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 transition w-full'
+
+function ic(invalid: boolean) {
+  return invalid
+    ? 'rounded-lg border border-red-400 bg-red-50/30 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 transition w-full'
+    : normalInputClass
 }

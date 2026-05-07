@@ -88,7 +88,7 @@ export default function CalendarioPage() {
     <div className="flex flex-col h-[calc(100vh-4rem)]">
 
       
-      <div className="flex items-center gap-3 px-8 py-4 border-b border-zinc-100 shrink-0">
+      <div className="flex items-center gap-3 px-4 md:px-8 py-4 border-b border-zinc-100 shrink-0">
         <h1 className="text-xl font-bold text-zinc-900 capitalize">
           {MONTHS[month]} de {year}
         </h1>

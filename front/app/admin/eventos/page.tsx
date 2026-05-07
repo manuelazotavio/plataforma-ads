@@ -45,6 +45,7 @@ export default function AdminEventosPage() {
   const [form, setForm] = useState(empty())
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [submitted, setSubmitted] = useState(false)
 
   useEffect(() => { load() }, [])
 
@@ -73,9 +74,11 @@ export default function AdminEventosPage() {
     setShowForm(false)
     setEditing(null)
     setForm(empty())
+    setSubmitted(false)
   }
 
   async function save() {
+    setSubmitted(true)
     if (!form.title.trim()) return
     setSaving(true)
     const payload = {
@@ -124,10 +127,11 @@ export default function AdminEventosPage() {
         </div>
         <button
           onClick={openCreate}
-          className="rounded-lg px-4 py-2 text-sm font-medium text-white transition"
+          className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-white transition"
           style={{ backgroundColor: '#0B7A3B' }}
         >
-          + Novo evento
+          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+          Novo evento
         </button>
       </div>
 
@@ -143,11 +147,11 @@ export default function AdminEventosPage() {
             </div>
 
             <div className="flex flex-col gap-4">
-              <Field label="Título *">
+              <Field label="Título" required>
                 <input
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  className={input}
+                  className={submitted && !form.title.trim() ? inputError : input}
                   placeholder="Ex: Hackathon ADS 2026"
                 />
               </Field>
@@ -162,16 +166,21 @@ export default function AdminEventosPage() {
                   />
                 </Field>
                 <Field label="Categoria">
-                  <select
-                    value={form.category ?? ''}
-                    onChange={(e) => setForm({ ...form, category: e.target.value || null })}
-                    className={input}
-                  >
-                    <option value="">Sem categoria</option>
-                    {CATEGORIES.map((c) => (
-                      <option key={c.value} value={c.value}>{c.label}</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      value={form.category ?? ''}
+                      onChange={(e) => setForm({ ...form, category: e.target.value || null })}
+                      className={`${input} appearance-none bg-white pr-9 cursor-pointer`}
+                    >
+                      <option value="">Sem categoria</option>
+                      {CATEGORIES.map((c) => (
+                        <option key={c.value} value={c.value}>{c.label}</option>
+                      ))}
+                    </select>
+                    <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400" width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </div>
                 </Field>
               </div>
 
@@ -227,7 +236,7 @@ export default function AdminEventosPage() {
                     type="checkbox"
                     checked={form.registration_open}
                     onChange={(e) => setForm({ ...form, registration_open: e.target.checked })}
-                    className="rounded"
+                    className="w-4.5 h-4.5 accent-[#0B7A3B]"
                   />
                   Inscrições abertas
                 </label>
@@ -236,7 +245,7 @@ export default function AdminEventosPage() {
                     type="checkbox"
                     checked={form.is_active}
                     onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
-                    className="rounded"
+                    className="w-4.5 h-4.5 accent-[#0B7A3B]"
                   />
                   Publicado
                 </label>
@@ -333,10 +342,14 @@ export default function AdminEventosPage() {
 
 const input = 'w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-400 transition'
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+const inputError = 'w-full rounded-lg border border-red-400 bg-red-50/30 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 transition'
+
+function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs font-medium text-zinc-500">{label}</label>
+      <label className="text-xs font-medium text-zinc-500">
+        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
       {children}
     </div>
   )

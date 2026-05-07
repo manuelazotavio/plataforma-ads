@@ -17,6 +17,7 @@ export default function NovoTopicoPage() {
   const [categoryId, setCategoryId] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [submitted, setSubmitted] = useState(false)
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [videoUrl, setVideoUrl] = useState('')
   const [uploading, setUploading] = useState(false)
@@ -62,6 +63,7 @@ export default function NovoTopicoPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    setSubmitted(true)
     if (!title.trim() || !content.trim()) return
     setSaving(true)
     setError(null)
@@ -93,7 +95,7 @@ export default function NovoTopicoPage() {
   }
 
   return (
-    <div className="px-10 py-8 max-w-3xl mx-auto w-full">
+    <div className="px-4 md:px-10 py-8 max-w-3xl mx-auto w-full">
       <Link href="/forum" className="text-sm text-zinc-400 hover:text-zinc-700 transition mb-8 inline-flex items-center gap-1.5">
         <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
         Fórum
@@ -103,12 +105,12 @@ export default function NovoTopicoPage() {
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-zinc-700">Título *</label>
+          <label className="text-sm font-medium text-zinc-700">Título <span className="text-red-500">*</span></label>
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
-            className={inputClass}
+            className={submitted && !title.trim() ? inputErrorClass : inputClass}
             placeholder="Qual é a sua dúvida ou assunto?"
           />
         </div>
@@ -133,13 +135,13 @@ export default function NovoTopicoPage() {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-zinc-700">Conteúdo *</label>
+          <label className="text-sm font-medium text-zinc-700">Conteúdo <span className="text-red-500">*</span></label>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             required
             rows={8}
-            className={`${inputClass} resize-none`}
+            className={`${submitted && !content.trim() ? inputErrorClass : inputClass} resize-none`}
             placeholder="Descreva o assunto em detalhes..."
           />
         </div>
@@ -236,3 +238,5 @@ export default function NovoTopicoPage() {
 }
 
 const inputClass = 'rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-400 transition w-full'
+
+const inputErrorClass = 'rounded-lg border border-red-400 bg-red-50/30 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 transition w-full'

@@ -1,6 +1,8 @@
 import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
 
+export const dynamic = 'force-dynamic'
+
 export default async function CorpoDocentePage() {
   const { data: professors } = await supabase
     .from('professors')

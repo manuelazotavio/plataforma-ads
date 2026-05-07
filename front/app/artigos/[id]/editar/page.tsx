@@ -33,6 +33,7 @@ export default function EditarArtigoPage() {
   const [uploadingCover, setUploadingCover] = useState(false)
   const [savingAs, setSavingAs] = useState<'rascunho' | 'publicado' | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [submitted, setSubmitted] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
 
@@ -100,7 +101,8 @@ export default function EditarArtigoPage() {
   }
 
   async function save(newStatus: 'rascunho' | 'publicado') {
-    if (!formRef.current?.reportValidity()) return
+    setSubmitted(true)
+    if (!title.trim() || !slug.trim() || !summary.trim() || !content.trim()) return
 
     setSavingAs(newStatus)
     setError(null)
@@ -170,7 +172,7 @@ export default function EditarArtigoPage() {
                 <Image src={coverUrl} alt="Capa" fill className="object-cover" />
               ) : (
                 <div className="flex flex-col items-center gap-2 text-zinc-400 select-none">
-                  <span className="text-3xl">+</span>
+                  <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
                   <span className="text-sm">
                     {uploadingCover ? 'Enviando...' : 'Clique para adicionar uma capa'}
                   </span>
@@ -197,13 +199,13 @@ export default function EditarArtigoPage() {
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className={inputClass}
+              className={submitted && !title.trim() ? inputErrorClass : inputClass}
               placeholder="Título do artigo"
             />
           </Field>
 
           <Field label="Slug (URL)" required>
-            <div className="flex items-center rounded-lg border border-zinc-300 overflow-hidden focus-within:border-zinc-500 focus-within:ring-2 focus-within:ring-zinc-200 transition">
+            <div className={`flex items-center rounded-lg border overflow-hidden transition ${submitted && !slug.trim() ? 'border-red-400 bg-red-50/30 focus-within:border-red-400 focus-within:ring-2 focus-within:ring-red-100' : 'border-zinc-300 focus-within:border-zinc-500 focus-within:ring-2 focus-within:ring-zinc-200'}`}>
               <span className="px-3 py-2 text-sm text-zinc-400 bg-zinc-50 border-r border-zinc-300 select-none">
                 /artigos/
               </span>
@@ -212,7 +214,7 @@ export default function EditarArtigoPage() {
                 required
                 value={slug}
                 onChange={(e) => setSlug(toSlug(e.target.value))}
-                className="flex-1 px-3 py-2 text-sm text-zinc-900 outline-none bg-white"
+                className="flex-1 px-3 py-2 text-sm text-zinc-900 outline-none bg-transparent"
               />
             </div>
           </Field>
@@ -223,12 +225,14 @@ export default function EditarArtigoPage() {
               rows={2}
               value={summary}
               onChange={(e) => setSummary(e.target.value)}
-              className={inputClass + ' resize-none'}
+              className={(submitted && !summary.trim() ? inputErrorClass : inputClass) + ' resize-none'}
             />
           </Field>
 
           <Field label="Conteúdo" required>
-            <RichTextEditor value={content} onChange={setContent} />
+            <div className={submitted && !content.trim() ? 'rounded-xl ring-2 ring-red-200 border border-red-400' : ''}>
+              <RichTextEditor value={content} onChange={setContent} />
+            </div>
           </Field>
 
           <Field label="Tags">
@@ -297,7 +301,7 @@ export default function EditarArtigoPage() {
                 type="button"
                 disabled={!!savingAs || uploadingCover}
                 onClick={() => save('publicado')}
-                className="rounded-lg bg-zinc-900 px-5 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50 transition"
+                className="rounded-lg bg-[#0B7A3B] px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 transition"
               >
                 {savingAs === 'publicado' ? 'Publicando...' : 'Publicar'}
               </button>
@@ -312,6 +316,9 @@ export default function EditarArtigoPage() {
 
 const inputClass =
   'rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 transition w-full'
+
+const inputErrorClass =
+  'rounded-lg border border-red-400 bg-red-50/30 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 transition w-full'
 
 function Field({
   label,

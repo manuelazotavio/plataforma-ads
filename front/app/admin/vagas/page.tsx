@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/app/lib/supabase'
@@ -74,7 +74,7 @@ export default function AdminVagasPage() {
               key={f}
               onClick={() => setFilter(f)}
               className={`rounded-md px-3 py-1.5 text-xs font-medium transition capitalize ${
-                filter === f ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:text-zinc-900'
+                filter === f ? 'bg-[#0B7A3B] text-white' : 'text-zinc-500 hover:text-zinc-900'
               }`}
             >
               {f}

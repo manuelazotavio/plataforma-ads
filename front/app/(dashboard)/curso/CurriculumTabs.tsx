@@ -13,12 +13,12 @@ export default function CurriculumTabs({ curriculum }: { curriculum: Semester[] 
 
   return (
     <div>
-      <div className="flex gap-2 mb-6">
+      <div className="no-scrollbar flex gap-2 mb-6 overflow-x-auto pb-1">
         {curriculum.map((sem) => (
           <button
             key={sem.semester}
             onClick={() => setActive(sem.semester)}
-            className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors cursor-pointer ${
+            className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors cursor-pointer ${
               active === sem.semester
                 ? 'text-white'
                 : 'text-zinc-400 hover:text-zinc-700'

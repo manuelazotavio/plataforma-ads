@@ -42,6 +42,13 @@ button:disabled {
   cursor: not-allowed;
 }
 
+input[type="checkbox"] {
+  width: 1.125rem;
+  height: 1.125rem;
+  accent-color: #0B7A3B;
+  flex-shrink: 0;
+}
+
 .no-scrollbar {
   -ms-overflow-style: none !important;
   scrollbar-width: none !important;

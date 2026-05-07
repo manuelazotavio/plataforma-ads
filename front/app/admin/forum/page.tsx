@@ -18,6 +18,7 @@ export default function AdminForumPage() {
   const [form, setForm] = useState({ name: '', description: '', display_order: 0 })
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [submitted, setSubmitted] = useState(false)
 
   useEffect(() => { load() }, [])
 
@@ -30,16 +31,24 @@ export default function AdminForumPage() {
   function openCreate() {
     setEditing(null)
     setForm({ name: '', description: '', display_order: 0 })
+    setSubmitted(false)
     setShowForm(true)
   }
 
   function openEdit(cat: Category) {
     setEditing(cat)
     setForm({ name: cat.name, description: cat.description ?? '', display_order: cat.display_order })
+    setSubmitted(false)
     setShowForm(true)
   }
 
+  function closeForm() {
+    setShowForm(false)
+    setSubmitted(false)
+  }
+
   async function save() {
+    setSubmitted(true)
     if (!form.name.trim()) return
     setSaving(true)
     const payload = { name: form.name, description: form.description || null, display_order: form.display_order }
@@ -49,7 +58,7 @@ export default function AdminForumPage() {
       await supabase.from('forum_categories').insert(payload)
     }
     await load()
-    setShowForm(false)
+    closeForm()
     setSaving(false)
   }
 
@@ -70,8 +79,9 @@ export default function AdminForumPage() {
           <h1 className="text-2xl font-semibold text-zinc-900">Categorias do Fórum</h1>
           <p className="text-sm text-zinc-500 mt-0.5">{categories.length} categoria{categories.length !== 1 ? 's' : ''}</p>
         </div>
-        <button onClick={openCreate} className="rounded-lg px-4 py-2 text-sm font-medium text-white transition" style={{ backgroundColor: '#0B7A3B' }}>
-          + Nova categoria
+        <button onClick={openCreate} className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-white transition" style={{ backgroundColor: '#0B7A3B' }}>
+          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+          Nova categoria
         </button>
       </div>
 
@@ -80,12 +90,12 @@ export default function AdminForumPage() {
           <div className="bg-white rounded-2xl w-full max-w-md shadow-xl p-7 flex flex-col gap-5">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-zinc-900">{editing ? 'Editar categoria' : 'Nova categoria'}</h2>
-              <button onClick={() => setShowForm(false)} className="text-zinc-400 hover:text-zinc-700 text-xl">×</button>
+              <button onClick={closeForm} className="text-zinc-400 hover:text-zinc-700 text-xl">×</button>
             </div>
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-zinc-500">Nome *</label>
-                <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={input} placeholder="Ex: Dúvidas" />
+                <label className="text-xs font-medium text-zinc-500">Nome <span className="text-red-500">*</span></label>
+                <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={submitted && !form.name.trim() ? inputError : input} placeholder="Ex: Dúvidas" />
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-zinc-500">Descrição</label>
@@ -100,7 +110,7 @@ export default function AdminForumPage() {
               <button onClick={save} disabled={saving || !form.name.trim()} className="flex-1 rounded-lg py-2.5 text-sm font-medium text-white disabled:opacity-50" style={{ backgroundColor: '#0B7A3B' }}>
                 {saving ? 'Salvando...' : 'Salvar'}
               </button>
-              <button onClick={() => setShowForm(false)} className="rounded-lg border border-zinc-200 px-5 py-2.5 text-sm text-zinc-600 hover:bg-zinc-50">Cancelar</button>
+              <button onClick={closeForm} className="rounded-lg border border-zinc-200 px-5 py-2.5 text-sm text-zinc-600 hover:bg-zinc-50">Cancelar</button>
             </div>
           </div>
         </div>
@@ -129,3 +139,5 @@ export default function AdminForumPage() {
 }
 
 const input = 'w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-400 transition'
+
+const inputError = 'w-full rounded-lg border border-red-400 bg-red-50/30 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 transition'

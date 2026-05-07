@@ -2,6 +2,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 import ProjectFilters from '@/app/components/ProjectFilters'
+
+export const dynamic = 'force-dynamic'
 import { DEFAULT_PROJECT_TAGS, PROJECT_TAG_OPTIONS_TABLE, uniqueTagNames } from '@/app/lib/projectTags'
 
 const CATEGORIES = [
@@ -90,7 +92,7 @@ export default async function ProjetosPage({
         </div>
 
         
-        <div className="flex gap-2 mb-6">
+        <div className="no-scrollbar flex gap-2 mb-6 overflow-x-auto pb-1 -mx-4 px-4 md:mx-0 md:px-0">
           <Link
             href="/projetos"
             className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors cursor-pointer ${

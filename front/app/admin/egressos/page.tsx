@@ -36,6 +36,7 @@ export default function AdminEgressosPage() {
   const [form, setForm] = useState(empty())
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [submitted, setSubmitted] = useState(false)
 
   useEffect(() => { load() }, [])
 
@@ -51,12 +52,14 @@ export default function AdminEgressosPage() {
   function openCreate() {
     setEditing(null)
     setForm(empty())
+    setSubmitted(false)
     setShowForm(true)
   }
 
   function openEdit(egresso: Egresso) {
     setEditing(egresso)
     setForm({ ...egresso })
+    setSubmitted(false)
     setShowForm(true)
   }
 
@@ -64,9 +67,11 @@ export default function AdminEgressosPage() {
     setShowForm(false)
     setEditing(null)
     setForm(empty())
+    setSubmitted(false)
   }
 
   async function save() {
+    setSubmitted(true)
     if (!form.name.trim()) return
     setSaving(true)
     const payload = {
@@ -114,10 +119,11 @@ export default function AdminEgressosPage() {
         </div>
         <button
           onClick={openCreate}
-          className="rounded-lg px-4 py-2 text-sm font-medium text-white transition"
+          className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-white transition"
           style={{ backgroundColor: '#0B7A3B' }}
         >
-          + Novo egresso
+          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+          Novo egresso
         </button>
       </div>
 
@@ -134,8 +140,8 @@ export default function AdminEgressosPage() {
             </div>
 
             <div className="flex flex-col gap-4">
-              <Field label="Nome *">
-                <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={input} placeholder="Nome completo" />
+              <Field label="Nome" required>
+                <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={submitted && !form.name.trim() ? inputError : input} placeholder="Nome completo" />
               </Field>
 
               <div className="grid grid-cols-2 gap-3">
@@ -180,7 +186,7 @@ export default function AdminEgressosPage() {
               </Field>
 
               <label className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer">
-                <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} className="rounded" />
+                <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} className="w-4.5 h-4.5 accent-[#0B7A3B]" />
                 Visível na plataforma
               </label>
             </div>
@@ -238,10 +244,14 @@ export default function AdminEgressosPage() {
 
 const input = 'w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-400 transition'
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+const inputError = 'w-full rounded-lg border border-red-400 bg-red-50/30 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 transition'
+
+function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs font-medium text-zinc-500">{label}</label>
+      <label className="text-xs font-medium text-zinc-500">
+        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
       {children}
     </div>
   )

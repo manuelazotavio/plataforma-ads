@@ -2,6 +2,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
 
+export const dynamic = 'force-dynamic'
+
 const CATEGORY_LABELS: Record<string, string> = {
   hackathon: 'Hackathon',
   maratona: 'Maratona',
@@ -25,7 +27,7 @@ export default async function EventosPage() {
   const past = (events ?? []).filter((e) => !e.start_date || new Date(e.start_date) < new Date())
 
   return (
-    <div className="px-10 py-8 max-w-5xl mx-auto w-full">
+    <div className="px-4 md:px-10 py-8 max-w-5xl mx-auto w-full">
       <div className="mb-10">
         <h1 className="text-2xl font-bold text-zinc-900">Eventos</h1>
         <p className="text-sm text-zinc-500 mt-1">Hackathons, maratonas, extensão e muito mais.</p>

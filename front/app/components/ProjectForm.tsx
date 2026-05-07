@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
@@ -35,6 +35,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
   const [tags, setTags] = useState<string[]>(uniqueTagNames(initial?.tags ?? []))
   const [images, setImages] = useState<{ url: string; type: 'image' | 'video' }[]>(initial?.images ?? [])
   const [uploading, setUploading] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
 
@@ -105,7 +106,8 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!formRef.current?.reportValidity()) return
+    setSubmitted(true)
+    if (!title.trim() || !description.trim()) return
     const validTags = tags.filter((tag) => technologyTags.includes(tag))
     onSave({ title, description, repo_url: repoUrl, deploy_url: deployUrl, semester, is_featured: isFeatured, tags: validTags, images })
   }
@@ -141,7 +143,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
             disabled={uploading}
             className="aspect-video rounded-xl border-2 border-dashed border-zinc-300 flex flex-col items-center justify-center text-zinc-400 hover:border-zinc-400 hover:text-zinc-600 disabled:opacity-50 transition text-xs gap-1"
           >
-            <span className="text-2xl leading-none">+</span>
+            <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
             <span>{uploading ? 'Enviando...' : 'Adicionar'}</span>
           </button>
         </div>
@@ -162,7 +164,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
           required
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className={inputClass}
+          className={submitted && !title.trim() ? inputErrorClass : inputClass}
           placeholder="Nome do projeto"
         />
       </Field>
@@ -173,7 +175,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
           rows={4}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className={inputClass + ' resize-none'}
+          className={(submitted && !description.trim() ? inputErrorClass : inputClass) + ' resize-none'}
           placeholder="Descreva o projeto, tecnologias usadas, desafios..."
         />
       </Field>
@@ -241,7 +243,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
           type="checkbox"
           checked={isFeatured}
           onChange={(e) => setIsFeatured(e.target.checked)}
-          className="rounded border-zinc-300"
+          className="w-4.5 h-4.5 accent-[#0B7A3B]"
         />
         <span className="text-sm text-zinc-700">Marcar como destaque no perfil</span>
       </label>
@@ -255,7 +257,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
         <button
           type="submit"
           disabled={saving || uploading}
-          className="ml-auto rounded-lg bg-zinc-900 px-6 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50 transition"
+          className="ml-auto rounded-lg bg-[#0B7A3B] px-6 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 transition"
         >
           {saving ? 'Salvando...' : 'Salvar projeto'}
         </button>
@@ -267,6 +269,9 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
 
 const inputClass =
   'rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 transition w-full'
+
+const inputErrorClass =
+  'rounded-lg border border-red-400 bg-red-50/30 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 transition w-full'
 
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (

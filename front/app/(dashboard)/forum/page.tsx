@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 
+export const dynamic = 'force-dynamic'
+
 export default async function ForumPage({
   searchParams,
 }: {
@@ -24,7 +26,7 @@ export default async function ForumPage({
     : (topics ?? [])
 
   return (
-    <div className="px-10 py-8 max-w-5xl mx-auto w-full">
+    <div className="px-4 md:px-10 py-8 max-w-5xl mx-auto w-full">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900">Fórum</h1>
@@ -32,10 +34,11 @@ export default async function ForumPage({
         </div>
         <Link
           href="/forum/novo"
-          className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
+          className="flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
           style={{ backgroundColor: '#0B7A3B' }}
         >
-          + Novo tópico
+          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+          Novo tópico
         </Link>
       </div>
 

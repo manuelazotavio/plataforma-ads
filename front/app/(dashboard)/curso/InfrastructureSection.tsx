@@ -31,7 +31,7 @@ function InfraRow({ item, index }: { item: InfraItem; index: number }) {
       ref={ref}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="grid grid-cols-[3fr_2fr] rounded-2xl overflow-hidden cursor-default"
+      className="grid grid-cols-1 md:grid-cols-[3fr_2fr] rounded-2xl overflow-hidden cursor-default"
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0)' : 'translateY(32px)',
@@ -40,7 +40,7 @@ function InfraRow({ item, index }: { item: InfraItem; index: number }) {
       }}
     >
       {/* Coluna de texto */}
-      <div className="py-9 pr-12 flex flex-col gap-4">
+      <div className="py-6 md:py-9 pr-0 md:pr-12 flex flex-col gap-4">
         <p
           className="text-2xl font-black leading-tight"
           style={{
@@ -84,7 +84,7 @@ function InfraRow({ item, index }: { item: InfraItem; index: number }) {
       </div>
 
       {/* Coluna de imagem */}
-      <div className="relative overflow-hidden min-h-[200px] bg-zinc-100">
+      <div className="relative overflow-hidden h-48 md:h-auto md:min-h-50 bg-zinc-100">
         {item.image ? (
           <Image
             src={item.image}
