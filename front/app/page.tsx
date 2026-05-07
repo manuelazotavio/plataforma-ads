@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 import PublicQuickCreateMenu from '@/app/components/PublicQuickCreateMenu'
+import { PublicHeaderAuth, PublicProfileCard } from '@/app/components/PublicAuthControls'
 
 type Project = {
   id: string
@@ -102,7 +103,7 @@ export default async function HomePage() {
             </div>
 
             <div className="flex flex-col gap-4">
-              <VisitorCard />
+              <PublicProfileCard />
               {topContributors.length > 0 && <TopContributorsCard contributors={topContributors} />}
               {popularTags.length > 0 && <TagsCard tags={popularTags} />}
             </div>
@@ -197,12 +198,7 @@ function PublicHeader() {
         />
       </div>
 
-      <Link href="/login" className="rounded-lg px-3 py-2 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900">
-        Entrar
-      </Link>
-      <Link href="/cadastro" className="rounded-lg px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90" style={{ backgroundColor: '#0B7A3B' }}>
-        Criar conta
-      </Link>
+      <PublicHeaderAuth />
     </header>
   )
 }
@@ -302,31 +298,6 @@ function TopicsSection({ topics }: { topics: Topic[] }) {
         </div>
       )}
     </section>
-  )
-}
-
-function VisitorCard() {
-  return (
-    <div className="rounded-2xl border border-zinc-200 bg-white p-5">
-      <h3 className="mb-4 text-base font-semibold text-zinc-900">Seu Perfil</h3>
-      <div className="mb-5 flex items-center gap-4">
-        <div className="relative h-14 w-14 shrink-0">
-          <svg viewBox="0 0 56 56" className="h-full w-full -rotate-90">
-            <circle cx={28} cy={28} r={22} fill="none" stroke="#f0fdf4" strokeWidth={6} />
-            <circle cx={28} cy={28} r={22} fill="none" stroke="#16a34a" strokeWidth={6} strokeDasharray={`${2 * Math.PI * 22}`} strokeDashoffset={`${2 * Math.PI * 22 * 0.7}`} strokeLinecap="round" />
-          </svg>
-          <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-green-700">30%</span>
-        </div>
-        <div>
-          <p className="text-sm font-semibold text-zinc-900">Visitante</p>
-          <p className="mt-0.5 text-xs text-zinc-400">Entre para publicar e comentar</p>
-        </div>
-      </div>
-      <div className="flex flex-col gap-3 border-t border-zinc-100 pt-4">
-        <Link href="/login" className="rounded-lg border border-zinc-200 px-3 py-2 text-center text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50">Entrar</Link>
-        <Link href="/cadastro" className="rounded-lg px-3 py-2 text-center text-xs font-semibold text-white transition hover:opacity-90" style={{ backgroundColor: '#0B7A3B' }}>Criar conta</Link>
-      </div>
-    </div>
   )
 }
 
