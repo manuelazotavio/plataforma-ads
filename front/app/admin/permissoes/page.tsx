@@ -96,7 +96,6 @@ export default function PermissoesPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState<string | null>(null)
 
-  // Modal novo perfil
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState({ id: '', label: '', description: '', color: '#2F9E41' })
   const [creating, setCreating] = useState(false)

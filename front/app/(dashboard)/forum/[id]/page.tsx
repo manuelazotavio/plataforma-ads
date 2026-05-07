@@ -35,8 +35,6 @@ type Reply = {
 type ReplyNode = { reply: Reply; children: ReplyNode[] }
 type VoteMap = Record<string, string[]>
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
-
 function buildTree(replies: Reply[]): ReplyNode[] {
   const map = new Map<string, ReplyNode>()
   for (const r of replies) map.set(r.id, { reply: r, children: [] })
@@ -56,8 +54,6 @@ function getEmbedUrl(url: string): string | null {
   if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}`
   return null
 }
-
-// ─── sub-components ──────────────────────────────────────────────────────────
 
 function Avatar({ author, size = 32 }: { author: Author | null; size?: number }) {
   if (author?.avatar_url) {
@@ -187,8 +183,6 @@ function ReplyItem({ reply, depth, currentUserId, voteMap, onVote, onReply, onDe
     </div>
   )
 }
-
-// ─── main page ───────────────────────────────────────────────────────────────
 
 export default function ForumTopicPage() {
   const router = useRouter()

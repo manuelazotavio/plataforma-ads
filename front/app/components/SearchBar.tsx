@@ -42,7 +42,6 @@ export default function SearchBar() {
   const [open, setOpen] = useState(false)
   const [selected, setSelected] = useState(-1)
 
-  // debounced search
   useEffect(() => {
     const q = query.trim()
     if (q.length < 2) {
@@ -104,7 +103,6 @@ export default function SearchBar() {
     return () => { clearTimeout(timer); }
   }, [query])
 
-  // close on outside click
   useEffect(() => {
     function close(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {

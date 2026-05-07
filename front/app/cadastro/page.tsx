@@ -42,8 +42,6 @@ export default function CadastroPage() {
       return
     }
 
-    // signUp may not establish a session (e.g. email confirmation required).
-    // Sign in explicitly so auth.uid() is available for subsequent DB operations.
     if (!data.session) {
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
       if (signInError) {

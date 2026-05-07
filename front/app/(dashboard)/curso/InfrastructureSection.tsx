@@ -39,7 +39,6 @@ function InfraRow({ item, index }: { item: InfraItem; index: number }) {
         transitionDelay: `${index * 100}ms`,
       }}
     >
-      {/* Coluna de texto */}
       <div className="py-6 md:py-9 pr-0 md:pr-12 flex flex-col gap-4">
         <p
           className="text-2xl font-black leading-tight"
@@ -83,7 +82,6 @@ function InfraRow({ item, index }: { item: InfraItem; index: number }) {
         </div>
       </div>
 
-      {/* Coluna de imagem */}
       <div className="relative overflow-hidden h-48 md:h-auto md:min-h-50 bg-zinc-100">
         {item.image ? (
           <Image
