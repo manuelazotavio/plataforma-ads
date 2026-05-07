@@ -42,7 +42,7 @@ export function PublicHeaderAuth() {
     <div className="flex items-center gap-3 pl-4 border-l border-zinc-100">
       <div className="hidden sm:block text-right leading-tight">
         <p className="text-sm font-semibold text-zinc-900">{profile.name}</p>
-        <p className="mt-0.5 text-xs text-zinc-400">{profile.semester ? `${profile.semester}o Semestre` : 'Aluno'}</p>
+        <p className="mt-0.5 text-xs text-zinc-400">{profile.semester ? `${profile.semester}º Semestre` : 'Aluno'}</p>
       </div>
       <Link href="/perfil" className="h-9 w-9 overflow-hidden rounded-full bg-zinc-200 ring-2 ring-zinc-100">
         {profile.avatar_url ? (
@@ -112,7 +112,7 @@ export function PublicProfileCard() {
         </div>
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-zinc-900">{profile.name}</p>
-          <p className="mt-0.5 text-xs text-zinc-400">{profile.semester ? `${profile.semester}o Semestre` : 'Aluno'}</p>
+          <p className="mt-0.5 text-xs text-zinc-400">{profile.semester ? `${profile.semester}º Semestre` : 'Aluno'}</p>
         </div>
       </div>
       <div className="flex flex-col gap-3 border-t border-zinc-100 pt-4">

@@ -7,7 +7,7 @@ import { supabase } from '@/app/lib/supabase'
 const quickCreateItems = [
   { href: '/cadastro', label: 'Novo projeto' },
   { href: '/cadastro', label: 'Novo artigo' },
-  { href: '/login', label: 'Novo topico' },
+  { href: '/login', label: 'Novo tópico' },
 ]
 
 export default function PublicQuickCreateMenu() {
@@ -22,7 +22,7 @@ export default function PublicQuickCreateMenu() {
     ? [
         { href: '/projetos/novo', label: 'Novo projeto' },
         { href: '/artigos/novo', label: 'Novo artigo' },
-        { href: '/forum/novo', label: 'Novo topico' },
+        { href: '/forum/novo', label: 'Novo tópico' },
       ]
     : quickCreateItems
 
@@ -45,7 +45,7 @@ export default function PublicQuickCreateMenu() {
 
       <button
         type="button"
-        aria-label={open ? 'Fechar acoes rapidas' : 'Abrir acoes rapidas'}
+        aria-label={open ? 'Fechar ações rápidas' : 'Abrir ações rápidas'}
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
         className="grid h-14 w-14 place-items-center rounded-full text-white shadow-lg transition hover:scale-105"

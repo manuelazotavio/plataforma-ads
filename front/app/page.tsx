@@ -32,7 +32,7 @@ type Contributor = {
 }
 
 const sidebarItems = [
-  { href: '/', label: 'Inicio', icon: <IconHome /> },
+  { href: '/', label: 'Início', icon: <IconHome /> },
   {
     href: '/curso',
     label: 'O curso',
@@ -41,14 +41,14 @@ const sidebarItems = [
   },
   { href: '/projetos', label: 'Projetos', icon: <IconGrid /> },
   { href: '/eventos', label: 'Eventos', icon: <IconCalendar /> },
-  { href: '/calendario', label: 'Calendario', icon: <IconCalendarGrid /> },
+  { href: '/calendario', label: 'Calendário', icon: <IconCalendarGrid /> },
   { href: '/vagas', label: 'Oportunidades', icon: <IconBriefcase /> },
   { href: '/egressos', label: 'Egressos', icon: <IconUsers /> },
   {
     href: '/area-aluno',
-    label: 'Area do Aluno',
+    label: 'Área do Aluno',
     icon: <IconPerson />,
-    children: ['Materiais', 'Orientacoes academicas', 'Links uteis'],
+    children: ['Materiais', 'Orientações acadêmicas', 'Links úteis'],
   },
   { href: '/contato', label: 'Contato', icon: <IconMessage /> },
 ]
@@ -116,8 +116,8 @@ export default async function HomePage() {
           <footer className="mt-8 border-t border-zinc-100 px-10 py-6">
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-zinc-400">
               <Link href="/regras" className="transition hover:text-zinc-700">Regras do ADS Comunica</Link>
-              <Link href="/privacidade" className="transition hover:text-zinc-700">Politica de Privacidade</Link>
-              <Link href="/contrato" className="transition hover:text-zinc-700">Contrato de Usuario</Link>
+              <Link href="/privacidade" className="transition hover:text-zinc-700">Política de Privacidade</Link>
+              <Link href="/contrato" className="transition hover:text-zinc-700">Contrato de Usuário</Link>
               <Link href="/acessibilidade" className="transition hover:text-zinc-700">Acessibilidade</Link>
               <span className="ml-auto">ADS Comunica, Inc. &copy; 2026. Todos os direitos reservados.</span>
             </div>
@@ -193,7 +193,7 @@ function PublicHeader() {
         </svg>
         <input
           type="text"
-          placeholder="Buscar projetos, topicos..."
+          placeholder="Buscar projetos, tópicos..."
           className="w-64 rounded-full bg-zinc-100 py-2 pl-8 pr-4 text-sm text-zinc-500 outline-none transition placeholder:text-zinc-400 focus:bg-zinc-200"
         />
       </div>
@@ -208,7 +208,7 @@ function WelcomeCard({ studentsCount, projectsCount }: { studentsCount: number; 
     <div className="rounded-2xl border border-zinc-100 px-10 py-8" style={{ background: 'linear-gradient(120deg, #f0fdf4 0%, #ffffff 55%, #fdf2f8 100%)' }}>
       <h1 className="mb-3 text-3xl font-bold tracking-tight text-zinc-900">Bem-vindo(a) ao ADS Comunica!</h1>
       <p className="mb-8 max-w-xl text-base text-zinc-500">
-        Veja projetos, acompanhe discussoes e conheca as oportunidades da comunidade de ADS.
+        Veja projetos, acompanhe discussões e conheça as oportunidades da comunidade de ADS.
       </p>
       <div className="flex flex-wrap gap-3">
         <Link href="/cadastro" className="flex items-center gap-2 rounded-lg px-6 py-3 text-base font-semibold text-white shadow-sm transition" style={{ backgroundColor: '#0B7A3B' }}>
@@ -217,7 +217,7 @@ function WelcomeCard({ studentsCount, projectsCount }: { studentsCount: number; 
         </Link>
         <Link href="/login" className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-6 py-3 text-base font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-50">
           <IconMessage size={16} />
-          Criar Topico
+          Criar Tópico
         </Link>
       </div>
       <div className="mt-8 flex gap-8 border-t border-white/70 pt-5">
@@ -271,9 +271,9 @@ function ProjectsSection({ projects }: { projects: Project[] }) {
 function TopicsSection({ topics }: { topics: Topic[] }) {
   return (
     <section>
-      <SectionHeader title="Discussoes Recentes" icon={<TopicsIcon />} href="/login" action="Participar" />
+      <SectionHeader title="Discussões Recentes" icon={<TopicsIcon />} href="/login" action="Participar" />
       {topics.length === 0 ? (
-        <EmptyCard text="Nenhum topico no forum ainda." action="Criar topico" href="/login" />
+        <EmptyCard text="Nenhum tópico no fórum ainda." action="Criar tópico" href="/login" />
       ) : (
         <div className="flex flex-col gap-3">
           {topics.map((topic) => {
@@ -358,7 +358,7 @@ function CalendarCard() {
 
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white p-5">
-      <h3 className="mb-4 text-base font-semibold text-zinc-900">Calendario de eventos</h3>
+      <h3 className="mb-4 text-base font-semibold text-zinc-900">Calendário de eventos</h3>
       <p className="mb-3 text-base font-bold text-zinc-900">{MONTH_NAMES[month]}</p>
       <div className="mb-1 grid grid-cols-7">
         {DAY_LABELS.map((day, i) => <div key={i} className="pb-1 text-center text-[11px] font-medium text-zinc-400">{day}</div>)}
@@ -437,7 +437,7 @@ function firstRelation<T>(value: T | T[] | null | undefined): T | null {
   return Array.isArray(value) ? (value[0] ?? null) : value
 }
 
-const MONTH_NAMES = ['Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+const MONTH_NAMES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
 const DAY_LABELS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
 
 function relativeTime(iso: string): string {
