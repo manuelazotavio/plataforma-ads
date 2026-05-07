@@ -45,10 +45,9 @@ const sidebarItems: SidebarItem[] = [
 type AppSidebarProps = {
   open?: boolean
   onClose?: () => void
-  showAdminLink?: boolean
 }
 
-export default function AppSidebar({ open = true, onClose, showAdminLink = false }: AppSidebarProps) {
+export default function AppSidebar({ open = true, onClose }: AppSidebarProps) {
   const pathname = usePathname()
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({})
   const navRef = useRef<HTMLElement>(null)
@@ -73,7 +72,7 @@ export default function AppSidebar({ open = true, onClose, showAdminLink = false
         {sidebarItems.map((item, i) => {
           const active = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href + '/'))
           const hasChildren = Boolean(item.children?.length)
-          const expanded = hasChildren && (openItems[item.href] ?? active)
+          const expanded = hasChildren && (openItems[item.href] ?? false)
           const dividerBefore = i === 6
 
           function handleToggle() {
@@ -149,20 +148,6 @@ export default function AppSidebar({ open = true, onClose, showAdminLink = false
         })}
       </nav>
 
-      {showAdminLink && (
-        <div className="px-3 pb-4">
-          <Link
-            href="/admin"
-            onClick={onClose}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition-colors"
-          >
-            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-            </svg>
-            Painel Admin
-          </Link>
-        </div>
-      )}
     </aside>
   )
 }

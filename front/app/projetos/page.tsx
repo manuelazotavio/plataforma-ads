@@ -35,6 +35,7 @@ export default async function ProjetosPage({
   let query = supabase
     .from('projects')
     .select('id, title, description, repo_url, deploy_url, semester, is_featured, like_count, created_at, users(id, name, avatar_url), project_tags(tag_name), project_images(image_url, display_order)')
+    .eq('approved', true)
     .order('created_at', { ascending: false })
 
   if (tagProjectIds !== null) {

@@ -23,6 +23,12 @@ export default function NovoProjetoPage() {
     setSaving(true)
     setError(null)
 
+    const { data: userRow } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', userId)
+      .single()
+
     const { data: project, error: insertError } = await supabase
       .from('projects')
       .insert({
@@ -33,6 +39,7 @@ export default function NovoProjetoPage() {
         deploy_url: data.deploy_url || null,
         semester: data.semester ? parseInt(data.semester) : null,
         is_featured: data.is_featured,
+        approved: userRow?.role === 'admin',
       })
       .select('id')
       .single()

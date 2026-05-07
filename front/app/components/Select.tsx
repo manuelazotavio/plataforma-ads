@@ -10,9 +10,10 @@ type Props = {
   options: Option[]
   placeholder?: string
   className?: string
+  disabled?: boolean
 }
 
-export default function Select({ value, onChange, options, placeholder, className }: Props) {
+export default function Select({ value, onChange, options, placeholder, className, disabled }: Props) {
   const [open, setOpen] = useState(false)
   const [rect, setRect] = useState<DOMRect | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -38,6 +39,7 @@ export default function Select({ value, onChange, options, placeholder, classNam
   }, [open])
 
   function handleToggle() {
+    if (disabled) return
     if (!open && btnRef.current) {
       setRect(btnRef.current.getBoundingClientRect())
     }
@@ -55,7 +57,8 @@ export default function Select({ value, onChange, options, placeholder, classNam
         ref={btnRef}
         type="button"
         onClick={handleToggle}
-        className="w-full flex items-center justify-between gap-2 rounded-lg border border-zinc-200 bg-white pl-3 pr-2.5 py-2 text-sm text-left outline-none focus:border-zinc-400 focus:ring-2 focus:ring-zinc-100 transition"
+        disabled={disabled}
+        className={`w-full flex items-center justify-between gap-2 rounded-lg border border-zinc-200 bg-white pl-3 pr-2.5 py-2 text-sm text-left outline-none focus:border-zinc-400 focus:ring-2 focus:ring-zinc-100 transition ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
         <span className={selected ? 'text-zinc-700 truncate' : 'text-zinc-400'}>
           {selected ? selected.label : placeholder}
