@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/app/lib/supabase'
 
 type Project = {
@@ -47,6 +48,7 @@ type Contributor = {
 }
 
 export default function InicioPage() {
+  const router = useRouter()
   const [stats, setStats] = useState<UserStats | null>(null)
   const [featuredProjects, setFeaturedProjects] = useState<Project[]>([])
   const [recentTopics, setRecentTopics] = useState<Topic[]>([])
@@ -57,7 +59,10 @@ export default function InicioPage() {
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      if (!user) {
+        router.replace('/login')
+        return
+      }
 
       const [
         { data: profile },
@@ -163,7 +168,7 @@ export default function InicioPage() {
       setLoading(false)
     }
     load()
-  }, [])
+  }, [router])
 
   if (loading) {
     return (
