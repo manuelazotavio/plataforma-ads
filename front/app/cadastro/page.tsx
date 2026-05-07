@@ -83,7 +83,7 @@ export default function CadastroPage() {
       }
     }
 
-    router.push('/inicio')
+    router.push('/')
   }
 
   return (

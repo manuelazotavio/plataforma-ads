@@ -1,7 +1,7 @@
 ﻿'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
@@ -16,7 +16,7 @@ type UserProfile = {
 }
 
 const sidebarItems = [
-  { href: '/inicio', label: 'Início', icon: <IconHome /> },
+  { href: '/', label: 'Início', icon: <IconHome /> },
   {
     href: '/curso',
     label: 'O curso',
@@ -49,6 +49,7 @@ const sidebarItems = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const router = useRouter()
   const [user, setUser] = useState<UserProfile | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -63,6 +64,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     async function loadUser() {
       const { data: { user: authUser } } = await supabase.auth.getUser()
       if (!authUser) {
+        if (isProtectedPath(pathname)) {
+          router.replace('/login')
+        }
         setLoading(false)
         return
       }
@@ -76,7 +80,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       setLoading(false)
     }
     loadUser()
-  }, [])
+  }, [pathname, router])
 
   useEffect(() => {
     setSidebarOpen(false)
@@ -337,6 +341,19 @@ const quickCreateItems = [
   { href: '/artigos/novo', label: 'Novo artigo' },
   { href: '/forum/novo', label: 'Novo tópico' },
 ]
+
+const protectedPathPrefixes = [
+  '/perfil',
+  '/meus-artigos',
+  '/meus-projetos',
+  '/projetos/novo',
+  '/artigos/novo',
+  '/forum/novo',
+]
+
+function isProtectedPath(pathname: string) {
+  return protectedPathPrefixes.some((path) => pathname === path || pathname.startsWith(`${path}/`))
+}
 
 function QuickCreateMenu() {
   const [open, setOpen] = useState(false)
