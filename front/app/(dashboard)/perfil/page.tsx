@@ -270,7 +270,7 @@ export default function PerfilPage() {
 
         <div className="lg:sticky lg:top-6 flex flex-col gap-4">
           <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden">
-            <div className="h-24 w-full" style={{ background: 'linear-gradient(135deg, #0B7A3B 0%, #0d9444 60%, #34d399 100%)' }} />
+            <div className="h-24 w-full" style={{ background: 'linear-gradient(135deg, #2F9E41 0%, #0d9444 60%, #34d399 100%)' }} />
 
             <div className="px-6 pb-6">
               <div className="relative -mt-10 mb-4">
@@ -290,7 +290,7 @@ export default function PerfilPage() {
                   {profile.name || <span className="text-zinc-300 font-normal italic">Seu nome</span>}
                 </h2>
                 {isEgresso && (
-                  <span className="rounded-full px-2 py-0.5 text-xs font-semibold" style={{ backgroundColor: '#e6f4ec', color: '#0B7A3B' }}>
+                  <span className="rounded-full px-2 py-0.5 text-xs font-semibold" style={{ backgroundColor: '#e6f4ec', color: '#2F9E41' }}>
                     Egresso
                   </span>
                 )}
@@ -521,7 +521,7 @@ export default function PerfilPage() {
               <h3 className="text-sm font-semibold text-zinc-900">Sou egresso</h3>
               <div
                 onClick={() => setIsEgresso((v) => !v)}
-                className={`w-10 h-5 rounded-full transition-colors relative cursor-pointer ${isEgresso ? 'bg-[#0B7A3B]' : 'bg-zinc-200'}`}
+                className={`w-10 h-5 rounded-full transition-colors relative cursor-pointer ${isEgresso ? 'bg-[#2F9E41]' : 'bg-zinc-200'}`}
               >
                 <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${isEgresso ? 'translate-x-5' : 'translate-x-0.5'}`} />
               </div>
@@ -563,7 +563,7 @@ export default function PerfilPage() {
             type="submit"
             disabled={saving}
             className="rounded-xl px-6 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50 transition"
-            style={{ backgroundColor: '#0B7A3B' }}
+            style={{ backgroundColor: '#2F9E41' }}
           >
             {saving ? 'Salvando...' : 'Salvar perfil'}
           </button>
@@ -603,7 +603,7 @@ export default function PerfilPage() {
               onClick={handlePasswordChange}
               disabled={passwordSaving || !newPassword}
               className="self-start rounded-xl px-5 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-40 transition"
-              style={{ backgroundColor: '#0B7A3B' }}
+              style={{ backgroundColor: '#2F9E41' }}
             >
               {passwordSaving ? 'Salvando...' : 'Alterar senha'}
             </button>

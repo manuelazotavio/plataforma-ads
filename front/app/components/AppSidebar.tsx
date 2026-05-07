@@ -103,7 +103,7 @@ export default function AppSidebar({ open = true, onClose }: AppSidebarProps) {
                   className={`flex w-full min-w-0 items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-colors ${
                     active ? 'text-white' : 'text-zinc-900 hover:bg-zinc-100'
                   }`}
-                  style={active ? { backgroundColor: '#0B7A3B' } : undefined}
+                  style={active ? { backgroundColor: '#2F9E41' } : undefined}
                 >
                   <span className="shrink-0">{item.icon}</span>
                   <span className="min-w-0 flex-1 truncate text-left">{item.label}</span>
@@ -123,7 +123,7 @@ export default function AppSidebar({ open = true, onClose }: AppSidebarProps) {
                   className={`flex min-w-0 items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-colors ${
                     active ? 'text-white' : 'text-zinc-900 hover:bg-zinc-100'
                   }`}
-                  style={active ? { backgroundColor: '#0B7A3B' } : undefined}
+                  style={active ? { backgroundColor: '#2F9E41' } : undefined}
                 >
                   <span className="shrink-0">{item.icon}</span>
                   <span className="truncate">{item.label}</span>

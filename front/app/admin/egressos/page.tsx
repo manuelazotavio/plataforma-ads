@@ -120,7 +120,7 @@ export default function AdminEgressosPage() {
         <button
           onClick={openCreate}
           className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-white transition"
-          style={{ backgroundColor: '#0B7A3B' }}
+          style={{ backgroundColor: '#2F9E41' }}
         >
           <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
           Novo egresso
@@ -186,7 +186,7 @@ export default function AdminEgressosPage() {
               </Field>
 
               <label className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer">
-                <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} className="w-4.5 h-4.5 accent-[#0B7A3B]" />
+                <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} className="w-4.5 h-4.5 accent-[#2F9E41]" />
                 Visível na plataforma
               </label>
             </div>
@@ -196,7 +196,7 @@ export default function AdminEgressosPage() {
                 onClick={save}
                 disabled={saving || !form.name.trim()}
                 className="flex-1 rounded-lg py-2.5 text-sm font-medium text-white disabled:opacity-50 transition"
-                style={{ backgroundColor: '#0B7A3B' }}
+                style={{ backgroundColor: '#2F9E41' }}
               >
                 {saving ? 'Salvando...' : 'Salvar'}
               </button>

@@ -36,7 +36,7 @@ export default function CurriculumTabs({ curriculum }: { curriculum: Semester[] 
                 ? 'text-white'
                 : 'text-zinc-400 hover:text-zinc-700'
             }`}
-            style={active === sem.semester ? { backgroundColor: '#0B7A3B' } : undefined}
+            style={active === sem.semester ? { backgroundColor: '#2F9E41' } : undefined}
           >
             {sem.semester}º Semestre
           </button>

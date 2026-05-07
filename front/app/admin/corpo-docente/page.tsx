@@ -233,7 +233,7 @@ export default function AdminCorpoDocentePage() {
           </div>
           <button
             onClick={() => { if (showForm) { setForm(EMPTY_FORM); setSubmitted(false) } setShowForm((v) => !v) }}
-            className="rounded-lg bg-[#0B7A3B] px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition"
+            className="rounded-lg bg-[#2F9E41] px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition"
           >
             {showForm ? 'Cancelar' : 'Adicionar professor'}
           </button>
@@ -281,13 +281,13 @@ export default function AdminCorpoDocentePage() {
               </div>
               <div className="flex items-center justify-between pt-1">
                 <label className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer">
-                  <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} className="w-4.5 h-4.5 accent-[#0B7A3B]" />
+                  <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} className="w-4.5 h-4.5 accent-[#2F9E41]" />
                   Visível na página pública
                 </label>
                 <button
                   onClick={handleCreate}
                   disabled={creating || !form.name.trim()}
-                  className="rounded-lg bg-[#0B7A3B] px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 transition"
+                  className="rounded-lg bg-[#2F9E41] px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 transition"
                 >
                   {creating ? 'Salvando...' : 'Salvar'}
                 </button>
@@ -388,14 +388,14 @@ export default function AdminCorpoDocentePage() {
                     </div>
                     <div className="flex items-center justify-between pt-1">
                       <label className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer">
-                        <input type="checkbox" checked={editState.is_active} onChange={(e) => setEditState({ ...editState, is_active: e.target.checked })} className="w-4.5 h-4.5 accent-[#0B7A3B]" />
+                        <input type="checkbox" checked={editState.is_active} onChange={(e) => setEditState({ ...editState, is_active: e.target.checked })} className="w-4.5 h-4.5 accent-[#2F9E41]" />
                         Visível na página pública
                       </label>
                       <div className="flex gap-2">
                         <button onClick={() => { setEditingId(null); setEditState(null); setEditSubmitted(false) }} className="text-sm text-zinc-500 hover:text-zinc-900 transition px-3 py-1.5">
                           Cancelar
                         </button>
-                        <button onClick={() => saveEdit(prof.id)} disabled={saving} className="rounded-lg bg-[#0B7A3B] px-4 py-1.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 transition">
+                        <button onClick={() => saveEdit(prof.id)} disabled={saving} className="rounded-lg bg-[#2F9E41] px-4 py-1.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 transition">
                           {saving ? 'Salvando...' : 'Salvar'}
                         </button>
                       </div>
@@ -434,7 +434,7 @@ export default function AdminCorpoDocentePage() {
                           <button
                             onClick={() => createAccess(prof.id)}
                             disabled={accessSaving}
-                            className="rounded-lg bg-[#0B7A3B] px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50 transition"
+                            className="rounded-lg bg-[#2F9E41] px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50 transition"
                           >
                             {accessSaving ? 'Criando...' : 'Criar acesso'}
                           </button>

@@ -89,7 +89,7 @@ function EventCard({ event }: {
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           {event.category && (
-            <span className="text-xs font-semibold uppercase tracking-wider text-[#0B7A3B]">
+            <span className="text-xs font-semibold uppercase tracking-wider text-[#2F9E41]">
               {CATEGORY_LABELS[event.category] ?? event.category}
             </span>
           )}
@@ -106,7 +106,7 @@ function EventCard({ event }: {
             <span className="text-xs text-zinc-400">{formatDate(event.start_date)}</span>
           )}
           {event.registration_open && (
-            <span className="text-xs font-semibold text-white bg-[#0B7A3B] rounded-full px-3 py-0.5">
+            <span className="text-xs font-semibold text-white bg-[#2F9E41] rounded-full px-3 py-0.5">
               Inscrições abertas
             </span>
           )}

@@ -68,7 +68,7 @@ export default async function CursoPage() {
                 'Empreendedorismo e gestão de projetos',
               ].map((item) => (
                 <li key={item} className="flex items-center gap-2 text-sm text-zinc-600">
-                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: '#0B7A3B' }} />
+                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: '#2F9E41' }} />
                   {item}
                 </li>
               ))}

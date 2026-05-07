@@ -40,7 +40,7 @@ export default async function VagasPage({
           className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${
             !category ? 'text-white' : 'text-zinc-400 hover:text-zinc-700'
           }`}
-          style={!category ? { backgroundColor: '#0B7A3B' } : undefined}
+          style={!category ? { backgroundColor: '#2F9E41' } : undefined}
         >
           Todas
         </Link>
@@ -51,7 +51,7 @@ export default async function VagasPage({
             className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${
               category === cat.value ? 'text-white' : 'text-zinc-400 hover:text-zinc-700'
             }`}
-            style={category === cat.value ? { backgroundColor: '#0B7A3B' } : undefined}
+            style={category === cat.value ? { backgroundColor: '#2F9E41' } : undefined}
           >
             {cat.label}
           </Link>
@@ -72,7 +72,7 @@ export default async function VagasPage({
                 <div className="flex flex-col gap-2 min-w-0">
                   <div className="flex items-center gap-2">
                     {cat && (
-                      <span className="text-xs font-semibold uppercase tracking-wider text-[#0B7A3B]">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-[#2F9E41]">
                         {cat.label}
                       </span>
                     )}

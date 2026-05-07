@@ -315,7 +315,7 @@ export default function Comments({ type, targetId }: Props) {
                           <button type="button" onClick={() => { setReplyingTo(null); setReplyText('') }} className="px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-800 transition">
                             Cancelar
                           </button>
-                          <button type="submit" disabled={replySubmitting || !replyText.trim()} className="rounded-lg bg-[#0B7A3B] px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50 transition">
+                          <button type="submit" disabled={replySubmitting || !replyText.trim()} className="rounded-lg bg-[#2F9E41] px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50 transition">
                             {replySubmitting ? 'Enviando...' : 'Responder'}
                           </button>
                         </div>
@@ -341,7 +341,7 @@ export default function Comments({ type, targetId }: Props) {
             className="w-full rounded-xl border border-zinc-200 px-4 py-3 text-sm text-zinc-900 outline-none focus:border-zinc-400 focus:ring-2 focus:ring-zinc-100 transition resize-none"
           />
           <div className="flex justify-end">
-            <button type="submit" disabled={submitting || !text.trim()} className="rounded-lg bg-[#0B7A3B] px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 transition">
+            <button type="submit" disabled={submitting || !text.trim()} className="rounded-lg bg-[#2F9E41] px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 transition">
               {submitting ? 'Enviando...' : 'Comentar'}
             </button>
           </div>

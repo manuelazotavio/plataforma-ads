@@ -54,7 +54,7 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
       <div className="flex flex-col gap-3 mb-10">
         <div className="flex items-center gap-2">
           {event.category && (
-            <span className="text-xs font-semibold uppercase tracking-wider text-[#0B7A3B]">
+            <span className="text-xs font-semibold uppercase tracking-wider text-[#2F9E41]">
               {CATEGORY_LABELS[event.category] ?? event.category}
             </span>
           )}
@@ -98,7 +98,7 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 rounded-xl px-8 py-3 text-sm font-bold text-white mb-12 transition hover:opacity-90"
-          style={{ backgroundColor: '#0B7A3B' }}
+          style={{ backgroundColor: '#2F9E41' }}
         >
           Inscrever-se ↗
         </a>
@@ -135,7 +135,7 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
               )
             })}
           </div>
-          <Link href={`/projetos?category=${event.category}`} className="text-sm text-[#0B7A3B] hover:opacity-70 transition mt-4 inline-flex items-center gap-1">
+          <Link href={`/projetos?category=${event.category}`} className="text-sm text-[#2F9E41] hover:opacity-70 transition mt-4 inline-flex items-center gap-1">
             Ver todos
             <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
           </Link>

@@ -265,7 +265,7 @@ function MultiSelect({
               >
                 <span
                   className={`grid h-4 w-4 shrink-0 place-items-center rounded border ${
-                    active ? 'border-[#0B7A3B] bg-[#0B7A3B]' : 'border-zinc-300 bg-white'
+                    active ? 'border-[#2F9E41] bg-[#2F9E41]' : 'border-zinc-300 bg-white'
                   }`}
                 >
                   {active && (

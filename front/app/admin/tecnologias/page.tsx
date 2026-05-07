@@ -256,7 +256,7 @@ export default function AdminTecnologiasPage() {
         <button
           type="submit"
           disabled={saving || !normalizeTagName(name)}
-          className="cursor-pointer rounded-lg bg-[#0B7A3B] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
+          className="cursor-pointer rounded-lg bg-[#2F9E41] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
         >
           Adicionar
         </button>

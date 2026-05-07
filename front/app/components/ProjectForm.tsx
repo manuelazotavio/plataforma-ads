@@ -224,7 +224,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
                 onClick={() => toggleTag(tag)}
                 className={`cursor-pointer rounded-full border px-3 py-1.5 text-xs font-medium transition ${
                   active
-                    ? 'border-[#0B7A3B] bg-[#0B7A3B] text-white'
+                    ? 'border-[#2F9E41] bg-[#2F9E41] text-white'
                     : 'border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50'
                 }`}
               >
@@ -243,7 +243,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
           type="checkbox"
           checked={isFeatured}
           onChange={(e) => setIsFeatured(e.target.checked)}
-          className="w-4.5 h-4.5 accent-[#0B7A3B]"
+          className="w-4.5 h-4.5 accent-[#2F9E41]"
         />
         <span className="text-sm text-zinc-700">Marcar como destaque no perfil</span>
       </label>
@@ -257,7 +257,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
         <button
           type="submit"
           disabled={saving || uploading}
-          className="ml-auto rounded-lg bg-[#0B7A3B] px-6 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 transition"
+          className="ml-auto rounded-lg bg-[#2F9E41] px-6 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 transition"
         >
           {saving ? 'Salvando...' : 'Salvar projeto'}
         </button>

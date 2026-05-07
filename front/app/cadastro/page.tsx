@@ -166,14 +166,14 @@ export default function CadastroPage() {
             <button
               type="button"
               onClick={() => setIsEgresso(false)}
-              className={`flex-1 py-2 transition-colors ${!isEgresso ? 'bg-[#0B7A3B] text-white' : 'text-zinc-500 hover:text-zinc-900'}`}
+              className={`flex-1 py-2 transition-colors ${!isEgresso ? 'bg-[#2F9E41] text-white' : 'text-zinc-500 hover:text-zinc-900'}`}
             >
               Sou aluno
             </button>
             <button
               type="button"
               onClick={() => setIsEgresso(true)}
-              className={`flex-1 py-2 transition-colors ${isEgresso ? 'bg-[#0B7A3B] text-white' : 'text-zinc-500 hover:text-zinc-900'}`}
+              className={`flex-1 py-2 transition-colors ${isEgresso ? 'bg-[#2F9E41] text-white' : 'text-zinc-500 hover:text-zinc-900'}`}
             >
               Sou egresso
             </button>
@@ -239,7 +239,7 @@ export default function CadastroPage() {
           <button
             type="submit"
             disabled={loading}
-            className="mt-1 rounded-lg bg-[#0B7A3B] px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 transition"
+            className="mt-1 rounded-lg bg-[#2F9E41] px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 transition"
           >
             {loading ? 'Criando conta...' : 'Criar conta'}
           </button>

@@ -77,7 +77,7 @@ function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (
       onClick={onChange}
       disabled={disabled}
       className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40 ${
-        checked ? 'bg-[#0B7A3B]' : 'bg-zinc-200'
+        checked ? 'bg-[#2F9E41]' : 'bg-zinc-200'
       }`}
     >
       <span
@@ -98,7 +98,7 @@ export default function PermissoesPage() {
 
   // Modal novo perfil
   const [showModal, setShowModal] = useState(false)
-  const [form, setForm] = useState({ id: '', label: '', description: '', color: '#0B7A3B' })
+  const [form, setForm] = useState({ id: '', label: '', description: '', color: '#2F9E41' })
   const [creating, setCreating] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
 
@@ -189,7 +189,7 @@ export default function PermissoesPage() {
     })
     if (error) { setFormError(error.message); setCreating(false); return }
     setShowModal(false)
-    setForm({ id: '', label: '', description: '', color: '#0B7A3B' })
+    setForm({ id: '', label: '', description: '', color: '#2F9E41' })
     await loadRoles()
     setSelected(form.id.trim())
     await loadPerms(form.id.trim())
@@ -223,7 +223,7 @@ export default function PermissoesPage() {
           <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Perfis</h2>
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-1 text-xs font-semibold text-[#0B7A3B] hover:opacity-70 transition"
+            className="flex items-center gap-1 text-xs font-semibold text-[#2F9E41] hover:opacity-70 transition"
           >
             <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
             Novo
@@ -283,7 +283,7 @@ export default function PermissoesPage() {
               <button
                 onClick={grantAll}
                 className="text-xs font-medium text-white transition px-3 py-1.5 rounded-lg hover:opacity-90"
-                style={{ backgroundColor: '#0B7A3B' }}
+                style={{ backgroundColor: '#2F9E41' }}
               >
                 Conceder tudo
               </button>
@@ -412,7 +412,7 @@ export default function PermissoesPage() {
                 onClick={createRole}
                 disabled={creating || !form.id.trim() || !form.label.trim()}
                 className="flex-1 rounded-lg py-2.5 text-sm font-medium text-white disabled:opacity-50 transition hover:opacity-90"
-                style={{ backgroundColor: '#0B7A3B' }}
+                style={{ backgroundColor: '#2F9E41' }}
               >
                 {creating ? 'Criando...' : 'Criar perfil'}
               </button>

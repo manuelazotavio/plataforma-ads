@@ -224,7 +224,7 @@ export default function NovoTopicoPage() {
             type="submit"
             disabled={saving || !title.trim() || !content.trim()}
             className="rounded-xl px-8 py-2.5 text-sm font-semibold text-white disabled:opacity-50 transition hover:opacity-90"
-            style={{ backgroundColor: '#0B7A3B' }}
+            style={{ backgroundColor: '#2F9E41' }}
           >
             {saving ? 'Publicando...' : 'Publicar tópico'}
           </button>

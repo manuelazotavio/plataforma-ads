@@ -76,7 +76,7 @@ export default function AdminArtigosPage() {
               key={f}
               onClick={() => setFilter(f)}
               className={`rounded-md px-3 py-1.5 text-xs font-medium transition capitalize ${
-                filter === f ? 'bg-[#0B7A3B] text-white' : 'text-zinc-500 hover:text-zinc-900'
+                filter === f ? 'bg-[#2F9E41] text-white' : 'text-zinc-500 hover:text-zinc-900'
               }`}
             >
               {f}

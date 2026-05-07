@@ -23,7 +23,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 }
 
 function categoryColor(cat: string | null) {
-  return cat && CATEGORY_COLORS[cat] ? CATEGORY_COLORS[cat] : 'bg-[#0B7A3B]/10 text-[#0B7A3B]'
+  return cat && CATEGORY_COLORS[cat] ? CATEGORY_COLORS[cat] : 'bg-[#2F9E41]/10 text-[#2F9E41]'
 }
 
 export default function CalendarioPage() {
@@ -138,7 +138,7 @@ export default function CalendarioPage() {
             >
               <span className={`text-xs font-bold self-start w-6 h-6 flex items-center justify-center rounded-full shrink-0 ${
                 todayCell
-                  ? 'bg-[#0B7A3B] text-white'
+                  ? 'bg-[#2F9E41] text-white'
                   : cell.current
                   ? 'text-zinc-800'
                   : 'text-zinc-300'

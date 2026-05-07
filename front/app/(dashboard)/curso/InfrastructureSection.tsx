@@ -44,7 +44,7 @@ function InfraRow({ item, index }: { item: InfraItem; index: number }) {
         <p
           className="text-2xl font-black leading-tight"
           style={{
-            color: hovered ? '#0B7A3B' : '#18181b',
+            color: hovered ? '#2F9E41' : '#18181b',
             letterSpacing: hovered ? '0.01em' : '0em',
             transition: 'color 0.4s ease, letter-spacing 0.4s ease',
           }}
@@ -69,8 +69,8 @@ function InfraRow({ item, index }: { item: InfraItem; index: number }) {
               key={tag}
               className="text-xs border rounded-full px-3 py-1"
               style={{
-                color: hovered ? '#0B7A3B' : '#71717a',
-                borderColor: hovered ? '#0B7A3B' : '#e4e4e7',
+                color: hovered ? '#2F9E41' : '#71717a',
+                borderColor: hovered ? '#2F9E41' : '#e4e4e7',
                 transform: hovered ? 'translateY(0)' : 'translateY(4px)',
                 opacity: hovered ? 1 : 0.7,
                 transition: 'color 0.3s ease, border-color 0.3s ease, transform 0.3s ease, opacity 0.3s ease',

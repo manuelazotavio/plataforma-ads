@@ -67,7 +67,7 @@ function EgressoRow({ egresso, index }: { egresso: Egresso; index: number }) {
       <div className="min-w-0 flex flex-col gap-0.5">
         <p
           className="text-base font-black leading-tight transition-colors duration-300"
-          style={{ color: hovered ? '#0B7A3B' : '#18181b' }}
+          style={{ color: hovered ? '#2F9E41' : '#18181b' }}
         >
           {egresso.name}
         </p>
@@ -102,7 +102,7 @@ function EgressoRow({ egresso, index }: { egresso: Egresso; index: number }) {
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs font-semibold transition-colors duration-300"
-            style={{ color: hovered ? '#0B7A3B' : '#d4d4d8' }}
+            style={{ color: hovered ? '#2F9E41' : '#d4d4d8' }}
             onClick={(e) => e.stopPropagation()}
           >
             LinkedIn ↗

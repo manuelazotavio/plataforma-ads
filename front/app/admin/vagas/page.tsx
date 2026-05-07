@@ -74,7 +74,7 @@ export default function AdminVagasPage() {
               key={f}
               onClick={() => setFilter(f)}
               className={`rounded-md px-3 py-1.5 text-xs font-medium transition capitalize ${
-                filter === f ? 'bg-[#0B7A3B] text-white' : 'text-zinc-500 hover:text-zinc-900'
+                filter === f ? 'bg-[#2F9E41] text-white' : 'text-zinc-500 hover:text-zinc-900'
               }`}
             >
               {f}
@@ -102,7 +102,7 @@ export default function AdminVagasPage() {
                       {job.company}{job.location ? ` · ${job.location}` : ''} · {new Date(job.created_at).toLocaleDateString('pt-BR')}
                     </p>
                     {job.category && (
-                      <span className="text-xs font-semibold text-[#0B7A3B]">
+                      <span className="text-xs font-semibold text-[#2F9E41]">
                         {CATEGORIES.find((c) => c.value === job.category)?.label}
                       </span>
                     )}

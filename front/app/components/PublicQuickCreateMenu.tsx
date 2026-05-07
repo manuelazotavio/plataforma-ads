@@ -49,7 +49,7 @@ export default function PublicQuickCreateMenu() {
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
         className="grid h-14 w-14 place-items-center rounded-full text-white shadow-lg transition hover:scale-105"
-        style={{ backgroundColor: '#0B7A3B' }}
+        style={{ backgroundColor: '#2F9E41' }}
       >
         <svg
           className={`h-7 w-7 transition-transform ${open ? 'rotate-45' : ''}`}

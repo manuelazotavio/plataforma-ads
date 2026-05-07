@@ -223,7 +223,7 @@ function TopContributorsCard({ contributors }: { contributors: Contributor[] }) 
               <p className="truncate text-xs font-semibold text-zinc-900">{contributor.name}</p>
               <p className="text-xs text-zinc-400">{contributor.semester ? `${contributor.semester}o Semestre` : 'Aluno'}</p>
             </div>
-            <span className="shrink-0 text-xs font-bold" style={{ color: '#0B7A3B' }}>{contributor.totalLikes > 0 ? `${contributor.totalLikes} XP` : '-'}</span>
+            <span className="shrink-0 text-xs font-bold" style={{ color: '#2F9E41' }}>{contributor.totalLikes > 0 ? `${contributor.totalLikes} XP` : '-'}</span>
           </div>
         ))}
       </div>
@@ -267,7 +267,7 @@ function CalendarCard() {
         {cells.map((day, i) => (
           <div key={i} className="flex h-7 items-center justify-center">
             {day !== null && (
-              <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-medium ${day === today ? 'font-bold text-white' : 'text-zinc-700'}`} style={day === today ? { backgroundColor: '#0B7A3B' } : undefined}>
+              <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-medium ${day === today ? 'font-bold text-white' : 'text-zinc-700'}`} style={day === today ? { backgroundColor: '#2F9E41' } : undefined}>
                 {day}
               </span>
             )}

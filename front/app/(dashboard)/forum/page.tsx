@@ -35,7 +35,7 @@ export default async function ForumPage({
         <Link
           href="/forum/novo"
           className="flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
-          style={{ backgroundColor: '#0B7A3B' }}
+          style={{ backgroundColor: '#2F9E41' }}
         >
           <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
           Novo tópico
@@ -48,7 +48,7 @@ export default async function ForumPage({
           <Link
             href="/forum"
             className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${!category ? 'text-white' : 'text-zinc-400 hover:text-zinc-700'}`}
-            style={!category ? { backgroundColor: '#0B7A3B' } : undefined}
+            style={!category ? { backgroundColor: '#2F9E41' } : undefined}
           >
             Todos
           </Link>
@@ -57,7 +57,7 @@ export default async function ForumPage({
               key={cat.id}
               href={`/forum?category=${cat.id}`}
               className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${category === cat.id ? 'text-white' : 'text-zinc-400 hover:text-zinc-700'}`}
-              style={category === cat.id ? { backgroundColor: '#0B7A3B' } : undefined}
+              style={category === cat.id ? { backgroundColor: '#2F9E41' } : undefined}
             >
               {cat.name}
             </Link>
@@ -68,7 +68,7 @@ export default async function ForumPage({
       {filtered.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-200 p-16 text-center">
           <p className="text-sm text-zinc-400">Nenhum tópico ainda.</p>
-          <Link href="/forum/novo" className="mt-3 inline-flex items-center gap-1 text-sm text-[#0B7A3B] font-medium hover:opacity-70">
+          <Link href="/forum/novo" className="mt-3 inline-flex items-center gap-1 text-sm text-[#2F9E41] font-medium hover:opacity-70">
             Criar o primeiro
             <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
           </Link>
@@ -86,7 +86,7 @@ export default async function ForumPage({
               >
                 <div className="flex flex-col gap-1.5 min-w-0">
                   {cat && (
-                    <span className="text-xs font-semibold uppercase tracking-wider text-[#0B7A3B]">{cat.name}</span>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-[#2F9E41]">{cat.name}</span>
                   )}
                   <p className="text-base font-black text-zinc-900 leading-tight">{topic.title}</p>
                   <p className="text-xs text-zinc-400">

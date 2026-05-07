@@ -90,7 +90,7 @@ export default function NiveisPage() {
           <button
             onClick={openCreate}
             className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-white transition"
-            style={{ backgroundColor: '#0B7A3B' }}
+            style={{ backgroundColor: '#2F9E41' }}
           >
             <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
             Novo nível
@@ -132,7 +132,7 @@ export default function NiveisPage() {
               onClick={save}
               disabled={saving}
               className="rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50 transition"
-              style={{ backgroundColor: '#0B7A3B' }}
+              style={{ backgroundColor: '#2F9E41' }}
             >
               {saving ? 'Salvando...' : 'Salvar'}
             </button>

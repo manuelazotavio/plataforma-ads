@@ -204,7 +204,7 @@ export default function NotificationBell({ userId }: { userId: string | null }) 
                     <p className="text-[10px] text-zinc-400 mt-0.5">{timeAgo(n.created_at)}</p>
                   </div>
                   {!n.read && (
-                    <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: '#0B7A3B' }} />
+                    <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: '#2F9E41' }} />
                   )}
                 </button>
               ))}

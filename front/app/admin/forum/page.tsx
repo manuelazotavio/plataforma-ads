@@ -79,7 +79,7 @@ export default function AdminForumPage() {
           <h1 className="text-2xl font-semibold text-zinc-900">Categorias do Fórum</h1>
           <p className="text-sm text-zinc-500 mt-0.5">{categories.length} categoria{categories.length !== 1 ? 's' : ''}</p>
         </div>
-        <button onClick={openCreate} className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-white transition" style={{ backgroundColor: '#0B7A3B' }}>
+        <button onClick={openCreate} className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-white transition" style={{ backgroundColor: '#2F9E41' }}>
           <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
           Nova categoria
         </button>
@@ -107,7 +107,7 @@ export default function AdminForumPage() {
               </div>
             </div>
             <div className="flex gap-2">
-              <button onClick={save} disabled={saving || !form.name.trim()} className="flex-1 rounded-lg py-2.5 text-sm font-medium text-white disabled:opacity-50" style={{ backgroundColor: '#0B7A3B' }}>
+              <button onClick={save} disabled={saving || !form.name.trim()} className="flex-1 rounded-lg py-2.5 text-sm font-medium text-white disabled:opacity-50" style={{ backgroundColor: '#2F9E41' }}>
                 {saving ? 'Salvando...' : 'Salvar'}
               </button>
               <button onClick={closeForm} className="rounded-lg border border-zinc-200 px-5 py-2.5 text-sm text-zinc-600 hover:bg-zinc-50">Cancelar</button>

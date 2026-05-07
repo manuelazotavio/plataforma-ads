@@ -79,7 +79,7 @@ function UpvoteButton({ count, voted, onToggle, disabled }: { count: number; vot
     <button
       onClick={onToggle}
       disabled={disabled}
-      className={`flex items-center gap-1 text-xs font-semibold transition-colors disabled:opacity-40 cursor-pointer ${voted ? 'text-[#0B7A3B]' : 'text-zinc-400 hover:text-zinc-700'}`}
+      className={`flex items-center gap-1 text-xs font-semibold transition-colors disabled:opacity-40 cursor-pointer ${voted ? 'text-[#2F9E41]' : 'text-zinc-400 hover:text-zinc-700'}`}
     >
       <svg width={13} height={13} viewBox="0 0 24 24" fill={voted ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 19V5M5 12l7-7 7 7" />
@@ -122,7 +122,7 @@ function ReplyForm({ onSubmit, onCancel, placeholder = 'Escreva sua resposta...'
           type="submit"
           disabled={submitting || !content.trim()}
           className="rounded-xl px-5 py-2 text-sm font-semibold text-white disabled:opacity-50 transition hover:opacity-90"
-          style={{ backgroundColor: '#0B7A3B' }}
+          style={{ backgroundColor: '#2F9E41' }}
         >
           {submitting ? 'Enviando...' : 'Responder'}
         </button>
@@ -377,7 +377,7 @@ export default function ForumTopicPage() {
     
       <div className="mb-8">
         {cat && (
-          <span className="text-xs font-semibold uppercase tracking-wider text-[#0B7A3B] mb-3 inline-block">
+          <span className="text-xs font-semibold uppercase tracking-wider text-[#2F9E41] mb-3 inline-block">
             {cat.name}
           </span>
         )}
@@ -456,7 +456,7 @@ export default function ForumTopicPage() {
             </div>
           ) : (
             <p className="text-sm text-zinc-400">
-              <Link href="/login" className="text-[#0B7A3B] font-medium hover:opacity-70">Faça login</Link> para responder.
+              <Link href="/login" className="text-[#2F9E41] font-medium hover:opacity-70">Faça login</Link> para responder.
             </p>
           )}
         </div>

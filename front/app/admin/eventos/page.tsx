@@ -128,7 +128,7 @@ export default function AdminEventosPage() {
         <button
           onClick={openCreate}
           className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-white transition"
-          style={{ backgroundColor: '#0B7A3B' }}
+          style={{ backgroundColor: '#2F9E41' }}
         >
           <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
           Novo evento
@@ -236,7 +236,7 @@ export default function AdminEventosPage() {
                     type="checkbox"
                     checked={form.registration_open}
                     onChange={(e) => setForm({ ...form, registration_open: e.target.checked })}
-                    className="w-4.5 h-4.5 accent-[#0B7A3B]"
+                    className="w-4.5 h-4.5 accent-[#2F9E41]"
                   />
                   Inscrições abertas
                 </label>
@@ -245,7 +245,7 @@ export default function AdminEventosPage() {
                     type="checkbox"
                     checked={form.is_active}
                     onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
-                    className="w-4.5 h-4.5 accent-[#0B7A3B]"
+                    className="w-4.5 h-4.5 accent-[#2F9E41]"
                   />
                   Publicado
                 </label>
@@ -257,7 +257,7 @@ export default function AdminEventosPage() {
                 onClick={save}
                 disabled={saving || !form.title.trim()}
                 className="flex-1 rounded-lg py-2.5 text-sm font-medium text-white disabled:opacity-50 transition"
-                style={{ backgroundColor: '#0B7A3B' }}
+                style={{ backgroundColor: '#2F9E41' }}
               >
                 {saving ? 'Salvando...' : 'Salvar'}
               </button>
@@ -282,7 +282,7 @@ export default function AdminEventosPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   {event.category && (
-                    <span className="text-xs font-semibold uppercase tracking-wider text-[#0B7A3B]">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-[#2F9E41]">
                       {CATEGORIES.find((c) => c.value === event.category)?.label}
                     </span>
                   )}

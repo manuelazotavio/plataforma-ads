@@ -44,7 +44,7 @@ export function PublicHeaderAuth() {
         <Link href="/login" className="rounded-lg px-3 py-2 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900">
           Entrar
         </Link>
-        <Link href="/cadastro" className="rounded-lg px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90" style={{ backgroundColor: '#0B7A3B' }}>
+        <Link href="/cadastro" className="rounded-lg px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90" style={{ backgroundColor: '#2F9E41' }}>
           Criar conta
         </Link>
       </>
@@ -102,7 +102,7 @@ export function PublicWelcomeCard({ studentsCount, projectsCount }: { studentsCo
         <Link
           href={loggedIn ? '/projetos/novo' : '/cadastro'}
           className="flex items-center gap-2 rounded-lg px-6 py-3 text-base font-semibold text-white shadow-sm transition"
-          style={{ backgroundColor: '#0B7A3B' }}
+          style={{ backgroundColor: '#2F9E41' }}
         >
           <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
           Novo Projeto
@@ -151,7 +151,7 @@ export function PublicProfileCard() {
         </div>
         <div className="flex flex-col gap-3 border-t border-zinc-100 pt-4">
           <Link href="/login" className="rounded-lg border border-zinc-200 px-3 py-2 text-center text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50">Entrar</Link>
-          <Link href="/cadastro" className="rounded-lg px-3 py-2 text-center text-xs font-semibold text-white transition hover:opacity-90" style={{ backgroundColor: '#0B7A3B' }}>Criar conta</Link>
+          <Link href="/cadastro" className="rounded-lg px-3 py-2 text-center text-xs font-semibold text-white transition hover:opacity-90" style={{ backgroundColor: '#2F9E41' }}>Criar conta</Link>
         </div>
       </div>
     )
