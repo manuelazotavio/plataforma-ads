@@ -13,6 +13,7 @@ type PublicHomeData = {
   firstName: string
   avatar_url: string | null
   semester: number | null
+  role: string | null
   topicsCount: number
   projectsCount: number
   articlesCount: number
@@ -54,7 +55,7 @@ export function PublicHeaderAuth() {
     <div className="flex items-center gap-3 pl-4 border-l border-zinc-100">
       <div className="hidden sm:block text-right leading-tight">
         <p className="text-sm font-semibold text-zinc-900">{data.name}</p>
-        <p className="mt-0.5 text-xs text-zinc-400">{data.semester ? `${data.semester}º Semestre` : 'Aluno'}</p>
+        <p className="mt-0.5 text-xs text-zinc-400">{profileLabel(data)}</p>
       </div>
       <Link href="/perfil" className="h-9 w-9 overflow-hidden rounded-full bg-zinc-200 ring-2 ring-zinc-100">
         {data.avatar_url ? (
@@ -190,7 +191,7 @@ async function loadHomeData(): Promise<PublicHomeData | null> {
     { data: ownArticles },
     { data: levelsData },
   ] = await Promise.all([
-    supabase.from('users').select('name, avatar_url, semester').eq('id', user.id).single(),
+    supabase.from('users').select('name, avatar_url, semester, role').eq('id', user.id).single(),
     supabase.from('forum_topics').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
     supabase.from('projects').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
     supabase.from('articles').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'publicado'),
@@ -229,6 +230,7 @@ async function loadHomeData(): Promise<PublicHomeData | null> {
     firstName: profile.name?.split(' ')[0] ?? 'Aluno',
     avatar_url: profile.avatar_url,
     semester: profile.semester,
+    role: profile.role,
     topicsCount: topicsCount ?? 0,
     projectsCount: projectsCount ?? 0,
     articlesCount: articlesCount ?? 0,
@@ -239,6 +241,14 @@ async function loadHomeData(): Promise<PublicHomeData | null> {
     nextLevel,
     levelProgress,
   }
+}
+
+function profileLabel(profile: Pick<PublicHomeData, 'role' | 'semester'>) {
+  if (profile.role === 'professor') return 'Professor'
+  if (profile.role === 'admin') return 'Administrador'
+  if (profile.role === 'egresso') return 'Egresso'
+  if (profile.semester) return `${profile.semester}º Semestre`
+  return 'Aluno'
 }
 
 function ProgressRing({ value }: { value: number }) {
