@@ -155,14 +155,14 @@ export function PublicWelcomeCard({ studentsCount, projectsCount }: { studentsCo
           style={{ backgroundColor: '#2F9E41' }}
         >
           <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-          Novo Projeto
+          Novo projeto
         </Link>
         <Link
           href={loggedIn ? '/forum/novo' : '/login'}
           className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-6 py-3 text-base font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-50"
         >
           <MessageIcon size={16} />
-          Criar Tópico
+          Criar tópico
         </Link>
       </div>
       <div className="mt-8 flex gap-8 border-t border-white/70 pt-5">
@@ -209,7 +209,7 @@ export function PublicProfileCard() {
 
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white p-5">
-      <h3 className="mb-4 text-base font-semibold text-zinc-900">Seu Perfil</h3>
+      <h3 className="mb-4 text-base font-semibold text-zinc-900">Seu perfil</h3>
       <div className="mb-5 flex items-center gap-4">
         <ProgressRing value={data.levelProgress} />
         <div>

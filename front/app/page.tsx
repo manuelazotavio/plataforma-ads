@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
@@ -40,6 +42,7 @@ export default async function HomePage() {
     { data: topProjects },
     { count: studentsCount },
     { count: projectsCount },
+    { data: events },
   ] = await Promise.all([
     supabase
       .from('projects')
@@ -59,12 +62,18 @@ export default async function HomePage() {
       .limit(50),
     supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'aluno'),
     supabase.from('projects').select('*', { count: 'exact', head: true }),
+    supabase
+      .from('events')
+      .select('id, title, category, start_date, end_date')
+      .eq('is_active', true)
+      .order('start_date', { ascending: true }),
   ])
 
   const featuredProjects = (projects ?? []) as unknown as Project[]
   const recentTopics = (topics ?? []) as unknown as Topic[]
   const popularTags = Array.from(new Set((tags ?? []).map((tag) => tag.tag_name))).slice(0, 6)
   const topContributors = getTopContributors(topProjects ?? [])
+  const allEvents = (events ?? []) as { id: string; title: string; category: string | null; start_date: string | null; end_date: string | null }[]
 
   return (
     <div className="flex h-screen overflow-hidden bg-white">
@@ -88,7 +97,7 @@ export default async function HomePage() {
             </div>
 
             <div className="flex flex-col gap-4">
-              <CalendarCard />
+              <CalendarCard events={allEvents} />
             </div>
           </div>
 
@@ -171,7 +180,7 @@ function ProjectsSection({ projects }: { projects: Project[] }) {
 function TopicsSection({ topics }: { topics: Topic[] }) {
   return (
     <section>
-      <SectionHeader title="Discussões Recentes" icon={<TopicsIcon />} href="/forum" action="Participar" />
+      <SectionHeader title="Discussões recentes" icon={<TopicsIcon />} href="/forum" action="Participar" />
       {topics.length === 0 ? (
         <EmptyCard text="Nenhum tópico no fórum ainda." action="Criar tópico" href="/forum/novo" />
       ) : (
@@ -206,7 +215,7 @@ function TopContributorsCard({ contributors }: { contributors: Contributor[] }) 
     <div className="rounded-2xl border border-zinc-200 bg-white p-5">
       <h3 className="mb-4 flex items-center gap-2 text-base font-semibold text-zinc-900">
         <MedalIcon />
-        Top Contribuidores
+        Top contribuidores
       </h3>
       <div className="flex flex-col gap-3">
         {contributors.map((contributor, i) => (
@@ -234,7 +243,7 @@ function TopContributorsCard({ contributors }: { contributors: Contributor[] }) 
 function TagsCard({ tags }: { tags: string[] }) {
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white p-5">
-      <h3 className="mb-3 text-base font-semibold text-zinc-900">Tags Populares</h3>
+      <h3 className="mb-3 text-base font-semibold text-zinc-900">Tags populares</h3>
       <div className="flex flex-wrap gap-2">
         {tags.map((tag) => (
           <Link key={tag} href={`/projetos?tag=${encodeURIComponent(tag)}`} className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600 transition hover:bg-zinc-200">
@@ -246,7 +255,20 @@ function TagsCard({ tags }: { tags: string[] }) {
   )
 }
 
-function CalendarCard() {
+type CalendarEvent = { id: string; title: string; category: string | null; start_date: string | null; end_date: string | null }
+
+const CATEGORY_COLOR: Record<string, string> = {
+  hackathon:             'bg-purple-400',
+  maratona:              'bg-blue-400',
+  extensao:              'bg-amber-400',
+  iniciacao_cientifica:  'bg-rose-400',
+}
+
+function eventColor(category: string | null) {
+  return category ? (CATEGORY_COLOR[category] ?? 'bg-zinc-400') : 'bg-zinc-400'
+}
+
+function CalendarCard({ events }: { events: CalendarEvent[] }) {
   const now = new Date()
   const year = now.getFullYear()
   const month = now.getMonth()
@@ -256,28 +278,91 @@ function CalendarCard() {
   const cells: (number | null)[] = [...Array(firstWeekday).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)]
   while (cells.length % 7 !== 0) cells.push(null)
 
+  function parseLocalDate(str: string) {
+    const [y, m, d] = str.split('-').map(Number)
+    return new Date(y, m - 1, d)
+  }
+
+  function eventsOnDay(day: number): CalendarEvent[] {
+    const d = new Date(year, month, day)
+    return events.filter((e) => {
+      if (!e.start_date) return false
+      const start = parseLocalDate(e.start_date)
+      const end = e.end_date ? parseLocalDate(e.end_date) : new Date(start)
+      end.setHours(23, 59, 59, 999)
+      return d >= start && d <= end
+    })
+  }
+
+  const todayMidnight = new Date(year, month, today)
+  const nextEvents = events
+    .filter((e) => {
+      if (!e.start_date) return false
+      const end = e.end_date ? parseLocalDate(e.end_date) : parseLocalDate(e.start_date)
+      return end >= todayMidnight
+    })
+    .slice(0, 4)
+
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white p-5">
-      <h3 className="mb-4 text-base font-semibold text-zinc-900">Calendário de eventos</h3>
-      <p className="mb-3 text-base font-bold text-zinc-900">{MONTH_NAMES[month]}</p>
-      <div className="mb-1 grid grid-cols-7">
-        {DAY_LABELS.map((day, i) => <div key={i} className="pb-1 text-center text-[11px] font-medium text-zinc-400">{day}</div>)}
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-base font-semibold text-zinc-900">Calendário</h3>
+        <Link href="/calendario" className="text-xs font-medium text-green-600 hover:text-green-700 transition">Ver mais →</Link>
       </div>
-      <div className="grid grid-cols-7 gap-y-0.5">
-        {cells.map((day, i) => (
-          <div key={i} className="flex h-7 items-center justify-center">
-            {day !== null && (
-              <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-medium ${day === today ? 'font-bold text-white' : 'text-zinc-700'}`} style={day === today ? { backgroundColor: '#2F9E41' } : undefined}>
-                {day}
-              </span>
-            )}
-          </div>
+      <p className="mb-3 text-sm font-semibold text-zinc-500">{MONTH_NAMES[month]} {year}</p>
+      <div className="mb-1 grid grid-cols-7">
+        {DAY_LABELS.map((day, i) => (
+          <div key={i} className="pb-1 text-center text-[11px] font-medium text-zinc-400">{day}</div>
         ))}
       </div>
-      <div className="mt-4 flex items-center gap-2 border-t border-zinc-100 pt-3">
-        <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-green-400" />
-        <span className="text-xs text-zinc-600">Hackathon 2026</span>
+      <div className="grid grid-cols-7 gap-y-1">
+        {cells.map((day, i) => {
+          const dayEvents = day ? eventsOnDay(day) : []
+          const isToday = day === today
+          return (
+            <div key={i} className="flex flex-col items-center gap-0.5">
+              {day !== null && (
+                <>
+                  <span
+                    className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-medium ${
+                      isToday ? 'font-bold text-white' : dayEvents.length > 0 ? 'text-zinc-900 font-semibold' : 'text-zinc-500'
+                    }`}
+                    style={isToday ? { backgroundColor: '#2F9E41' } : undefined}
+                  >
+                    {day}
+                  </span>
+                  {dayEvents.length > 0 && (
+                    <span className={`h-1.5 w-1.5 rounded-full ${eventColor(dayEvents[0].category)}`} />
+                  )}
+                </>
+              )}
+            </div>
+          )
+        })}
       </div>
+
+      {nextEvents.length > 0 ? (
+        <div className="mt-4 flex flex-col gap-2 border-t border-zinc-100 pt-3">
+          {nextEvents.map((e) => (
+            <Link key={e.id} href="/eventos" className="flex items-start gap-2.5 rounded-lg px-1 py-1 hover:bg-zinc-50 transition group">
+              <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${eventColor(e.category)}`} />
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-zinc-800 truncate group-hover:text-zinc-900">{e.title}</p>
+                {e.start_date && (
+                  <p className="text-[11px] text-zinc-400 mt-0.5">
+                    {parseLocalDate(e.start_date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })}
+                    {e.end_date && e.end_date !== e.start_date && ` – ${parseLocalDate(e.end_date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })}`}
+                  </p>
+                )}
+              </div>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <div className="mt-4 border-t border-zinc-100 pt-3">
+          <p className="text-xs text-zinc-400 text-center">Nenhum evento próximo</p>
+        </div>
+      )}
     </div>
   )
 }

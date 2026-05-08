@@ -8,6 +8,7 @@ type Evento = {
   id: string
   title: string
   start_date: string
+  end_date: string | null
   category: string | null
 }
 
@@ -33,12 +34,12 @@ export default function CalendarioPage() {
   const [eventos, setEventos] = useState<Evento[]>([])
 
   useEffect(() => {
-    const start = new Date(year, month - 1, 1).toISOString().split('T')[0]
-    const end = new Date(year, month + 2, 0).toISOString().split('T')[0]
+    const start = new Date(year, month, 1).toISOString().split('T')[0]
+    const end = new Date(year, month + 1, 0).toISOString().split('T')[0]
 
     supabase
-      .from('eventos')
-      .select('id, title, start_date, category')
+      .from('events')
+      .select('id, title, start_date, end_date, category')
       .gte('start_date', start)
       .lte('start_date', end)
       .eq('is_active', true)

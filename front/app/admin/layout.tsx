@@ -19,7 +19,7 @@ const nav = [
   { href: '/admin/tecnologias', label: 'Tecnologias', icon: <IconTags /> },
   { href: '/admin/matriz-curricular', label: 'Matriz Curricular', icon: <IconBook /> },
   { href: '/admin/artigos', label: 'Artigos', icon: <IconBook /> },
-  { href: '/admin/vagas', label: 'Vagas', icon: <IconBriefcase /> },
+  { href: '/admin/vagas', label: 'Oportunidades', icon: <IconBriefcase /> },
   { href: '/admin/eventos', label: 'Eventos', icon: <IconCalendar /> },
   { href: '/admin/egressos', label: 'Egressos', icon: <IconGraduation /> },
   { href: '/admin/corpo-docente', label: 'Corpo Docente', icon: <IconPerson /> },

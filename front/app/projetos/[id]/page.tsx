@@ -72,14 +72,14 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
 
           {project.description && (
             <div className="mb-8">
-              <h2 className="text-sm font-semibold text-zinc-700 mb-3">Sobre o projeto</h2>
+              <h2 className="text-base font-semibold text-zinc-900 mb-3">Sobre o projeto</h2>
               <p className="text-sm text-zinc-600 leading-relaxed whitespace-pre-wrap">{project.description}</p>
             </div>
           )}
 
           {gallery.length > 0 && (
             <div className="mb-8">
-              <h2 className="text-sm font-semibold text-zinc-700 mb-3">Galeria</h2>
+              <h2 className="text-base font-semibold text-zinc-900 mb-3">Galeria</h2>
               <div className={`grid gap-3 ${gallery.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
                 {gallery.map((img, i) => (
                   <div key={i} className="relative rounded-xl overflow-hidden bg-zinc-100 aspect-video">
