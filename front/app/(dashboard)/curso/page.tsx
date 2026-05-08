@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { supabase } from '@/app/lib/supabase'
 import CurriculumTabs from './CurriculumTabs'
 import InfrastructureSection from './InfrastructureSection'
