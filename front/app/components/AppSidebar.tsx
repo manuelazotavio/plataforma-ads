@@ -1,8 +1,9 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
+
 
 type SidebarItem = {
   href: string
@@ -49,6 +50,8 @@ type AppSidebarProps = {
 
 export default function AppSidebar({ open = true, onClose }: AppSidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
+  const [activeChild, setActiveChild] = useState('')
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({})
   const navRef = useRef<HTMLElement>(null)
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({})
@@ -56,12 +59,7 @@ export default function AppSidebar({ open = true, onClose }: AppSidebarProps) {
   return (
     <aside className={`w-56 shrink-0 bg-white border-r border-zinc-100 flex flex-col fixed h-full z-30 transition-transform duration-300 ${open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
       <div className="h-16 flex items-center px-5 border-b border-zinc-100 gap-2.5">
-        <div className="grid grid-cols-2 gap-0.5 w-7 h-7 shrink-0">
-          <div className="rounded-sm bg-green-500" />
-          <div className="rounded-sm bg-blue-400" />
-          <div className="rounded-sm bg-yellow-400" />
-          <div className="rounded-sm bg-red-400" />
-        </div>
+        <div className="w-7 h-3 rounded-sm bg-[#2F9E41] shrink-0" />
         <div className="leading-tight">
           <span className="block font-bold text-sm text-zinc-900">ADS</span>
           <span className="block font-bold text-sm text-zinc-900">Comunica</span>
@@ -131,16 +129,33 @@ export default function AppSidebar({ open = true, onClose }: AppSidebarProps) {
               )}
               {hasChildren && expanded && (
                 <div className="ml-8 mt-1 flex flex-col gap-1 border-l border-zinc-100 pl-3">
-                  {item.children!.map((child) => (
-                    <Link
-                      key={child.href}
-                      href={child.href}
-                      onClick={onClose}
-                      className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-500 transition hover:bg-zinc-50 hover:text-zinc-900"
-                    >
-                      {child.label}
-                    </Link>
-                  ))}
+                  {item.children!.map((child) => {
+                    const childActive = activeChild === child.href
+                    const [childPath, childAnchor] = child.href.split('#')
+                    return (
+                      <button
+                        key={child.href}
+                        type="button"
+                        onClick={() => {
+                          setActiveChild(child.href)
+                          if (pathname === childPath) {
+                            document.getElementById(childAnchor)?.scrollIntoView({ behavior: 'smooth' })
+                          } else {
+                            router.push(child.href)
+                          }
+                          onClose?.()
+                        }}
+                        className={`w-full text-left rounded-lg px-3 py-2 text-sm font-medium transition ${
+                          childActive
+                            ? 'text-white'
+                            : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900'
+                        }`}
+                        style={childActive ? { backgroundColor: '#2F9E41' } : undefined}
+                      >
+                        {child.label}
+                      </button>
+                    )
+                  })}
                 </div>
               )}
             </div>

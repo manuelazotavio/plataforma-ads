@@ -92,7 +92,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             type="button"
             aria-label="Abrir menu"
             onClick={() => setSidebarOpen(true)}
-            className="md:hidden p-2 rounded-lg text-zinc-500 hover:bg-zinc-100 transition shrink-0"
+            className="md:hidden p-2 rounded-lg text-zinc-500 hover:bg-zinc-100 transition shrink-0 mr-auto"
           >
             <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <line x1={3} y1={6} x2={21} y2={6} />
@@ -101,6 +101,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </svg>
           </button>
 
+          <div className="flex items-center gap-3 md:gap-4 shrink-0">
           <SearchBar />
 
 
@@ -179,6 +180,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               Entrar
             </Link>
           )}
+          </div>
         </header>
 
         <main className="flex-1 overflow-y-auto bg-white">
@@ -221,6 +223,7 @@ const protectedPathPrefixes = [
 function isProtectedPath(pathname: string) {
   return protectedPathPrefixes.some((path) => pathname === path || pathname.startsWith(`${path}/`))
 }
+
 
 function QuickCreateMenu() {
   const [open, setOpen] = useState(false)

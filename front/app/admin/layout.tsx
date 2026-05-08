@@ -54,12 +54,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside className="w-56 shrink-0 bg-zinc-950 flex flex-col fixed h-full z-20">
 
         <div className="h-16 flex items-center px-5 border-b border-white/5 gap-2.5">
-          <div className="grid grid-cols-2 gap-0.5 w-7 h-7 shrink-0">
-            <div className="rounded-sm bg-green-500" />
-            <div className="rounded-sm bg-blue-400" />
-            <div className="rounded-sm bg-yellow-400" />
-            <div className="rounded-sm bg-red-400" />
-          </div>
+          <div className="w-7 h-3 rounded-sm bg-white shrink-0" />
           <div className="leading-tight">
             <span className="block font-bold text-sm text-white">ADS</span>
             <span className="block font-bold text-sm text-zinc-500">Admin</span>
