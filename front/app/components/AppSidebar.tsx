@@ -58,8 +58,7 @@ export default function AppSidebar({ open = true, onClose }: AppSidebarProps) {
 
   return (
     <aside className={`w-56 shrink-0 bg-white border-r border-zinc-100 flex flex-col fixed h-full z-30 transition-transform duration-300 ${open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
-      <div className="h-16 flex items-center px-5 border-b border-zinc-100 gap-2.5">
-        <div className="w-7 h-3 rounded-sm bg-[#2F9E41] shrink-0" />
+      <div className="h-16 flex items-center px-5">
         <div className="leading-tight">
           <span className="block font-bold text-sm text-zinc-900">ADS</span>
           <span className="block font-bold text-sm text-zinc-900">Comunica</span>
