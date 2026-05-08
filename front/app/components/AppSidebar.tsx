@@ -57,12 +57,9 @@ export default function AppSidebar({ open = true, onClose }: AppSidebarProps) {
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
   return (
-    <aside className={`w-56 shrink-0 bg-white border-r border-zinc-100 flex flex-col fixed h-full z-30 transition-transform duration-300 ${open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
-      <div className="h-16 flex items-center px-5">
-        <div className="leading-tight">
-          <span className="block font-bold text-sm text-zinc-900">ADS</span>
-          <span className="block font-bold text-sm text-zinc-900">Comunica</span>
-        </div>
+    <aside className={`w-56 shrink-0 bg-white flex flex-col fixed h-full z-30 transition-transform duration-300 ${open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+      <div className="h-16 flex items-center px-5 border-b border-zinc-100">
+        <span className="font-bold text-sm text-zinc-900">ADS Comunica</span>
       </div>
 
       <nav ref={navRef} className="sidebar-nav flex flex-col gap-1 px-3 py-4 flex-1 overflow-y-auto">

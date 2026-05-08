@@ -27,7 +27,7 @@ export default function EditarArtigoPage() {
   const [coverUrl, setCoverUrl] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [newTag, setNewTag] = useState('')
-  const [status, setStatus] = useState<'rascunho' | 'publicado'>('rascunho')
+  const [status, setStatus] = useState<'rascunho' | 'pendente' | 'publicado' | 'rejeitado'>('rascunho')
 
   const [loading, setLoading] = useState(true)
   const [uploadingCover, setUploadingCover] = useState(false)
@@ -115,7 +115,8 @@ export default function EditarArtigoPage() {
         summary,
         content,
         cover_image_url: coverUrl || null,
-        status: newStatus,
+        status: status === 'rejeitado' && newStatus === 'publicado' ? 'pendente' : newStatus,
+        rejection_message: null,
         published_at: newStatus === 'publicado' && status !== 'publicado'
           ? new Date().toISOString()
           : undefined,

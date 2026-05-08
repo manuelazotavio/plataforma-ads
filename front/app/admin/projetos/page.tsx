@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
@@ -9,25 +9,34 @@ type Project = {
   title: string
   description: string | null
   approved: boolean
+  rejection_message: string | null
   created_at: string
   users: { name: string; avatar_url: string | null } | null
   project_tags: { tag_name: string }[]
   project_images: { image_url: string; display_order: number }[]
 }
 
-type Filter = 'pendentes' | 'aprovados' | 'todos'
+type Filter = 'pendentes' | 'aprovados' | 'reprovados' | 'todos'
+
+function projectStatus(p: Project) {
+  if (p.approved) return 'aprovado'
+  if (p.rejection_message) return 'reprovado'
+  return 'pendente'
+}
 
 export default function AdminProjetosPage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<Filter>('pendentes')
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [rejectingId, setRejectingId] = useState<string | null>(null)
+  const [rejectMessage, setRejectMessage] = useState('')
 
   useEffect(() => {
     async function load() {
       const { data } = await supabase
         .from('projects')
-        .select('id, title, description, approved, created_at, users(name, avatar_url), project_tags(tag_name), project_images(image_url, display_order)')
+        .select('id, title, description, approved, rejection_message, created_at, users(name, avatar_url), project_tags(tag_name), project_images(image_url, display_order)')
         .order('created_at', { ascending: false })
       setProjects((data as unknown as Project[]) ?? [])
       setLoading(false)
@@ -35,20 +44,40 @@ export default function AdminProjetosPage() {
     load()
   }, [])
 
-  async function setApproved(id: string, value: boolean) {
+  async function approve(id: string) {
     setUpdatingId(id)
-    await supabase.from('projects').update({ approved: value }).eq('id', id)
-    setProjects((prev) => prev.map((p) => p.id === id ? { ...p, approved: value } : p))
+    await supabase.from('projects').update({ approved: true, rejection_message: null }).eq('id', id)
+    setProjects((prev) => prev.map((p) => p.id === id ? { ...p, approved: true, rejection_message: null } : p))
+    setUpdatingId(null)
+  }
+
+  async function revoke(id: string) {
+    setUpdatingId(id)
+    await supabase.from('projects').update({ approved: false, rejection_message: null }).eq('id', id)
+    setProjects((prev) => prev.map((p) => p.id === id ? { ...p, approved: false, rejection_message: null } : p))
+    setUpdatingId(null)
+  }
+
+  async function reject(id: string) {
+    const msg = rejectMessage.trim()
+    if (!msg) return
+    setUpdatingId(id)
+    await supabase.from('projects').update({ approved: false, rejection_message: msg }).eq('id', id)
+    setProjects((prev) => prev.map((p) => p.id === id ? { ...p, approved: false, rejection_message: msg } : p))
+    setRejectingId(null)
+    setRejectMessage('')
     setUpdatingId(null)
   }
 
   const filtered = projects.filter((p) => {
-    if (filter === 'pendentes') return !p.approved
-    if (filter === 'aprovados') return p.approved
+    const s = projectStatus(p)
+    if (filter === 'pendentes') return s === 'pendente'
+    if (filter === 'aprovados') return s === 'aprovado'
+    if (filter === 'reprovados') return s === 'reprovado'
     return true
   })
 
-  const pendingCount = projects.filter((p) => !p.approved).length
+  const pendingCount = projects.filter((p) => projectStatus(p) === 'pendente').length
 
   if (loading) return <p className="text-sm text-zinc-500">Carregando...</p>
 
@@ -62,7 +91,7 @@ export default function AdminProjetosPage() {
           </p>
         </div>
         <div className="flex gap-1 rounded-lg border border-zinc-200 bg-white p-1">
-          {(['pendentes', 'aprovados', 'todos'] as Filter[]).map((f) => (
+          {(['pendentes', 'aprovados', 'reprovados', 'todos'] as Filter[]).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
@@ -85,73 +114,121 @@ export default function AdminProjetosPage() {
           {filtered.map((project) => {
             const cover = [...project.project_images]
               .sort((a, b) => a.display_order - b.display_order)[0]
+            const status = projectStatus(project)
 
             return (
               <div
                 key={project.id}
-                className={`bg-white rounded-2xl border p-4 flex gap-4 ${
-                  !project.approved ? 'border-amber-200' : 'border-zinc-200'
+                className={`bg-white rounded-2xl border p-4 flex flex-col gap-3 ${
+                  status === 'pendente' ? 'border-amber-200' : status === 'reprovado' ? 'border-red-200' : 'border-zinc-200'
                 }`}
               >
-                <div className="relative w-20 h-16 rounded-lg overflow-hidden bg-zinc-100 shrink-0">
-                  {cover
-                    ? <Image src={cover.image_url} alt={project.title} fill className="object-cover" />
-                    : <div className="w-full h-full flex items-center justify-center text-zinc-300 text-xs">sem imagem</div>
-                  }
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <div>
-                      <p className="text-sm font-semibold text-zinc-900">{project.title}</p>
-                      <p className="text-xs text-zinc-400">
-                        {project.users?.name} · {new Date(project.created_at).toLocaleDateString('pt-BR')}
-                      </p>
-                    </div>
-                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
-                      project.approved ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-                    }`}>
-                      {project.approved ? 'aprovado' : 'pendente'}
-                    </span>
+                <div className="flex gap-4">
+                  <div className="relative w-20 h-16 rounded-lg overflow-hidden bg-zinc-100 shrink-0">
+                    {cover
+                      ? <Image src={cover.image_url} alt={project.title} fill className="object-cover" />
+                      : <div className="w-full h-full flex items-center justify-center text-zinc-300 text-xs">sem imagem</div>
+                    }
                   </div>
-                  {project.project_tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {project.project_tags.map(({ tag_name }) => (
-                        <span key={tag_name} className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">
-                          {tag_name}
-                        </span>
-                      ))}
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <div>
+                        <p className="text-sm font-semibold text-zinc-900">{project.title}</p>
+                        <p className="text-xs text-zinc-400">
+                          {project.users?.name} · {new Date(project.created_at).toLocaleDateString('pt-BR')}
+                        </p>
+                      </div>
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                        status === 'aprovado' ? 'bg-green-100 text-green-700' :
+                        status === 'reprovado' ? 'bg-red-100 text-red-600' :
+                        'bg-amber-100 text-amber-700'
+                      }`}>
+                        {status}
+                      </span>
                     </div>
-                  )}
+                    {project.project_tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {project.project_tags.map(({ tag_name }) => (
+                          <span key={tag_name} className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">
+                            {tag_name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 shrink-0 justify-center">
+                    {status !== 'aprovado' && (
+                      <button
+                        onClick={() => approve(project.id)}
+                        disabled={updatingId === project.id}
+                        className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50 transition"
+                      >
+                        Aprovar
+                      </button>
+                    )}
+                    {status === 'aprovado' && (
+                      <button
+                        onClick={() => revoke(project.id)}
+                        disabled={updatingId === project.id}
+                        className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 transition"
+                      >
+                        Revogar
+                      </button>
+                    )}
+                    {status !== 'reprovado' && (
+                      <button
+                        onClick={() => { setRejectingId(project.id); setRejectMessage('') }}
+                        disabled={updatingId === project.id}
+                        className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 transition"
+                      >
+                        Reprovar
+                      </button>
+                    )}
+                    <a
+                      href={`/projetos/${project.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs text-center font-medium text-zinc-500 hover:bg-zinc-50 transition"
+                    >
+                      Ver
+                    </a>
+                  </div>
                 </div>
 
-                <div className="flex flex-col gap-1.5 shrink-0 justify-center">
-                  {!project.approved ? (
-                    <button
-                      onClick={() => setApproved(project.id, true)}
-                      disabled={updatingId === project.id}
-                      className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50 transition"
-                    >
-                      Aprovar
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => setApproved(project.id, false)}
-                      disabled={updatingId === project.id}
-                      className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 transition"
-                    >
-                      Revogar
-                    </button>
-                  )}
-                  <a
-                    href={`/projetos/${project.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs text-center font-medium text-zinc-500 hover:bg-zinc-50 transition"
-                  >
-                    Ver
-                  </a>
-                </div>
+                {project.rejection_message && (
+                  <div className="rounded-lg bg-red-50 border border-red-100 px-3 py-2 text-xs text-red-700">
+                    <span className="font-semibold">Mensagem enviada ao aluno:</span> {project.rejection_message}
+                  </div>
+                )}
+
+                {rejectingId === project.id && (
+                  <div className="flex gap-2 items-start">
+                    <textarea
+                      value={rejectMessage}
+                      onChange={(e) => setRejectMessage(e.target.value)}
+                      placeholder="Descreva o que precisa ser alterado..."
+                      rows={2}
+                      className="flex-1 rounded-lg border border-zinc-300 px-3 py-2 text-xs text-zinc-900 outline-none resize-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
+                    />
+                    <div className="flex flex-col gap-1.5">
+                      <button
+                        onClick={() => reject(project.id)}
+                        disabled={!rejectMessage.trim() || updatingId === project.id}
+                        className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50 transition"
+                      >
+                        Confirmar
+                      </button>
+                      <button
+                        onClick={() => { setRejectingId(null); setRejectMessage('') }}
+                        className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )
           })}

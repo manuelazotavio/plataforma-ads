@@ -58,6 +58,8 @@ export default function EditarProjetoPage() {
         deploy_url: data.deploy_url || null,
         semester: data.semester ? parseInt(data.semester) : null,
         is_featured: data.is_featured,
+        approved: false,
+        rejection_message: null,
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)

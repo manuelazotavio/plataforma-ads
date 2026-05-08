@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
@@ -9,6 +9,7 @@ type Article = {
   title: string
   summary: string | null
   status: string
+  rejection_message: string | null
   cover_image_url: string | null
   created_at: string
   users: { name: string; avatar_url: string | null } | null
@@ -29,12 +30,14 @@ export default function AdminArtigosPage() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<Filter>('pendentes')
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [rejectingId, setRejectingId] = useState<string | null>(null)
+  const [rejectMessage, setRejectMessage] = useState('')
 
   useEffect(() => {
     async function load() {
       const { data } = await supabase
         .from('articles')
-        .select('id, title, summary, status, cover_image_url, created_at, users(name, avatar_url), article_tags(tag_name)')
+        .select('id, title, summary, status, rejection_message, cover_image_url, created_at, users(name, avatar_url), article_tags(tag_name)')
         .neq('status', 'rascunho')
         .order('created_at', { ascending: false })
       setArticles((data as unknown as Article[]) ?? [])
@@ -43,10 +46,21 @@ export default function AdminArtigosPage() {
     load()
   }, [])
 
-  async function setStatus(id: string, status: string) {
+  async function publish(id: string) {
     setUpdatingId(id)
-    await supabase.from('articles').update({ status }).eq('id', id)
-    setArticles((prev) => prev.map((a) => a.id === id ? { ...a, status } : a))
+    await supabase.from('articles').update({ status: 'publicado', rejection_message: null }).eq('id', id)
+    setArticles((prev) => prev.map((a) => a.id === id ? { ...a, status: 'publicado', rejection_message: null } : a))
+    setUpdatingId(null)
+  }
+
+  async function reject(id: string) {
+    const msg = rejectMessage.trim()
+    if (!msg) return
+    setUpdatingId(id)
+    await supabase.from('articles').update({ status: 'rejeitado', rejection_message: msg }).eq('id', id)
+    setArticles((prev) => prev.map((a) => a.id === id ? { ...a, status: 'rejeitado', rejection_message: msg } : a))
+    setRejectingId(null)
+    setRejectMessage('')
     setUpdatingId(null)
   }
 
@@ -95,67 +109,104 @@ export default function AdminArtigosPage() {
             return (
               <div
                 key={article.id}
-                className={`bg-white rounded-2xl border p-4 flex gap-4 ${
-                  article.status === 'pendente' ? 'border-amber-200' : 'border-zinc-200'
+                className={`bg-white rounded-2xl border p-4 flex flex-col gap-3 ${
+                  article.status === 'pendente' ? 'border-amber-200' :
+                  article.status === 'rejeitado' ? 'border-red-200' :
+                  'border-zinc-200'
                 }`}
               >
-                {article.cover_image_url && (
-                  <div className="relative w-20 h-16 rounded-lg overflow-hidden bg-zinc-100 shrink-0">
-                    <Image src={article.cover_image_url} alt={article.title} fill className="object-cover" />
+                <div className="flex gap-4">
+                  {article.cover_image_url && (
+                    <div className="relative w-20 h-16 rounded-lg overflow-hidden bg-zinc-100 shrink-0">
+                      <Image src={article.cover_image_url} alt={article.title} fill className="object-cover" />
+                    </div>
+                  )}
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <div>
+                        <p className="text-sm font-semibold text-zinc-900 line-clamp-1">{article.title}</p>
+                        <p className="text-xs text-zinc-400">
+                          {article.users?.name} · {new Date(article.created_at).toLocaleDateString('pt-BR')}
+                        </p>
+                      </div>
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${cfg.class}`}>
+                        {cfg.label}
+                      </span>
+                    </div>
+                    {article.article_tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {article.article_tags.map(({ tag_name }) => (
+                          <span key={tag_name} className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">
+                            {tag_name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 shrink-0 justify-center">
+                    {article.status !== 'publicado' && (
+                      <button
+                        onClick={() => publish(article.id)}
+                        disabled={updatingId === article.id}
+                        className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50 transition"
+                      >
+                        Publicar
+                      </button>
+                    )}
+                    {article.status !== 'rejeitado' && (
+                      <button
+                        onClick={() => { setRejectingId(article.id); setRejectMessage('') }}
+                        disabled={updatingId === article.id}
+                        className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 transition"
+                      >
+                        Rejeitar
+                      </button>
+                    )}
+                    <a
+                      href={`/artigos/${article.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs text-center font-medium text-zinc-500 hover:bg-zinc-50 transition"
+                    >
+                      Ver
+                    </a>
+                  </div>
+                </div>
+
+                {article.rejection_message && (
+                  <div className="rounded-lg bg-red-50 border border-red-100 px-3 py-2 text-xs text-red-700">
+                    <span className="font-semibold">Mensagem enviada ao aluno:</span> {article.rejection_message}
                   </div>
                 )}
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <div>
-                      <p className="text-sm font-semibold text-zinc-900 line-clamp-1">{article.title}</p>
-                      <p className="text-xs text-zinc-400">
-                        {article.users?.name} · {new Date(article.created_at).toLocaleDateString('pt-BR')}
-                      </p>
+                {rejectingId === article.id && (
+                  <div className="flex gap-2 items-start">
+                    <textarea
+                      value={rejectMessage}
+                      onChange={(e) => setRejectMessage(e.target.value)}
+                      placeholder="Descreva o que precisa ser alterado..."
+                      rows={2}
+                      className="flex-1 rounded-lg border border-zinc-300 px-3 py-2 text-xs text-zinc-900 outline-none resize-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
+                    />
+                    <div className="flex flex-col gap-1.5">
+                      <button
+                        onClick={() => reject(article.id)}
+                        disabled={!rejectMessage.trim() || updatingId === article.id}
+                        className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50 transition"
+                      >
+                        Confirmar
+                      </button>
+                      <button
+                        onClick={() => { setRejectingId(null); setRejectMessage('') }}
+                        className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition"
+                      >
+                        Cancelar
+                      </button>
                     </div>
-                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${cfg.class}`}>
-                      {cfg.label}
-                    </span>
                   </div>
-                  {article.article_tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {article.article_tags.map(({ tag_name }) => (
-                        <span key={tag_name} className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">
-                          {tag_name}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex flex-col gap-1.5 shrink-0 justify-center">
-                  {article.status !== 'publicado' && (
-                    <button
-                      onClick={() => setStatus(article.id, 'publicado')}
-                      disabled={updatingId === article.id}
-                      className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50 transition"
-                    >
-                      Publicar
-                    </button>
-                  )}
-                  {article.status !== 'rejeitado' && (
-                    <button
-                      onClick={() => setStatus(article.id, 'rejeitado')}
-                      disabled={updatingId === article.id}
-                      className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 transition"
-                    >
-                      Rejeitar
-                    </button>
-                  )}
-                  <a
-                    href={`/artigos/${article.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs text-center font-medium text-zinc-500 hover:bg-zinc-50 transition"
-                  >
-                    Ver
-                  </a>
-                </div>
+                )}
               </div>
             )
           })}
