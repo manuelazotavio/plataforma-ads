@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 import { REACTIONS, ReactionPicker, type ReactionType } from './LikeButton'
 
@@ -23,18 +24,45 @@ type Props = {
 }
 
 function Avatar({ user }: { user: Comment['users'] }) {
-  if (user?.avatar_url) {
-    return <Image src={user.avatar_url} alt={user.name} width={28} height={28} className="w-7 h-7 rounded-full object-cover shrink-0" />
-  }
-  return (
+  const content = user?.avatar_url ? (
+    <Image src={user.avatar_url} alt={user.name} width={28} height={28} className="w-7 h-7 rounded-full object-cover shrink-0" />
+  ) : (
     <div className="w-7 h-7 rounded-full bg-zinc-200 flex items-center justify-center text-xs font-medium text-zinc-500 shrink-0">
       {user?.name?.charAt(0).toUpperCase()}
     </div>
+  )
+
+  if (user?.id) {
+    return (
+      <Link href={`/usuarios/${user.id}`} className="inline-flex rounded-full hover:opacity-80 transition" aria-label={`Ver perfil de ${user.name}`}>
+        {content}
+      </Link>
+    )
+  }
+
+  return content
+}
+
+function UserName({ user }: { user: Comment['users'] }) {
+  if (!user?.id) return <span className="text-xs font-semibold text-zinc-800">{user?.name}</span>
+  return (
+    <Link href={`/usuarios/${user.id}`} className="text-xs font-semibold text-zinc-800 hover:text-[#2F9E41] transition">
+      {user.name}
+    </Link>
   )
 }
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+function ReactionIcon({ type, size = 16 }: { type: ReactionType; size?: number }) {
+  const r = REACTIONS.find(r => r.type === type)!
+  return (
+    <span className={`inline-flex shrink-0 ${r.color}`} style={{ width: size, height: size }}>
+      {r.icon}
+    </span>
+  )
 }
 
 function CommentReactionBar({
@@ -70,15 +98,6 @@ function CommentReactionBar({
     document.addEventListener('mousedown', close)
     return () => document.removeEventListener('mousedown', close)
   }, [])
-
-  function ReactionIcon({ type, size = 16 }: { type: ReactionType; size?: number }) {
-    const r = REACTIONS.find(r => r.type === type)!
-    return (
-      <span className={`inline-flex shrink-0 ${r.color}`} style={{ width: size, height: size }}>
-        {r.icon}
-      </span>
-    )
-  }
 
   return (
     <div ref={ref} className="relative inline-flex">
@@ -128,18 +147,7 @@ export default function Comments({ type, targetId }: Props) {
   const mainRef  = useRef<HTMLTextAreaElement>(null)
   const replyRef = useRef<HTMLTextAreaElement>(null)
 
-  useEffect(() => {
-    load()
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) setUserId(user.id)
-    })
-  }, [])
-
-  useEffect(() => {
-    if (replyingTo) replyRef.current?.focus()
-  }, [replyingTo])
-
-  async function load() {
+  const load = useCallback(async () => {
     const { data } = await supabase
       .from(table)
       .select('id, content, created_at, parent_id, users(id, name, avatar_url)')
@@ -159,7 +167,18 @@ export default function Comments({ type, targetId }: Props) {
       supabase.from(reactionTable).select('comment_id, reaction_type, user_id').in('comment_id', ids)
         .then(({ data: rdata }) => setReactions((rdata as Reaction[]) ?? []))
     }
-  }
+  }, [field, reactionTable, table, targetId])
+
+  useEffect(() => {
+    void Promise.resolve().then(load)
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setUserId(user.id)
+    })
+  }, [load])
+
+  useEffect(() => {
+    if (replyingTo) replyRef.current?.focus()
+  }, [replyingTo])
 
   async function handleReact(commentId: string, reactionType: ReactionType) {
     if (!userId) return
@@ -246,7 +265,7 @@ export default function Comments({ type, targetId }: Props) {
                 <div className="shrink-0 mt-0.5"><Avatar user={comment.users} /></div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline gap-2 mb-1">
-                    <span className="text-xs font-semibold text-zinc-800">{comment.users?.name}</span>
+                    <UserName user={comment.users} />
                     <span className="text-xs text-zinc-400">{formatDate(comment.created_at)}</span>
                   </div>
                   <p className="text-sm text-zinc-700 whitespace-pre-wrap leading-relaxed">{comment.content}</p>
@@ -280,7 +299,7 @@ export default function Comments({ type, targetId }: Props) {
                       <div className="shrink-0 mt-0.5"><Avatar user={reply.users} /></div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-baseline gap-2 mb-1">
-                          <span className="text-xs font-semibold text-zinc-800">{reply.users?.name}</span>
+                          <UserName user={reply.users} />
                           <span className="text-xs text-zinc-400">{formatDate(reply.created_at)}</span>
                         </div>
                         <p className="text-sm text-zinc-700 whitespace-pre-wrap leading-relaxed">{reply.content}</p>

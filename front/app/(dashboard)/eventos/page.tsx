@@ -42,7 +42,7 @@ export default async function EventosPage() {
 
           {upcoming.length > 0 && (
             <section>
-              <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400 mb-5">Próximos</p>
+              <p className="text-xs font-semibold text-zinc-400 mb-5">Próximos</p>
               <div className="flex flex-col gap-4">
                 {upcoming.map((event) => (
                   <EventCard key={event.id} event={event} />
@@ -53,7 +53,7 @@ export default async function EventosPage() {
 
           {past.length > 0 && (
             <section>
-              <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400 mb-5">Anteriores</p>
+              <p className="text-xs font-semibold text-zinc-400 mb-5">Anteriores</p>
               <div className="flex flex-col gap-4">
                 {past.map((event) => (
                   <EventCard key={event.id} event={event} />
@@ -84,12 +84,14 @@ function EventCard({ event }: {
   return (
     <Link
       href={`/eventos/${event.id}`}
-      className="grid grid-cols-[1fr_auto] gap-8 items-center py-6 border-b border-zinc-100 last:border-0 hover:opacity-80 transition-opacity"
+      className={`grid gap-8 items-center py-6 border-b border-zinc-100 last:border-0 hover:opacity-80 transition-opacity ${
+        event.banner_url ? 'grid-cols-[1fr_auto]' : 'grid-cols-1'
+      }`}
     >
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           {event.category && (
-            <span className="text-xs font-semibold uppercase tracking-wider text-[#2F9E41]">
+            <span className="text-xs font-semibold text-[#2F9E41]">
               {CATEGORY_LABELS[event.category] ?? event.category}
             </span>
           )}
@@ -113,12 +115,10 @@ function EventCard({ event }: {
         </div>
       </div>
 
-      {event.banner_url ? (
+      {event.banner_url && (
         <div className="relative w-36 h-24 rounded-xl overflow-hidden shrink-0">
           <Image src={event.banner_url} alt={event.title} fill className="object-cover" />
         </div>
-      ) : (
-        <div className="w-36 h-24 rounded-xl bg-zinc-100 shrink-0" />
       )}
     </Link>
   )

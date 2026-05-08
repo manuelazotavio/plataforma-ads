@@ -23,7 +23,7 @@ export default function AdminDashboard() {
         { count: pendingJobs },
         { count: totalUsers },
       ] = await Promise.all([
-        supabase.from('projects').select('*', { count: 'exact', head: true }).eq('approved', false),
+        supabase.from('projects').select('*', { count: 'exact', head: true }).eq('approved', false).is('rejection_message', null),
         supabase.from('articles').select('*', { count: 'exact', head: true }).eq('status', 'pendente'),
         supabase.from('jobs').select('*', { count: 'exact', head: true }).eq('is_active', false),
         supabase.from('users').select('*', { count: 'exact', head: true }),
@@ -53,7 +53,7 @@ export default function AdminDashboard() {
       <h1 className="text-2xl font-semibold text-zinc-900 mb-1">Visão geral</h1>
       <p className="text-sm text-zinc-500 mb-8">Itens que precisam de atenção</p>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {cards.map((card) => (
           <Link
             key={card.href}

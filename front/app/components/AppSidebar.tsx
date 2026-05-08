@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -51,22 +51,38 @@ type AppSidebarProps = {
 export default function AppSidebar({ open = true, onClose }: AppSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const [activeChild, setActiveChild] = useState('')
+  const [currentHash, setCurrentHash] = useState('')
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({})
   const navRef = useRef<HTMLElement>(null)
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
+  useEffect(() => {
+    function syncHash() {
+      setCurrentHash(window.location.hash)
+    }
+
+    syncHash()
+    window.addEventListener('hashchange', syncHash)
+    return () => window.removeEventListener('hashchange', syncHash)
+  }, [pathname])
+
   return (
     <aside className={`w-56 shrink-0 bg-white flex flex-col fixed h-full z-30 transition-transform duration-300 ${open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
       <div className="h-16 flex items-center px-5 border-b border-zinc-100">
-        <span className="font-bold text-sm text-zinc-900">ADS Comunica</span>
+        <Link
+          href="/"
+          onClick={onClose}
+          className="font-bold text-sm text-zinc-900 transition hover:text-[#2F9E41]"
+        >
+          ADS Comunica
+        </Link>
       </div>
 
       <nav ref={navRef} className="sidebar-nav flex flex-col gap-1 px-3 py-4 flex-1 overflow-y-auto">
         {sidebarItems.map((item, i) => {
           const active = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href + '/'))
           const hasChildren = Boolean(item.children?.length)
-          const expanded = hasChildren && (openItems[item.href] ?? false)
+          const expanded = hasChildren && (openItems[item.href] ?? active)
           const dividerBefore = i === 6
 
           function handleToggle() {
@@ -126,15 +142,18 @@ export default function AppSidebar({ open = true, onClose }: AppSidebarProps) {
               {hasChildren && expanded && (
                 <div className="ml-8 mt-1 flex flex-col gap-1 border-l border-zinc-100 pl-3">
                   {item.children!.map((child) => {
-                    const childActive = activeChild === child.href
                     const [childPath, childAnchor] = child.href.split('#')
+                    const childHash = childAnchor ? `#${childAnchor}` : ''
+                    const childActive = pathname === childPath && currentHash === childHash
                     return (
                       <button
                         key={child.href}
                         type="button"
                         onClick={() => {
-                          setActiveChild(child.href)
+                          setCurrentHash(childHash)
+                          setOpenItems((prev) => ({ ...prev, [item.href]: true }))
                           if (pathname === childPath) {
+                            window.history.replaceState(null, '', child.href)
                             document.getElementById(childAnchor)?.scrollIntoView({ behavior: 'smooth' })
                           } else {
                             router.push(child.href)

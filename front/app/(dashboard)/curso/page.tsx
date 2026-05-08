@@ -15,7 +15,7 @@ export default async function CursoPage() {
   const [{ data: professors }, { data: subjects, error: subjectsError }] = await Promise.all([
     supabase
       .from('professors')
-      .select('id, name, avatar_url, bio, cargo, years_at_if, email, whatsapp, linkedin, cnpq')
+      .select('id, user_id, name, avatar_url, bio, cargo, years_at_if, email, whatsapp, linkedin, cnpq')
       .eq('is_active', true)
       .order('display_order', { ascending: true }),
     supabase
@@ -126,19 +126,19 @@ const infrastructure = [
     bg: '#eff6ff',
     title: 'Rede e Conectividade',
     description: 'Wi-Fi de alta velocidade em todo o campus, servidores dedicados para projetos e ambientes de desenvolvimento em nuvem.',
-    tags: ['Wi-Fi 6', 'Servidores Linux', 'VPN acadêmica', 'Alta disponibilidade'],
+    tags: ['Wi-Fi 6', 'Alta disponibilidade'],
   },
   {
     icon: '📚',
     bg: '#fefce8',
     title: 'Biblioteca e Acervo Digital',
     description: 'Acervo de livros técnicos, assinatura de plataformas de ensino online e acesso a periódicos e artigos científicos.',
-    tags: ['Livros técnicos', 'Udemy for Business', 'IEEE Access', 'E-books'],
+    tags: ['Livros técnicos', 'IEEE Access', 'E-books'],
   },
   {
     icon: '🏗️',
     bg: '#fdf4ff',
-    title: 'Espaço Maker',
+    title: 'LabTech',
     description: 'Laboratório de prototipagem com impressoras 3D, Arduino, Raspberry Pi e equipamentos de IoT para projetos práticos.',
     tags: ['Impressão 3D', 'Arduino & RPi', 'IoT', 'Prototipagem rápida'],
   },

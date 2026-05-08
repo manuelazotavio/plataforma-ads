@@ -58,7 +58,7 @@ export default function Select({ value, onChange, options, placeholder, classNam
         type="button"
         onClick={handleToggle}
         disabled={disabled}
-        className={`w-full flex items-center justify-between gap-2 rounded-lg border border-zinc-200 bg-white pl-3 pr-2.5 py-2 text-sm text-left outline-none focus:border-zinc-400 focus:ring-2 focus:ring-zinc-100 transition ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+        className={`w-full flex items-center justify-between gap-2 rounded-xl border border-zinc-200 bg-white pl-3 pr-2.5 py-2.5 text-sm text-left text-zinc-900 outline-none transition focus:border-[#2F9E41] focus:ring-2 focus:ring-[#2F9E41]/10 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
       >
         <span className={selected ? 'text-zinc-700 truncate' : 'text-zinc-400'}>
           {selected ? selected.label : placeholder}
@@ -87,7 +87,7 @@ export default function Select({ value, onChange, options, placeholder, classNam
               type="button"
               onClick={() => pick('')}
               className={`w-full text-left px-3 py-2 text-sm transition-colors ${
-                value === '' ? 'text-zinc-900 font-medium bg-zinc-50' : 'text-zinc-400 hover:bg-zinc-50'
+                value === '' ? 'text-zinc-900 font-medium bg-[#2F9E41]/10' : 'text-zinc-400 hover:bg-zinc-50'
               }`}
             >
               {placeholder}
@@ -101,12 +101,12 @@ export default function Select({ value, onChange, options, placeholder, classNam
                 type="button"
                 onClick={() => pick(opt.value)}
                 className={`w-full flex items-center justify-between gap-3 px-3 py-2 text-sm transition-colors ${
-                  active ? 'text-zinc-900 font-medium bg-zinc-50' : 'text-zinc-700 hover:bg-zinc-50'
+                  active ? 'text-zinc-900 font-medium bg-[#2F9E41]/10' : 'text-zinc-700 hover:bg-zinc-50'
                 }`}
               >
                 {opt.label}
                 {active && (
-                  <svg className="h-3.5 w-3.5 shrink-0 text-zinc-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <svg className="h-3.5 w-3.5 shrink-0 text-[#2F9E41]" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clipRule="evenodd" />
                   </svg>
                 )}

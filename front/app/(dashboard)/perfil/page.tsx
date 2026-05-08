@@ -65,12 +65,6 @@ export default function PerfilPage() {
   const [egressoId, setEgressoId] = useState<string | null>(null)
   const [egressoForm, setEgressoForm] = useState({ graduation_year: '', role: '', company: '' })
 
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [passwordSaving, setPasswordSaving] = useState(false)
-  const [passwordError, setPasswordError] = useState<string | null>(null)
-  const [passwordSuccess, setPasswordSuccess] = useState(false)
-
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
@@ -162,21 +156,6 @@ export default function PerfilPage() {
 
   function removeSkill(skill: string) {
     setSkills((prev) => prev.filter((s) => s !== skill))
-  }
-
-  async function handlePasswordChange() {
-    if (!newPassword.trim()) { setPasswordError('Digite a nova senha.'); return }
-    if (newPassword.length < 6) { setPasswordError('A senha deve ter ao menos 6 caracteres.'); return }
-    if (newPassword !== confirmPassword) { setPasswordError('As senhas não coincidem.'); return }
-    setPasswordSaving(true)
-    setPasswordError(null)
-    setPasswordSuccess(false)
-    const { error } = await supabase.auth.updateUser({ password: newPassword })
-    if (error) { setPasswordError(error.message); setPasswordSaving(false); return }
-    setNewPassword('')
-    setConfirmPassword('')
-    setPasswordSuccess(true)
-    setPasswordSaving(false)
   }
 
   async function handleSave(e: React.FormEvent<HTMLFormElement>) {
@@ -351,6 +330,11 @@ export default function PerfilPage() {
             <Link href="/meus-artigos" className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 transition">
               <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
               Meus artigos
+            </Link>
+            <div className="border-t border-zinc-100 my-1" />
+            <Link href="/perfil/senha" className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 transition">
+              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400"><rect x={3} y={11} width={18} height={11} rx={2} ry={2}/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Alterar senha
             </Link>
           </div>
         </div>
@@ -570,45 +554,6 @@ export default function PerfilPage() {
 
         </form>
 
-        <div className="bg-white rounded-2xl border border-zinc-200 p-6 mt-6 lg:col-start-2">
-          <h3 className="text-sm font-semibold text-zinc-900 mb-1">Alterar senha</h3>
-          <p className="text-xs text-zinc-400 mb-5">Deixe em branco para manter a senha atual.</p>
-          <div className="flex flex-col gap-4">
-            <Field label="Nova senha">
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className={inputClass}
-                placeholder="Mínimo 6 caracteres"
-              />
-            </Field>
-            <Field label="Confirmar nova senha">
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className={inputClass}
-                placeholder="Repita a nova senha"
-              />
-            </Field>
-            {passwordError && (
-              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{passwordError}</p>
-            )}
-            {passwordSuccess && (
-              <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">Senha alterada com sucesso!</p>
-            )}
-            <button
-              type="button"
-              onClick={handlePasswordChange}
-              disabled={passwordSaving || !newPassword}
-              className="self-start rounded-xl px-5 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-40 transition"
-              style={{ backgroundColor: '#2F9E41' }}
-            >
-              {passwordSaving ? 'Salvando...' : 'Alterar senha'}
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   )

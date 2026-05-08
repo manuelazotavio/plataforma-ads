@@ -93,10 +93,10 @@ export default async function ProjetosPage({
         </div>
 
         
-        <div className="no-scrollbar flex gap-2 mb-6 overflow-x-auto pb-1 -mx-4 px-4 md:mx-0 md:px-0">
+        <div className="no-scrollbar mb-6 flex max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-2 -mx-4 px-4 sm:flex-wrap sm:overflow-visible md:mx-0 md:px-0">
           <Link
             href="/projetos"
-            className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors cursor-pointer ${
+            className={`shrink-0 whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-semibold transition-colors cursor-pointer ${
               !category ? 'text-white' : 'text-zinc-400 hover:text-zinc-700'
             }`}
             style={!category ? { backgroundColor: '#2F9E41' } : undefined}
@@ -107,7 +107,7 @@ export default async function ProjetosPage({
             <Link
               key={cat.value}
               href={`/projetos?category=${cat.value}`}
-              className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors cursor-pointer ${
+              className={`shrink-0 whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-semibold transition-colors cursor-pointer ${
                 category === cat.value ? 'text-white' : 'text-zinc-400 hover:text-zinc-700'
               }`}
               style={category === cat.value ? { backgroundColor: '#2F9E41' } : undefined}
@@ -129,15 +129,14 @@ export default async function ProjetosPage({
               const cover = (project.project_images as { image_url: string; display_order: number }[])
                 .sort((a, b) => a.display_order - b.display_order)[0]
               const tags = project.project_tags as { tag_name: string }[]
-              const author = project.users as unknown as { name: string; avatar_url: string | null } | null
+              const author = project.users as unknown as { id: string; name: string; avatar_url: string | null } | null
 
               return (
-                <Link
+                <div
                   key={project.id}
-                  href={`/projetos/${project.id}`}
                   className="bg-white rounded-2xl border border-zinc-200 overflow-hidden flex flex-col hover:border-zinc-300 hover:shadow-sm transition"
                 >
-                  <div className="relative h-44 bg-zinc-100">
+                  <Link href={`/projetos/${project.id}`} className="relative h-44 bg-zinc-100">
                     {cover
                       ? <Image src={cover.image_url} alt={project.title} fill className="object-cover" />
                       : <div className="w-full h-full flex items-center justify-center text-zinc-300 text-3xl">◻</div>
@@ -147,11 +146,11 @@ export default async function ProjetosPage({
                         destaque
                       </span>
                     )}
-                  </div>
+                  </Link>
 
                   <div className="p-4 flex flex-col gap-2 flex-1">
-                    <h2 className="text-sm font-semibold text-zinc-900">{project.title}</h2>
-                    <p className="text-xs text-zinc-500 line-clamp-2 flex-1">{project.description}</p>
+                    <Link href={`/projetos/${project.id}`} className="text-sm font-semibold text-zinc-900 hover:text-[#2F9E41] transition">{project.title}</Link>
+                    <Link href={`/projetos/${project.id}`} className="text-xs text-zinc-500 line-clamp-2 flex-1 hover:text-zinc-700 transition">{project.description}</Link>
 
                     {tags.length > 0 && (
                       <div className="flex flex-wrap gap-1">
@@ -164,13 +163,13 @@ export default async function ProjetosPage({
                     )}
 
                     <div className="flex items-center justify-between mt-1">
-                      <div className="flex items-center gap-2">
+                      <Link href={author ? `/usuarios/${author.id}` : '#'} className="flex items-center gap-2 hover:opacity-80 transition">
                         {author?.avatar_url
                           ? <Image src={author.avatar_url} alt={author.name} width={16} height={16} className="w-4 h-4 rounded-full object-cover shrink-0" />
                           : <div className="w-4 h-4 rounded-full bg-zinc-200" />
                         }
                         <span className="text-xs text-zinc-400">{author?.name}</span>
-                      </div>
+                      </Link>
                       {(project.like_count as number) > 0 && (
                         <span className="flex items-center gap-1 text-xs text-zinc-400">
                           <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" /></svg>
@@ -179,7 +178,7 @@ export default async function ProjetosPage({
                       )}
                     </div>
                   </div>
-                </Link>
+                </div>
               )
             })}
           </div>

@@ -14,7 +14,7 @@ export default async function ForumPage({
     supabase.from('forum_categories').select('id, name').order('display_order'),
     supabase
       .from('forum_topics')
-      .select('id, title, created_at, replies_count, views_count, users(name), forum_categories(id, name)')
+      .select('id, title, created_at, replies_count, views_count, user_id, users(id, name), forum_categories(id, name)')
       .order('created_at', { ascending: false }),
   ])
 
@@ -76,28 +76,33 @@ export default async function ForumPage({
       ) : (
         <div className="divide-y divide-zinc-100">
           {filtered.map((topic) => {
-            const author = topic.users as unknown as { name: string } | null
+            const author = topic.users as unknown as { id: string; name: string } | null
             const cat = topic.forum_categories as unknown as { id: string; name: string } | null
             return (
-              <Link
+              <div
                 key={topic.id}
-                href={`/forum/${topic.id}`}
-                className="flex items-start justify-between gap-8 py-5 hover:opacity-70 transition-opacity"
+                className="flex items-start justify-between gap-8 py-5"
               >
                 <div className="flex flex-col gap-1.5 min-w-0">
                   {cat && (
-                    <span className="text-xs font-semibold uppercase tracking-wider text-[#2F9E41]">{cat.name}</span>
+                    <span className="text-xs font-semibold text-[#2F9E41]">{cat.name}</span>
                   )}
-                  <p className="text-base font-black text-zinc-900 leading-tight">{topic.title}</p>
+                  <Link href={`/forum/${topic.id}`} className="text-base font-black text-zinc-900 leading-tight hover:opacity-70 transition">
+                    {topic.title}
+                  </Link>
                   <p className="text-xs text-zinc-400">
-                    {author?.name} · {new Date(topic.created_at).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })}
+                    {author ? (
+                      <Link href={`/usuarios/${author.id}`} className="hover:text-[#2F9E41] transition">
+                        {author.name}
+                      </Link>
+                    ) : 'Anonimo'} &bull; {new Date(topic.created_at).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })}
                   </p>
                 </div>
                 <div className="flex items-center gap-5 shrink-0 pt-1 text-xs text-zinc-400">
                   <span>{topic.replies_count ?? 0} respostas</span>
                   <span>{topic.views_count ?? 0} views</span>
                 </div>
-              </Link>
+              </div>
             )
           })}
         </div>

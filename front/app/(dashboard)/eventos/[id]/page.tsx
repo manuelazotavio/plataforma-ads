@@ -54,7 +54,7 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
       <div className="flex flex-col gap-3 mb-10">
         <div className="flex items-center gap-2">
           {event.category && (
-            <span className="text-xs font-semibold uppercase tracking-wider text-[#2F9E41]">
+            <span className="text-xs font-semibold text-[#2F9E41]">
               {CATEGORY_LABELS[event.category] ?? event.category}
             </span>
           )}
@@ -107,7 +107,7 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
       
       {relatedProjects && relatedProjects.length > 0 && (
         <section>
-          <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400 mb-5">
+          <p className="text-xs font-semibold text-zinc-400 mb-5">
             Projetos desta categoria
           </p>
           <div className="flex flex-col gap-3">

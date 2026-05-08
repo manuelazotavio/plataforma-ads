@@ -228,7 +228,7 @@ export default function AdminTecnologiasPage() {
 
   return (
     <div>
-      <div className="mb-8 flex items-start justify-between gap-4">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900">Tecnologias</h1>
           <p className="mt-0.5 text-sm text-zinc-500">
@@ -239,13 +239,13 @@ export default function AdminTecnologiasPage() {
           type="button"
           onClick={seedDefaultTags}
           disabled={saving || loading}
-          className="cursor-pointer rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-50"
+          className="w-full cursor-pointer rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-50 sm:w-auto"
         >
           Usar lista padrão
         </button>
       </div>
 
-      <form onSubmit={addTag} className="mb-5 flex max-w-xl gap-2">
+      <form onSubmit={addTag} className="mb-5 flex max-w-xl flex-col gap-2 sm:flex-row">
         <input
           type="text"
           value={name}
@@ -293,7 +293,7 @@ export default function AdminTecnologiasPage() {
           {tags.map((tag, index) => (
             <div
               key={tag.id}
-              className="grid grid-cols-[1fr_auto] items-center gap-4 border-b border-zinc-100 px-4 py-3 last:border-b-0"
+              className="grid gap-3 border-b border-zinc-100 px-4 py-3 last:border-b-0 sm:grid-cols-[1fr_auto] sm:items-center sm:gap-4"
             >
               <div className="min-w-0">
                 <p className={`text-sm font-semibold ${tag.is_active ? 'text-zinc-900' : 'text-zinc-400'}`}>
@@ -304,7 +304,7 @@ export default function AdminTecnologiasPage() {
                 </p>
               </div>
 
-              <div className="flex items-center gap-1">
+              <div className="flex flex-wrap items-center gap-1 sm:justify-end">
                 <button
                   type="button"
                   onClick={() => moveTag(index, -1)}

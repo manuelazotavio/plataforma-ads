@@ -12,14 +12,14 @@ export default async function ArtigoDetalhe({ params }: { params: Promise<{ id: 
 
   const { data: article } = await supabase
     .from('articles')
-    .select('id, title, summary, content, cover_image_url, published_at, like_count, status, users(name, avatar_url), article_tags(tag_name)')
+    .select('id, title, summary, content, cover_image_url, published_at, like_count, status, users(id, name, avatar_url), article_tags(tag_name)')
     .eq('id', id)
     .eq('status', 'publicado')
     .single()
 
   if (!article) notFound()
 
-  const author = article.users as unknown as { name: string; avatar_url: string | null } | null
+  const author = article.users as unknown as { id: string; name: string; avatar_url: string | null } | null
   const tags = article.article_tags as { tag_name: string }[]
 
   return (
@@ -52,14 +52,20 @@ export default async function ArtigoDetalhe({ params }: { params: Promise<{ id: 
 
           <div className="flex items-center justify-between pb-6 border-b border-zinc-100">
             <div className="flex items-center gap-2">
-              {author?.avatar_url
-                ? <Image src={author.avatar_url} alt={author.name} width={28} height={28} className="w-7 h-7 rounded-full object-cover shrink-0" />
-                : <div className="w-7 h-7 rounded-full bg-zinc-200 shrink-0" />
-              }
-              <span className="text-sm text-zinc-600 font-medium">{author?.name}</span>
+              {author ? (
+                <Link href={`/usuarios/${author.id}`} className="flex items-center gap-2 hover:opacity-80 transition">
+                  {author.avatar_url
+                    ? <Image src={author.avatar_url} alt={author.name} width={28} height={28} className="w-7 h-7 rounded-full object-cover shrink-0" />
+                    : <div className="w-7 h-7 rounded-full bg-zinc-200 shrink-0" />
+                  }
+                  <span className="text-sm text-zinc-600 font-medium">{author.name}</span>
+                </Link>
+              ) : (
+                <span className="text-sm text-zinc-600 font-medium">Anonimo</span>
+              )}
               {article.published_at && (
                 <>
-                  <span className="text-zinc-300">·</span>
+                  <span className="text-zinc-300">&bull;</span>
                   <span className="text-sm text-zinc-400">
                     {new Date(article.published_at).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}
                   </span>

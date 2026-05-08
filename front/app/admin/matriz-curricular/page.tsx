@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import Select from '@/app/components/Select'
 import { supabase } from '@/app/lib/supabase'
 import {
   CURRICULUM_SUBJECTS_TABLE,
@@ -20,6 +21,11 @@ const emptyForm: FormState = {
   name: '',
   workload_hours: '',
 }
+
+const semesterOptions = Array.from({ length: 8 }, (_, index) => {
+  const semester = index + 1
+  return { value: String(semester), label: `${semester}º` }
+})
 
 export default function AdminMatrizCurricularPage() {
   const [subjects, setSubjects] = useState<CurriculumSubject[]>([])
@@ -63,7 +69,7 @@ export default function AdminMatrizCurricularPage() {
   }
 
   useEffect(() => {
-    loadSubjects()
+    void Promise.resolve().then(loadSubjects)
   }, [])
 
   async function saveSubject(e: React.FormEvent) {
@@ -251,7 +257,7 @@ export default function AdminMatrizCurricularPage() {
 
   return (
     <div>
-      <div className="mb-8 flex items-start justify-between gap-4">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900">Matriz curricular</h1>
           <p className="mt-0.5 text-sm text-zinc-500">
@@ -262,7 +268,7 @@ export default function AdminMatrizCurricularPage() {
           type="button"
           onClick={seedDefaultCurriculum}
           disabled={saving || loading}
-          className="cursor-pointer rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-50"
+          className="w-full cursor-pointer rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-50 sm:w-auto"
         >
           Usar matriz padrão
         </button>
@@ -271,15 +277,11 @@ export default function AdminMatrizCurricularPage() {
       <form onSubmit={saveSubject} className="mb-5 grid gap-3 rounded-xl border border-zinc-200 bg-white p-4 lg:grid-cols-[110px_1fr_140px_auto]">
         <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500">
           Semestre
-          <select
-            value={form.semester}
-            onChange={(e) => setForm((prev) => ({ ...prev, semester: Number(e.target.value) }))}
-            className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
-          >
-            {Array.from({ length: 8 }, (_, index) => index + 1).map((semester) => (
-              <option key={semester} value={semester}>{semester}º</option>
-            ))}
-          </select>
+          <Select
+            value={String(form.semester)}
+            onChange={(value) => setForm((prev) => ({ ...prev, semester: Number(value) }))}
+            options={semesterOptions}
+          />
         </label>
 
         <label className="flex min-w-0 flex-col gap-1 text-xs font-medium text-zinc-500">
@@ -305,7 +307,7 @@ export default function AdminMatrizCurricularPage() {
           />
         </label>
 
-        <div className="flex items-end gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
           <button
             type="submit"
             disabled={saving || !form.name.trim()}
@@ -362,7 +364,7 @@ export default function AdminMatrizCurricularPage() {
               {semesterSubjects.map((subject, index) => (
                 <div
                   key={subject.id}
-                  className="grid grid-cols-[1fr_auto] items-center gap-4 border-b border-zinc-100 px-4 py-3 last:border-b-0"
+                  className="grid gap-3 border-b border-zinc-100 px-4 py-3 last:border-b-0 sm:grid-cols-[1fr_auto] sm:items-center sm:gap-4"
                 >
                   <div className="min-w-0">
                     <p className={`text-sm font-semibold ${subject.is_active ? 'text-zinc-900' : 'text-zinc-400'}`}>
@@ -374,7 +376,7 @@ export default function AdminMatrizCurricularPage() {
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-1">
+                  <div className="flex flex-wrap items-center gap-1 sm:justify-end">
                     <button
                       type="button"
                       onClick={() => moveSubject(semesterSubjects, index, -1)}

@@ -33,6 +33,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname()
   const [user, setUser] = useState<UserProfile | null>(null)
   const [ready, setReady] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
     async function check() {
@@ -51,66 +52,97 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex h-screen overflow-hidden">
 
-      <aside className="w-56 shrink-0 bg-zinc-950 flex flex-col fixed h-full z-20">
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-20 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-        <div className="h-16 flex items-center px-5 border-b border-white/5 gap-2.5">
+      <aside className={`w-56 shrink-0 bg-zinc-950 flex flex-col fixed h-full z-30 transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+
+        <Link
+          href="/admin"
+          onClick={() => setSidebarOpen(false)}
+          className="h-16 flex items-center px-5 border-b border-white/5 gap-2.5 transition hover:bg-white/5"
+        >
           <div className="w-7 h-3 rounded-sm bg-white shrink-0" />
           <div className="leading-tight">
             <span className="block font-bold text-sm text-white">ADS</span>
             <span className="block font-bold text-sm text-zinc-500">Admin</span>
           </div>
+        </Link>
+        <div className="absolute right-5 top-5 md:hidden">
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="text-zinc-500 hover:text-white transition"
+            aria-label="Fechar menu"
+          >
+            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <line x1={18} y1={6} x2={6} y2={18}/><line x1={6} y1={6} x2={18} y2={18}/>
+            </svg>
+          </button>
         </div>
 
-        <nav className="flex flex-col gap-0.5 px-3 py-4 flex-1 overflow-y-auto">
+        <nav className="sidebar-nav flex flex-col gap-1 px-3 py-4 flex-1 overflow-y-auto">
           {nav.map((item) => {
             const active = item.exact ? pathname === item.href : pathname.startsWith(item.href)
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                onClick={() => setSidebarOpen(false)}
+                className={`flex min-w-0 items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-colors ${
                   active
                     ? 'bg-white/10 text-white'
                     : 'text-zinc-400 hover:bg-white/5 hover:text-white'
                 }`}
               >
                 <span className="shrink-0">{item.icon}</span>
-                {item.label}
+                <span className="truncate">{item.label}</span>
               </Link>
             )
           })}
         </nav>
 
-        <div className="px-3 pb-4">
+        <div className="shrink-0 px-3 pb-4">
           <Link
             href="/"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-zinc-600 hover:bg-white/5 hover:text-zinc-400 transition-colors"
+            onClick={() => setSidebarOpen(false)}
+            className="flex min-w-0 items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-zinc-600 hover:bg-white/5 hover:text-zinc-400 transition-colors"
           >
             <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
-            Voltar ao site
+            <span className="truncate">Voltar ao site</span>
           </Link>
         </div>
       </aside>
 
-      <div className="flex flex-col flex-1 ml-56 min-w-0">
+      <div className="flex flex-col flex-1 ml-0 md:ml-56 min-w-0">
 
-        <header className="h-16 bg-white border-b border-zinc-100 flex items-center justify-end px-6 sticky top-0 z-10 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="text-right leading-tight">
+        <header className="h-16 bg-white border-b border-zinc-100 flex items-center justify-end px-4 md:px-6 sticky top-0 z-10 shrink-0 gap-3 md:gap-4">
+          <button
+            type="button"
+            aria-label="Abrir menu"
+            onClick={() => setSidebarOpen(true)}
+            className="md:hidden p-2 rounded-lg text-zinc-500 hover:bg-zinc-100 transition shrink-0 mr-auto"
+          >
+            <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <line x1={3} y1={6} x2={21} y2={6} />
+              <line x1={3} y1={12} x2={21} y2={12} />
+              <line x1={3} y1={18} x2={21} y2={18} />
+            </svg>
+          </button>
+
+          <div className="flex items-center gap-3 ml-auto">
+            <div className="text-right leading-tight hidden sm:block">
               <p className="text-sm font-semibold text-zinc-900">{user?.name}</p>
               <p className="text-xs text-zinc-400 mt-0.5">Administrador</p>
             </div>
             <div className="w-9 h-9 rounded-full overflow-hidden bg-zinc-200 shrink-0 ring-2 ring-zinc-100">
               {user?.avatar_url ? (
-                <Image
-                  src={user.avatar_url}
-                  alt={user.name}
-                  width={36}
-                  height={36}
-                  className="object-cover w-full h-full"
-                />
+                <Image src={user.avatar_url} alt={user.name} width={36} height={36} className="object-cover w-full h-full" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-zinc-500 text-sm font-semibold">
                   {user?.name?.charAt(0)?.toUpperCase()}
@@ -122,10 +154,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         <main className="flex-1 overflow-y-auto bg-white">
           <div className="flex flex-col min-h-full">
-            <div className="flex-1 p-8">
+            <div className="flex-1 p-4 md:p-8">
               {children}
             </div>
-            <footer className="border-t border-zinc-100 px-8 py-6 mt-4">
+            <footer className="border-t border-zinc-100 px-4 md:px-8 py-6 mt-4">
               <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-zinc-400">
                 <Link href="/regras" className="hover:text-zinc-700 transition">Regras do ADS Comunica</Link>
                 <Link href="/privacidade" className="hover:text-zinc-700 transition">Política de Privacidade</Link>

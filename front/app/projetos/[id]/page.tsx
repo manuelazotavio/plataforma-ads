@@ -12,7 +12,7 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
 
   const { data: project } = await supabase
     .from('projects')
-    .select('id, title, description, repo_url, deploy_url, semester, is_featured, like_count, created_at, users(name, avatar_url), project_tags(tag_name), project_images(image_url, display_order, media_type)')
+    .select('id, title, description, repo_url, deploy_url, semester, is_featured, like_count, created_at, users(id, name, avatar_url), project_tags(tag_name), project_images(image_url, display_order, media_type)')
     .eq('id', id)
     .single()
 
@@ -21,7 +21,7 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
   const images = (project.project_images as { image_url: string; display_order: number; media_type: string }[])
     .sort((a, b) => a.display_order - b.display_order)
   const tags = project.project_tags as { tag_name: string }[]
-  const author = project.users as unknown as { name: string; avatar_url: string | null } | null
+  const author = project.users as unknown as { id: string; name: string; avatar_url: string | null } | null
   const cover = images[0]
   const gallery = images.slice(1)
 
@@ -131,7 +131,7 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
           {author && (
             <div className="flex flex-col gap-3 pt-1">
               <p className="text-sm font-semibold text-zinc-700">Autor</p>
-              <div className="flex items-center gap-3">
+              <Link href={`/usuarios/${author.id}`} className="flex items-center gap-3 hover:opacity-80 transition">
                 {author.avatar_url ? (
                   <Image src={author.avatar_url} alt={author.name} width={36} height={36} className="w-9 h-9 rounded-full object-cover shrink-0" />
                 ) : (
@@ -140,7 +140,7 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
                   </div>
                 )}
                 <span className="text-sm font-medium text-zinc-900">{author.name}</span>
-              </div>
+              </Link>
             </div>
           )}
 

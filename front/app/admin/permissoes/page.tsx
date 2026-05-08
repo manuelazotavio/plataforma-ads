@@ -101,9 +101,13 @@ export default function PermissoesPage() {
   const [creating, setCreating] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
 
-  useEffect(() => {
-    loadRoles()
-  }, [])
+  async function loadPerms(roleId: string) {
+    const { data } = await supabase
+      .from('role_permissions')
+      .select('permission')
+      .eq('role_id', roleId)
+    setPerms(new Set((data ?? []).map((r: { permission: string }) => r.permission)))
+  }
 
   async function loadRoles() {
     const { data } = await supabase.from('user_roles').select('*').order('display_order')
@@ -116,13 +120,22 @@ export default function PermissoesPage() {
     setLoading(false)
   }
 
-  async function loadPerms(roleId: string) {
-    const { data } = await supabase
-      .from('role_permissions')
-      .select('permission')
-      .eq('role_id', roleId)
-    setPerms(new Set((data ?? []).map((r: { permission: string }) => r.permission)))
-  }
+  useEffect(() => {
+    void Promise.resolve().then(async () => {
+      const { data } = await supabase.from('user_roles').select('*').order('display_order')
+      const list = (data as Role[]) ?? []
+      setRoles(list)
+      if (list.length > 0) {
+        setSelected(list[0].id)
+        const { data: rolePerms } = await supabase
+          .from('role_permissions')
+          .select('permission')
+          .eq('role_id', list[0].id)
+        setPerms(new Set((rolePerms ?? []).map((r: { permission: string }) => r.permission)))
+      }
+      setLoading(false)
+    })
+  }, [])
 
   async function selectRole(roleId: string) {
     setSelected(roleId)
@@ -214,12 +227,12 @@ export default function PermissoesPage() {
   if (loading) return <p className="text-sm text-zinc-500">Carregando...</p>
 
   return (
-    <div className="flex gap-6 h-full min-h-0">
+    <div className="flex h-full min-h-0 flex-col gap-6 lg:flex-row">
 
     
-      <div className="w-56 shrink-0 flex flex-col gap-2">
+      <div className="flex shrink-0 flex-col gap-2 lg:w-56">
         <div className="flex items-center justify-between mb-1">
-          <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Perfis</h2>
+          <h2 className="text-xs font-semibold text-zinc-400">Perfis</h2>
           <button
             onClick={() => setShowModal(true)}
             className="flex items-center gap-1 text-xs font-semibold text-[#2F9E41] hover:opacity-70 transition"
@@ -229,33 +242,35 @@ export default function PermissoesPage() {
           </button>
         </div>
 
-        {roles.map(role => (
-          <button
-            key={role.id}
-            onClick={() => selectRole(role.id)}
-            className={`w-full text-left rounded-xl px-3.5 py-3 transition-colors border ${
-              selected === role.id
-                ? 'border-zinc-200 bg-zinc-50'
-                : 'border-transparent hover:bg-zinc-50'
-            }`}
-          >
-            <div className="flex items-center gap-2.5 min-w-0">
-              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: role.color }} />
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-zinc-900 truncate">{role.label}</p>
-                {role.description && (
-                  <p className="text-xs text-zinc-400 truncate mt-0.5">{role.description}</p>
-                )}
+        <div className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
+          {roles.map(role => (
+            <button
+              key={role.id}
+              onClick={() => selectRole(role.id)}
+              className={`w-52 shrink-0 rounded-xl border px-3.5 py-3 text-left transition-colors lg:w-full ${
+                selected === role.id
+                  ? 'border-zinc-200 bg-zinc-50'
+                  : 'border-transparent hover:bg-zinc-50'
+              }`}
+            >
+              <div className="flex min-w-0 items-center gap-2.5">
+                <span className="w-2.5 h-2.5 shrink-0 rounded-full" style={{ backgroundColor: role.color }} />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-zinc-900">{role.label}</p>
+                  {role.description && (
+                    <p className="mt-0.5 truncate text-xs text-zinc-400">{role.description}</p>
+                  )}
+                </div>
               </div>
-            </div>
-          </button>
-        ))}
+            </button>
+          ))}
+        </div>
       </div>
 
       
       {selectedRole ? (
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between mb-6">
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <div className="flex items-center gap-2.5 mb-1">
                 <span className="w-3 h-3 rounded-full" style={{ backgroundColor: selectedRole.color }} />
@@ -272,7 +287,7 @@ export default function PermissoesPage() {
               </p>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
               <button
                 onClick={revokeAll}
                 className="text-xs font-medium text-zinc-400 hover:text-zinc-700 transition px-3 py-1.5 rounded-lg border border-zinc-200 hover:bg-zinc-50"
@@ -305,8 +320,8 @@ export default function PermissoesPage() {
               return (
                 <div key={group.category} className="rounded-2xl border border-zinc-100 overflow-hidden">
                
-                  <div className="flex items-center justify-between px-5 py-3 bg-zinc-50 border-b border-zinc-100">
-                    <span className="text-xs font-bold text-zinc-700 uppercase tracking-wider">{group.category}</span>
+                  <div className="flex flex-col gap-2 border-b border-zinc-100 bg-zinc-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                    <span className="text-xs font-bold text-zinc-700">{group.category}</span>
                     <button
                       onClick={() => toggleAll(group.items)}
                       className="text-xs font-semibold text-zinc-400 hover:text-zinc-700 transition"
@@ -320,12 +335,12 @@ export default function PermissoesPage() {
                     {group.items.map(perm => {
                       const active = perms.has(perm.id)
                       return (
-                        <div key={perm.id} className="flex items-center justify-between px-5 py-3.5">
-                          <div className="flex flex-col gap-0.5">
+                        <div key={perm.id} className="flex items-start justify-between gap-4 px-4 py-3.5 sm:items-center sm:px-5">
+                          <div className="flex min-w-0 flex-col gap-0.5">
                             <span className={`text-sm font-medium ${active ? 'text-zinc-900' : 'text-zinc-400'}`}>
                               {perm.label}
                             </span>
-                            <span className="text-xs text-zinc-300 font-mono">{perm.id}</span>
+                            <span className="break-all text-xs font-mono text-zinc-300">{perm.id}</span>
                           </div>
                           <Toggle
                             checked={active}
@@ -349,8 +364,8 @@ export default function PermissoesPage() {
 
    
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl p-7 flex flex-col gap-5">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 px-4 py-4 sm:items-center">
+          <div className="flex max-h-[90vh] w-full max-w-sm flex-col gap-5 overflow-y-auto rounded-2xl bg-white p-4 shadow-xl sm:p-7">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-zinc-900">Novo perfil</h2>
               <button onClick={() => { setShowModal(false); setFormError(null) }} className="text-zinc-400 hover:text-zinc-700 text-xl">×</button>
@@ -406,7 +421,7 @@ export default function PermissoesPage() {
               <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{formError}</p>
             )}
 
-            <div className="flex gap-2">
+            <div className="flex flex-col-reverse gap-2 sm:flex-row">
               <button
                 onClick={createRole}
                 disabled={creating || !form.id.trim() || !form.label.trim()}

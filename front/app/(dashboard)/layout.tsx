@@ -188,7 +188,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="flex-1">
               {children}
             </div>
-            <footer className="border-t border-zinc-100 px-4 md:px-10 py-6 mt-8">
+            <footer className="border-t border-zinc-100 py-6 mt-8 pl-4 pr-24 md:pl-10 md:pr-28">
               <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-zinc-400">
                 <Link href="/regras" className="hover:text-zinc-700 transition">Regras do ADS Comunica</Link>
                 <Link href="/privacidade" className="hover:text-zinc-700 transition">Política de Privacidade</Link>

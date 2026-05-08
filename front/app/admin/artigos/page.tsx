@@ -77,19 +77,19 @@ export default function AdminArtigosPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900">Artigos</h1>
           <p className="text-sm text-zinc-500 mt-0.5">
             {pendingCount} aguardando revisão
           </p>
         </div>
-        <div className="flex gap-1 rounded-lg border border-zinc-200 bg-white p-1">
+        <div className="flex w-full flex-wrap gap-1 rounded-lg border border-zinc-200 bg-white p-1 sm:w-auto">
           {(['pendentes', 'publicados', 'rejeitados', 'todos'] as Filter[]).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`rounded-md px-3 py-1.5 text-xs font-medium transition capitalize ${
+              className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition capitalize sm:flex-none ${
                 filter === f ? 'bg-[#2F9E41] text-white' : 'text-zinc-500 hover:text-zinc-900'
               }`}
             >
@@ -115,15 +115,15 @@ export default function AdminArtigosPage() {
                   'border-zinc-200'
                 }`}
               >
-                <div className="flex gap-4">
+                <div className="flex flex-col gap-4 sm:flex-row">
                   {article.cover_image_url && (
-                    <div className="relative w-20 h-16 rounded-lg overflow-hidden bg-zinc-100 shrink-0">
+                    <div className="relative h-36 w-full overflow-hidden rounded-lg bg-zinc-100 sm:h-16 sm:w-20 sm:shrink-0">
                       <Image src={article.cover_image_url} alt={article.title} fill className="object-cover" />
                     </div>
                   )}
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2 mb-1">
+                    <div className="mb-1 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <p className="text-sm font-semibold text-zinc-900 line-clamp-1">{article.title}</p>
                         <p className="text-xs text-zinc-400">
@@ -145,7 +145,7 @@ export default function AdminArtigosPage() {
                     )}
                   </div>
 
-                  <div className="flex flex-col gap-1.5 shrink-0 justify-center">
+                  <div className="grid grid-cols-2 gap-1.5 sm:flex sm:shrink-0 sm:flex-col sm:justify-center">
                     {article.status !== 'publicado' && (
                       <button
                         onClick={() => publish(article.id)}
@@ -182,7 +182,7 @@ export default function AdminArtigosPage() {
                 )}
 
                 {rejectingId === article.id && (
-                  <div className="flex gap-2 items-start">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
                     <textarea
                       value={rejectMessage}
                       onChange={(e) => setRejectMessage(e.target.value)}
@@ -190,7 +190,7 @@ export default function AdminArtigosPage() {
                       rows={2}
                       className="flex-1 rounded-lg border border-zinc-300 px-3 py-2 text-xs text-zinc-900 outline-none resize-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
                     />
-                    <div className="flex flex-col gap-1.5">
+                    <div className="grid grid-cols-2 gap-1.5 sm:flex sm:flex-col">
                       <button
                         onClick={() => reject(article.id)}
                         disabled={!rejectMessage.trim() || updatingId === article.id}

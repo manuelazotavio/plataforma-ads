@@ -1,11 +1,10 @@
-export const dynamic = 'force-dynamic'
+﻿export const dynamic = 'force-dynamic'
 
 import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
-import PublicQuickCreateMenu from '@/app/components/PublicQuickCreateMenu'
-import { PublicHeaderAuth, PublicProfileCard, PublicWelcomeCard } from '@/app/components/PublicAuthControls'
-import AppSidebar from '@/app/components/AppSidebar'
+import HomeShell from '@/app/components/HomeShell'
+import { PublicProfileCard, PublicWelcomeCard } from '@/app/components/PublicAuthControls'
 
 type Project = {
   id: string
@@ -31,7 +30,26 @@ type Contributor = {
   name: string
   avatar_url: string | null
   semester: number | null
-  totalLikes: number
+  role: string | null
+  xp: number
+}
+
+type PopularTag = {
+  name: string
+  count: number
+}
+
+type ContributorUser = {
+  id: string
+  name: string
+  avatar_url: string | null
+  semester: number | null
+  role: string | null
+}
+
+type XpContent = {
+  user_id: string | null
+  like_count?: number | null
 }
 
 export default async function HomePage() {
@@ -39,7 +57,12 @@ export default async function HomePage() {
     { data: projects },
     { data: topics },
     { data: tags },
-    { data: topProjects },
+    { data: contributorUsers },
+    { data: contributorProjects },
+    { data: contributorArticles },
+    { data: contributorTopics },
+    { data: contributorProjectComments },
+    { data: contributorArticleComments },
     { count: studentsCount },
     { count: projectsCount },
     { data: events },
@@ -54,12 +77,15 @@ export default async function HomePage() {
       .select('id, title, created_at, replies_count, users(name), forum_categories(name)')
       .order('created_at', { ascending: false })
       .limit(5),
-    supabase.from('project_tags').select('tag_name').limit(50),
+    supabase.from('project_tags').select('tag_name, projects!inner(approved)').eq('projects.approved', true),
     supabase
-      .from('projects')
-      .select('like_count, users(id, name, avatar_url, semester)')
-      .order('like_count', { ascending: false })
-      .limit(50),
+      .from('users')
+      .select('id, name, avatar_url, semester, role'),
+    supabase.from('projects').select('user_id, like_count'),
+    supabase.from('articles').select('user_id, like_count').eq('status', 'publicado'),
+    supabase.from('forum_topics').select('user_id'),
+    supabase.from('project_comments').select('user_id'),
+    supabase.from('article_comments').select('user_id'),
     supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'aluno'),
     supabase.from('projects').select('*', { count: 'exact', head: true }),
     supabase
@@ -71,69 +97,47 @@ export default async function HomePage() {
 
   const featuredProjects = (projects ?? []) as unknown as Project[]
   const recentTopics = (topics ?? []) as unknown as Topic[]
-  const popularTags = Array.from(new Set((tags ?? []).map((tag) => tag.tag_name))).slice(0, 6)
-  const topContributors = getTopContributors(topProjects ?? [])
+  const popularTags = getPopularTags((tags ?? []).map((tag) => tag.tag_name))
+  const topContributors = getTopContributors({
+    users: (contributorUsers ?? []) as ContributorUser[],
+    projects: (contributorProjects ?? []) as XpContent[],
+    articles: (contributorArticles ?? []) as XpContent[],
+    topics: (contributorTopics ?? []) as XpContent[],
+    projectComments: (contributorProjectComments ?? []) as XpContent[],
+    articleComments: (contributorArticleComments ?? []) as XpContent[],
+  })
   const allEvents = (events ?? []) as { id: string; title: string; category: string | null; start_date: string | null; end_date: string | null }[]
 
   return (
-    <div className="flex h-screen overflow-hidden bg-white">
-      <AppSidebar />
+    <HomeShell>
+      <div className="grid grid-cols-1 gap-7 px-5 py-6 lg:px-8 xl:grid-cols-[minmax(0,750px)_290px_300px]">
+        <div className="flex min-w-0 flex-col gap-7">
+          <PublicWelcomeCard studentsCount={studentsCount ?? 0} projectsCount={projectsCount ?? 0} />
+          <ProjectsSection projects={featuredProjects} />
+          <TopicsSection topics={recentTopics} />
+        </div>
 
-      <div className="flex min-w-0 flex-1 flex-col ml-56">
-        <PublicHeader />
+        <div className="flex flex-col gap-4">
+          <PublicProfileCard />
+          {topContributors.length > 0 && <TopContributorsCard contributors={topContributors} />}
+          {popularTags.length > 0 && <TagsCard tags={popularTags} />}
+        </div>
 
-        <main className="flex-1 overflow-y-auto bg-white">
-          <div className="grid grid-cols-1 gap-7 px-5 py-6 lg:px-8 xl:grid-cols-[minmax(0,750px)_290px_300px]">
-            <div className="flex min-w-0 flex-col gap-7">
-              <PublicWelcomeCard studentsCount={studentsCount ?? 0} projectsCount={projectsCount ?? 0} />
-              <ProjectsSection projects={featuredProjects} />
-              <TopicsSection topics={recentTopics} />
-            </div>
-
-            <div className="flex flex-col gap-4">
-              <PublicProfileCard />
-              {topContributors.length > 0 && <TopContributorsCard contributors={topContributors} />}
-              {popularTags.length > 0 && <TagsCard tags={popularTags} />}
-            </div>
-
-            <div className="flex flex-col gap-4">
-              <CalendarCard events={allEvents} />
-            </div>
-          </div>
-
-          <footer className="mt-8 border-t border-zinc-100 px-10 py-6">
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-zinc-400">
-              <Link href="/regras" className="transition hover:text-zinc-700">Regras do ADS Comunica</Link>
-              <Link href="/privacidade" className="transition hover:text-zinc-700">Política de Privacidade</Link>
-              <Link href="/contrato" className="transition hover:text-zinc-700">Contrato de Usuário</Link>
-              <Link href="/acessibilidade" className="transition hover:text-zinc-700">Acessibilidade</Link>
-              <span className="ml-auto">ADS Comunica, Inc. &copy; 2026. Todos os direitos reservados.</span>
-            </div>
-          </footer>
-        </main>
-
-        <PublicQuickCreateMenu />
-      </div>
-    </div>
-  )
-}
-
-function PublicHeader() {
-  return (
-    <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-end gap-4 border-b border-zinc-100 bg-white px-6">
-      <div className="relative hidden sm:block">
-        <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-          <circle cx={11} cy={11} r={8} /><path d="m21 21-4.35-4.35" />
-        </svg>
-        <input
-          type="text"
-          placeholder="Buscar projetos, tópicos..."
-          className="w-64 rounded-full bg-zinc-100 py-2 pl-8 pr-4 text-sm text-zinc-500 outline-none transition placeholder:text-zinc-400 focus:bg-zinc-200"
-        />
+        <div className="flex flex-col gap-4">
+          <CalendarCard events={allEvents} />
+        </div>
       </div>
 
-      <PublicHeaderAuth />
-    </header>
+      <footer className="mt-8 border-t border-zinc-100 pl-4 pr-24 py-6 md:pl-10 md:pr-28">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-zinc-400">
+          <Link href="/regras" className="transition hover:text-zinc-700">Regras do ADS Comunica</Link>
+          <Link href="/privacidade" className="transition hover:text-zinc-700">Política de Privacidade</Link>
+          <Link href="/contrato" className="transition hover:text-zinc-700">Contrato de Usuário</Link>
+          <Link href="/acessibilidade" className="transition hover:text-zinc-700">Acessibilidade</Link>
+          <span className="ml-auto">ADS Comunica, Inc. &copy; 2026. Todos os direitos reservados.</span>
+        </div>
+      </footer>
+    </HomeShell>
   )
 }
 
@@ -219,7 +223,11 @@ function TopContributorsCard({ contributors }: { contributors: Contributor[] }) 
       </h3>
       <div className="flex flex-col gap-3">
         {contributors.map((contributor, i) => (
-          <div key={contributor.id} className="flex items-center gap-3">
+          <Link
+            key={contributor.id}
+            href={`/usuarios/${contributor.id}`}
+            className="flex items-center gap-3 rounded-xl -mx-2 px-2 py-1.5 transition hover:bg-zinc-50"
+          >
             <span className="w-4 shrink-0 text-xs font-bold text-zinc-300">{i + 1}</span>
             <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-zinc-200">
               {contributor.avatar_url ? (
@@ -230,24 +238,33 @@ function TopContributorsCard({ contributors }: { contributors: Contributor[] }) 
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-semibold text-zinc-900">{contributor.name}</p>
-              <p className="text-xs text-zinc-400">{contributor.semester ? `${contributor.semester}o Semestre` : 'Aluno'}</p>
+              <p className="text-xs text-zinc-400">{contributorLabel(contributor)}</p>
             </div>
-            <span className="shrink-0 text-xs font-bold" style={{ color: '#2F9E41' }}>{contributor.totalLikes > 0 ? `${contributor.totalLikes} XP` : '-'}</span>
-          </div>
+            <span className="shrink-0 text-xs font-bold" style={{ color: '#2F9E41' }}>{contributor.xp > 0 ? `${contributor.xp} XP` : '-'}</span>
+          </Link>
         ))}
       </div>
     </div>
   )
 }
 
-function TagsCard({ tags }: { tags: string[] }) {
+function TagsCard({ tags }: { tags: PopularTag[] }) {
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white p-5">
-      <h3 className="mb-3 text-base font-semibold text-zinc-900">Tags populares</h3>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h3 className="text-base font-semibold text-zinc-900">Tags populares</h3>
+        <Link href="/projetos" className="text-xs font-medium text-green-600 hover:text-green-700 transition">Ver projetos</Link>
+      </div>
       <div className="flex flex-wrap gap-2">
         {tags.map((tag) => (
-          <Link key={tag} href={`/projetos?tag=${encodeURIComponent(tag)}`} className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600 transition hover:bg-zinc-200">
-            #{tag}
+          <Link
+            key={tag.name}
+            href={`/projetos?tag=${encodeURIComponent(tag.name)}`}
+            className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600 transition hover:bg-zinc-200 hover:text-zinc-900"
+            title={`${tag.count} projeto${tag.count !== 1 ? 's' : ''} com ${tag.name}`}
+          >
+            <span>#{tag.name}</span>
+            <span className="text-[10px] text-zinc-400">{tag.count}</span>
           </Link>
         ))}
       </div>
@@ -369,9 +386,12 @@ function CalendarCard({ events }: { events: CalendarEvent[] }) {
 
 function SectionHeader({ title, icon, href, action }: { title: string; icon: React.ReactNode; href: string; action: string }) {
   return (
-    <div className="mb-5 flex items-center justify-between">
-      <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-900">{icon}{title}</h2>
-      <Link href={href} className="flex items-center gap-1 text-sm font-medium text-green-600 transition hover:text-green-700">
+    <div className="mb-5 flex items-center justify-between gap-3">
+      <h2 className="flex items-center gap-1.5 text-base md:text-lg font-semibold text-zinc-900 min-w-0">
+        <span className="hidden sm:flex shrink-0">{icon}</span>
+        <span className="truncate">{title}</span>
+      </h2>
+      <Link href={href} className="flex items-center gap-1 text-xs md:text-sm font-medium text-green-600 transition hover:text-green-700 shrink-0 whitespace-nowrap">
         {action}
         <ArrowIcon />
       </Link>
@@ -400,21 +420,71 @@ function Stat({ label, value }: { label: string; value: number }) {
   )
 }
 
-function getTopContributors(projects: { like_count: number | null; users: unknown }[]): Contributor[] {
-  const likesMap = new Map<string, Contributor>()
-  for (const project of projects) {
-    const user = firstRelation(project.users) as Contributor | null
-    if (!user?.id) continue
-    const prev = likesMap.get(user.id)
-    likesMap.set(user.id, {
-      id: user.id,
-      name: user.name,
-      avatar_url: user.avatar_url,
-      semester: user.semester,
-      totalLikes: (prev?.totalLikes ?? 0) + (project.like_count ?? 0),
-    })
+function getTopContributors({
+  users,
+  projects,
+  articles,
+  topics,
+  projectComments,
+  articleComments,
+}: {
+  users: ContributorUser[]
+  projects: XpContent[]
+  articles: XpContent[]
+  topics: XpContent[]
+  projectComments: XpContent[]
+  articleComments: XpContent[]
+}): Contributor[] {
+  const usersById = new Map(users.map((user) => [user.id, user]))
+  const xpByUser = new Map<string, number>()
+
+  function addXp(userId: string | null | undefined, xp: number) {
+    if (!userId || !usersById.has(userId)) return
+    xpByUser.set(userId, (xpByUser.get(userId) ?? 0) + xp)
   }
-  return Array.from(likesMap.values()).sort((a, b) => b.totalLikes - a.totalLikes).slice(0, 3)
+
+  for (const project of projects) addXp(project.user_id, 50 + (project.like_count ?? 0) * 5)
+  for (const article of articles) addXp(article.user_id, 40 + (article.like_count ?? 0) * 5)
+  for (const topic of topics) addXp(topic.user_id, 20)
+  for (const comment of projectComments) addXp(comment.user_id, 10)
+  for (const comment of articleComments) addXp(comment.user_id, 10)
+
+  return Array.from(xpByUser.entries())
+    .map(([userId, xp]) => {
+      const user = usersById.get(userId)!
+      return {
+        id: user.id,
+        name: user.name,
+        avatar_url: user.avatar_url,
+        semester: user.semester,
+        role: user.role,
+        xp,
+      }
+    })
+    .sort((a, b) => b.xp - a.xp)
+    .slice(0, 3)
+}
+
+function getPopularTags(tags: string[]): PopularTag[] {
+  const counts = new Map<string, number>()
+  for (const tag of tags) {
+    const name = tag.trim()
+    if (!name) continue
+    counts.set(name, (counts.get(name) ?? 0) + 1)
+  }
+  return Array.from(counts.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+    .slice(0, 8)
+}
+
+function contributorLabel(contributor: Pick<Contributor, 'role' | 'semester'>) {
+  if (contributor.role === 'admin') return 'Administrador'
+  if (contributor.role === 'moderador') return 'Moderador'
+  if (contributor.role === 'professor') return 'Professor'
+  if (contributor.role === 'egresso') return 'Egresso'
+  if (contributor.semester) return `${contributor.semester}º semestre`
+  return 'Aluno'
 }
 
 function firstRelation<T>(value: T | T[] | null | undefined): T | null {
@@ -428,10 +498,10 @@ const DAY_LABELS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
 function relativeTime(iso: string): string {
   const ms = Date.now() - new Date(iso).getTime()
   const h = Math.floor(ms / 36e5)
-  if (h < 1) return 'ha menos de 1h'
-  if (h < 24) return `ha ${h}h`
+  if (h < 1) return 'há menos de 1h'
+  if (h < 24) return `há ${h}h`
   const d = Math.floor(h / 24)
-  return d === 1 ? 'ha 1 dia' : `ha ${d} dias`
+  return d === 1 ? 'há 1 dia' : `há ${d} dias`
 }
 
 function formatDate(iso: string): string {

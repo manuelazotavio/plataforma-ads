@@ -40,8 +40,8 @@ export default function CalendarioPage() {
     supabase
       .from('events')
       .select('id, title, start_date, end_date, category')
-      .gte('start_date', start)
       .lte('start_date', end)
+      .or(`start_date.gte.${start},end_date.gte.${start}`)
       .eq('is_active', true)
       .then(({ data }) => setEventos(data ?? []))
   }, [year, month])
@@ -74,9 +74,25 @@ export default function CalendarioPage() {
   for (let i = 1; i <= remaining; i++)
     cells.push({ date: new Date(year, month + 1, i), current: false })
 
+  function parseLocal(s: string) {
+    const [y, m, d] = s.split('-').map(Number)
+    return new Date(y, m - 1, d)
+  }
+
   function eventsForDay(date: Date) {
-    const str = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-    return eventos.filter(e => e.start_date.startsWith(str))
+    const day = date.getTime()
+    return eventos
+      .map(e => {
+        const start = parseLocal(e.start_date)
+        const end = e.end_date ? parseLocal(e.end_date) : start
+        if (day < start.getTime() || day > end.getTime()) return null
+        return {
+          ...e,
+          isStart: day === start.getTime(),
+          isEnd:   day === end.getTime(),
+        }
+      })
+      .filter(Boolean) as (Evento & { isStart: boolean; isEnd: boolean })[]
   }
 
   function isToday(date: Date) {
@@ -116,7 +132,7 @@ export default function CalendarioPage() {
       
       <div className="grid grid-cols-7 border-b border-zinc-100 shrink-0">
         {DAYS.map(d => (
-          <div key={d} className="py-2 text-center text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+          <div key={d} className="py-2 text-center text-xs font-semibold text-zinc-400">
             {d}
           </div>
         ))}
@@ -151,9 +167,14 @@ export default function CalendarioPage() {
                 <Link
                   key={ev.id}
                   href={`/eventos/${ev.id}`}
-                  className={`text-xs font-medium px-1.5 py-0.5 rounded truncate transition hover:opacity-80 ${categoryColor(ev.category)}`}
+                  title={ev.title}
+                  className={`text-xs font-medium px-1.5 py-0.5 truncate transition hover:opacity-80 ${categoryColor(ev.category)} ${
+                    ev.isStart && ev.isEnd ? 'rounded' :
+                    ev.isStart             ? 'rounded-l' :
+                    ev.isEnd               ? 'rounded-r' : ''
+                  }`}
                 >
-                  {ev.title}
+                  {ev.isStart ? ev.title : ' '}
                 </Link>
               ))}
 

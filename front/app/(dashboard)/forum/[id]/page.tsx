@@ -35,6 +35,13 @@ type Reply = {
 type ReplyNode = { reply: Reply; children: ReplyNode[] }
 type VoteMap = Record<string, string[]>
 
+const MODERATOR_REMOVED_REPLY = 'Esta resposta foi removida por um moderador.'
+const AUTHOR_REMOVED_REPLY = 'Esta resposta foi removida pelo autor.'
+
+function isRemovedReply(content: string) {
+  return content === MODERATOR_REMOVED_REPLY || content === AUTHOR_REMOVED_REPLY
+}
+
 function buildTree(replies: Reply[]): ReplyNode[] {
   const map = new Map<string, ReplyNode>()
   for (const r of replies) map.set(r.id, { reply: r, children: [] })
@@ -132,10 +139,11 @@ function ReplyForm({ onSubmit, onCancel, placeholder = 'Escreva sua resposta...'
   )
 }
 
-function ReplyItem({ reply, depth, currentUserId, voteMap, onVote, onReply, onDelete, replyingToId }: {
+function ReplyItem({ reply, depth, currentUserId, canModerate, voteMap, onVote, onReply, onDelete, replyingToId }: {
   reply: Reply
   depth: number
   currentUserId: string | null
+  canModerate: boolean
   voteMap: VoteMap
   onVote: (id: string) => void
   onReply: (id: string | null) => void
@@ -145,6 +153,7 @@ function ReplyItem({ reply, depth, currentUserId, voteMap, onVote, onReply, onDe
   const votes = voteMap[reply.id] ?? []
   const voted = !!currentUserId && votes.includes(currentUserId)
   const isOwn = currentUserId === reply.user_id
+  const removed = isRemovedReply(reply.content)
   const isReplying = replyingToId === reply.id
   const date = new Date(reply.created_at).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })
   const avatarSize = depth === 0 ? 32 : 26
@@ -152,34 +161,41 @@ function ReplyItem({ reply, depth, currentUserId, voteMap, onVote, onReply, onDe
   return (
     <div className="group py-4">
       <div className="flex items-start gap-3">
-        <Avatar author={reply.users} size={avatarSize} />
+        <Link href={`/usuarios/${reply.user_id}`} className="rounded-full hover:opacity-80 transition">
+          <Avatar author={reply.users} size={avatarSize} />
+        </Link>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-sm font-semibold text-zinc-800">{reply.users?.name ?? 'Anônimo'}</span>
+            <Link href={`/usuarios/${reply.user_id}`} className="text-sm font-semibold text-zinc-800 hover:text-[#2F9E41] transition">
+              {reply.users?.name ?? 'Anonimo'}
+            </Link>
             <span className="text-xs text-zinc-400">{date}</span>
           </div>
-          <p className="text-sm text-zinc-700 leading-relaxed whitespace-pre-wrap">{reply.content}</p>
-          <div className="flex items-center gap-4 mt-2">
-            <UpvoteButton count={votes.length} voted={voted} onToggle={() => onVote(reply.id)} disabled={!currentUserId} />
-            {currentUserId && (
-              <button
-                onClick={() => onReply(isReplying ? null : reply.id)}
-                className="text-xs font-semibold text-zinc-400 hover:text-zinc-700 transition cursor-pointer"
-              >
-                {isReplying ? 'Cancelar' : 'Responder'}
-              </button>
-            )}
-            {isOwn && (
-              <button
-                onClick={() => onDelete(reply.id)}
-                className="text-xs font-semibold text-zinc-300 hover:text-red-500 transition cursor-pointer opacity-0 group-hover:opacity-100"
-              >
-                Excluir
-              </button>
-            )}
-          </div>
+          <p className={`text-sm leading-relaxed whitespace-pre-wrap ${removed ? 'italic text-zinc-400' : 'text-zinc-700'}`}>{reply.content}</p>
+          {!removed && (
+            <div className="flex items-center gap-4 mt-2">
+              <UpvoteButton count={votes.length} voted={voted} onToggle={() => onVote(reply.id)} disabled={!currentUserId} />
+              {currentUserId && (
+                <button
+                  onClick={() => onReply(isReplying ? null : reply.id)}
+                  className="text-xs font-semibold text-zinc-400 hover:text-zinc-700 transition cursor-pointer"
+                >
+                  {isReplying ? 'Cancelar' : 'Responder'}
+                </button>
+              )}
+              {(isOwn || canModerate) && (
+                <button
+                  onClick={() => onDelete(reply.id)}
+                  className="text-xs font-semibold text-zinc-300 hover:text-red-500 transition cursor-pointer opacity-0 group-hover:opacity-100"
+                >
+                  {canModerate && !isOwn ? 'Remover' : 'Excluir'}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
+
     </div>
   )
 }
@@ -194,8 +210,12 @@ export default function ForumTopicPage() {
   const [voteMap, setVoteMap] = useState<VoteMap>({})
   const [topicVoters, setTopicVoters] = useState<string[]>([])
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [currentUserRole, setCurrentUserRole] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [replyingToId, setReplyingToId] = useState<string | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<Reply | null>(null)
+  const [deletingReplyId, setDeletingReplyId] = useState<string | null>(null)
+  const [moderationError, setModerationError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     const [{ data: topicData }, { data: { user } }] = await Promise.all([
@@ -211,6 +231,16 @@ export default function ForumTopicPage() {
 
     setTopic(topicData as unknown as Topic)
     setCurrentUserId(user?.id ?? null)
+    if (user?.id) {
+      const { data: profile } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+      setCurrentUserRole(profile?.role ?? null)
+    } else {
+      setCurrentUserRole(null)
+    }
 
     await supabase.from('forum_topics').update({ views_count: (topicData.views_count ?? 0) + 1 }).eq('id', id)
 
@@ -246,7 +276,7 @@ export default function ForumTopicPage() {
     setLoading(false)
   }, [id, router])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => { void Promise.resolve().then(load) }, [load])
 
   async function handleTopicVote() {
     if (!currentUserId) return
@@ -262,6 +292,8 @@ export default function ForumTopicPage() {
 
   async function handleReplyVote(replyId: string) {
     if (!currentUserId) return
+    const reply = replies.find(r => r.id === replyId)
+    if (!reply || isRemovedReply(reply.content)) return
     const voted = (voteMap[replyId] ?? []).includes(currentUserId)
     if (voted) {
       await supabase.from('forum_reply_votes').delete().eq('reply_id', replyId).eq('user_id', currentUserId)
@@ -274,6 +306,7 @@ export default function ForumTopicPage() {
 
   async function handleReply(content: string, parentId: string | null) {
     if (!currentUserId) return
+    if (parentId && replies.some(r => r.id === parentId && isRemovedReply(r.content))) return
     const { data } = await supabase
       .from('forum_replies')
       .insert({ topic_id: id, user_id: currentUserId, content, parent_id: parentId })
@@ -291,21 +324,48 @@ export default function ForumTopicPage() {
   }
 
   async function handleDelete(replyId: string) {
-    if (!confirm('Excluir esta resposta?')) return
-    await supabase.from('forum_reply_votes').delete().eq('reply_id', replyId)
-    await supabase.from('forum_replies').delete().eq('id', replyId)
+    const reply = replies.find(r => r.id === replyId)
+    if (!reply || !currentUserId) return
 
-    const collectIds = (rid: string): string[] => {
-      const children = replies.filter(r => r.parent_id === rid)
-      return [rid, ...children.flatMap(c => collectIds(c.id))]
+    const canModerate = currentUserRole === 'admin' || currentUserRole === 'moderador'
+    const isOwn = reply.user_id === currentUserId
+    if (!isOwn && !canModerate) return
+
+    setModerationError(null)
+    setPendingDelete(reply)
+  }
+
+  async function confirmDelete() {
+    if (!pendingDelete || !currentUserId) return
+
+    const canModerate = currentUserRole === 'admin' || currentUserRole === 'moderador'
+    const isOwn = pendingDelete.user_id === currentUserId
+    if (!isOwn && !canModerate) return
+
+    const content = canModerate && !isOwn ? MODERATOR_REMOVED_REPLY : AUTHOR_REMOVED_REPLY
+    setDeletingReplyId(pendingDelete.id)
+
+    const { error } = await supabase
+      .from('forum_replies')
+      .update({ content })
+      .eq('id', pendingDelete.id)
+
+    if (error) {
+      setModerationError('Nao foi possivel remover esta resposta. Verifique as permissoes de moderacao no banco.')
+      setDeletingReplyId(null)
+      return
     }
-    const toRemove = new Set(collectIds(replyId))
-    setReplies(prev => prev.filter(r => !toRemove.has(r.id)))
+
+    await supabase.from('forum_reply_votes').delete().eq('reply_id', pendingDelete.id)
+    setReplies(prev => prev.map(r => r.id === pendingDelete.id ? { ...r, content } : r))
     setVoteMap(prev => {
       const next = { ...prev }
-      toRemove.forEach(rid => delete next[rid])
+      delete next[pendingDelete.id]
       return next
     })
+    if (replyingToId === pendingDelete.id) setReplyingToId(null)
+    setPendingDelete(null)
+    setDeletingReplyId(null)
   }
 
   function renderTree(nodes: ReplyNode[], depth = 0): React.ReactNode {
@@ -317,18 +377,19 @@ export default function ForumTopicPage() {
             reply={node.reply}
             depth={depth}
             currentUserId={currentUserId}
+            canModerate={currentUserRole === 'admin' || currentUserRole === 'moderador'}
             voteMap={voteMap}
             onVote={handleReplyVote}
             onReply={setReplyingToId}
             onDelete={handleDelete}
             replyingToId={replyingToId}
           />
-          {replyingToId === node.reply.id && (
+          {replyingToId === node.reply.id && !isRemovedReply(node.reply.content) && (
             <div className="pl-10 pb-2">
               <ReplyForm
                 onSubmit={(content) => handleReply(content, node.reply.id)}
                 onCancel={() => setReplyingToId(null)}
-                placeholder={`Respondendo a ${node.reply.users?.name ?? 'Anônimo'}...`}
+                placeholder={`Respondendo a ${node.reply.users?.name ?? 'Anonimo'}...`}
               />
             </div>
           )}
@@ -356,7 +417,7 @@ export default function ForumTopicPage() {
 
   const topicVoted = !!currentUserId && topicVoters.includes(currentUserId)
   const tree = buildTree(replies)
-  const topLevelCount = replies.filter(r => !r.parent_id).length
+  const topLevelCount = replies.filter(r => !r.parent_id && !isRemovedReply(r.content)).length
   const cat = topic.forum_categories
   const attachments = topic.attachments ?? []
   const topicDate = new Date(topic.created_at).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -365,13 +426,13 @@ export default function ForumTopicPage() {
     <div className="px-4 md:px-10 py-8 max-w-3xl mx-auto w-full">
       <Link href="/forum" className="text-sm text-zinc-400 hover:text-zinc-700 transition mb-8 inline-flex items-center gap-1.5">
         <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-        Fórum
+        F&oacute;rum
       </Link>
 
     
       <div className="mb-8">
         {cat && (
-          <span className="text-xs font-semibold uppercase tracking-wider text-[#2F9E41] mb-3 inline-block">
+          <span className="text-sm font-semibold text-[#2F9E41] mb-3 inline-block">
             {cat.name}
           </span>
         )}
@@ -379,14 +440,18 @@ export default function ForumTopicPage() {
           <div className="flex-1">
             <h1 className="text-3xl font-black text-zinc-900 leading-tight mb-4">{topic.title}</h1>
             <div className="flex items-center gap-3">
-              <Avatar author={topic.users} size={32} />
+              <Link href={`/usuarios/${topic.user_id}`} className="rounded-full hover:opacity-80 transition">
+                <Avatar author={topic.users} size={32} />
+              </Link>
               <div className="flex items-center gap-2 text-sm text-zinc-400">
-                <span className="font-medium text-zinc-600">{topic.users?.name ?? 'Anônimo'}</span>
-                <span>·</span>
+                <Link href={`/usuarios/${topic.user_id}`} className="font-medium text-zinc-600 hover:text-[#2F9E41] transition">
+                  {topic.users?.name ?? 'Anonimo'}
+                </Link>
+                <span>&bull;</span>
                 <span>{topicDate}</span>
-                <span>·</span>
+                <span>&bull;</span>
                 <span>{topic.replies_count ?? 0} respostas</span>
-                <span>·</span>
+                <span>&bull;</span>
                 <span>{(topic.views_count ?? 0) + 1} views</span>
               </div>
             </div>
@@ -428,7 +493,7 @@ export default function ForumTopicPage() {
 
    
       <div className="border-t border-zinc-100 pt-8 mt-10">
-        <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-4">
+        <h2 className="text-xs font-semibold text-zinc-400 mb-4">
           {topLevelCount} {topLevelCount === 1 ? 'Resposta' : 'Respostas'}
         </h2>
 
@@ -450,11 +515,59 @@ export default function ForumTopicPage() {
             </div>
           ) : (
             <p className="text-sm text-zinc-400">
-              <Link href="/login" className="text-[#2F9E41] font-medium hover:opacity-70">Faça login</Link> para responder.
+              <Link href="/login" className="text-[#2F9E41] font-medium hover:opacity-70">Fa&ccedil;a login</Link> para responder.
             </p>
           )}
         </div>
       </div>
+
+      {pendingDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-red-500">
+              <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M12 9v4" />
+                <path d="M12 17h.01" />
+                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+              </svg>
+            </div>
+            <h3 className="text-base font-semibold text-zinc-900">
+              {pendingDelete.user_id === currentUserId ? 'Excluir resposta?' : 'Remover resposta?'}
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-zinc-500">
+              {pendingDelete.user_id === currentUserId
+                ? 'A resposta sera substituida por uma mensagem indicando que ela foi removida pelo autor.'
+                : 'A resposta sera substituida por uma mensagem indicando que foi removida por um moderador.'}
+            </p>
+            {moderationError && (
+              <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600">
+                {moderationError}
+              </p>
+            )}
+            <div className="mt-5 flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setPendingDelete(null)
+                  setModerationError(null)
+                }}
+                disabled={deletingReplyId === pendingDelete.id}
+                className="flex-1 rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                disabled={deletingReplyId === pendingDelete.id}
+                className="flex-1 rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-600 disabled:opacity-50"
+              >
+                {deletingReplyId === pendingDelete.id ? 'Removendo...' : 'Remover'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

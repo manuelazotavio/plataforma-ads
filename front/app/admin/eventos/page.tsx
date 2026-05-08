@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Select from '@/app/components/Select'
 import { supabase } from '@/app/lib/supabase'
 
 const CATEGORIES = [
@@ -47,8 +48,6 @@ export default function AdminEventosPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
 
-  useEffect(() => { load() }, [])
-
   async function load() {
     const { data } = await supabase
       .from('events')
@@ -57,6 +56,8 @@ export default function AdminEventosPage() {
     setEvents((data as Event[]) ?? [])
     setLoading(false)
   }
+
+  useEffect(() => { void Promise.resolve().then(load) }, [])
 
   function openCreate() {
     setEditing(null)
@@ -120,14 +121,14 @@ export default function AdminEventosPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900">Eventos</h1>
           <p className="text-sm text-zinc-500 mt-0.5">{events.length} evento{events.length !== 1 ? 's' : ''}</p>
         </div>
         <button
           onClick={openCreate}
-          className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-white transition"
+          className="flex w-full items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-white transition sm:w-auto"
           style={{ backgroundColor: '#2F9E41' }}
         >
           <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
@@ -137,8 +138,8 @@ export default function AdminEventosPage() {
 
       
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl p-7 flex flex-col gap-5 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 px-4 py-4 sm:items-center">
+          <div className="flex max-h-[90vh] w-full max-w-lg flex-col gap-5 overflow-y-auto rounded-2xl bg-white p-4 shadow-xl sm:p-7">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-zinc-900">
                 {editing ? 'Editar evento' : 'Novo evento'}
@@ -156,7 +157,7 @@ export default function AdminEventosPage() {
                 />
               </Field>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="Edição">
                   <input
                     value={form.edition ?? ''}
@@ -166,21 +167,12 @@ export default function AdminEventosPage() {
                   />
                 </Field>
                 <Field label="Categoria">
-                  <div className="relative">
-                    <select
-                      value={form.category ?? ''}
-                      onChange={(e) => setForm({ ...form, category: e.target.value || null })}
-                      className={`${input} appearance-none bg-white pr-9 cursor-pointer`}
-                    >
-                      <option value="">Sem categoria</option>
-                      {CATEGORIES.map((c) => (
-                        <option key={c.value} value={c.value}>{c.label}</option>
-                      ))}
-                    </select>
-                    <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400" width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                      <path d="m6 9 6 6 6-6" />
-                    </svg>
-                  </div>
+                  <Select
+                    value={form.category ?? ''}
+                    onChange={(value) => setForm({ ...form, category: value || null })}
+                    options={CATEGORIES}
+                    placeholder="Sem categoria"
+                  />
                 </Field>
               </div>
 
@@ -193,7 +185,7 @@ export default function AdminEventosPage() {
                 />
               </Field>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="Data de início">
                   <input
                     type="date"
@@ -230,7 +222,7 @@ export default function AdminEventosPage() {
                 />
               </Field>
 
-              <div className="flex gap-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:gap-6">
                 <label className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer">
                   <input
                     type="checkbox"
@@ -252,7 +244,7 @@ export default function AdminEventosPage() {
               </div>
             </div>
 
-            <div className="flex gap-2 pt-2">
+            <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row">
               <button
                 onClick={save}
                 disabled={saving || !form.title.trim()}
@@ -278,11 +270,11 @@ export default function AdminEventosPage() {
       ) : (
         <div className="flex flex-col gap-3">
           {events.map((event) => (
-            <div key={event.id} className="bg-white rounded-2xl border border-zinc-200 p-5 flex gap-4 items-start">
+            <div key={event.id} className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-5 sm:flex-row sm:items-start">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
+                <div className="mb-1 flex flex-wrap items-center gap-2">
                   {event.category && (
-                    <span className="text-xs font-semibold uppercase tracking-wider text-[#2F9E41]">
+                    <span className="text-xs font-semibold text-[#2F9E41]">
                       {CATEGORIES.find((c) => c.value === event.category)?.label}
                     </span>
                   )}
@@ -295,7 +287,7 @@ export default function AdminEventosPage() {
                     {event.end_date && ` – ${new Date(event.end_date).toLocaleDateString('pt-BR')}`}
                   </p>
                 )}
-                <div className="flex gap-2 mt-2">
+                <div className="mt-2 flex flex-wrap gap-2">
                   <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${event.is_active ? 'bg-green-100 text-green-700' : 'bg-zinc-100 text-zinc-500'}`}>
                     {event.is_active ? 'publicado' : 'oculto'}
                   </span>
@@ -305,7 +297,7 @@ export default function AdminEventosPage() {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-1.5 shrink-0">
+              <div className="grid grid-cols-2 gap-1.5 sm:flex sm:shrink-0 sm:flex-col">
                 <button
                   onClick={() => openEdit(event)}
                   className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition"

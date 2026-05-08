@@ -79,25 +79,24 @@ export default async function ArtigosPage({
         ) : (
           <div className="flex flex-col gap-4">
             {articles.map((article) => {
-              const author = article.users as unknown as { name: string; avatar_url: string | null } | null
+              const author = article.users as unknown as { id: string; name: string; avatar_url: string | null } | null
               const tags = article.article_tags as { tag_name: string }[]
 
               return (
-                <Link
+                <div
                   key={article.id}
-                  href={`/artigos/${article.id}`}
                   className="bg-white rounded-2xl border border-zinc-200 overflow-hidden flex gap-4 p-4 hover:border-zinc-300 hover:shadow-sm transition"
                 >
                   {article.cover_image_url && (
-                    <div className="relative w-24 h-24 rounded-xl overflow-hidden shrink-0">
+                    <Link href={`/artigos/${article.id}`} className="relative w-24 h-24 rounded-xl overflow-hidden shrink-0">
                       <Image src={article.cover_image_url} alt={article.title} fill className="object-cover" />
-                    </div>
+                    </Link>
                   )}
 
                   <div className="flex flex-col justify-between flex-1 min-w-0">
                     <div>
-                      <h2 className="text-sm font-semibold text-zinc-900 line-clamp-1 mb-1">{article.title}</h2>
-                      <p className="text-xs text-zinc-500 line-clamp-2">{article.summary}</p>
+                      <Link href={`/artigos/${article.id}`} className="text-sm font-semibold text-zinc-900 line-clamp-1 mb-1 hover:text-[#2F9E41] transition">{article.title}</Link>
+                      <Link href={`/artigos/${article.id}`} className="text-xs text-zinc-500 line-clamp-2 hover:text-zinc-700 transition">{article.summary}</Link>
                       {tags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
                           {tags.map(({ tag_name }) => (
@@ -111,14 +110,16 @@ export default async function ArtigosPage({
 
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center gap-2">
-                        {author?.avatar_url
-                          ? <Image src={author.avatar_url} alt={author.name} width={16} height={16} className="w-4 h-4 rounded-full object-cover shrink-0" />
-                          : <div className="w-4 h-4 rounded-full bg-zinc-200" />
-                        }
-                        <span className="text-xs text-zinc-400">{author?.name}</span>
+                        <Link href={author ? `/usuarios/${author.id}` : '#'} className="flex items-center gap-2 hover:opacity-80 transition">
+                          {author?.avatar_url
+                            ? <Image src={author.avatar_url} alt={author.name} width={16} height={16} className="w-4 h-4 rounded-full object-cover shrink-0" />
+                            : <div className="w-4 h-4 rounded-full bg-zinc-200" />
+                          }
+                          <span className="text-xs text-zinc-400">{author?.name}</span>
+                        </Link>
                         {article.published_at && (
                           <>
-                            <span className="text-zinc-300">·</span>
+                            <span className="text-zinc-300">&bull;</span>
                             <span className="text-xs text-zinc-400">{new Date(article.published_at).toLocaleDateString('pt-BR')}</span>
                           </>
                         )}
@@ -131,7 +132,7 @@ export default async function ArtigosPage({
                       )}
                     </div>
                   </div>
-                </Link>
+                </div>
               )
             })}
           </div>

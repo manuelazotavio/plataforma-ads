@@ -74,7 +74,7 @@ export default function AdminUsuariosPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900">Usuários</h1>
           <p className="text-sm text-zinc-500 mt-0.5">
@@ -86,8 +86,8 @@ export default function AdminUsuariosPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white">
+        <table className="min-w-[760px] w-full text-sm">
           <thead className="border-b border-zinc-100 bg-zinc-50">
             <tr>
               <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500">Usuário</th>
@@ -108,7 +108,7 @@ export default function AdminUsuariosPage() {
                   className={`transition ${user.suspended ? 'bg-amber-50/40' : 'hover:bg-zinc-50/50'}`}
                 >
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex min-w-0 items-center gap-2.5">
                       <div className="relative shrink-0">
                         {user.avatar_url
                           ? <Image src={user.avatar_url} alt={user.name} width={28} height={28} className={`w-7 h-7 rounded-full object-cover ${user.suspended ? 'opacity-50 grayscale' : ''}`} />
@@ -117,7 +117,7 @@ export default function AdminUsuariosPage() {
                             </div>
                         }
                       </div>
-                      <span className={`font-medium ${user.suspended ? 'text-zinc-400 line-through' : 'text-zinc-900'}`}>
+                      <span className={`max-w-40 truncate font-medium ${user.suspended ? 'text-zinc-400 line-through' : 'text-zinc-900'}`}>
                         {user.name}
                       </span>
                       {isSelf && <span className="text-xs text-zinc-400">(você)</span>}
@@ -145,7 +145,7 @@ export default function AdminUsuariosPage() {
                   </td>
                   <td className="px-4 py-3">
                     {!isSelf && (
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-end gap-2 whitespace-nowrap">
                         {updatingId === user.id ? (
                           <span className="text-xs text-zinc-400">Salvando...</span>
                         ) : isConfirming ? (

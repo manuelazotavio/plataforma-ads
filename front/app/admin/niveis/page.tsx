@@ -24,13 +24,13 @@ export default function NiveisPage() {
   const [submitted, setSubmitted] = useState(false)
   const [showForm, setShowForm] = useState(false)
 
-  useEffect(() => { load() }, [])
-
   async function load() {
     const { data } = await supabase.from('levels').select('id, name, min_xp').order('min_xp', { ascending: true })
     setLevels(data ?? [])
     setLoading(false)
   }
+
+  useEffect(() => { void Promise.resolve().then(load) }, [])
 
   function openCreate() {
     setEditId(null)
@@ -81,7 +81,7 @@ export default function NiveisPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900">Níveis de usuário</h1>
           <p className="text-sm text-zinc-500 mt-0.5">{levels.length} nível{levels.length !== 1 ? 'is' : ''} configurado{levels.length !== 1 ? 's' : ''}</p>
@@ -89,7 +89,7 @@ export default function NiveisPage() {
         {!showForm && (
           <button
             onClick={openCreate}
-            className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-white transition"
+            className="flex w-full items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-white transition sm:w-auto"
             style={{ backgroundColor: '#2F9E41' }}
           >
             <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
@@ -101,7 +101,7 @@ export default function NiveisPage() {
       {showForm && (
         <div className="bg-white rounded-2xl border border-zinc-200 p-5 mb-6">
           <h2 className="text-sm font-semibold text-zinc-900 mb-4">{editId !== null ? 'Editar nível' : 'Novo nível'}</h2>
-          <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="mb-4 grid gap-3 sm:grid-cols-2">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-zinc-600">
                 Nome <span className="text-red-500">*</span>
@@ -127,7 +127,7 @@ export default function NiveisPage() {
               />
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <button
               onClick={save}
               disabled={saving}
@@ -143,11 +143,11 @@ export default function NiveisPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden mb-8">
+      <div className="mb-8 overflow-x-auto rounded-2xl border border-zinc-200 bg-white">
         {levels.length === 0 ? (
           <p className="text-sm text-zinc-400 px-5 py-8 text-center">Nenhum nível cadastrado.</p>
         ) : (
-          <table className="w-full text-sm">
+          <table className="min-w-[640px] w-full text-sm">
             <thead>
               <tr className="border-b border-zinc-100">
                 <th className="text-left px-5 py-3 text-xs font-semibold text-zinc-500 w-10">#</th>
@@ -189,7 +189,7 @@ export default function NiveisPage() {
         <p className="text-xs text-zinc-500 mb-4">Cada ação do usuário soma XP. Os pesos são fixos.</p>
         <div className="flex flex-col gap-2">
           {XP_TABLE.map((row) => (
-            <div key={row.label} className="flex items-center justify-between">
+            <div key={row.label} className="flex items-center justify-between gap-4">
               <span className="text-xs text-zinc-600">{row.label}</span>
               <span className="text-xs font-semibold text-zinc-900">+{row.xp} XP</span>
             </div>

@@ -61,6 +61,14 @@ export default function AdminCorpoDocentePage() {
   const [accessSaving, setAccessSaving] = useState(false)
   const [accessError, setAccessError] = useState<string | null>(null)
 
+  async function loadProfessors() {
+    const { data } = await supabase
+      .from('professors')
+      .select('*')
+      .order('display_order', { ascending: true })
+    setProfessors(data ?? [])
+  }
+
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
@@ -89,14 +97,6 @@ export default function AdminCorpoDocentePage() {
     }
     load()
   }, [router])
-
-  async function loadProfessors() {
-    const { data } = await supabase
-      .from('professors')
-      .select('*')
-      .order('display_order', { ascending: true })
-    setProfessors(data ?? [])
-  }
 
   async function handleCreate() {
     setSubmitted(true)
@@ -224,16 +224,16 @@ export default function AdminCorpoDocentePage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="mx-auto max-w-3xl">
 
-        <div className="flex items-center justify-between mb-8">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-zinc-900">Corpo Docente</h1>
             <p className="text-sm text-zinc-500 mt-0.5">{professors.length} professor{professors.length !== 1 ? 'es' : ''}</p>
           </div>
           <button
             onClick={() => { if (showForm) { setForm(EMPTY_FORM); setSubmitted(false) } setShowForm((v) => !v) }}
-            className="rounded-lg bg-[#2F9E41] px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition"
+            className="w-full rounded-lg bg-[#2F9E41] px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition sm:w-auto"
           >
             {showForm ? 'Cancelar' : 'Adicionar professor'}
           </button>
@@ -244,7 +244,7 @@ export default function AdminCorpoDocentePage() {
           <div className="bg-white rounded-2xl border border-zinc-200 p-5 mb-6">
             <h2 className="text-sm font-semibold text-zinc-900 mb-4">Novo professor</h2>
             <div className="flex flex-col gap-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="Nome" required>
                   <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={submitted && !form.name.trim() ? inputErrorClass : inputClass} placeholder="Nome completo" />
                 </Field>
@@ -252,7 +252,7 @@ export default function AdminCorpoDocentePage() {
                   <input type="text" value={form.cargo} onChange={(e) => setForm({ ...form, cargo: e.target.value })} className={inputClass} placeholder="Ex: Professor Efetivo" />
                 </Field>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="Anos no IF">
                   <input type="number" min={0} value={form.years_at_if} onChange={(e) => setForm({ ...form, years_at_if: e.target.value })} className={inputClass} placeholder="Ex: 8" />
                 </Field>
@@ -263,7 +263,7 @@ export default function AdminCorpoDocentePage() {
               <Field label="Bio">
                 <textarea rows={2} value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} className={inputClass + ' resize-none'} placeholder="Especialidade, formação..." />
               </Field>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="E-mail de contato">
                   <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={inputClass} placeholder="prof@email.com" />
                 </Field>
@@ -271,7 +271,7 @@ export default function AdminCorpoDocentePage() {
                   <input type="text" value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} className={inputClass} placeholder="Ex: 5511999999999" />
                 </Field>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="LinkedIn">
                   <input type="url" value={form.linkedin} onChange={(e) => setForm({ ...form, linkedin: e.target.value })} className={inputClass} placeholder="https://linkedin.com/in/..." />
                 </Field>
@@ -279,7 +279,7 @@ export default function AdminCorpoDocentePage() {
                   <input type="url" value={form.cnpq} onChange={(e) => setForm({ ...form, cnpq: e.target.value })} className={inputClass} placeholder="http://lattes.cnpq.br/..." />
                 </Field>
               </div>
-              <div className="flex items-center justify-between pt-1">
+              <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
                 <label className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer">
                   <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} className="w-4.5 h-4.5 accent-[#2F9E41]" />
                   Visível na página pública
@@ -303,10 +303,10 @@ export default function AdminCorpoDocentePage() {
           <div className="flex flex-col gap-4">
             {professors.map((prof) => (
               <div key={prof.id} className="bg-white rounded-2xl border border-zinc-200 p-5">
-                <div className="flex gap-4">
+                <div className="flex flex-col gap-4 sm:flex-row">
 
                  
-                  <div className="shrink-0 flex flex-col items-center gap-1">
+                  <div className="flex shrink-0 flex-col items-start gap-1 sm:items-center">
                     <div className="relative w-16 h-16 rounded-full overflow-hidden bg-zinc-100 border border-zinc-200">
                       {prof.avatar_url ? (
                         <Image src={prof.avatar_url} alt={prof.name} fill className="object-cover" />
@@ -327,7 +327,7 @@ export default function AdminCorpoDocentePage() {
 
                   
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2 mb-1">
+                    <div className="mb-1 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <p className="text-sm font-semibold text-zinc-900">{prof.name}</p>
                         {prof.cargo && <p className="text-xs text-zinc-500">{prof.cargo}</p>}
@@ -335,7 +335,7 @@ export default function AdminCorpoDocentePage() {
                           <p className="text-xs text-zinc-400">{prof.years_at_if} anos no IF</p>
                         )}
                       </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
+                      <div className="flex flex-wrap items-center gap-1.5 sm:shrink-0">
                         <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${prof.is_active ? 'bg-green-100 text-green-700' : 'bg-zinc-100 text-zinc-500'}`}>
                           {prof.is_active ? 'visível' : 'oculto'}
                         </span>
@@ -351,7 +351,7 @@ export default function AdminCorpoDocentePage() {
                 
                 {editingId === prof.id && editState ? (
                   <div className="mt-4 pt-4 border-t border-zinc-100 flex flex-col gap-3">
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid gap-3 sm:grid-cols-2">
                       <Field label="Nome" required>
                         <input type="text" value={editState.name} onChange={(e) => setEditState({ ...editState, name: e.target.value })} className={editSubmitted && !editState.name.trim() ? inputErrorClass : inputClass} />
                       </Field>
@@ -359,7 +359,7 @@ export default function AdminCorpoDocentePage() {
                         <input type="text" value={editState.cargo} onChange={(e) => setEditState({ ...editState, cargo: e.target.value })} className={inputClass} placeholder="Ex: Professor Efetivo" />
                       </Field>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid gap-3 sm:grid-cols-2">
                       <Field label="Anos no IF">
                         <input type="number" min={0} value={editState.years_at_if} onChange={(e) => setEditState({ ...editState, years_at_if: e.target.value })} className={inputClass} />
                       </Field>
@@ -370,7 +370,7 @@ export default function AdminCorpoDocentePage() {
                     <Field label="Bio">
                       <textarea rows={2} value={editState.bio} onChange={(e) => setEditState({ ...editState, bio: e.target.value })} className={inputClass + ' resize-none'} />
                     </Field>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid gap-3 sm:grid-cols-2">
                       <Field label="E-mail de contato">
                         <input type="email" value={editState.email} onChange={(e) => setEditState({ ...editState, email: e.target.value })} className={inputClass} placeholder="prof@email.com" />
                       </Field>
@@ -378,7 +378,7 @@ export default function AdminCorpoDocentePage() {
                         <input type="text" value={editState.whatsapp} onChange={(e) => setEditState({ ...editState, whatsapp: e.target.value })} className={inputClass} placeholder="Ex: 5511999999999" />
                       </Field>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid gap-3 sm:grid-cols-2">
                       <Field label="LinkedIn">
                         <input type="url" value={editState.linkedin} onChange={(e) => setEditState({ ...editState, linkedin: e.target.value })} className={inputClass} placeholder="https://linkedin.com/in/..." />
                       </Field>
@@ -386,7 +386,7 @@ export default function AdminCorpoDocentePage() {
                         <input type="url" value={editState.cnpq} onChange={(e) => setEditState({ ...editState, cnpq: e.target.value })} className={inputClass} placeholder="http://lattes.cnpq.br/..." />
                       </Field>
                     </div>
-                    <div className="flex items-center justify-between pt-1">
+                    <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
                       <label className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer">
                         <input type="checkbox" checked={editState.is_active} onChange={(e) => setEditState({ ...editState, is_active: e.target.checked })} className="w-4.5 h-4.5 accent-[#2F9E41]" />
                         Visível na página pública
@@ -404,7 +404,7 @@ export default function AdminCorpoDocentePage() {
                 ) : (
                   <div className="mt-3 border-t border-zinc-100 pt-3 flex flex-col gap-3">
                     {prof.user_id ? (
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
                         <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
                           Acesso vinculado
                         </span>
@@ -413,7 +413,7 @@ export default function AdminCorpoDocentePage() {
                     ) : accessFormId === prof.id ? (
                       <div className="flex flex-col gap-2">
                         <p className="text-xs font-medium text-zinc-700">Criar acesso de login para este professor</p>
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid gap-2 sm:grid-cols-2">
                           <input
                             type="email"
                             placeholder="E-mail"
@@ -430,7 +430,7 @@ export default function AdminCorpoDocentePage() {
                           />
                         </div>
                         {accessError && <p className="text-xs text-red-600">{accessError}</p>}
-                        <div className="flex gap-2">
+                        <div className="flex flex-col gap-2 sm:flex-row">
                           <button
                             onClick={() => createAccess(prof.id)}
                             disabled={accessSaving}

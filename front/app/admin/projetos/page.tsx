@@ -31,6 +31,7 @@ export default function AdminProjetosPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [rejectingId, setRejectingId] = useState<string | null>(null)
   const [rejectMessage, setRejectMessage] = useState('')
+  const [actionError, setActionError] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -46,15 +47,41 @@ export default function AdminProjetosPage() {
 
   async function approve(id: string) {
     setUpdatingId(id)
-    await supabase.from('projects').update({ approved: true, rejection_message: null }).eq('id', id)
-    setProjects((prev) => prev.map((p) => p.id === id ? { ...p, approved: true, rejection_message: null } : p))
+    setActionError(null)
+    const { data, error } = await supabase
+      .from('projects')
+      .update({ approved: true, rejection_message: null })
+      .eq('id', id)
+      .select('approved, rejection_message')
+      .single()
+
+    if (error || !data?.approved) {
+      setActionError(error?.message ?? 'NÃ£o foi possÃ­vel aprovar o projeto. Verifique as permissÃµes no Supabase.')
+      setUpdatingId(null)
+      return
+    }
+
+    setProjects((prev) => prev.map((p) => p.id === id ? { ...p, approved: data.approved, rejection_message: data.rejection_message } : p))
     setUpdatingId(null)
   }
 
   async function revoke(id: string) {
     setUpdatingId(id)
-    await supabase.from('projects').update({ approved: false, rejection_message: null }).eq('id', id)
-    setProjects((prev) => prev.map((p) => p.id === id ? { ...p, approved: false, rejection_message: null } : p))
+    setActionError(null)
+    const { data, error } = await supabase
+      .from('projects')
+      .update({ approved: false, rejection_message: null })
+      .eq('id', id)
+      .select('approved, rejection_message')
+      .single()
+
+    if (error || !data) {
+      setActionError(error?.message ?? 'NÃ£o foi possÃ­vel revogar a aprovaÃ§Ã£o do projeto.')
+      setUpdatingId(null)
+      return
+    }
+
+    setProjects((prev) => prev.map((p) => p.id === id ? { ...p, approved: data.approved, rejection_message: data.rejection_message } : p))
     setUpdatingId(null)
   }
 
@@ -62,8 +89,21 @@ export default function AdminProjetosPage() {
     const msg = rejectMessage.trim()
     if (!msg) return
     setUpdatingId(id)
-    await supabase.from('projects').update({ approved: false, rejection_message: msg }).eq('id', id)
-    setProjects((prev) => prev.map((p) => p.id === id ? { ...p, approved: false, rejection_message: msg } : p))
+    setActionError(null)
+    const { data, error } = await supabase
+      .from('projects')
+      .update({ approved: false, rejection_message: msg })
+      .eq('id', id)
+      .select('approved, rejection_message')
+      .single()
+
+    if (error || !data) {
+      setActionError(error?.message ?? 'NÃ£o foi possÃ­vel reprovar o projeto.')
+      setUpdatingId(null)
+      return
+    }
+
+    setProjects((prev) => prev.map((p) => p.id === id ? { ...p, approved: data.approved, rejection_message: data.rejection_message } : p))
     setRejectingId(null)
     setRejectMessage('')
     setUpdatingId(null)
@@ -83,19 +123,19 @@ export default function AdminProjetosPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900">Projetos</h1>
           <p className="text-sm text-zinc-500 mt-0.5">
             {pendingCount} pendente{pendingCount !== 1 ? 's' : ''}
           </p>
         </div>
-        <div className="flex gap-1 rounded-lg border border-zinc-200 bg-white p-1">
+        <div className="flex w-full flex-wrap gap-1 rounded-lg border border-zinc-200 bg-white p-1 sm:w-auto">
           {(['pendentes', 'aprovados', 'reprovados', 'todos'] as Filter[]).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`rounded-md px-3 py-1.5 text-xs font-medium transition capitalize ${
+              className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition capitalize sm:flex-none ${
                 filter === f ? 'bg-[#2F9E41] text-white' : 'text-zinc-500 hover:text-zinc-900'
               }`}
             >
@@ -104,6 +144,12 @@ export default function AdminProjetosPage() {
           ))}
         </div>
       </div>
+
+      {actionError && (
+        <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {actionError}
+        </p>
+      )}
 
       {filtered.length === 0 ? (
         <div className="text-center py-16 text-zinc-400">
@@ -123,8 +169,8 @@ export default function AdminProjetosPage() {
                   status === 'pendente' ? 'border-amber-200' : status === 'reprovado' ? 'border-red-200' : 'border-zinc-200'
                 }`}
               >
-                <div className="flex gap-4">
-                  <div className="relative w-20 h-16 rounded-lg overflow-hidden bg-zinc-100 shrink-0">
+                <div className="flex flex-col gap-4 sm:flex-row">
+                  <div className="relative h-36 w-full overflow-hidden rounded-lg bg-zinc-100 sm:h-16 sm:w-20 sm:shrink-0">
                     {cover
                       ? <Image src={cover.image_url} alt={project.title} fill className="object-cover" />
                       : <div className="w-full h-full flex items-center justify-center text-zinc-300 text-xs">sem imagem</div>
@@ -132,7 +178,7 @@ export default function AdminProjetosPage() {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2 mb-1">
+                    <div className="mb-1 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <p className="text-sm font-semibold text-zinc-900">{project.title}</p>
                         <p className="text-xs text-zinc-400">
@@ -158,7 +204,7 @@ export default function AdminProjetosPage() {
                     )}
                   </div>
 
-                  <div className="flex flex-col gap-1.5 shrink-0 justify-center">
+                  <div className="grid grid-cols-2 gap-1.5 sm:flex sm:shrink-0 sm:flex-col sm:justify-center">
                     {status !== 'aprovado' && (
                       <button
                         onClick={() => approve(project.id)}
@@ -204,7 +250,7 @@ export default function AdminProjetosPage() {
                 )}
 
                 {rejectingId === project.id && (
-                  <div className="flex gap-2 items-start">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
                     <textarea
                       value={rejectMessage}
                       onChange={(e) => setRejectMessage(e.target.value)}
@@ -212,7 +258,7 @@ export default function AdminProjetosPage() {
                       rows={2}
                       className="flex-1 rounded-lg border border-zinc-300 px-3 py-2 text-xs text-zinc-900 outline-none resize-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
                     />
-                    <div className="flex flex-col gap-1.5">
+                    <div className="grid grid-cols-2 gap-1.5 sm:flex sm:flex-col">
                       <button
                         onClick={() => reject(project.id)}
                         disabled={!rejectMessage.trim() || updatingId === project.id}
