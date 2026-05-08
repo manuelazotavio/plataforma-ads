@@ -14,7 +14,7 @@ export default async function CorpoDocentePage() {
     <div className="min-h-screen bg-white">
 
       <div className="bg-white text-zinc-900 py-16 px-4">
-        <div className="max-w-5xl mx-auto">
+        <div className="w-full">
           <p className="text-xs font-medium text-zinc-500 mb-3">
             Análise e Desenvolvimento de Sistemas
           </p>
@@ -23,7 +23,7 @@ export default async function CorpoDocentePage() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-16">
+      <div className="w-full px-4 py-16 md:px-6 md:px-6">
         {!professors || professors.length === 0 ? (
           <p className="text-center text-zinc-400 py-20">Nenhum professor cadastrado ainda.</p>
         ) : (

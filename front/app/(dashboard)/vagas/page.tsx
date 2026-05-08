@@ -27,7 +27,7 @@ export default async function VagasPage({
   const { data: jobs } = await query
 
   return (
-    <div className="px-4 md:px-10 py-8 max-w-5xl mx-auto w-full">
+    <div className="px-4 md:px-6 py-8 w-full">
 
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-zinc-900">Oportunidades</h1>

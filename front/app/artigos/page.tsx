@@ -53,8 +53,8 @@ export default async function ArtigosPage({
     .sort((a, b) => a.name.localeCompare(b.name))
 
   return (
-    <div className="min-h-screen bg-white py-12 px-4">
-      <div className="w-full max-w-2xl mx-auto">
+    <div className="min-h-screen bg-white px-4 py-12 md:px-6">
+      <div className="w-full">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-semibold text-zinc-900">Artigos</h1>

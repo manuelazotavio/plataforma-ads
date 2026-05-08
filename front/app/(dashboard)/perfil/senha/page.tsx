@@ -31,7 +31,7 @@ export default function AlterarSenhaPage() {
   }
 
   return (
-    <div className="px-4 md:px-10 py-8 w-full max-w-lg mx-auto">
+    <div className="px-4 md:px-6 py-8 w-full">
       <Link
         href="/perfil"
         className="inline-flex items-center gap-1.5 text-sm text-zinc-400 hover:text-zinc-700 transition mb-6"

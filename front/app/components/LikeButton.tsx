@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/app/lib/supabase'
+import { getAuthUser } from '@/app/lib/auth'
 
 export type ReactionType = 'like' | 'love' | 'celebrate' | 'insightful' | 'support'
 
@@ -84,7 +85,7 @@ export function ReactionPicker({
 }) {
   const iconSize = size === 'sm' ? 22 : 28
   return (
-    <div className="flex items-end gap-0.5 bg-white rounded-2xl shadow-xl border border-zinc-100 px-2 py-2">
+    <div className="no-scrollbar flex max-w-[calc(100vw-2rem)] items-end gap-0.5 overflow-x-auto overscroll-x-contain bg-white rounded-2xl shadow-xl border border-zinc-100 px-2 py-2">
       {REACTIONS.map((r) => (
         <button
           key={r.type}
@@ -124,7 +125,7 @@ export default function LikeButton({ type, targetId, initialCount }: Props) {
   const reactionData = REACTIONS.find(r => r.type === myReaction)
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    getAuthUser().then((user) => {
       if (!user) return
       setUserId(user.id)
       supabase.from(table).select('reaction_type').eq(field, targetId).eq('user_id', user.id).maybeSingle()
@@ -179,9 +180,9 @@ export default function LikeButton({ type, targetId, initialCount }: Props) {
   }
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative inline-flex">
       {open && userId && (
-        <div className="absolute bottom-full left-0 mb-2 z-50">
+        <div className="absolute bottom-full right-0 mb-2 z-50 max-w-[calc(100vw-2rem)]">
           <ReactionPicker myReaction={myReaction} onReact={react} />
         </div>
       )}

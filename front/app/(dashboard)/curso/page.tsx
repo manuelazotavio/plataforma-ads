@@ -32,7 +32,7 @@ export default async function CursoPage() {
     : DEFAULT_CURRICULUM
 
   return (
-    <div className="px-4 md:px-10 py-8 flex flex-col gap-12 max-w-5xl mx-auto w-full bg-white">
+    <div className="px-4 md:px-6 py-8 flex flex-col gap-12 w-full bg-white">
 
      
       <section id="sobre-o-curso" className="scroll-mt-24">

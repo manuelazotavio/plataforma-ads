@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
+import { getAuthUser } from '@/app/lib/auth'
 import RichTextEditor from '@/app/components/RichTextEditor'
 
 function toSlug(text: string) {
@@ -37,7 +38,7 @@ export default function NovoArtigoPage() {
   const formRef = useRef<HTMLFormElement>(null)
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    getAuthUser().then((user) => {
       if (!user) router.push('/login')
       else setUserId(user.id)
     })
@@ -133,8 +134,8 @@ export default function NovoArtigoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white py-12 px-4">
-      <div className="w-full max-w-2xl mx-auto">
+    <div className="min-h-screen bg-white px-4 py-12 md:px-6">
+      <div className="w-full">
         <h1 className="text-2xl font-semibold text-zinc-900 mb-1">Novo artigo</h1>
         <p className="text-sm text-zinc-500 mb-8">Escreva e publique seu conteúdo</p>
 

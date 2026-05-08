@@ -36,7 +36,7 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
     .limit(4)
 
   return (
-    <div className="px-4 md:px-10 py-8 max-w-4xl mx-auto w-full">
+    <div className="px-4 md:px-6 py-8 w-full">
 
       <Link href="/eventos" className="text-sm text-zinc-400 hover:text-zinc-700 transition mb-8 inline-flex items-center gap-1.5">
         <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
@@ -64,7 +64,7 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
         </div>
         <h1 className="text-3xl font-black text-zinc-900 leading-tight">{event.title}</h1>
         {event.description && (
-          <p className="text-base text-zinc-500 leading-relaxed max-w-2xl">{event.description}</p>
+          <p className="text-base text-zinc-500 leading-relaxed max-w-4xl">{event.description}</p>
         )}
       </div>
 

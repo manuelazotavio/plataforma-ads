@@ -1,10 +1,11 @@
-ï»¿'use client'
+'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
+import { getAuthUser } from '@/app/lib/auth'
 
 type Article = {
   id: string
@@ -26,7 +27,7 @@ export default function MeusArtigosPage() {
 
   useEffect(() => {
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await getAuthUser()
       if (!user) { router.push('/login'); return }
 
       const { data } = await supabase
@@ -42,7 +43,7 @@ export default function MeusArtigosPage() {
   }, [router])
 
   async function handleDelete(id: string, title: string) {
-    if (!confirm(`Excluir "${title}"? Esta aÃ§Ã£o nÃ£o pode ser desfeita.`)) return
+    if (!confirm(`Excluir "${title}"? Esta ação não pode ser desfeita.`)) return
     setDeletingId(id)
     await supabase.from('articles').delete().eq('id', id)
     setArticles((prev) => prev.filter((a) => a.id !== id))
@@ -58,8 +59,8 @@ export default function MeusArtigosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white py-12 px-4">
-      <div className="w-full max-w-2xl mx-auto">
+    <div className="min-h-screen bg-white px-4 py-12 md:px-6">
+      <div className="w-full">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-semibold text-zinc-900">Meus artigos</h1>
@@ -99,7 +100,7 @@ export default function MeusArtigosPage() {
                   <div className="rounded-lg bg-red-50 border border-red-100 px-3 py-2.5 flex gap-2">
                     <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-red-500 shrink-0 mt-0.5"><circle cx={12} cy={12} r={10}/><line x1={12} y1={8} x2={12} y2={12}/><line x1={12} y1={16} x2={12.01} y2={16}/></svg>
                     <div>
-                      <p className="text-xs font-semibold text-red-700 mb-0.5">Artigo rejeitado â€” edite e reenvie</p>
+                      <p className="text-xs font-semibold text-red-700 mb-0.5">Artigo rejeitado — edite e reenvie</p>
                       <p className="text-xs text-red-600">{article.rejection_message}</p>
                     </div>
                   </div>

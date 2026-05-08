@@ -26,7 +26,7 @@ export default async function ForumPage({
     : (topics ?? [])
 
   return (
-    <div className="px-4 md:px-10 py-8 max-w-5xl mx-auto w-full">
+    <div className="px-4 md:px-6 py-8 w-full">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900">Fórum</h1>

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
+import { getAuthUser } from '@/app/lib/auth'
 import RichTextEditor from '@/app/components/RichTextEditor'
 
 function toSlug(text: string) {
@@ -39,7 +40,7 @@ export default function EditarArtigoPage() {
 
   useEffect(() => {
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await getAuthUser()
       if (!user) { router.push('/login'); return }
 
       const { data, error } = await supabase
@@ -70,9 +71,10 @@ export default function EditarArtigoPage() {
     setUploadingCover(true)
     setError(null)
 
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getAuthUser()
+    if (!user) { setUploadingCover(false); router.push('/login'); return }
     const ext = file.name.split('.').pop()
-    const path = `${user!.id}/${Date.now()}.${ext}`
+    const path = `${user.id}/${Date.now()}.${ext}`
 
     const { error: uploadError } = await supabase.storage
       .from('covers')
@@ -155,8 +157,8 @@ export default function EditarArtigoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white py-12 px-4">
-      <div className="w-full max-w-2xl mx-auto">
+    <div className="min-h-screen bg-white px-4 py-12 md:px-6">
+      <div className="w-full">
         <h1 className="text-2xl font-semibold text-zinc-900 mb-1">Editar artigo</h1>
         <p className="text-sm text-zinc-500 mb-8">Atualize as informações do seu artigo</p>
 

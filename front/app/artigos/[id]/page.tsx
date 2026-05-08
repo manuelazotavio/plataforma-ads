@@ -24,7 +24,7 @@ export default async function ArtigoDetalhe({ params }: { params: Promise<{ id: 
 
   return (
     <div className="min-h-screen bg-white py-12 px-4">
-      <div className="w-full max-w-2xl mx-auto">
+      <div className="w-full">
 
         <Link href="/artigos" className="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition mb-6">
           <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>

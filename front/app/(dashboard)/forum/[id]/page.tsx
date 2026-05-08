@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
+import { getAuthUser } from '@/app/lib/auth'
 
 type Author = { name: string; avatar_url: string | null }
 type Category = { id: string; name: string }
@@ -218,13 +219,13 @@ export default function ForumTopicPage() {
   const [moderationError, setModerationError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
-    const [{ data: topicData }, { data: { user } }] = await Promise.all([
+    const [{ data: topicData }, user] = await Promise.all([
       supabase
         .from('forum_topics')
         .select('id, title, content, created_at, replies_count, views_count, user_id, attachments, users(name, avatar_url), forum_categories(id, name)')
         .eq('id', id)
         .single(),
-      supabase.auth.getUser(),
+      getAuthUser(),
     ])
 
     if (!topicData) { router.push('/forum'); return }
@@ -405,7 +406,7 @@ export default function ForumTopicPage() {
 
   if (loading) {
     return (
-      <div className="px-4 md:px-10 py-8 max-w-3xl mx-auto w-full animate-pulse space-y-4">
+      <div className="px-4 md:px-6 py-8 w-full animate-pulse space-y-4">
         <div className="h-4 w-32 bg-zinc-100 rounded" />
         <div className="h-8 w-3/4 bg-zinc-100 rounded" />
         <div className="h-4 w-48 bg-zinc-100 rounded" />
@@ -423,7 +424,7 @@ export default function ForumTopicPage() {
   const topicDate = new Date(topic.created_at).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
 
   return (
-    <div className="px-4 md:px-10 py-8 max-w-3xl mx-auto w-full">
+    <div className="px-4 md:px-6 py-8 w-full">
       <Link href="/forum" className="text-sm text-zinc-400 hover:text-zinc-700 transition mb-8 inline-flex items-center gap-1.5">
         <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
         F&oacute;rum

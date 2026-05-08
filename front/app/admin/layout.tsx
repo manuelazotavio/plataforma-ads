@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
+import { getAuthUser } from '@/app/lib/auth'
 
 type UserProfile = {
   name: string
@@ -37,7 +38,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     async function check() {
-      const { data: { user: authUser } } = await supabase.auth.getUser()
+      const authUser = await getAuthUser()
       if (!authUser) { router.push('/login'); return }
       const { data } = await supabase.from('users').select('name, avatar_url, role').eq('id', authUser.id).single()
       if (!data || data.role !== 'admin') { router.push('/'); return }

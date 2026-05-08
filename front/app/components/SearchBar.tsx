@@ -71,12 +71,14 @@ export default function SearchBar() {
   useEffect(() => {
     const q = query.trim()
     if (q.length < 2) {
-      setResults([])
-      setOpen(false)
+      void Promise.resolve().then(() => {
+        setResults([])
+        setOpen(false)
+      })
       return
     }
 
-    setLoading(true)
+    void Promise.resolve().then(() => setLoading(true))
     const timer = setTimeout(async () => {
       const like = `%${q}%`
 
@@ -181,10 +183,10 @@ export default function SearchBar() {
   }
 
   return (
-    <div ref={ref} className="hidden md:block relative">
+    <div ref={ref} className="relative hidden w-[min(42vw,28rem)] max-w-md md:block">
       <svg
-        className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none"
-        width={14} height={14} viewBox="0 0 24 24" fill="none"
+        className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#2F9E41]"
+        width={16} height={16} viewBox="0 0 24 24" fill="none"
         stroke="currentColor" strokeWidth={2.5}
       >
         <circle cx={11} cy={11} r={8} />
@@ -200,16 +202,16 @@ export default function SearchBar() {
         onFocus={() => query.trim().length >= 2 && results.length > 0 && setOpen(true)}
         placeholder="Buscar projetos, tópicos..."
         autoComplete="off"
-        className="rounded-full bg-zinc-100 pl-8 pr-4 py-2 text-sm text-zinc-700 outline-none focus:bg-zinc-200 transition w-64 placeholder:text-zinc-400"
+        className="h-10 w-full rounded-xl border border-zinc-300 bg-white pl-10 pr-4 text-sm font-medium text-zinc-800 shadow-sm outline-none transition placeholder:text-zinc-500 hover:border-zinc-400 focus:border-[#2F9E41] focus:ring-2 focus:ring-[#2F9E41]/15"
       />
 
       {open && (
-        <div className="absolute top-full left-0 mt-2 w-96 rounded-xl border border-zinc-200 bg-white shadow-xl z-50 overflow-hidden">
+        <div className="absolute left-0 top-full z-50 mt-2 w-full min-w-96 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl">
           {loading ? (
             <div className="px-4 py-4 text-sm text-zinc-400">Buscando…</div>
           ) : results.length === 0 ? (
             <div className="px-4 py-5 text-sm text-zinc-400 text-center">
-              Nenhum resultado para <span className="font-medium text-zinc-600">"{query}"</span>
+              Nenhum resultado para <span className="font-medium text-zinc-600">{query}</span>
             </div>
           ) : (
             <div className="py-1 max-h-80 overflow-y-auto">

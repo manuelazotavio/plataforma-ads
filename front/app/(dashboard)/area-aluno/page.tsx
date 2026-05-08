@@ -98,14 +98,14 @@ const links = [
 
 export default function AreaAlunoPage() {
   return (
-    <div className="min-h-screen bg-white px-6 py-10">
-      <div className="mx-auto w-full max-w-4xl">
+    <div className="min-h-screen bg-white px-4 py-10 md:px-6">
+      <div className="w-full">
         <header className="mb-10">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">
               Recursos acadêmicos
             </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500">
+            <p className="mt-2 max-w-4xl text-sm leading-6 text-zinc-500">
               Acesse materiais do curso, orientações importantes e atalhos usados no dia a dia.
             </p>
           </div>
@@ -131,7 +131,7 @@ export default function AreaAlunoPage() {
         </section>
 
         <section id="orientacoes-academicas" className="scroll-mt-24 border-t border-zinc-100 py-8">
-          <div className="max-w-2xl">
+          <div className="max-w-4xl">
             <h2 className="text-lg font-semibold text-zinc-900">Orientações acadêmicas</h2>
             <p className="mt-2 text-sm leading-6 text-zinc-500">
               Escolha o assunto que você precisa consultar. Cada tema tem espaço para vídeo explicativo e passo a passo.

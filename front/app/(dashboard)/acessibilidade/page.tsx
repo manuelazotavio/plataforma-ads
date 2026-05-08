@@ -1,6 +1,6 @@
 export default function AcessibilidadePage() {
   return (
-    <div className="px-4 md:px-10 py-8 md:py-12 max-w-2xl mx-auto w-full">
+    <div className="px-4 md:px-6 py-8 md:py-12 w-full">
       <h1 className="text-2xl font-black text-zinc-900 mb-2">Acessibilidade</h1>
       <p className="text-sm text-zinc-400 mb-10">Última atualização: abril de 2026</p>
 

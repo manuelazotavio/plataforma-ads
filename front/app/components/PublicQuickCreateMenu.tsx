@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { supabase } from '@/app/lib/supabase'
+import { getAuthUser } from '@/app/lib/auth'
 
 const quickCreateItems = [
   { href: '/cadastro', label: 'Novo projeto' },
@@ -15,7 +15,7 @@ export default function PublicQuickCreateMenu() {
   const [loggedIn, setLoggedIn] = useState(false)
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => setLoggedIn(Boolean(user)))
+    getAuthUser().then((user) => setLoggedIn(Boolean(user)))
   }, [])
 
   const items = loggedIn

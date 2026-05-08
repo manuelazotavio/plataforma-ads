@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { supabase } from '@/app/lib/supabase'
 import LikeButton from '@/app/components/LikeButton'
+import ProjectMediaMosaic from '@/app/components/ProjectMediaMosaic'
 
 export const dynamic = 'force-dynamic'
 import Comments from '@/app/components/Comments'
@@ -32,9 +33,9 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
   return (
     <div className="min-h-screen bg-white">
 
-      {cover && (
+      {cover && images.length <= 2 && (
         <div className="relative w-full h-72 bg-zinc-900 overflow-hidden">
-          {cover.media_type === 'video' ? (
+          {isVideoMedia(cover) ? (
             <video src={cover.image_url} className="w-full h-full object-cover opacity-80" autoPlay muted loop playsInline />
           ) : (
             <Image src={cover.image_url} alt={project.title} fill className="object-cover opacity-80" />
@@ -44,7 +45,7 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
       )}
 
       <div className="border-b border-zinc-100 px-4 md:px-8 py-4 md:py-5">
-        <div className="max-w-5xl mx-auto">
+        <div className="w-full">
           <Link href="/projetos" className="inline-flex items-center gap-1.5 text-sm text-zinc-400 hover:text-zinc-700 transition mb-4">
             <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
             Todos os projetos
@@ -66,7 +67,7 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 md:px-8 py-6 md:py-8 flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
+      <div className="w-full px-4 md:px-6 py-6 md:py-8 flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
 
         <div className="flex-1 min-w-0">
 
@@ -77,20 +78,17 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
             </div>
           )}
 
-          {gallery.length > 0 && (
+          {images.length > 2 && (
             <div className="mb-8">
               <h2 className="text-base font-semibold text-zinc-900 mb-3">Galeria</h2>
-              <div className={`grid gap-3 ${gallery.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                {gallery.map((img, i) => (
-                  <div key={i} className="relative rounded-xl overflow-hidden bg-zinc-100 aspect-video">
-                    {img.media_type === 'video' ? (
-                      <video src={img.image_url} className="w-full h-full object-cover" controls playsInline />
-                    ) : (
-                      <Image src={img.image_url} alt={`${project.title} — imagem ${i + 2}`} fill className="object-cover" />
-                    )}
-                  </div>
-                ))}
-              </div>
+              <ProjectMediaMosaic items={images} title={project.title} />
+            </div>
+          )}
+
+          {images.length <= 2 && gallery.length > 0 && (
+            <div className="mb-8">
+              <h2 className="text-base font-semibold text-zinc-900 mb-3">Galeria</h2>
+              <ProjectMediaMosaic items={gallery} title={project.title} />
             </div>
           )}
 
@@ -175,4 +173,9 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
       </div>
     </div>
   )
+}
+
+function isVideoMedia(media: { image_url: string; media_type?: string | null }) {
+  if (media.media_type === 'video') return true
+  return /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(media.image_url)
 }

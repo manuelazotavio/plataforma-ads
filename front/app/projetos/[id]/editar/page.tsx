@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/app/lib/supabase'
+import { getAuthUser } from '@/app/lib/auth'
 import ProjectForm, { type ProjectFormData } from '@/app/components/ProjectForm'
 
 export default function EditarProjetoPage() {
@@ -15,7 +16,7 @@ export default function EditarProjetoPage() {
 
   useEffect(() => {
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await getAuthUser()
       if (!user) { router.push('/login'); return }
       setUserId(user.id)
 
@@ -96,8 +97,8 @@ export default function EditarProjetoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white py-12 px-4">
-      <div className="w-full max-w-2xl mx-auto">
+    <div className="min-h-screen bg-white px-4 py-12 md:px-6">
+      <div className="w-full">
         <h1 className="text-2xl font-semibold text-zinc-900 mb-1">Editar projeto</h1>
         <p className="text-sm text-zinc-500 mb-8">Atualize as informações do projeto</p>
 

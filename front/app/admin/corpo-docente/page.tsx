@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
+import { getAuthUser } from '@/app/lib/auth'
 
 type Professor = {
   id: string
@@ -71,7 +72,7 @@ export default function AdminCorpoDocentePage() {
 
   useEffect(() => {
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await getAuthUser()
       if (!user) { router.push('/login'); return }
 
       const { data: me, error } = await supabase

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
+import { getAuthUser } from '@/app/lib/auth'
 import Select from '@/app/components/Select'
 
 type User = {
@@ -31,7 +32,7 @@ export default function AdminUsuariosPage() {
 
   useEffect(() => {
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await getAuthUser()
       if (user) setCurrentUserId(user.id)
 
       const { data } = await supabase

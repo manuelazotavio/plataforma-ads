@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
+import { getAuthUser } from '@/app/lib/auth'
 import { REACTIONS, ReactionPicker, type ReactionType } from './LikeButton'
 
 type Comment = {
@@ -171,7 +172,7 @@ export default function Comments({ type, targetId }: Props) {
 
   useEffect(() => {
     void Promise.resolve().then(load)
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    getAuthUser().then((user) => {
       if (user) setUserId(user.id)
     })
   }, [load])

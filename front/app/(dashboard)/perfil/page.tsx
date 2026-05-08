@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
+import { getAuthUser } from '@/app/lib/auth'
 
 type Profile = {
   name: string
@@ -67,7 +68,7 @@ export default function PerfilPage() {
 
   useEffect(() => {
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await getAuthUser()
       if (!user) { router.push('/login'); return }
       setUserId(user.id)
 
@@ -230,7 +231,7 @@ export default function PerfilPage() {
   }
 
   return (
-    <div className="px-4 md:px-10 py-8 w-full max-w-5xl mx-auto">
+    <div className="px-4 md:px-6 py-8 w-full">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900">Meu perfil</h1>
@@ -245,7 +246,7 @@ export default function PerfilPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[300px_minmax(0,42rem)_300px] justify-center gap-6 items-start">
 
         <div className="lg:sticky lg:top-6 flex flex-col gap-4">
           <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden">
@@ -339,7 +340,7 @@ export default function PerfilPage() {
           </div>
         </div>
 
-        <form onSubmit={handleSave} className="flex flex-col gap-5">
+        <form onSubmit={handleSave} className="flex w-full flex-col gap-5 lg:col-start-2">
 
           <div className="bg-white rounded-2xl border border-zinc-200 p-6">
             <h3 className="text-sm font-semibold text-zinc-900 mb-5">Informações pessoais</h3>

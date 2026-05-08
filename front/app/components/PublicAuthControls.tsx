@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
+import { getAuthUser } from '@/app/lib/auth'
 
 type Level = { id: number; name: string; min_xp: number }
 
@@ -232,7 +233,7 @@ export function PublicProfileCard() {
 }
 
 async function loadHomeData(): Promise<PublicHomeData | null> {
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser()
   if (!user) return null
 
   const [

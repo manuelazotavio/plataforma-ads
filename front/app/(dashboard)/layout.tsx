@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
+import { getAuthUser } from '@/app/lib/auth'
 import NotificationBell from '@/app/components/NotificationBell'
 import SearchBar from '@/app/components/SearchBar'
 import AppSidebar from '@/app/components/AppSidebar'
@@ -29,7 +30,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     async function loadUser() {
-      const { data: { user: authUser } } = await supabase.auth.getUser()
+      const authUser = await getAuthUser()
       if (!authUser) {
         if (isProtectedPath(pathname)) {
           router.replace('/login')
@@ -55,8 +56,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [pathname, router])
 
   useEffect(() => {
-    setSidebarOpen(false)
-    setUserMenuOpen(false)
+    void Promise.resolve().then(() => {
+      setSidebarOpen(false)
+      setUserMenuOpen(false)
+    })
   }, [pathname])
 
   useEffect(() => {
@@ -101,7 +104,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </svg>
           </button>
 
-          <div className="flex items-center gap-3 md:gap-4 shrink-0">
+          <div className="flex min-w-0 flex-1 items-center justify-end gap-3 md:gap-4">
           <SearchBar />
 
 

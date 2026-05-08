@@ -13,7 +13,7 @@ export default async function EgressosPage() {
   const years = [...new Set((egressos ?? []).map((e) => e.graduation_year).filter(Boolean))].sort((a, b) => (b ?? 0) - (a ?? 0))
 
   return (
-    <div className="px-4 md:px-10 py-8 max-w-4xl mx-auto w-full">
+    <div className="px-4 md:px-6 py-8 w-full">
       <div className="flex flex-wrap items-end justify-between gap-3 mb-8 md:mb-10">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900">Egressos</h1>

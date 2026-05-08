@@ -50,7 +50,7 @@ export default function ContatoPage() {
   }
 
   return (
-    <div className="px-4 md:px-10 py-8 max-w-5xl mx-auto w-full">
+    <div className="px-4 md:px-6 py-8 w-full">
 
       <div className="mb-10">
         <h1 className="text-2xl font-bold text-zinc-900">Contato</h1>

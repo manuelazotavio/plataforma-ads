@@ -35,8 +35,10 @@ export default function HomeShell({ children }: { children: React.ReactNode }) {
             </svg>
           </button>
 
-          <SearchBar />
-          <PublicHeaderAuth />
+          <div className="flex min-w-0 flex-1 items-center justify-end gap-3 md:gap-4">
+            <SearchBar />
+            <PublicHeaderAuth />
+          </div>
         </header>
 
         <main className="flex-1 overflow-y-auto bg-white">

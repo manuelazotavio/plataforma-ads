@@ -34,7 +34,7 @@ export default async function ProjetosPage({
   
   let query = supabase
     .from('projects')
-    .select('id, title, description, repo_url, deploy_url, semester, is_featured, like_count, created_at, users(id, name, avatar_url), project_tags(tag_name), project_images(image_url, display_order)')
+    .select('id, title, description, repo_url, deploy_url, semester, is_featured, like_count, created_at, users(id, name, avatar_url), project_tags(tag_name), project_images(image_url, display_order, media_type)')
     .eq('approved', true)
     .order('created_at', { ascending: false })
 
@@ -75,8 +75,8 @@ export default async function ProjetosPage({
     .sort((a, b) => a.name.localeCompare(b.name))
 
   return (
-    <div className="min-h-screen bg-white py-12 px-4">
-      <div className="w-full max-w-4xl mx-auto">
+    <div className="min-h-screen bg-white px-4 py-12 md:px-6">
+      <div className="w-full">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-semibold text-zinc-900">Projetos</h1>
@@ -126,7 +126,7 @@ export default async function ProjetosPage({
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {projects.map((project) => {
-              const cover = (project.project_images as { image_url: string; display_order: number }[])
+              const cover = (project.project_images as { image_url: string; display_order: number; media_type?: string | null }[])
                 .sort((a, b) => a.display_order - b.display_order)[0]
               const tags = project.project_tags as { tag_name: string }[]
               const author = project.users as unknown as { id: string; name: string; avatar_url: string | null } | null
@@ -138,7 +138,9 @@ export default async function ProjetosPage({
                 >
                   <Link href={`/projetos/${project.id}`} className="relative h-44 bg-zinc-100">
                     {cover
-                      ? <Image src={cover.image_url} alt={project.title} fill className="object-cover" />
+                      ? isVideoMedia(cover)
+                        ? <video src={cover.image_url} className="h-full w-full object-cover" autoPlay muted loop playsInline />
+                        : <Image src={cover.image_url} alt={project.title} fill className="object-cover" />
                       : <div className="w-full h-full flex items-center justify-center text-zinc-300 text-3xl">◻</div>
                     }
                     {project.is_featured && (
@@ -186,4 +188,9 @@ export default async function ProjetosPage({
       </div>
     </div>
   )
+}
+
+function isVideoMedia(media: { image_url: string; media_type?: string | null }) {
+  if (media.media_type === 'video') return true
+  return /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(media.image_url)
 }
