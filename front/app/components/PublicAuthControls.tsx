@@ -140,7 +140,7 @@ export function PublicWelcomeCard() {
   const loggedIn = loaded && data
 
   return (
-    <div className="rounded-2xl border border-zinc-100 px-10 py-8" style={{ background: 'linear-gradient(120deg, #f0fdf4 0%, #ffffff 55%, #fdf2f8 100%)' }}>
+    <div className="dashboard-welcome-card rounded-2xl border border-zinc-100 px-6 py-7 sm:px-10 sm:py-8">
       <h1 className="mb-3 text-3xl font-bold tracking-tight text-zinc-900">
         {loggedIn ? `Bem-vindo(a) de volta, ${data.firstName}!` : 'Bem-vindo(a) ao ADS Comunica!'}
       </h1>

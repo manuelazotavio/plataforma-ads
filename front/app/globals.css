@@ -155,6 +155,22 @@ body * {
   --tw-prose-td-borders: #27272a;
 }
 
+.dashboard-welcome-card {
+  background:
+    radial-gradient(circle at 0% 0%, rgb(220 252 231 / 0.9), transparent 34%),
+    radial-gradient(circle at 100% 0%, rgb(252 231 243 / 0.8), transparent 32%),
+    #ffffff;
+}
+
+.dark .dashboard-welcome-card {
+  border-color: rgb(63 63 70 / 0.8) !important;
+  background:
+    radial-gradient(circle at 0% 0%, rgb(47 158 65 / 0.24), transparent 34%),
+    radial-gradient(circle at 100% 0%, rgb(134 25 143 / 0.18), transparent 32%),
+    #18181b !important;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+}
+
 button,
 [role="button"],
 a[href],
