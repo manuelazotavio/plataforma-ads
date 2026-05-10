@@ -106,7 +106,7 @@ export default function CadastroPage() {
     <div className="flex min-h-dvh items-start justify-center bg-zinc-50 px-4 py-8 sm:items-center sm:px-6">
       <div className="w-full max-w-[440px] rounded-2xl border border-zinc-200 bg-white p-6 shadow-lg shadow-zinc-200/70 sm:p-8">
         <div className="mb-6">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#2F9E41]">
+          <p className="mb-2 text-xs font-semibold text-[#2F9E41]">
             Plataforma ADS
           </p>
           <h1 className="text-2xl font-semibold text-zinc-950">Criar conta</h1>
@@ -125,7 +125,7 @@ export default function CadastroPage() {
 
         <div className="mb-4 flex items-center gap-3">
           <div className="h-px flex-1 bg-zinc-200" />
-          <span className="text-xs font-medium uppercase tracking-wide text-zinc-400">ou</span>
+          <span className="text-xs font-medium text-zinc-400">ou</span>
           <div className="h-px flex-1 bg-zinc-200" />
         </div>
 

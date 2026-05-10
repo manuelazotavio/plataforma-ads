@@ -227,7 +227,7 @@ function InfoItem({ icon, label, value, href }: { icon: React.ReactNode; label: 
     <div className="flex items-start gap-3">
       <span className="mt-0.5 shrink-0 text-[#2F9E41]">{icon}</span>
       <div>
-        <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wide leading-none mb-1">{label}</p>
+        <p className="text-xs font-semibold text-zinc-400 leading-none mb-1">{label}</p>
         <p className="text-sm text-zinc-700 leading-snug">{value}</p>
       </div>
     </div>

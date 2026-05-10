@@ -52,7 +52,7 @@ export default async function CursoPage() {
               { label: 'Grau', value: 'Tecnólogo' },
             ].map((item) => (
               <div key={item.label} className="rounded-xl bg-zinc-50 border border-zinc-100 p-4">
-                <p className="text-xs text-zinc-400 font-medium uppercase tracking-wide mb-1">{item.label}</p>
+                <p className="text-xs text-zinc-400 font-medium mb-1">{item.label}</p>
                 <p className="text-sm font-semibold text-zinc-900">{item.value}</p>
               </div>
             ))}

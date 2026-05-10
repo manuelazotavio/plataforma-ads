@@ -54,7 +54,7 @@ export default function LoginPage() {
     <div className="flex min-h-dvh items-center justify-center bg-zinc-50 px-4 py-8 sm:px-6">
       <div className="w-full max-w-[420px] rounded-2xl border border-zinc-200 bg-white p-6 shadow-lg shadow-zinc-200/70 sm:p-8">
         <div className="mb-6">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#2F9E41]">
+          <p className="mb-2 text-xs font-semibold text-[#2F9E41]">
             Plataforma ADS
           </p>
           <h1 className="text-2xl font-semibold text-zinc-950">Entrar</h1>

@@ -72,18 +72,18 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-10">
         {event.start_date && (
           <div className="rounded-xl bg-zinc-50 border border-zinc-100 p-4">
-            <p className="text-xs text-zinc-400 uppercase tracking-wide mb-1">Início</p>
+            <p className="text-xs text-zinc-400 mb-1">Início</p>
             <p className="text-sm font-semibold text-zinc-900">{formatDate(event.start_date)}</p>
           </div>
         )}
         {event.end_date && (
           <div className="rounded-xl bg-zinc-50 border border-zinc-100 p-4">
-            <p className="text-xs text-zinc-400 uppercase tracking-wide mb-1">Encerramento</p>
+            <p className="text-xs text-zinc-400  mb-1">Encerramento</p>
             <p className="text-sm font-semibold text-zinc-900">{formatDate(event.end_date)}</p>
           </div>
         )}
         <div className="rounded-xl bg-zinc-50 border border-zinc-100 p-4">
-          <p className="text-xs text-zinc-400 uppercase tracking-wide mb-1">Inscrições</p>
+          <p className="text-xs text-zinc-400  mb-1">Inscrições</p>
           <p className="text-sm font-semibold text-zinc-900">
             {event.registration_open ? 'Abertas' : 'Encerradas'}
           </p>

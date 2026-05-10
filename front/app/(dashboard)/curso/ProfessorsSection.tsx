@@ -164,7 +164,7 @@ function ProfessorDetailsModal({
         </div>
 
         <div className="mt-6">
-          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Descri&ccedil;&atilde;o</p>
+          <p className="text-xs font-semibold text-zinc-400">Descri&ccedil;&atilde;o</p>
           {professor.bio ? (
             <p className="mt-2 text-sm leading-relaxed text-zinc-700">{professor.bio}</p>
           ) : (
@@ -175,7 +175,7 @@ function ProfessorDetailsModal({
         </div>
 
         <div className="mt-6">
-          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Redes sociais</p>
+          <p className="text-xs font-semibold text-zinc-400">Redes sociais</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {links.length > 0 ? (
               links.map((link) => (
