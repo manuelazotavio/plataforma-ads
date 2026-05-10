@@ -63,8 +63,6 @@ export default async function HomePage() {
     { data: contributorTopics },
     { data: contributorProjectComments },
     { data: contributorArticleComments },
-    { count: studentsCount },
-    { count: projectsCount },
     { data: events },
   ] = await Promise.all([
     supabase
@@ -86,8 +84,6 @@ export default async function HomePage() {
     supabase.from('forum_topics').select('user_id'),
     supabase.from('project_comments').select('user_id'),
     supabase.from('article_comments').select('user_id'),
-    supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'aluno'),
-    supabase.from('projects').select('*', { count: 'exact', head: true }),
     supabase
       .from('events')
       .select('id, title, category, start_date, end_date')
@@ -112,7 +108,7 @@ export default async function HomePage() {
     <HomeShell>
       <div className="grid grid-cols-1 gap-7 px-5 py-6 lg:px-8 xl:grid-cols-[minmax(0,750px)_290px_300px]">
         <div className="flex min-w-0 flex-col gap-7">
-          <PublicWelcomeCard studentsCount={studentsCount ?? 0} projectsCount={projectsCount ?? 0} />
+          <PublicWelcomeCard />
           <ProjectsSection projects={featuredProjects} />
           <TopicsSection topics={recentTopics} />
         </div>

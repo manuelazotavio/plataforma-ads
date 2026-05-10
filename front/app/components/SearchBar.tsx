@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/app/lib/supabase'
 
-type ResultType = 'project' | 'article' | 'forum_topic' | 'page'
+type ResultType = 'project' | 'article' | 'forum_topic' | 'user' | 'page'
 
 type Result = {
   id: string
@@ -18,6 +18,7 @@ const TYPE_LABEL: Record<ResultType, string> = {
   project:     'Projeto',
   article:     'Artigo',
   forum_topic: 'Fórum',
+  user:        'Usuario',
   page:        'Página',
 }
 
@@ -26,6 +27,7 @@ function TypeBadge({ type }: { type: ResultType }) {
     project:     'bg-blue-50 text-blue-600',
     article:     'bg-amber-50 text-amber-600',
     forum_topic: 'bg-purple-50 text-purple-600',
+    user:        'bg-emerald-50 text-emerald-600',
     page:        'bg-zinc-100 text-zinc-600',
   }
   return (
@@ -82,7 +84,7 @@ export default function SearchBar() {
     const timer = setTimeout(async () => {
       const like = `%${q}%`
 
-      const [{ data: projects }, { data: articles }, { data: topics }] =
+      const [{ data: projects }, { data: articles }, { data: topics }, { data: users }] =
         await Promise.all([
           supabase
             .from('projects')
@@ -99,6 +101,11 @@ export default function SearchBar() {
             .from('forum_topics')
             .select('id, title')
             .ilike('title', like)
+            .limit(5),
+          supabase
+            .from('users')
+            .select('id, name, role')
+            .ilike('name', like)
             .limit(5),
         ])
 
@@ -131,6 +138,12 @@ export default function SearchBar() {
           title: t.title,
           type: 'forum_topic' as const,
         })),
+        ...(users ?? []).map((u) => ({
+          id: u.id,
+          title: u.name,
+          type: 'user' as const,
+          subtitle: u.role ? `Perfil ${u.role}` : 'Perfil',
+        })),
         ...pages,
       ]
 
@@ -160,6 +173,7 @@ export default function SearchBar() {
       r.url                        ? r.url              :
       r.type === 'project'         ? `/projetos/${r.id}` :
       r.type === 'article'         ? `/artigos/${r.id}`  :
+      r.type === 'user'            ? `/usuarios/${r.id}` :
                                      `/forum/${r.id}`
     router.push(url)
   }
@@ -183,7 +197,7 @@ export default function SearchBar() {
   }
 
   return (
-    <div ref={ref} className="relative hidden w-[min(42vw,28rem)] max-w-md md:block">
+    <div ref={ref} className="relative block min-w-0 flex-1 md:w-[min(42vw,28rem)] md:max-w-md md:flex-none">
       <svg
         className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#2F9E41]"
         width={16} height={16} viewBox="0 0 24 24" fill="none"
@@ -200,13 +214,13 @@ export default function SearchBar() {
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={handleKeyDown}
         onFocus={() => query.trim().length >= 2 && results.length > 0 && setOpen(true)}
-        placeholder="Buscar projetos, tópicos..."
+        placeholder="Buscar projetos, usuarios, tópicos..."
         autoComplete="off"
         className="h-10 w-full rounded-xl border border-zinc-300 bg-white pl-10 pr-4 text-sm font-medium text-zinc-800 shadow-sm outline-none transition placeholder:text-zinc-500 hover:border-zinc-400 focus:border-[#2F9E41] focus:ring-2 focus:ring-[#2F9E41]/15"
       />
 
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-2 w-full min-w-96 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl">
+        <div className="fixed left-4 right-4 top-16 z-50 mt-2 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl md:absolute md:left-0 md:right-auto md:top-full md:w-full md:min-w-96">
           {loading ? (
             <div className="px-4 py-4 text-sm text-zinc-400">Buscando…</div>
           ) : results.length === 0 ? (

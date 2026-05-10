@@ -131,11 +131,64 @@ function EgressoRow({ egresso, index }: { egresso: Egresso; index: number }) {
 }
 
 export default function EgressosList({ egressos }: { egressos: Egresso[] }) {
+  const years = [...new Set(egressos.map((egresso) => egresso.graduation_year).filter(Boolean) as number[])]
+    .sort((a, b) => b - a)
+  const [selectedYear, setSelectedYear] = useState<number | null>(years[0] ?? null)
+  const filtered = selectedYear
+    ? egressos.filter((egresso) => egresso.graduation_year === selectedYear)
+    : egressos.filter((egresso) => !egresso.graduation_year)
+
   return (
-    <div>
-      {egressos.map((egresso, i) => (
+    <div className="flex flex-col gap-6">
+      <div>
+        <p className="mb-3 text-sm font-semibold text-zinc-900">Selecione a turma</p>
+        <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
+          {years.map((year) => (
+            <button
+              key={year}
+              type="button"
+              onClick={() => setSelectedYear(year)}
+              className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+                selectedYear === year
+                  ? 'text-white'
+                  : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-700'
+              }`}
+              style={selectedYear === year ? { backgroundColor: '#2F9E41' } : undefined}
+            >
+              Turma {year}
+            </button>
+          ))}
+          {egressos.some((egresso) => !egresso.graduation_year) && (
+            <button
+              type="button"
+              onClick={() => setSelectedYear(null)}
+              className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+                selectedYear === null
+                  ? 'text-white'
+                  : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-700'
+              }`}
+              style={selectedYear === null ? { backgroundColor: '#2F9E41' } : undefined}
+            >
+              Sem turma
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div>
+        <div className="mb-3 flex items-end justify-between gap-3 border-b border-zinc-100 pb-3">
+          <h2 className="text-lg font-bold text-zinc-900">
+            {selectedYear ? `Turma ${selectedYear}` : 'Sem turma'}
+          </h2>
+          <p className="text-sm text-zinc-400">
+            {filtered.length} egresso{filtered.length !== 1 ? 's' : ''}
+          </p>
+        </div>
+
+        {filtered.map((egresso, i) => (
         <EgressoRow key={egresso.id} egresso={egresso} index={i} />
-      ))}
+        ))}
+      </div>
     </div>
   )
 }

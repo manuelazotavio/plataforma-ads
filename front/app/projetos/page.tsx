@@ -75,7 +75,7 @@ export default async function ProjetosPage({
     .sort((a, b) => a.name.localeCompare(b.name))
 
   return (
-    <div className="min-h-screen bg-white px-4 py-12 md:px-6">
+    <div className="min-h-screen bg-white px-6 py-12 md:px-10 lg:px-12">
       <div className="w-full">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -93,7 +93,7 @@ export default async function ProjetosPage({
         </div>
 
         
-        <div className="no-scrollbar mb-6 flex max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-2 -mx-4 px-4 sm:flex-wrap sm:overflow-visible md:mx-0 md:px-0">
+        <div className="no-scrollbar mb-6 flex max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-2 -mx-6 px-6 sm:flex-wrap sm:overflow-visible md:mx-0 md:px-0">
           <Link
             href="/projetos"
             className={`shrink-0 whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-semibold transition-colors cursor-pointer ${

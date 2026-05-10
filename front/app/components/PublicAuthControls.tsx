@@ -126,7 +126,7 @@ export function PublicHeaderAuth() {
   )
 }
 
-export function PublicWelcomeCard({ studentsCount, projectsCount }: { studentsCount: number; projectsCount: number }) {
+export function PublicWelcomeCard() {
   const [data, setData] = useState<PublicHomeData | null>(null)
   const [loaded, setLoaded] = useState(false)
 
@@ -165,10 +165,6 @@ export function PublicWelcomeCard({ studentsCount, projectsCount }: { studentsCo
           <MessageIcon size={16} />
           Criar tópico
         </Link>
-      </div>
-      <div className="mt-8 flex gap-8 border-t border-white/70 pt-5">
-        <Stat label="Alunos" value={studentsCount} />
-        <Stat label="Projetos" value={projectsCount} />
       </div>
     </div>
   )
@@ -336,15 +332,6 @@ function Metric({ label, value }: { label: string; value: number }) {
     <div className="flex items-center justify-between">
       <span className="text-xs text-zinc-500">{label}</span>
       <span className="text-xs font-semibold text-zinc-900">{value}</span>
-    </div>
-  )
-}
-
-function Stat({ label, value }: { label: string; value: number }) {
-  return (
-    <div>
-      <p className="text-2xl font-bold text-zinc-900">{value.toLocaleString('pt-BR')}</p>
-      <p className="text-xs text-zinc-400">{label}</p>
     </div>
   )
 }
