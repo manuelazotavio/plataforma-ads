@@ -93,7 +93,7 @@ export default function MeusProjetosPage() {
 
         {projects.length === 0 ? (
           <div className="text-center py-20 text-zinc-400">
-            <p className="text-lg">Você ainda não tem projetos.</p>
+            <p className="text-lg">VocÃª ainda nÃ£o tem projetos.</p>
             <Link href="/projetos/novo" className="mt-3 inline-block text-sm text-zinc-600 underline hover:text-zinc-900 transition">
               Criar primeiro projeto
             </Link>
@@ -111,7 +111,7 @@ export default function MeusProjetosPage() {
                     <div className="rounded-lg bg-red-50 border border-red-100 px-3 py-2.5 flex gap-2">
                       <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-red-500 shrink-0 mt-0.5"><circle cx={12} cy={12} r={10}/><line x1={12} y1={8} x2={12} y2={12}/><line x1={12} y1={16} x2={12.01} y2={16}/></svg>
                       <div>
-                        <p className="text-xs font-semibold text-red-700 mb-0.5">Projeto reprovado — edite e reenvie</p>
+                        <p className="text-xs font-semibold text-red-700 mb-0.5">Projeto reprovado â€” edite e reenvie</p>
                         <p className="text-xs text-red-600">{project.rejection_message}</p>
                       </div>
                     </div>
@@ -129,7 +129,7 @@ export default function MeusProjetosPage() {
                         <div>
                           <h2 className="text-sm font-semibold text-zinc-900">{project.title}</h2>
                           {project.semester && (
-                            <span className="text-xs text-zinc-400">{project.semester}º semestre</span>
+                            <span className="text-xs text-zinc-400">{project.semester}Âº semestre</span>
                           )}
                         </div>
                         {project.is_featured && (
