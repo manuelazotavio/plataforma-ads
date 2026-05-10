@@ -5,6 +5,7 @@ import AppSidebar from './AppSidebar'
 import PublicQuickCreateMenu from './PublicQuickCreateMenu'
 import { PublicHeaderAuth } from './PublicAuthControls'
 import SearchBar from './SearchBar'
+import ThemeToggle from './ThemeToggle'
 
 export default function HomeShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -37,6 +38,7 @@ export default function HomeShell({ children }: { children: React.ReactNode }) {
 
           <div className="flex min-w-0 flex-1 items-center justify-end gap-3 md:gap-4">
             <SearchBar />
+            <ThemeToggle />
             <PublicHeaderAuth />
           </div>
         </header>

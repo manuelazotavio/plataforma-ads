@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
+import ThemeToggle from '@/app/components/ThemeToggle'
 
 type UserProfile = {
   name: string
@@ -137,6 +138,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </button>
 
           <div className="flex items-center gap-3 ml-auto">
+            <ThemeToggle />
             <div className="text-right leading-tight hidden sm:block">
               <p className="text-sm font-semibold text-zinc-900">{user?.name}</p>
               <p className="text-xs text-zinc-400 mt-0.5">Administrador</p>

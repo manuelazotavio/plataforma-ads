@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getAuthRedirectUrl } from '@/app/lib/authRedirect'
 import { supabase } from '@/app/lib/supabase'
+import ThemeToggle from '@/app/components/ThemeToggle'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -52,6 +53,9 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-dvh items-center justify-center bg-zinc-50 px-4 py-8 sm:px-6">
+      <div className="absolute right-4 top-4">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-[420px] rounded-2xl border border-zinc-200 bg-white p-6 shadow-lg shadow-zinc-200/70 sm:p-8">
         <div className="mb-6">
           <p className="mb-2 text-xs font-semibold text-[#2F9E41]">

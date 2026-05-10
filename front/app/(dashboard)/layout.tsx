@@ -9,6 +9,7 @@ import { getAuthUser } from '@/app/lib/auth'
 import NotificationBell from '@/app/components/NotificationBell'
 import SearchBar from '@/app/components/SearchBar'
 import AppSidebar from '@/app/components/AppSidebar'
+import ThemeToggle from '@/app/components/ThemeToggle'
 
 type UserProfile = {
   name: string
@@ -106,6 +107,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           <div className="flex min-w-0 flex-1 items-center justify-end gap-3 md:gap-4">
           <SearchBar />
+
+          <ThemeToggle />
 
 
           <NotificationBell userId={userId} />
