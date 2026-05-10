@@ -51,10 +51,15 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
-      <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm border border-zinc-200 p-8">
-        <h1 className="text-2xl font-semibold text-zinc-900 mb-1">Entrar</h1>
-        <p className="text-sm text-zinc-500 mb-6">Plataforma ADS</p>
+    <div className="flex min-h-dvh items-center justify-center bg-zinc-50 px-4 py-8 sm:px-6">
+      <div className="w-full max-w-[420px] rounded-2xl border border-zinc-200 bg-white p-6 shadow-lg shadow-zinc-200/70 sm:p-8">
+        <div className="mb-6">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#2F9E41]">
+            Plataforma ADS
+          </p>
+          <h1 className="text-2xl font-semibold text-zinc-950">Entrar</h1>
+          <p className="mt-1 text-sm text-zinc-500">Acesse sua conta para continuar.</p>
+        </div>
 
         <button
           type="button"
@@ -143,6 +148,6 @@ function GoogleIcon() {
 
 function ic(invalid: boolean) {
   return invalid
-    ? 'rounded-lg border border-red-400 bg-red-50/30 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 transition w-full'
-    : 'rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 transition w-full'
+    ? 'w-full rounded-lg border border-red-400 bg-red-50/30 px-3 py-2.5 text-sm text-zinc-900 outline-none transition focus:border-red-400 focus:ring-2 focus:ring-red-100'
+    : 'w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200'
 }
