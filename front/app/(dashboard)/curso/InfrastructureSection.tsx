@@ -10,10 +10,23 @@ type InfraItem = {
   image?: string
 }
 
+function useDark() {
+  const [dark, setDark] = useState(false)
+  useEffect(() => {
+    const el = document.documentElement
+    setDark(el.classList.contains('dark'))
+    const obs = new MutationObserver(() => setDark(el.classList.contains('dark')))
+    obs.observe(el, { attributeFilter: ['class'] })
+    return () => obs.disconnect()
+  }, [])
+  return dark
+}
+
 function InfraRow({ item, index }: { item: InfraItem; index: number }) {
   const ref = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
   const [hovered, setHovered] = useState(false)
+  const dark = useDark()
 
   useEffect(() => {
     const el = ref.current
@@ -43,7 +56,7 @@ function InfraRow({ item, index }: { item: InfraItem; index: number }) {
         <p
           className="text-2xl font-black leading-tight"
           style={{
-            color: hovered ? '#2F9E41' : '#18181b',
+            color: hovered ? '#2F9E41' : (dark ? '#f4f4f5' : '#18181b'),
             letterSpacing: hovered ? '0.01em' : '0em',
             transition: 'color 0.4s ease, letter-spacing 0.4s ease',
           }}
@@ -54,7 +67,7 @@ function InfraRow({ item, index }: { item: InfraItem; index: number }) {
         <p
           className="text-sm leading-relaxed"
           style={{
-            color: hovered ? '#52525b' : '#71717a',
+            color: hovered ? (dark ? '#a1a1aa' : '#52525b') : '#71717a',
             transform: hovered ? 'translateX(8px)' : 'translateX(0)',
             transition: 'color 0.4s ease, transform 0.4s ease',
           }}
@@ -69,7 +82,7 @@ function InfraRow({ item, index }: { item: InfraItem; index: number }) {
               className="text-xs border rounded-full px-3 py-1"
               style={{
                 color: hovered ? '#2F9E41' : '#71717a',
-                borderColor: hovered ? '#2F9E41' : '#e4e4e7',
+                borderColor: hovered ? '#2F9E41' : (dark ? '#3f3f46' : '#e4e4e7'),
                 transform: hovered ? 'translateY(0)' : 'translateY(4px)',
                 opacity: hovered ? 1 : 0.7,
                 transition: 'color 0.3s ease, border-color 0.3s ease, transform 0.3s ease, opacity 0.3s ease',

@@ -83,12 +83,17 @@ function UpvoteButton({ count, voted, onToggle, disabled }: { count: number; vot
     <button
       onClick={onToggle}
       disabled={disabled}
-      className={`flex items-center gap-1 text-xs font-semibold transition-colors disabled:opacity-40 cursor-pointer ${voted ? 'text-[#2F9E41]' : 'text-zinc-400 hover:text-zinc-700'}`}
+      title={disabled ? 'Faça login para votar' : voted ? 'Remover voto' : 'Votar'}
+      className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 transition-all disabled:opacity-40 cursor-pointer ${
+        voted
+          ? 'border-[#2F9E41] bg-[#2F9E41]/10 text-[#2F9E41]'
+          : 'border-zinc-200 bg-zinc-50 text-zinc-500 hover:border-[#2F9E41] hover:text-[#2F9E41]'
+      }`}
     >
-      <svg width={13} height={13} viewBox="0 0 24 24" fill={voted ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+      <svg width={18} height={18} viewBox="0 0 24 24" fill={voted ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 19V5M5 12l7-7 7 7" />
       </svg>
-      {count}
+      <span className="text-sm font-bold leading-none">{count} votos</span>
     </button>
   )
 }
@@ -457,9 +462,8 @@ export default function ForumTopicPage() {
               </div>
             </div>
           </div>
-          <div className="flex flex-col items-center gap-1 pt-1 shrink-0">
+          <div className="shrink-0 pt-1">
             <UpvoteButton count={topicVoters.length} voted={topicVoted} onToggle={handleTopicVote} disabled={!currentUserId} />
-            <span className="text-xs text-zinc-400">votos</span>
           </div>
         </div>
       </div>

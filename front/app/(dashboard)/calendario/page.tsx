@@ -115,7 +115,7 @@ export default function CalendarioPage() {
             className="px-3 py-1.5 text-sm font-medium text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50 transition mr-1"
           >
             Hoje
-          </button>
+          </button>d
           <button onClick={prevMonth} className="p-1.5 rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition">
             <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 18l-6-6 6-6" />

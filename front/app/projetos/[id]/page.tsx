@@ -67,7 +67,7 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
         </div>
       </div>
 
-      <div className="w-full px-4 md:px-6 py-6 md:py-8 flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
+      <div className="w-full px-4 md:px-6 py-6 md:py-8 flex flex-col lg:flex-row gap-8 lg:gap-12 lg:items-start">
 
         <div className="flex-1 min-w-0">
 

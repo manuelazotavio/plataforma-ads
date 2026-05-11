@@ -97,6 +97,16 @@ body * {
   border-color: #27272a !important;
 }
 
+.dark .divide-zinc-100 > *,
+.dark .divide-zinc-200 > *,
+.dark .divide-zinc-300 > * {
+  border-color: #27272a !important;
+}
+
+.dark .curriculum-subject-list > * {
+  border-color: rgb(63 63 70 / 0.65) !important;
+}
+
 .dark .ring-zinc-100,
 .dark .ring-zinc-200 {
   --tw-ring-color: #27272a !important;
@@ -170,6 +180,7 @@ body * {
     #18181b !important;
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
 }
+
 
 button,
 [role="button"],

@@ -214,7 +214,7 @@ export default function ProfessorsSection({ professors }: { professors: Professo
 
   return (
     <>
-      <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 md:-mx-10 md:px-10" style={{ scrollbarWidth: 'none' }}>
+      <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 md:-mx-6 md:px-6" style={{ scrollbarWidth: 'none' }}>
         {professors.map((prof) => (
           <ProfessorCard key={prof.id} prof={prof} onOpen={setSelectedProfessor} />
         ))}

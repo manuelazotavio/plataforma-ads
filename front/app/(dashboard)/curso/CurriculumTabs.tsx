@@ -43,7 +43,7 @@ export default function CurriculumTabs({ curriculum }: { curriculum: Semester[] 
         ))}
       </div>
 
-      <div className="divide-y divide-zinc-100">
+      <div className="curriculum-subject-list divide-y divide-zinc-100">
         {current.subjects.map((subject) => (
           <div key={subject.name} className="flex items-center justify-between gap-4 py-3.5">
             <p className="text-base text-zinc-800">{subject.name}</p>

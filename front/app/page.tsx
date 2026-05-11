@@ -124,13 +124,13 @@ export default async function HomePage() {
         </div>
       </div>
 
-      <footer className="mt-8 border-t border-zinc-100 pl-4 pr-24 py-6 md:pl-10 md:pr-28">
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-zinc-400">
+      <footer className="mt-8 border-t border-zinc-100 px-4 py-6 md:pl-10 md:pr-28">
+        <div className="flex flex-col items-center gap-y-2 text-center text-xs text-zinc-400 md:flex-row md:flex-wrap md:text-left md:gap-x-5">
           <Link href="/regras" className="transition hover:text-zinc-700">Regras do ADS Comunica</Link>
           <Link href="/privacidade" className="transition hover:text-zinc-700">Política de Privacidade</Link>
           <Link href="/contrato" className="transition hover:text-zinc-700">Contrato de Usuário</Link>
           <Link href="/acessibilidade" className="transition hover:text-zinc-700">Acessibilidade</Link>
-          <span className="ml-auto">ADS Comunica, Inc. &copy; 2026. Todos os direitos reservados.</span>
+          <span className="md:ml-auto">ADS Comunica, Inc. &copy; 2026. Todos os direitos reservados.</span>
         </div>
       </footer>
     </HomeShell>

@@ -1,11 +1,21 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import AppSidebar from './AppSidebar'
 import PublicQuickCreateMenu from './PublicQuickCreateMenu'
 import { PublicHeaderAuth } from './PublicAuthControls'
 import SearchBar from './SearchBar'
 import ThemeToggle from './ThemeToggle'
+import NotificationBell from './NotificationBell'
+import { supabase } from '@/app/lib/supabase'
+
+function NotificationBellWrapper() {
+  const [userId, setUserId] = useState<string | null>(null)
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null))
+  }, [])
+  return <NotificationBell userId={userId} />
+}
 
 export default function HomeShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -39,6 +49,7 @@ export default function HomeShell({ children }: { children: React.ReactNode }) {
           <div className="flex min-w-0 flex-1 items-center justify-end gap-3 md:gap-4">
             <SearchBar />
             <ThemeToggle />
+            <NotificationBellWrapper />
             <PublicHeaderAuth />
           </div>
         </header>

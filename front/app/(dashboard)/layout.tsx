@@ -189,18 +189,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto bg-white">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-white">
           <div className="flex flex-col min-h-full">
             <div className="flex-1">
               {children}
             </div>
-            <footer className="border-t border-zinc-100 py-6 mt-8 pl-4 pr-24 md:pl-10 md:pr-28">
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-zinc-400">
+            <footer className="border-t border-zinc-100 py-6 mt-8 px-4 md:pl-10 md:pr-28">
+              <div className="flex flex-col items-center gap-y-2 text-center text-xs text-zinc-400 md:flex-row md:flex-wrap md:text-left md:gap-x-5">
                 <Link href="/regras" className="hover:text-zinc-700 transition">Regras do ADS Comunica</Link>
                 <Link href="/privacidade" className="hover:text-zinc-700 transition">Política de Privacidade</Link>
                 <Link href="/contrato" className="hover:text-zinc-700 transition">Contrato de Usuário</Link>
                 <Link href="/acessibilidade" className="hover:text-zinc-700 transition">Acessibilidade</Link>
-                <span className="ml-auto">ADS Comunica, Inc. © 2026. Todos os direitos reservados.</span>
+                <span className="md:ml-auto">ADS Comunica, Inc. © 2026. Todos os direitos reservados.</span>
               </div>
             </footer>
           </div>

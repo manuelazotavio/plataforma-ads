@@ -157,7 +157,7 @@ export default function NotificationBell({ userId }: { userId: string | null }) 
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-zinc-200 bg-white shadow-xl z-50 overflow-hidden">
+        <div className="fixed inset-x-4 top-18 z-50 rounded-xl border border-zinc-200 bg-white shadow-xl overflow-hidden sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-80">
           <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100">
             <span className="text-sm font-semibold text-zinc-900">Notificações</span>
             {notifications.some((n) => n.read) && unread === 0 && notifications.length > 0 && (

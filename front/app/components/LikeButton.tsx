@@ -85,7 +85,7 @@ export function ReactionPicker({
 }) {
   const iconSize = size === 'sm' ? 22 : 28
   return (
-    <div className="no-scrollbar flex max-w-[calc(100vw-2rem)] items-end gap-0.5 overflow-x-auto overscroll-x-contain bg-white rounded-2xl shadow-xl border border-zinc-100 px-2 py-2">
+    <div className="no-scrollbar flex items-end gap-0.5 overflow-x-auto overscroll-x-contain bg-white rounded-2xl shadow-xl border border-zinc-100 px-2 py-2 max-w-[calc(100vw-2rem)]">
       {REACTIONS.map((r) => (
         <button
           key={r.type}
@@ -182,7 +182,7 @@ export default function LikeButton({ type, targetId, initialCount }: Props) {
   return (
     <div ref={ref} className="relative inline-flex">
       {open && userId && (
-        <div className="absolute bottom-full right-0 mb-2 z-50 max-w-[calc(100vw-2rem)]">
+        <div className="absolute bottom-full left-1/2 mb-2 z-50 -translate-x-1/2">
           <ReactionPicker myReaction={myReaction} onReact={react} />
         </div>
       )}

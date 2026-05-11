@@ -36,7 +36,16 @@ export default function ProjectMediaMosaic({ items, title }: Props) {
       <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm">
         <div className={items.length === 1 ? 'relative aspect-video overflow-hidden rounded-xl bg-zinc-100' : items.length === 2 ? 'grid aspect-[2.1/1] grid-cols-2 gap-2' : 'grid aspect-[2.1/1] grid-cols-[1.45fr_1fr] gap-2'}>
           {items.length === 1 ? (
-            <MediaTile media={visible[0]} title={title} index={1} />
+            <button
+              type="button"
+              onClick={() => setOpen(true)}
+              className="group relative h-full w-full overflow-hidden rounded-xl bg-zinc-100 text-left"
+            >
+              <MediaTile media={visible[0]} title={title} index={1} />
+              <span className="absolute bottom-3 right-3 rounded-full bg-black/55 px-3 py-1 text-xs font-semibold text-white opacity-0 transition group-hover:opacity-100">
+                {isVideoMedia(visible[0]) ? 'Abrir player' : 'Ver galeria'}
+              </span>
+            </button>
           ) : items.length === 2 ? (
             visible.map((item, index) => (
               <button
@@ -50,13 +59,21 @@ export default function ProjectMediaMosaic({ items, title }: Props) {
             ))
           ) : (
             <>
-              <div className="relative min-h-0 overflow-hidden rounded-xl bg-zinc-100">
+              <button
+                type="button"
+                onClick={() => setOpen(true)}
+                className="relative min-h-0 overflow-hidden rounded-xl bg-zinc-100 text-left"
+              >
                 <MediaTile media={visible[0]} title={title} index={1} />
-              </div>
+              </button>
               <div className="grid min-h-0 gap-2">
-                <div className="relative min-h-0 overflow-hidden rounded-xl bg-zinc-100">
+                <button
+                  type="button"
+                  onClick={() => setOpen(true)}
+                  className="relative min-h-0 overflow-hidden rounded-xl bg-zinc-100 text-left"
+                >
                   <MediaTile media={visible[1]} title={title} index={2} />
-                </div>
+                </button>
                 <button
                   type="button"
                   onClick={() => setOpen(true)}
@@ -81,9 +98,9 @@ export default function ProjectMediaMosaic({ items, title }: Props) {
       </div>
 
       {open && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/75 px-4 py-6" role="dialog" aria-modal="true">
-          <div className="max-h-[88vh] w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-3">
+        <div className="fixed inset-0 z-[80] flex flex-col bg-black/75 sm:items-center sm:justify-center sm:px-4 sm:py-6" role="dialog" aria-modal="true">
+          <div className="flex w-full flex-col overflow-hidden bg-white sm:max-h-[88vh] sm:max-w-5xl sm:rounded-2xl sm:shadow-2xl" style={{ height: '100%' }}>
+            <div className="flex shrink-0 items-center justify-between border-b border-zinc-100 px-4 py-3">
               <p className="text-sm font-semibold text-zinc-900">Galeria do projeto</p>
               <button
                 type="button"
@@ -97,12 +114,14 @@ export default function ProjectMediaMosaic({ items, title }: Props) {
                 </svg>
               </button>
             </div>
-            <div className="grid max-h-[calc(88vh-58px)] gap-3 overflow-y-auto p-3 sm:grid-cols-2">
-              {items.map((item, index) => (
-                <div key={`${item.image_url}-${index}`} className="relative aspect-video overflow-hidden rounded-xl bg-zinc-100">
-                  <MediaTile media={item} title={title} index={index + 1} controls />
-                </div>
-              ))}
+            <div className="flex-1 overflow-y-auto p-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {items.map((item, index) => (
+                  <div key={`${item.image_url}-${index}`} className="relative aspect-video overflow-hidden rounded-xl bg-zinc-100">
+                    <MediaTile media={item} title={title} index={index + 1} controls />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -118,11 +137,11 @@ function MediaTile({ media, title, index, dimmed, controls }: { media: ProjectMe
     return (
       <video
         src={media.image_url}
-        className={`h-full w-full object-cover ${dimmed ? 'opacity-80' : ''}`}
+        className={`h-full w-full ${controls ? 'object-contain bg-black' : 'object-cover'} ${dimmed ? 'opacity-80' : ''}`}
         controls={controls}
-        autoPlay={!controls}
+        autoPlay
         muted={!controls}
-        loop
+        loop={!controls}
         playsInline
       />
     )

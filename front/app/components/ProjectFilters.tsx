@@ -36,32 +36,32 @@ export default function ProjectFilters({ tags, semesters, students }: Props) {
     searchParams.has('tag') || searchParams.has('semester') || searchParams.has('aluno')
 
   return (
-    <div className="flex flex-wrap items-center gap-2 mb-6">
+    <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
       <MultiSelect
         values={selectedTags}
         onChange={updateTags}
         placeholder="Todas as tecnologias"
         options={tags.map((t) => ({ value: t, label: t }))}
-        className="w-56"
+        className="w-full sm:w-56"
       />
       <Select
         value={searchParams.get('semester') ?? ''}
         onChange={(v) => update('semester', v)}
         placeholder="Todos os semestres"
         options={semesters.map((s) => ({ value: String(s), label: `${s}º semestre` }))}
-        className="w-52"
+        className="w-full sm:w-52"
       />
       <SearchableSelect
         value={searchParams.get('aluno') ?? ''}
         onChange={(v) => update('aluno', v)}
         placeholder="Todos os alunos"
         options={students.map((s) => ({ value: s.id, label: s.name }))}
-        className="w-48"
+        className="w-full sm:w-48"
       />
       {hasFilters && (
         <button
           onClick={() => router.push(pathname)}
-          className="text-sm text-zinc-400 hover:text-zinc-700 transition px-1"
+          className="text-sm text-zinc-400 hover:text-zinc-700 transition px-1 text-left"
         >
           Limpar ×
         </button>
