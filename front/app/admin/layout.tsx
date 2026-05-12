@@ -26,6 +26,7 @@ const nav = [
   { href: '/admin/egressos', label: 'Egressos', icon: <IconGraduation /> },
   { href: '/admin/corpo-docente', label: 'Corpo Docente', icon: <IconPerson /> },
   { href: '/admin/forum', label: 'Fórum', icon: <IconChat /> },
+  { href: '/admin/mensagens', label: 'Mensagens', icon: <IconMail /> },
   { href: '/admin/niveis', label: 'Níveis', icon: <IconStar /> },
   { href: '/admin/permissoes', label: 'Permissões', icon: <IconShield /> },
 ]
@@ -36,6 +37,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [user, setUser] = useState<UserProfile | null>(null)
   const [ready, setReady] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [unreadMsgs, setUnreadMsgs] = useState(0)
 
   useEffect(() => {
     async function check() {
@@ -48,6 +50,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
     check()
   }, [router])
+
+  useEffect(() => {
+    if (!ready) return
+    const lastSeen = localStorage.getItem('admin_msgs_last_seen')
+    let q = supabase.from('contact_messages').select('id', { count: 'exact', head: true })
+    if (lastSeen) q = q.gt('created_at', lastSeen)
+    q.then(({ count }) => setUnreadMsgs(count ?? 0))
+
+    const channel = supabase
+      .channel('admin-msgs-badge')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'contact_messages' }, () => {
+        setUnreadMsgs((c) => c + 1)
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [ready])
+
+  useEffect(() => {
+    if (pathname === '/admin/mensagens') setUnreadMsgs(0)
+  }, [pathname])
 
   if (!ready) return <div className="min-h-screen bg-white" />
 
@@ -101,7 +123,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 }`}
               >
                 <span className="shrink-0">{item.icon}</span>
-                <span className="truncate">{item.label}</span>
+                <span className="truncate flex-1">{item.label}</span>
+                {item.href === '/admin/mensagens' && unreadMsgs > 0 && (
+                  <span className="shrink-0 min-w-4.5 rounded-full bg-red-500 px-1.5 py-0.5 text-center text-[10px] font-bold leading-none text-white">
+                    {unreadMsgs > 99 ? '99+' : unreadMsgs}
+                  </span>
+                )}
               </Link>
             )
           })}
@@ -272,6 +299,15 @@ function IconShield() {
   return (
     <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  )
+}
+
+function IconMail() {
+  return (
+    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+      <polyline points="22,6 12,13 2,6" />
     </svg>
   )
 }
