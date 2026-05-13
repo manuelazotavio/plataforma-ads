@@ -15,19 +15,23 @@ type Props = {
 
 export default function ProjectMediaMosaic({ items, title }: Props) {
   const [open, setOpen] = useState(false)
+  const [selectedIndex, setSelectedIndex] = useState(0)
   const visible = items.slice(0, 3)
   const hiddenCount = Math.max(items.length - 3, 0)
+  const selected = items[selectedIndex] ?? items[0]
 
   useEffect(() => {
     if (!open) return
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') setOpen(false)
+      if (event.key === 'ArrowLeft') setSelectedIndex((current) => (current - 1 + items.length) % items.length)
+      if (event.key === 'ArrowRight') setSelectedIndex((current) => (current + 1) % items.length)
     }
 
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [open])
+  }, [items.length, open])
 
   if (items.length === 0) return null
 
@@ -38,7 +42,10 @@ export default function ProjectMediaMosaic({ items, title }: Props) {
           {items.length === 1 ? (
             <button
               type="button"
-              onClick={() => setOpen(true)}
+              onClick={() => {
+                setSelectedIndex(0)
+                setOpen(true)
+              }}
               className="group relative h-full w-full overflow-hidden rounded-xl bg-zinc-100 text-left"
             >
               <MediaTile media={visible[0]} title={title} index={1} />
@@ -51,7 +58,10 @@ export default function ProjectMediaMosaic({ items, title }: Props) {
               <button
                 key={`${item.image_url}-${index}`}
                 type="button"
-                onClick={() => setOpen(true)}
+                onClick={() => {
+                  setSelectedIndex(index)
+                  setOpen(true)
+                }}
                 className="relative min-h-0 overflow-hidden rounded-xl bg-zinc-100 text-left"
               >
                 <MediaTile media={item} title={title} index={index + 1} />
@@ -61,7 +71,10 @@ export default function ProjectMediaMosaic({ items, title }: Props) {
             <>
               <button
                 type="button"
-                onClick={() => setOpen(true)}
+                onClick={() => {
+                  setSelectedIndex(0)
+                  setOpen(true)
+                }}
                 className="relative min-h-0 overflow-hidden rounded-xl bg-zinc-100 text-left"
               >
                 <MediaTile media={visible[0]} title={title} index={1} />
@@ -69,14 +82,20 @@ export default function ProjectMediaMosaic({ items, title }: Props) {
               <div className="grid min-h-0 gap-2">
                 <button
                   type="button"
-                  onClick={() => setOpen(true)}
+                  onClick={() => {
+                    setSelectedIndex(1)
+                    setOpen(true)
+                  }}
                   className="relative min-h-0 overflow-hidden rounded-xl bg-zinc-100 text-left"
                 >
                   <MediaTile media={visible[1]} title={title} index={2} />
                 </button>
                 <button
                   type="button"
-                  onClick={() => setOpen(true)}
+                  onClick={() => {
+                    setSelectedIndex(2)
+                    setOpen(true)
+                  }}
                   className="group relative min-h-0 overflow-hidden rounded-xl bg-zinc-100 text-left"
                 >
                   <MediaTile media={visible[2] ?? visible[1]} title={title} index={3} dimmed={hiddenCount > 0} />
@@ -101,7 +120,10 @@ export default function ProjectMediaMosaic({ items, title }: Props) {
         <div className="fixed inset-0 z-[80] flex flex-col bg-black/75 sm:items-center sm:justify-center sm:px-4 sm:py-6" role="dialog" aria-modal="true">
           <div className="flex w-full flex-col overflow-hidden bg-white sm:max-h-[88vh] sm:max-w-5xl sm:rounded-2xl sm:shadow-2xl" style={{ height: '100%' }}>
             <div className="flex shrink-0 items-center justify-between border-b border-zinc-100 px-4 py-3">
-              <p className="text-sm font-semibold text-zinc-900">Galeria do projeto</p>
+              <div>
+                <p className="text-sm font-semibold text-zinc-900">Galeria do projeto</p>
+                <p className="text-xs text-zinc-400">{selectedIndex + 1} de {items.length}</p>
+              </div>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
@@ -114,13 +136,54 @@ export default function ProjectMediaMosaic({ items, title }: Props) {
                 </svg>
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-3">
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {items.map((item, index) => (
-                  <div key={`${item.image_url}-${index}`} className="relative aspect-video overflow-hidden rounded-xl bg-zinc-100">
-                    <MediaTile media={item} title={title} index={index + 1} controls />
-                  </div>
-                ))}
+
+            <div className="flex min-h-0 flex-1 flex-col gap-3 p-3">
+              <div className="relative min-h-0 flex-1 overflow-hidden rounded-xl bg-black">
+                <MediaTile media={selected} title={title} index={selectedIndex + 1} controls contain />
+
+                {items.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedIndex((current) => (current - 1 + items.length) % items.length)}
+                      className="absolute left-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-black/55 text-white transition hover:bg-black/70"
+                      aria-label="Imagem anterior"
+                    >
+                      <ArrowLeftIcon />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedIndex((current) => (current + 1) % items.length)}
+                      className="absolute right-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-black/55 text-white transition hover:bg-black/70"
+                      aria-label="Próxima imagem"
+                    >
+                      <ArrowRightIcon />
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {items.length > 1 && (
+                <div className="gallery-thumbnails-scroll flex shrink-0 gap-2 overflow-x-auto pb-1">
+                  {items.map((item, index) => (
+                    <button
+                      key={`${item.image_url}-${index}`}
+                      type="button"
+                      onClick={() => setSelectedIndex(index)}
+                      className={`relative h-16 w-24 shrink-0 overflow-hidden rounded-lg border-2 bg-zinc-100 transition ${
+                        selectedIndex === index ? 'border-[#2F9E41]' : 'border-transparent hover:border-zinc-300'
+                      }`}
+                      aria-label={`Ver mídia ${index + 1}`}
+                    >
+                      <MediaTile media={item} title={title} index={index + 1} thumbnail />
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="shrink-0">
+                <p className="text-sm font-medium text-zinc-900">{title}</p>
+                <p className="text-xs text-zinc-400">Mídia {selectedIndex + 1}</p>
               </div>
             </div>
           </div>
@@ -130,16 +193,32 @@ export default function ProjectMediaMosaic({ items, title }: Props) {
   )
 }
 
-function MediaTile({ media, title, index, dimmed, controls }: { media: ProjectMedia; title: string; index: number; dimmed?: boolean; controls?: boolean }) {
+function MediaTile({
+  media,
+  title,
+  index,
+  dimmed,
+  controls,
+  contain,
+  thumbnail,
+}: {
+  media: ProjectMedia
+  title: string
+  index: number
+  dimmed?: boolean
+  controls?: boolean
+  contain?: boolean
+  thumbnail?: boolean
+}) {
   const isVideo = isVideoMedia(media)
 
   if (isVideo) {
     return (
       <video
         src={media.image_url}
-        className={`h-full w-full ${controls ? 'object-contain bg-black' : 'object-cover'} ${dimmed ? 'opacity-80' : ''}`}
+        className={`h-full w-full ${controls || contain ? 'object-contain bg-black' : 'object-cover'} ${dimmed ? 'opacity-80' : ''}`}
         controls={controls}
-        autoPlay
+        autoPlay={!thumbnail}
         muted={!controls}
         loop={!controls}
         playsInline
@@ -152,9 +231,25 @@ function MediaTile({ media, title, index, dimmed, controls }: { media: ProjectMe
       src={media.image_url}
       alt={`${title} imagem ${index}`}
       fill
-      className={`object-cover ${dimmed ? 'opacity-80' : ''}`}
+      className={`${contain ? 'object-contain' : 'object-cover'} ${dimmed ? 'opacity-80' : ''}`}
       sizes="(max-width: 768px) 100vw, 720px"
     />
+  )
+}
+
+function ArrowLeftIcon() {
+  return (
+    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+      <path d="m15 18-6-6 6-6" />
+    </svg>
+  )
+}
+
+function ArrowRightIcon() {
+  return (
+    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+      <path d="m9 18 6-6-6-6" />
+    </svg>
   )
 }
 

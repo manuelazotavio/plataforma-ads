@@ -107,9 +107,12 @@ type Props = {
   type: 'project' | 'article'
   targetId: string
   initialCount: number
+  label?: string
+  variant?: 'default' | 'action'
+  className?: string
 }
 
-export default function LikeButton({ type, targetId, initialCount }: Props) {
+export default function LikeButton({ type, targetId, initialCount, label, variant = 'default', className = '' }: Props) {
   const table = type === 'project' ? 'project_likes' : 'article_likes'
   const field = type === 'project' ? 'project_id' : 'article_id'
 
@@ -180,7 +183,7 @@ export default function LikeButton({ type, targetId, initialCount }: Props) {
   }
 
   return (
-    <div ref={ref} className="relative inline-flex">
+    <div ref={ref} className={`relative inline-flex ${variant === 'action' ? 'w-full sm:w-auto' : ''}`}>
       {open && userId && (
         <div className="absolute bottom-full left-1/2 mb-2 z-50 -translate-x-1/2">
           <ReactionPicker myReaction={myReaction} onReact={react} />
@@ -191,7 +194,9 @@ export default function LikeButton({ type, targetId, initialCount }: Props) {
         onClick={() => userId ? setOpen(o => !o) : undefined}
         disabled={loading}
         title={!userId ? 'Faça login para reagir' : 'Reagir'}
-        className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium border transition select-none disabled:opacity-60 ${
+        className={`flex items-center gap-2 rounded-full border font-medium transition select-none disabled:opacity-60 ${
+          variant === 'action' ? 'px-4 py-2 text-base' : 'px-3 py-1.5 text-sm'
+        } ${className} ${
           myReaction
             ? `border-zinc-200 bg-zinc-50 ${reactionData?.color}`
             : userId
@@ -199,6 +204,7 @@ export default function LikeButton({ type, targetId, initialCount }: Props) {
             : 'text-zinc-300 border-zinc-100 cursor-default'
         }`}
       >
+        {label && <span className="font-semibold text-zinc-900">{label}</span>}
         {topTypes.length > 0 ? (
           <span className="flex -space-x-1">
             {topTypes.map(t => <ReactionIcon key={t} type={t} size={17} />)}

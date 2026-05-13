@@ -32,7 +32,7 @@ export default function EditarArtigoPage() {
 
   const [loading, setLoading] = useState(true)
   const [uploadingCover, setUploadingCover] = useState(false)
-  const [savingAs, setSavingAs] = useState<'rascunho' | 'publicado' | null>(null)
+  const [savingAs, setSavingAs] = useState<'rascunho' | 'pendente' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -102,7 +102,7 @@ export default function EditarArtigoPage() {
     setTags((prev) => prev.filter((t) => t !== tag))
   }
 
-  async function save(newStatus: 'rascunho' | 'publicado') {
+  async function save(newStatus: 'rascunho' | 'pendente') {
     setSubmitted(true)
     if (!title.trim() || !slug.trim() || !summary.trim() || !content.trim()) return
 
@@ -117,11 +117,9 @@ export default function EditarArtigoPage() {
         summary,
         content,
         cover_image_url: coverUrl || null,
-        status: status === 'rejeitado' && newStatus === 'publicado' ? 'pendente' : newStatus,
+        status: newStatus,
         rejection_message: null,
-        published_at: newStatus === 'publicado' && status !== 'publicado'
-          ? new Date().toISOString()
-          : undefined,
+        published_at: newStatus === 'pendente' ? null : undefined,
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)
@@ -303,10 +301,10 @@ export default function EditarArtigoPage() {
               <button
                 type="button"
                 disabled={!!savingAs || uploadingCover}
-                onClick={() => save('publicado')}
+                onClick={() => save('pendente')}
                 className="rounded-lg bg-[#2F9E41] px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 transition"
               >
-                {savingAs === 'publicado' ? 'Publicando...' : 'Publicar'}
+                {savingAs === 'pendente' ? 'Enviando...' : 'Enviar para revisão'}
               </button>
             </div>
           </div>

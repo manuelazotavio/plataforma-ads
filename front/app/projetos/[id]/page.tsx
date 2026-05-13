@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { supabase } from '@/app/lib/supabase'
 import LikeButton from '@/app/components/LikeButton'
 import ProjectMediaMosaic from '@/app/components/ProjectMediaMosaic'
+import ShareProjectButton from '@/app/components/ShareProjectButton'
 
 export const dynamic = 'force-dynamic'
 import Comments from '@/app/components/Comments'
@@ -44,12 +45,12 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
         </div>
       )}
 
-      <div className="border-b border-zinc-100 px-4 md:px-8 py-4 md:py-5">
-        <div className="w-full">
-          <Link href="/projetos" className="inline-flex items-center gap-1.5 text-sm text-zinc-400 hover:text-zinc-700 transition mb-4">
-            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-            Todos os projetos
-          </Link>
+      <div className="border-b border-zinc-100 px-6 py-5 sm:px-8 lg:px-12 xl:px-16">
+        <Link href="/projetos" className="mb-5 inline-flex items-center gap-1.5 text-sm text-zinc-400 transition hover:text-zinc-700">
+          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+          Todos os projetos
+        </Link>
+        <div className="mx-auto w-full max-w-6xl">
           <div className="flex items-start justify-between gap-4">
             <div>
               {project.is_featured && (
@@ -59,38 +60,56 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
                 </span>
               )}
               <h1 className="text-2xl font-bold text-zinc-900">{project.title}</h1>
-              {project.semester && (
-                <p className="text-sm text-zinc-400 mt-1">{project.semester}º semestre</p>
-              )}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="w-full px-4 md:px-6 py-6 md:py-8 flex flex-col lg:flex-row gap-8 lg:gap-12 lg:items-start">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-8 sm:px-8 lg:px-12 xl:px-16">
 
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0">
 
           {project.description && (
             <div className="mb-8">
-              <h2 className="text-base font-semibold text-zinc-900 mb-3">Sobre o projeto</h2>
-              <p className="text-sm text-zinc-600 leading-relaxed whitespace-pre-wrap">{project.description}</p>
+              <h2 className="mb-4 text-xl font-semibold text-zinc-900">Sobre o projeto</h2>
+              <p className="whitespace-pre-wrap text-base leading-8 text-zinc-600">{project.description}</p>
+            </div>
+          )}
+
+          {images.length === 1 && (
+            <div className="mb-8">
+              <h2 className="mb-4 text-xl font-semibold text-zinc-900">Galeria</h2>
+              <ProjectMediaMosaic items={images} title={project.title} />
             </div>
           )}
 
           {images.length > 2 && (
             <div className="mb-8">
-              <h2 className="text-base font-semibold text-zinc-900 mb-3">Galeria</h2>
+              <h2 className="mb-4 text-xl font-semibold text-zinc-900">Galeria</h2>
               <ProjectMediaMosaic items={images} title={project.title} />
             </div>
           )}
 
           {images.length <= 2 && gallery.length > 0 && (
             <div className="mb-8">
-              <h2 className="text-base font-semibold text-zinc-900 mb-3">Galeria</h2>
+              <h2 className="mb-4 text-xl font-semibold text-zinc-900">Galeria</h2>
               <ProjectMediaMosaic items={gallery} title={project.title} />
             </div>
           )}
+
+          <div className="mb-6 flex flex-col gap-3 border-t border-zinc-100 pt-8 sm:flex-row sm:flex-wrap sm:items-center sm:gap-8">
+            <div className="flex w-full sm:w-auto">
+              <LikeButton
+                type="project"
+                targetId={project.id}
+                initialCount={project.like_count}
+                label="Curtir projeto"
+                variant="action"
+                className="w-full justify-center sm:w-auto"
+              />
+            </div>
+            <ShareProjectButton title={project.title} className="w-full justify-center sm:w-auto" />
+          </div>
 
           <div className="border-t border-zinc-100 pt-8">
             <Comments type="project" targetId={project.id} />
@@ -98,15 +117,10 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
 
         </div>
 
-        <aside className="w-full lg:w-60 lg:shrink-0 flex flex-col gap-5 lg:sticky lg:top-4">
-
-          <div className="flex flex-col items-center gap-2 py-5 border border-zinc-200 rounded-2xl">
-            <LikeButton type="project" targetId={project.id} initialCount={project.like_count} />
-            <span className="text-xs text-zinc-400">Curtir projeto</span>
-          </div>
+        <section className="grid gap-5 border-t border-zinc-100 pt-8 md:grid-cols-2 xl:grid-cols-4">
 
           {(project.repo_url || project.deploy_url) && (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 rounded-2xl border border-zinc-200 p-4">
               {project.repo_url && (
                 <a href={project.repo_url} target="_blank" rel="noopener noreferrer"
                   className="flex items-center gap-2 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition">
@@ -127,7 +141,7 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
           )}
 
           {author && (
-            <div className="flex flex-col gap-3 pt-1">
+            <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200 p-4">
               <p className="text-sm font-semibold text-zinc-700">Autor</p>
               <Link href={`/usuarios/${author.id}`} className="flex items-center gap-3 hover:opacity-80 transition">
                 {author.avatar_url ? (
@@ -142,22 +156,22 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
             </div>
           )}
 
-          <div className="flex flex-col gap-2.5 pt-1">
+          <div className="flex flex-col gap-2.5 rounded-2xl border border-zinc-200 p-4">
             <p className="text-sm font-semibold text-zinc-700">Detalhes</p>
             {project.semester && (
               <div className="flex items-center gap-2.5">
                 <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 shrink-0"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-                <span className="text-sm text-zinc-500">{project.semester}º semestre</span>
+                <span className="text-sm text-zinc-500">Desenvolvido no {project.semester}º semestre</span>
               </div>
             )}
             <div className="flex items-center gap-2.5">
               <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 shrink-0"><rect x={3} y={4} width={18} height={18} rx={2} ry={2}/><line x1={16} y1={2} x2={16} y2={6}/><line x1={8} y1={2} x2={8} y2={6}/><line x1={3} y1={10} x2={21} y2={10}/></svg>
-              <span className="text-sm text-zinc-500">{createdAt}</span>
+              <span className="text-sm text-zinc-500">Publicado em {createdAt}</span>
             </div>
           </div>
 
           {tags.length > 0 && (
-            <div className="flex flex-col gap-2.5 pt-1">
+            <div className="flex flex-col gap-2.5 rounded-2xl border border-zinc-200 p-4">
               <p className="text-sm font-semibold text-zinc-700">Tecnologias</p>
               <div className="flex flex-wrap gap-1.5">
                 {tags.map(({ tag_name }) => (
@@ -169,7 +183,7 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
             </div>
           )}
 
-        </aside>
+        </section>
       </div>
     </div>
   )

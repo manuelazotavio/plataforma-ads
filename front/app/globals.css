@@ -227,3 +227,14 @@ input[type="checkbox"] {
   height: 0 !important;
   background: transparent !important;
 }
+
+.gallery-thumbnails-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.gallery-thumbnails-scroll::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}

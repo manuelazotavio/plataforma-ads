@@ -45,9 +45,9 @@ function Avatar({ user }: { user: Comment['users'] }) {
 }
 
 function UserName({ user }: { user: Comment['users'] }) {
-  if (!user?.id) return <span className="text-xs font-semibold text-zinc-800">{user?.name}</span>
+  if (!user?.id) return <span className="text-sm font-semibold text-zinc-800">{user?.name}</span>
   return (
-    <Link href={`/usuarios/${user.id}`} className="text-xs font-semibold text-zinc-800 hover:text-[#2F9E41] transition">
+    <Link href={`/usuarios/${user.id}`} className="text-sm font-semibold text-zinc-800 hover:text-[#2F9E41] transition">
       {user.name}
     </Link>
   )
@@ -254,7 +254,7 @@ export default function Comments({ type, targetId }: Props) {
 
   return (
     <div className="mt-10 pt-8 border-t border-zinc-100">
-      <h2 className="text-sm font-semibold text-zinc-900 mb-6">
+      <h2 className="mb-6 text-xl font-semibold text-zinc-900">
         {totalCount > 0 ? `${totalCount} comentário${totalCount !== 1 ? 's' : ''}` : 'Comentários'}
       </h2>
 
@@ -267,15 +267,15 @@ export default function Comments({ type, targetId }: Props) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline gap-2 mb-1">
                     <UserName user={comment.users} />
-                    <span className="text-xs text-zinc-400">{formatDate(comment.created_at)}</span>
+                    <span className="text-sm text-zinc-400">{formatDate(comment.created_at)}</span>
                   </div>
-                  <p className="text-sm text-zinc-700 whitespace-pre-wrap leading-relaxed">{comment.content}</p>
+                  <p className="whitespace-pre-wrap text-base leading-7 text-zinc-700">{comment.content}</p>
                   <div className="flex items-center gap-3 mt-2">
                     <CommentReactionBar commentId={comment.id} userId={userId} reactions={reactions} onReact={handleReact} />
                     {userId && (
                       <button
                         onClick={() => setReplyingTo(replyingTo?.id === comment.id ? null : { id: comment.id, name: comment.users?.name ?? '' })}
-                        className="text-xs text-zinc-400 hover:text-zinc-700 transition"
+                        className="text-sm text-zinc-400 hover:text-zinc-700 transition"
                       >
                         Responder
                       </button>
@@ -284,7 +284,7 @@ export default function Comments({ type, targetId }: Props) {
                       <button
                         onClick={() => handleDelete(comment.id, null)}
                         disabled={deletingId === comment.id}
-                        className="text-xs text-zinc-300 hover:text-red-400 transition disabled:opacity-50"
+                        className="text-sm text-zinc-300 hover:text-red-400 transition disabled:opacity-50"
                       >
                         {deletingId === comment.id ? 'Excluindo...' : 'Excluir'}
                       </button>
@@ -301,16 +301,16 @@ export default function Comments({ type, targetId }: Props) {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-baseline gap-2 mb-1">
                           <UserName user={reply.users} />
-                          <span className="text-xs text-zinc-400">{formatDate(reply.created_at)}</span>
+                          <span className="text-sm text-zinc-400">{formatDate(reply.created_at)}</span>
                         </div>
-                        <p className="text-sm text-zinc-700 whitespace-pre-wrap leading-relaxed">{reply.content}</p>
+                        <p className="whitespace-pre-wrap text-base leading-7 text-zinc-700">{reply.content}</p>
                         <div className="flex items-center gap-3 mt-2">
                           <CommentReactionBar commentId={reply.id} userId={userId} reactions={reactions} onReact={handleReact} />
                           {userId === reply.users?.id && (
                             <button
                               onClick={() => handleDelete(reply.id, comment.id)}
                               disabled={deletingId === reply.id}
-                              className="text-xs text-zinc-300 hover:text-red-400 transition disabled:opacity-50"
+                              className="text-sm text-zinc-300 hover:text-red-400 transition disabled:opacity-50"
                             >
                               {deletingId === reply.id ? 'Excluindo...' : 'Excluir'}
                             </button>
@@ -331,13 +331,13 @@ export default function Comments({ type, targetId }: Props) {
                           onChange={(e) => setReplyText(e.target.value)}
                           onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleReply(e) }}
                           placeholder={`Responder ${replyingTo.name}...`}
-                          className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-400 transition resize-none"
+                          className="w-full resize-none rounded-xl border border-zinc-200 px-3 py-2 text-base text-zinc-900 outline-none transition focus:border-zinc-400"
                         />
                         <div className="flex gap-2 justify-end">
-                          <button type="button" onClick={() => { setReplyingTo(null); setReplyText('') }} className="px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-800 transition">
+                          <button type="button" onClick={() => { setReplyingTo(null); setReplyText('') }} className="px-3 py-1.5 text-sm text-zinc-500 transition hover:text-zinc-800">
                             Cancelar
                           </button>
-                          <button type="submit" disabled={replySubmitting || !replyText.trim()} className="rounded-lg bg-[#2F9E41] px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50 transition">
+                          <button type="submit" disabled={replySubmitting || !replyText.trim()} className="rounded-lg bg-[#2F9E41] px-3 py-1.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50">
                             {replySubmitting ? 'Enviando...' : 'Responder'}
                           </button>
                         </div>
@@ -360,16 +360,16 @@ export default function Comments({ type, targetId }: Props) {
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleSubmit(e) }}
             placeholder="Escreva um comentário..."
-            className="w-full rounded-xl border border-zinc-200 px-4 py-3 text-sm text-zinc-900 outline-none focus:border-zinc-400 focus:ring-2 focus:ring-zinc-100 transition resize-none"
+            className="w-full resize-none rounded-xl border border-zinc-200 px-4 py-3 text-base text-zinc-900 outline-none transition focus:border-zinc-400 focus:ring-2 focus:ring-zinc-100"
           />
           <div className="flex justify-end">
-            <button type="submit" disabled={submitting || !text.trim()} className="rounded-lg bg-[#2F9E41] px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 transition">
+            <button type="submit" disabled={submitting || !text.trim()} className="rounded-lg bg-[#2F9E41] px-4 py-2 text-base font-medium text-white transition hover:opacity-90 disabled:opacity-50">
               {submitting ? 'Enviando...' : 'Comentar'}
             </button>
           </div>
         </form>
       ) : (
-        <p className="text-sm text-zinc-400">
+        <p className="text-base text-zinc-400">
           <a href="/login" className="text-zinc-600 underline hover:text-zinc-900 transition">Faça login</a> para comentar.
         </p>
       )}

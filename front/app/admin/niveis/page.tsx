@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/app/lib/supabase'
 
-type Level = { id: number; name: string; min_xp: number }
+type Level = { id: number; name: string; min_xp: number; description: string | null }
 
 const XP_TABLE = [
   { label: 'Projeto criado',         xp: 50 },
@@ -13,7 +13,7 @@ const XP_TABLE = [
   { label: 'Like/reação recebida',   xp: 5  },
 ]
 
-const emptyForm = { name: '', min_xp: '' }
+const emptyForm = { name: '', min_xp: '', description: '' }
 
 export default function NiveisPage() {
   const [levels, setLevels] = useState<Level[]>([])
@@ -25,7 +25,7 @@ export default function NiveisPage() {
   const [showForm, setShowForm] = useState(false)
 
   async function load() {
-    const { data } = await supabase.from('levels').select('id, name, min_xp').order('min_xp', { ascending: true })
+    const { data } = await supabase.from('levels').select('id, name, min_xp, description').order('min_xp', { ascending: true })
     setLevels(data ?? [])
     setLoading(false)
   }
@@ -41,7 +41,7 @@ export default function NiveisPage() {
 
   function openEdit(level: Level) {
     setEditId(level.id)
-    setForm({ name: level.name, min_xp: String(level.min_xp) })
+    setForm({ name: level.name, min_xp: String(level.min_xp), description: level.description ?? '' })
     setSubmitted(false)
     setShowForm(true)
   }
@@ -58,7 +58,11 @@ export default function NiveisPage() {
     if (!form.name.trim() || form.min_xp === '') return
     setSaving(true)
 
-    const payload = { name: form.name.trim(), min_xp: parseInt(form.min_xp) }
+    const payload = {
+      name: form.name.trim(),
+      min_xp: parseInt(form.min_xp),
+      description: form.description.trim() || null,
+    }
 
     if (editId !== null) {
       await supabase.from('levels').update(payload).eq('id', editId)
@@ -126,6 +130,18 @@ export default function NiveisPage() {
                 placeholder="Ex: 100"
               />
             </div>
+            <div className="flex flex-col gap-1 sm:col-span-2">
+              <label className="text-xs font-medium text-zinc-600">
+                Descrição do nível
+              </label>
+              <textarea
+                rows={3}
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                className={input + ' resize-none'}
+                placeholder="Explique o que esse nível representa para o usuário..."
+              />
+            </div>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <button
@@ -147,11 +163,12 @@ export default function NiveisPage() {
         {levels.length === 0 ? (
           <p className="text-sm text-zinc-400 px-5 py-8 text-center">Nenhum nível cadastrado.</p>
         ) : (
-          <table className="min-w-[640px] w-full text-sm">
+          <table className="min-w-[760px] w-full text-sm">
             <thead>
               <tr className="border-b border-zinc-100">
                 <th className="text-left px-5 py-3 text-xs font-semibold text-zinc-500 w-10">#</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-zinc-500">Nome</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-zinc-500">Descrição</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-zinc-500">XP mínimo</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-zinc-500">XP máximo</th>
                 <th className="px-5 py-3" />
@@ -165,6 +182,9 @@ export default function NiveisPage() {
                     <td className="px-5 py-3.5 text-xs text-zinc-400 font-medium">{i + 1}</td>
                     <td className="px-5 py-3.5">
                       <span className="font-semibold text-zinc-900">{level.name}</span>
+                    </td>
+                    <td className="max-w-sm px-5 py-3.5 text-xs leading-relaxed text-zinc-500">
+                      {level.description || 'Sem descrição'}
                     </td>
                     <td className="px-5 py-3.5 text-zinc-600">{level.min_xp} XP</td>
                     <td className="px-5 py-3.5 text-zinc-400 text-xs">

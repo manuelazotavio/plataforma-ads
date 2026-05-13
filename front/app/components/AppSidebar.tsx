@@ -26,6 +26,8 @@ const sidebarItems: SidebarItem[] = [
     ],
   },
   { href: '/projetos', label: 'Projetos', icon: <IconGrid /> },
+  { href: '/forum', label: 'Fórum', icon: <IconMessage /> },
+  { href: '/artigos', label: 'Artigos', icon: <IconBook /> },
   { href: '/eventos', label: 'Eventos', icon: <IconCalendar /> },
   { href: '/calendario', label: 'Calendário', icon: <IconCalendarGrid /> },
   { href: '/vagas', label: 'Oportunidades', icon: <IconBriefcase /> },
@@ -83,7 +85,7 @@ export default function AppSidebar({ open = true, onClose }: AppSidebarProps) {
           const active = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href + '/'))
           const hasChildren = Boolean(item.children?.length)
           const expanded = hasChildren && (openItems[item.href] ?? active)
-          const dividerBefore = i === 6
+          const dividerBefore = item.href === '/egressos'
 
           function handleToggle() {
             const opening = !expanded

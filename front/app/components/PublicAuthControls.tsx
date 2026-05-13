@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 
-type Level = { id: number; name: string; min_xp: number }
+type Level = { id: number; name: string; min_xp: number; description: string | null }
 
 type PublicHomeData = {
   id: string
@@ -23,6 +23,7 @@ type PublicHomeData = {
   xp: number
   level: Level | null
   nextLevel: Level | null
+  levels: Level[]
   levelProgress: number
 }
 
@@ -173,6 +174,7 @@ export function PublicWelcomeCard() {
 export function PublicProfileCard() {
   const [data, setData] = useState<PublicHomeData | null>(null)
   const [loaded, setLoaded] = useState(false)
+  const [levelsOpen, setLevelsOpen] = useState(false)
 
   useEffect(() => {
     loadHomeData().then((value) => {
@@ -190,7 +192,7 @@ export function PublicProfileCard() {
       <div className="rounded-2xl border border-zinc-200 bg-white p-5">
         <h3 className="mb-4 text-base font-semibold text-zinc-900">Seu Perfil</h3>
         <div className="mb-5 flex items-center gap-4">
-          <ProgressRing value={30} />
+          <ProgressRing value={0} />
           <div>
             <p className="text-sm font-semibold text-zinc-900">Visitante</p>
             <p className="mt-0.5 text-xs text-zinc-400">Entre para publicar e comentar</p>
@@ -211,6 +213,9 @@ export function PublicProfileCard() {
         <ProgressRing value={data.levelProgress} />
         <div>
           <p className="text-sm font-semibold text-zinc-900">{data.level ? data.level.name : 'Sem nível'}</p>
+          {data.level?.description && (
+            <p className="mt-0.5 text-xs leading-snug text-zinc-500">{data.level.description}</p>
+          )}
           <p className="mt-0.5 text-xs text-zinc-400">
             {data.nextLevel
               ? `${Math.max(0, data.nextLevel.min_xp - data.xp)} XP para ${data.nextLevel.name}`
@@ -223,7 +228,21 @@ export function PublicProfileCard() {
         <Metric label="Projetos criados" value={data.projectsCount} />
         <Metric label="Artigos publicados" value={data.articlesCount} />
         <Metric label="Tópicos no fórum" value={data.topicsCount} />
+        <button
+          type="button"
+          onClick={() => setLevelsOpen(true)}
+          className="mt-1 rounded-lg border border-zinc-200 px-3 py-2 text-center text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50"
+        >
+          Ver detalhes dos níveis
+        </button>
       </div>
+      {levelsOpen && (
+        <LevelsModal
+          levels={data.levels}
+          currentLevelId={data.level?.id ?? null}
+          onClose={() => setLevelsOpen(false)}
+        />
+      )}
     </div>
   )
 }
@@ -251,7 +270,7 @@ async function loadHomeData(): Promise<PublicHomeData | null> {
     supabase.from('article_comments').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
     supabase.from('projects').select('like_count').eq('user_id', user.id),
     supabase.from('articles').select('like_count').eq('user_id', user.id),
-    supabase.from('levels').select('id, name, min_xp').order('min_xp', { ascending: true }),
+    supabase.from('levels').select('id, name, min_xp, description').order('min_xp', { ascending: true }),
   ])
 
   if (!profile) return null
@@ -291,6 +310,7 @@ async function loadHomeData(): Promise<PublicHomeData | null> {
     xp,
     level,
     nextLevel,
+    levels,
     levelProgress,
   }
 }
@@ -301,6 +321,97 @@ function profileLabel(profile: Pick<PublicHomeData, 'role' | 'semester'>) {
   if (profile.role === 'egresso') return 'Egresso'
   if (profile.semester) return `${profile.semester}º Semestre`
   return 'Aluno'
+}
+
+function LevelsModal({
+  levels,
+  currentLevelId,
+  onClose,
+}: {
+  levels: Level[]
+  currentLevelId: number | null
+  onClose: () => void
+}) {
+  useEffect(() => {
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') onClose()
+    }
+
+    document.addEventListener('keydown', closeOnEscape)
+    return () => document.removeEventListener('keydown', closeOnEscape)
+  }, [onClose])
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="levels-modal-title"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-white p-5 shadow-xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="mb-4 flex items-start justify-between gap-4">
+          <div>
+            <h3 id="levels-modal-title" className="text-base font-semibold text-zinc-900">
+              Niveis de XP
+            </h3>
+            <p className="mt-0.5 text-xs text-zinc-400">Veja o que cada nivel representa.</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Fechar"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700"
+          >
+            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="flex max-h-[65vh] flex-col gap-2 overflow-y-auto pr-1">
+          {levels.length > 0 ? (
+            levels.map((level, index) => {
+              const nextLevel = levels[index + 1]
+              const range = nextLevel ? `${level.min_xp}-${nextLevel.min_xp - 1} XP` : `${level.min_xp}+ XP`
+              const isCurrent = currentLevelId === level.id
+
+              return (
+                <div
+                  key={level.id}
+                  className={
+                    'rounded-xl border px-3 py-3 ' +
+                    (isCurrent ? 'border-[#2F9E41] bg-green-50' : 'border-zinc-100 bg-white')
+                  }
+                >
+                  <div className="mb-1 flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-zinc-900">{level.name}</p>
+                    <span className="shrink-0 rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-semibold text-zinc-600">
+                      {range}
+                    </span>
+                  </div>
+                  <p className="text-xs leading-relaxed text-zinc-500">
+                    {level.description ?? 'Descricao ainda nao cadastrada para este nivel.'}
+                  </p>
+                  {isCurrent && (
+                    <p className="mt-2 text-[11px] font-semibold text-[#2F9E41]">Seu nivel atual</p>
+                  )}
+                </div>
+              )
+            })
+          ) : (
+            <div className="rounded-xl border border-zinc-100 px-3 py-4 text-sm text-zinc-500">
+              Nenhum nivel cadastrado ainda.
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function ProgressRing({ value }: { value: number }) {

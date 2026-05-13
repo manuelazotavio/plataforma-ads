@@ -48,7 +48,7 @@ export default function AdminArtigosPage() {
 
   async function publish(id: string) {
     setUpdatingId(id)
-    await supabase.from('articles').update({ status: 'publicado', rejection_message: null }).eq('id', id)
+    await supabase.from('articles').update({ status: 'publicado', rejection_message: null, published_at: new Date().toISOString() }).eq('id', id)
     setArticles((prev) => prev.map((a) => a.id === id ? { ...a, status: 'publicado', rejection_message: null } : a))
     setUpdatingId(null)
   }
