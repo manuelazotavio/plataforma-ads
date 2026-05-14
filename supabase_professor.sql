@@ -75,3 +75,41 @@ CREATE POLICY "Admins can update professor avatars"
       AND users.role = 'admin'
     )
   );
+
+DROP POLICY IF EXISTS "Admins can upload egresso avatars" ON storage.objects;
+CREATE POLICY "Admins can upload egresso avatars"
+  ON storage.objects FOR INSERT
+  WITH CHECK (
+    bucket_id = 'avatars'
+    AND (storage.foldername(name))[1] = 'egressos'
+    AND EXISTS (
+      SELECT 1
+      FROM public.users
+      WHERE users.id = auth.uid()
+      AND users.role = 'admin'
+    )
+  );
+
+DROP POLICY IF EXISTS "Admins can update egresso avatars" ON storage.objects;
+CREATE POLICY "Admins can update egresso avatars"
+  ON storage.objects FOR UPDATE
+  USING (
+    bucket_id = 'avatars'
+    AND (storage.foldername(name))[1] = 'egressos'
+    AND EXISTS (
+      SELECT 1
+      FROM public.users
+      WHERE users.id = auth.uid()
+      AND users.role = 'admin'
+    )
+  )
+  WITH CHECK (
+    bucket_id = 'avatars'
+    AND (storage.foldername(name))[1] = 'egressos'
+    AND EXISTS (
+      SELECT 1
+      FROM public.users
+      WHERE users.id = auth.uid()
+      AND users.role = 'admin'
+    )
+  );

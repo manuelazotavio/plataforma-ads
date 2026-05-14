@@ -43,11 +43,15 @@ export default function AdminEgressosPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   async function load() {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('egressos')
       .select('*')
       .order('display_order', { ascending: true })
-    setEgressos((data as Egresso[]) ?? [])
+    if (error) {
+      setError('Erro ao carregar egressos: ' + error.message)
+    } else {
+      setEgressos((data as Egresso[]) ?? [])
+    }
     setLoading(false)
   }
 
@@ -137,14 +141,25 @@ export default function AdminEgressosPage() {
   }
 
   async function toggleActive(id: string, value: boolean) {
-    await supabase.from('egressos').update({ is_active: value }).eq('id', id)
+    setError(null)
+    const { error } = await supabase.from('egressos').update({ is_active: value }).eq('id', id)
+    if (error) {
+      setError('Erro ao atualizar egresso: ' + error.message)
+      return
+    }
     setEgressos((prev) => prev.map((e) => e.id === id ? { ...e, is_active: value } : e))
   }
 
   async function deleteEgresso(id: string) {
     if (!confirm('Remover este egresso?')) return
     setDeletingId(id)
-    await supabase.from('egressos').delete().eq('id', id)
+    setError(null)
+    const { error } = await supabase.from('egressos').delete().eq('id', id)
+    if (error) {
+      setError('Erro ao remover egresso: ' + error.message)
+      setDeletingId(null)
+      return
+    }
     setEgressos((prev) => prev.filter((e) => e.id !== id))
     setDeletingId(null)
   }
@@ -273,6 +288,10 @@ export default function AdminEgressosPage() {
       )}
 
       
+      {error && !showForm && (
+        <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+      )}
+
       {egressos.length === 0 ? (
         <div className="text-center py-16 text-zinc-400">Nenhum egresso cadastrado.</div>
       ) : (

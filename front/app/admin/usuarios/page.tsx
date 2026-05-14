@@ -29,18 +29,23 @@ export default function AdminUsuariosPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
       const user = await getAuthUser()
       if (user) setCurrentUserId(user.id)
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('users')
         .select('id, name, email, role, avatar_url, created_at, suspended')
         .order('created_at', { ascending: false })
 
-      setUsers(data ?? [])
+      if (error) {
+        setError('Erro ao carregar usuários: ' + error.message)
+      } else {
+        setUsers(data ?? [])
+      }
       setLoading(false)
     }
     load()
@@ -48,21 +53,43 @@ export default function AdminUsuariosPage() {
 
   async function changeRole(userId: string, role: string) {
     setUpdatingId(userId)
-    await supabase.from('users').update({ role }).eq('id', userId)
+    setError(null)
+    const { error } = await supabase.from('users').update({ role }).eq('id', userId)
+    if (error) {
+      setError('Erro ao alterar papel: ' + error.message)
+      setUpdatingId(null)
+      return
+    }
     setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, role } : u))
     setUpdatingId(null)
   }
 
   async function toggleSuspend(userId: string, suspended: boolean) {
     setUpdatingId(userId)
-    await supabase.from('users').update({ suspended }).eq('id', userId)
+    setError(null)
+    const { error } = await supabase.from('users').update({ suspended }).eq('id', userId)
+    if (error) {
+      setError('Erro ao atualizar usuário: ' + error.message)
+      setUpdatingId(null)
+      return
+    }
     setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, suspended } : u))
     setUpdatingId(null)
   }
 
   async function deleteUser(userId: string) {
     setUpdatingId(userId)
-    await supabase.from('users').delete().eq('id', userId)
+    setError(null)
+    const { data, error } = await supabase.functions.invoke('delete-user', {
+      body: { user_id: userId },
+    })
+
+    if (error || data?.error) {
+      setError('Erro ao excluir usuário: ' + (data?.error ?? error?.message ?? 'Erro desconhecido'))
+      setUpdatingId(null)
+      return
+    }
+
     setUsers((prev) => prev.filter((u) => u.id !== userId))
     setConfirmDelete(null)
     setUpdatingId(null)
@@ -86,6 +113,10 @@ export default function AdminUsuariosPage() {
           </p>
         </div>
       </div>
+
+      {error && (
+        <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+      )}
 
       <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white">
         <table className="min-w-[760px] w-full text-sm">
