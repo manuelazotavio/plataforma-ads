@@ -54,6 +54,7 @@ export default function AdminCorpoDocentePage() {
 
   
   const [uploadingId, setUploadingId] = useState<string | null>(null)
+  const [avatarError, setAvatarError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const targetProfId = useRef<string | null>(null)
 
@@ -174,13 +175,23 @@ export default function AdminCorpoDocentePage() {
     if (!file || !profId) return
 
     setUploadingId(profId)
+    setAvatarError(null)
     const ext = file.name.split('.').pop()
     const path = `professors/${profId}.${ext}`
 
     const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true })
-    if (!error) {
-      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
-      await supabase.from('professors').update({ avatar_url: publicUrl }).eq('id', profId)
+    if (error) {
+      setAvatarError(`Erro ao enviar foto: ${error.message}`)
+      setUploadingId(null)
+      e.target.value = ''
+      return
+    }
+
+    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
+    const { error: updateError } = await supabase.from('professors').update({ avatar_url: publicUrl }).eq('id', profId)
+    if (updateError) {
+      setAvatarError(`Foto enviada, mas não foi possível salvar no professor: ${updateError.message}`)
+    } else {
       setProfessors((prev) => prev.map((p) => p.id === profId ? { ...p, avatar_url: publicUrl } : p))
     }
 
@@ -241,6 +252,12 @@ export default function AdminCorpoDocentePage() {
         </div>
 
        
+        {avatarError && (
+          <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {avatarError}
+          </p>
+        )}
+
         {showForm && (
           <div className="bg-white rounded-2xl border border-zinc-200 p-5 mb-6">
             <h2 className="text-sm font-semibold text-zinc-900 mb-4">Novo professor</h2>

@@ -8,6 +8,8 @@ import {
   DEFAULT_CURRICULUM,
   CurriculumSubject,
   curriculumTableSql,
+  formatWorkloadHours,
+  parseWorkloadHours,
 } from '@/app/lib/curriculum'
 
 type FormState = {
@@ -78,11 +80,9 @@ export default function AdminMatrizCurricularPage() {
     const name = form.name.trim()
     if (!name) return
 
-    const workload = form.workload_hours.trim()
-      ? Number(form.workload_hours)
-      : null
+    const workload = parseWorkloadHours(form.workload_hours)
 
-    if (workload !== null && (!Number.isFinite(workload) || workload < 1)) {
+    if (workload !== null && (!Number.isFinite(workload) || workload <= 0)) {
       setError('Informe uma carga horária válida ou deixe o campo em branco.')
       return
     }
@@ -298,12 +298,12 @@ export default function AdminMatrizCurricularPage() {
         <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500">
           Carga horária
           <input
-            type="number"
-            min={1}
+            type="text"
+            inputMode="decimal"
             value={form.workload_hours}
             onChange={(e) => setForm((prev) => ({ ...prev, workload_hours: e.target.value }))}
             className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
-            placeholder="Opcional"
+            placeholder="Ex: 33,5"
           />
         </label>
 
@@ -371,7 +371,7 @@ export default function AdminMatrizCurricularPage() {
                       {subject.name}
                     </p>
                     <p className="mt-0.5 text-xs text-zinc-400">
-                      {subject.workload_hours ? `${subject.workload_hours}h • ` : ''}
+                      {subject.workload_hours ? `${formatWorkloadHours(subject.workload_hours)}h - ` : ''}
                       {subject.is_active ? 'Aparece na página do curso' : 'Oculta na página do curso'}
                     </p>
                   </div>

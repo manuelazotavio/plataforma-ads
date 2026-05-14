@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { formatWorkloadHours } from '@/app/lib/curriculum'
 
 type Semester = {
   semester: number
@@ -49,7 +50,7 @@ export default function CurriculumTabs({ curriculum }: { curriculum: Semester[] 
             <p className="text-base text-zinc-800">{subject.name}</p>
             {subject.workload_hours && (
               <span className="shrink-0 rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-500">
-                {subject.workload_hours}h
+                {formatWorkloadHours(subject.workload_hours)}h
               </span>
             )}
           </div>

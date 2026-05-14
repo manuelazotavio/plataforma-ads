@@ -32,6 +32,13 @@ type UserResult = {
   avatar_url: string | null
 }
 
+type ReadmePreview = {
+  title: string
+  description: string
+  images: string[]
+  repoName: string
+}
+
 type Props = {
   userId: string
   initial?: Partial<ProjectFormData>
@@ -59,12 +66,17 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
   const [tagQuery, setTagQuery] = useState('')
   const [showTagDropdown, setShowTagDropdown] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [importingReadme, setImportingReadme] = useState(false)
+  const [applyingReadme, setApplyingReadme] = useState(false)
+  const [readmeError, setReadmeError] = useState<string | null>(null)
+  const [readmePreview, setReadmePreview] = useState<ReadmePreview | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
   const collabRef = useRef<HTMLDivElement>(null)
   const tagRef = useRef<HTMLDivElement>(null)
   const tagInputRef = useRef<HTMLInputElement>(null)
+  const readmeImportInFlightRef = useRef<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -205,6 +217,56 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
     setImages((prev) => prev.filter((_, i) => i !== index))
   }
 
+  async function importReadmeFromRepository() {
+    setReadmeError(null)
+    const repo = parseGithubRepoUrl(repoUrl)
+    if (!repo) {
+      setReadmeError('Informe um link válido do GitHub para importar o README.')
+      return
+    }
+
+    const importKey = `${repo.owner}/${repo.name}`.toLowerCase()
+    if (readmeImportInFlightRef.current === importKey) return
+
+    readmeImportInFlightRef.current = importKey
+    setImportingReadme(true)
+    try {
+      const preview = await fetchReadmePreview(repo.owner, repo.name)
+      if (!preview.title && !preview.description && preview.images.length === 0) {
+        setReadmeError('README encontrado, mas não consegui identificar dados para importar.')
+        return
+      }
+      setReadmePreview(preview)
+    } catch (error) {
+      setReadmeError(error instanceof Error ? error.message : 'Não foi possível importar o README.')
+    } finally {
+      if (readmeImportInFlightRef.current === importKey) {
+        readmeImportInFlightRef.current = null
+      }
+      setImportingReadme(false)
+    }
+  }
+
+  async function applyReadmePreview() {
+    if (!readmePreview) return
+    setApplyingReadme(true)
+    setReadmeError(null)
+
+    try {
+      if (readmePreview.title) setTitle(readmePreview.title)
+      if (readmePreview.description) setDescription(readmePreview.description)
+
+      const importedImages = await downloadAndUploadReadmeImages(readmePreview.images, userId)
+      if (importedImages.length > 0) setImages((prev) => [...prev, ...importedImages])
+
+      setReadmePreview(null)
+    } catch {
+      setReadmeError('Os dados foram encontrados, mas não foi possível importar as imagens do README.')
+    } finally {
+      setApplyingReadme(false)
+    }
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSubmitted(true)
@@ -310,13 +372,32 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
 
       <div className="grid grid-cols-2 gap-4">
         <Field label="Repositório (GitHub)">
-          <input
-            type="url"
-            value={repoUrl}
-            onChange={(e) => setRepoUrl(e.target.value)}
-            className={inputClass}
-            placeholder="https://github.com/..."
-          />
+          <div className="flex gap-2">
+            <input
+              type="url"
+              value={repoUrl}
+              onChange={(e) => {
+                setRepoUrl(e.target.value)
+                setReadmeError(null)
+              }}
+              onBlur={() => {
+                if (repoUrl.trim() && parseGithubRepoUrl(repoUrl) && !readmePreview && !importingReadme && !applyingReadme) {
+                  void importReadmeFromRepository()
+                }
+              }}
+              className={inputClass}
+              placeholder="https://github.com/..."
+            />
+            <button
+              type="button"
+              onClick={importReadmeFromRepository}
+              disabled={importingReadme || applyingReadme || !repoUrl.trim()}
+              className="shrink-0 rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-50"
+            >
+              {importingReadme ? 'Buscando...' : 'Importar README'}
+            </button>
+          </div>
+          {readmeError && <p className="mt-1 text-xs text-red-500">{readmeError}</p>}
         </Field>
         <Field label="Deploy / Link">
           <input
@@ -533,12 +614,84 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
         )}
         <button
           type="submit"
-          disabled={saving || uploading}
+          disabled={saving || uploading || applyingReadme}
           className="ml-auto rounded-lg bg-[#2F9E41] px-6 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 transition"
         >
           {saving ? 'Salvando...' : 'Salvar projeto'}
         </button>
       </div>
+
+      {readmePreview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" role="dialog" aria-modal="true">
+          <div className="max-h-[86vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl">
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-[#2F9E41]">Prévia do README</p>
+                <h2 className="mt-1 text-lg font-semibold text-zinc-900">{readmePreview.repoName}</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setReadmePreview(null)}
+                disabled={applyingReadme}
+                className="grid h-8 w-8 place-items-center rounded-lg text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 disabled:opacity-50"
+                aria-label="Fechar prévia"
+              >
+                <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 6 6 18" />
+                  <path d="m6 6 12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {readmePreview.title && (
+                <div>
+                  <p className="text-xs font-semibold text-zinc-400">Título</p>
+                  <p className="mt-1 text-sm font-medium text-zinc-900">{readmePreview.title}</p>
+                </div>
+              )}
+              {readmePreview.description && (
+                <div>
+                  <p className="text-xs font-semibold text-zinc-400">Descrição</p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-zinc-600">{readmePreview.description}</p>
+                </div>
+              )}
+              {readmePreview.images.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-zinc-400">Imagens encontradas</p>
+                  <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    {readmePreview.images.map((imageUrl) => (
+                      <div key={imageUrl} className="aspect-video overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={imageUrl} alt="" className="h-full w-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setReadmePreview(null)}
+                disabled={applyingReadme}
+                className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={applyReadmePreview}
+                disabled={applyingReadme}
+                className="rounded-lg bg-[#2F9E41] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
+              >
+                {applyingReadme ? 'Importando imagens...' : 'Usar dados no formulário'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </form>
   )
@@ -559,4 +712,226 @@ function Field({ label, required, children }: { label: string; required?: boolea
       {children}
     </div>
   )
+}
+
+type GithubRepo = {
+  owner: string
+  name: string
+}
+
+type GithubReadmeResponse = {
+  name: string
+  path: string
+  download_url: string | null
+}
+
+type GithubRepoResponse = {
+  default_branch?: string
+}
+
+type ReadmeContext = {
+  owner: string
+  repo: string
+  defaultBranch: string
+  downloadUrl: string
+}
+
+function parseGithubRepoUrl(value: string): GithubRepo | null {
+  const raw = value.trim()
+  if (!raw) return null
+
+  const ssh = raw.match(/^git@github\.com:([^/]+)\/([^/]+?)(?:\.git)?$/i)
+  if (ssh) return { owner: ssh[1], name: ssh[2] }
+
+  try {
+    const normalized = raw.startsWith('http') ? raw : `https://${raw}`
+    const url = new URL(normalized)
+    if (!/(^|\.)github\.com$/i.test(url.hostname)) return null
+
+    const [owner, repo] = url.pathname.replace(/^\/+/, '').split('/')
+    if (!owner || !repo) return null
+
+    return { owner, name: repo.replace(/\.git$/i, '') }
+  } catch {
+    return null
+  }
+}
+
+async function fetchReadmePreview(owner: string, repo: string): Promise<ReadmePreview> {
+  const [repoResponse, readmeResponse] = await Promise.all([
+    fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+      headers: { Accept: 'application/vnd.github+json' },
+    }),
+    fetch(`https://api.github.com/repos/${owner}/${repo}/readme`, {
+      headers: { Accept: 'application/vnd.github+json' },
+    }),
+  ])
+
+  if (!readmeResponse.ok) {
+    throw new Error('Não encontrei um README público nesse repositório.')
+  }
+
+  const readmeData = await readmeResponse.json() as GithubReadmeResponse
+  if (!readmeData.download_url) {
+    throw new Error('O README foi encontrado, mas não está disponível para importação.')
+  }
+
+  const repoData = repoResponse.ok
+    ? await repoResponse.json() as GithubRepoResponse
+    : null
+
+  const markdownResponse = await fetch(readmeData.download_url)
+  if (!markdownResponse.ok) {
+    throw new Error('Não foi possível baixar o conteúdo do README.')
+  }
+
+  const markdown = await markdownResponse.text()
+  return parseReadme(markdown, {
+    owner,
+    repo,
+    defaultBranch: repoData?.default_branch ?? 'main',
+    downloadUrl: readmeData.download_url,
+  })
+}
+
+function parseReadme(markdown: string, context: ReadmeContext): ReadmePreview {
+  const title = stripMarkdown(markdown.match(/^#\s+(.+)$/m)?.[1] ?? '')
+  const withoutCode = markdown
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/<!--[\s\S]*?-->/g, '')
+
+  const paragraphs = withoutCode
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean)
+
+  const description = paragraphs
+    .map((paragraph) => paragraph.replace(/^#+\s+.+$/gm, '').trim())
+    .filter((paragraph) => paragraph && !isReadmeNoise(paragraph))
+    .map(stripMarkdown)
+    .find((paragraph) => paragraph.length >= 20) ?? ''
+
+  const markdownImages = Array.from(markdown.matchAll(/!\[[^\]]*]\(([^)\s]+)(?:\s+["'][^"']*["'])?\)/g))
+    .map((match) => match[1])
+  const htmlImages = Array.from(markdown.matchAll(/<img[^>]+src=["']([^"']+)["'][^>]*>/gi))
+    .map((match) => match[1])
+  const images = [...markdownImages, ...htmlImages]
+    .map((src) => resolveReadmeImageUrl(src, context))
+    .filter((src): src is string => Boolean(src))
+    .filter(isUsefulReadmeImage)
+    .filter((src, index, all) => all.indexOf(src) === index)
+    .slice(0, 8)
+
+  return {
+    title,
+    description: description.slice(0, 1200),
+    images,
+    repoName: `${context.owner}/${context.repo}`,
+  }
+}
+
+function isReadmeNoise(value: string) {
+  const trimmed = value.trim()
+  return (
+    trimmed.startsWith('![') ||
+    trimmed.startsWith('|') ||
+    trimmed.startsWith('---') ||
+    /^<p[^>]*align=/i.test(trimmed) ||
+    /shields\.io|badgen\.net|badge|github\.com\/.*\/actions\/workflows/i.test(trimmed)
+  )
+}
+
+function stripMarkdown(value: string) {
+  return value
+    .replace(/<[^>]+>/g, '')
+    .replace(/!\[[^\]]*]\([^)]+\)/g, '')
+    .replace(/\[([^\]]+)]\([^)]+\)/g, '$1')
+    .replace(/[`*_~>#-]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function resolveReadmeImageUrl(src: string, context: ReadmeContext) {
+  const cleanSrc = src.trim().replace(/^<|>$/g, '')
+  if (!cleanSrc || cleanSrc.startsWith('data:')) return null
+  if (/^https?:\/\//i.test(cleanSrc)) return cleanSrc
+  if (cleanSrc.startsWith('//')) return `https:${cleanSrc}`
+  if (cleanSrc.startsWith('/')) {
+    return `https://raw.githubusercontent.com/${context.owner}/${context.repo}/${context.defaultBranch}${cleanSrc}`
+  }
+
+  try {
+    return new URL(cleanSrc, context.downloadUrl).toString()
+  } catch {
+    return null
+  }
+}
+
+function isUsefulReadmeImage(src: string) {
+  return (
+    !/shields\.io|badgen\.net|badge|github\.com\/.*\/actions\/workflows/i.test(src) &&
+    (
+      /\.(png|jpe?g|gif|webp)(\?|#|$)/i.test(src) ||
+      /github\.com\/.*\/assets\/|user-images\.githubusercontent\.com|raw\.githubusercontent\.com/i.test(src)
+    )
+  )
+}
+
+async function downloadAndUploadReadmeImages(imageUrls: string[], userId: string): Promise<ProjectFormData['images']> {
+  const imported: ProjectFormData['images'] = []
+
+  for (const imageUrl of imageUrls) {
+    try {
+      const response = await fetch(imageUrl)
+      if (!response.ok) throw new Error('image download failed')
+
+      const blob = await response.blob()
+      if (!blob.type.startsWith('image/')) throw new Error('invalid image type')
+
+      const ext = getExtensionFromImageUrl(imageUrl) ?? mimeToExtension(blob.type)
+      const fileName = getFileNameFromImageUrl(imageUrl, ext)
+      const file = new File([blob], fileName, { type: blob.type })
+      const path = `${userId}/readme-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+
+      const { error } = await supabase.storage
+        .from('project-images')
+        .upload(path, file, { upsert: true })
+
+      if (error) throw error
+
+      const { data: { publicUrl } } = supabase.storage.from('project-images').getPublicUrl(path)
+      imported.push({ url: publicUrl, type: 'image', name: file.name, size: file.size })
+    } catch {
+      imported.push({ url: imageUrl, type: 'image', name: getFileNameFromImageUrl(imageUrl, 'png') })
+    }
+  }
+
+  return imported
+}
+
+function getExtensionFromImageUrl(imageUrl: string) {
+  try {
+    const pathname = new URL(imageUrl).pathname
+    const match = pathname.match(/\.([a-z0-9]+)$/i)
+    return match?.[1]?.toLowerCase()
+  } catch {
+    return null
+  }
+}
+
+function mimeToExtension(mime: string) {
+  if (mime === 'image/jpeg') return 'jpg'
+  if (mime === 'image/gif') return 'gif'
+  if (mime === 'image/webp') return 'webp'
+  return 'png'
+}
+
+function getFileNameFromImageUrl(imageUrl: string, ext: string) {
+  try {
+    const pathname = new URL(imageUrl).pathname
+    const name = decodeURIComponent(pathname.split('/').pop() ?? '').replace(/[^\w.-]/g, '-')
+    return name || `readme-image.${ext}`
+  } catch {
+    return `readme-image.${ext}`
+  }
 }

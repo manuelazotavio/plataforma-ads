@@ -84,11 +84,15 @@ export const curriculumTableSql = `create table if not exists public.curriculum_
   id uuid primary key default gen_random_uuid(),
   semester integer not null check (semester between 1 and 12),
   name text not null,
-  workload_hours integer,
+  workload_hours numeric(7,2),
   display_order integer not null default 0,
   is_active boolean not null default true,
   created_at timestamptz not null default now()
 );
+
+alter table public.curriculum_subjects
+alter column workload_hours type numeric(7,2)
+using workload_hours::numeric;
 
 alter table public.curriculum_subjects enable row level security;
 
@@ -128,4 +132,19 @@ export function groupCurriculumSubjects(subjects: CurriculumSubject[]): Curricul
   }
 
   return Array.from(bySemester.values()).sort((a, b) => a.semester - b.semester)
+}
+
+export function parseWorkloadHours(value: string) {
+  const normalized = value.trim().replace(',', '.')
+  if (!normalized) return null
+
+  const workload = Number(normalized)
+  return Number.isFinite(workload) ? workload : Number.NaN
+}
+
+export function formatWorkloadHours(value: number) {
+  return new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: Number.isInteger(value) ? 0 : 1,
+    maximumFractionDigits: 2,
+  }).format(value)
 }
