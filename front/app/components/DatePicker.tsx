@@ -26,10 +26,41 @@ function parseISO(s: string): Date | null {
   if (!s) return null
   const [y, m, d] = s.split('-').map(Number)
   if (!y || !m || !d || isNaN(y)) return null
-  return new Date(y, m - 1, d)
+  const parsed = new Date(y, m - 1, d)
+  if (parsed.getFullYear() !== y || parsed.getMonth() !== m - 1 || parsed.getDate() !== d) return null
+  return parsed
 }
 
-function formatPT(s: string) {
+function parseTypedDate(s: string): string | null {
+  const trimmed = s.trim()
+  if (!trimmed) return ''
+
+  const iso = parseISO(trimmed)
+  if (iso) return toISO(iso)
+
+  const match = trimmed.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/)
+  if (!match) return null
+
+  const [, day, month, year] = match
+  const parsed = new Date(Number(year), Number(month) - 1, Number(day))
+  if (
+    parsed.getFullYear() !== Number(year) ||
+    parsed.getMonth() !== Number(month) - 1 ||
+    parsed.getDate() !== Number(day)
+  ) {
+    return null
+  }
+
+  return toISO(parsed)
+}
+
+function formatInput(s: string) {
+  const d = parseISO(s)
+  if (!d) return ''
+  return d.toLocaleDateString('pt-BR')
+}
+
+function formatLongPT(s: string) {
   const d = parseISO(s)
   if (!d) return ''
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
@@ -74,9 +105,14 @@ export default function DatePicker({
 }: Props) {
   const sel = parseISO(value)
   const [open, setOpen] = useState(false)
+  const [typed, setTyped] = useState(formatInput(value))
   const [vy, setVy] = useState(sel?.getFullYear() ?? today.getFullYear())
   const [vm, setVm] = useState(sel?.getMonth() ?? today.getMonth())
   const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setTyped(formatInput(value))
+  }, [value])
 
   useEffect(() => {
     if (open) {
@@ -105,42 +141,78 @@ export default function DatePicker({
     else setVm((m) => m + 1)
   }
 
+  function commitTypedDate() {
+    const parsed = parseTypedDate(typed)
+    if (parsed !== null) {
+      onChange(parsed)
+      if (parsed) {
+        const d = parseISO(parsed)
+        setVy(d?.getFullYear() ?? today.getFullYear())
+        setVm(d?.getMonth() ?? today.getMonth())
+      }
+      return
+    }
+
+    setTyped(formatInput(value))
+  }
+
   const grid = buildGrid(vy, vm)
   const cls = className ?? DEFAULT_CLS
 
   return (
     <div ref={ref} className="relative w-full">
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={() => !disabled && setOpen((o) => !o)}
-        className={`flex items-center justify-between gap-2 text-left cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 ${cls}`}
-      >
-        <span className={value ? 'text-zinc-900' : 'text-zinc-400'}>
-          {value ? formatPT(value) : placeholder}
-        </span>
-        <svg
-          className="shrink-0 text-zinc-400"
-          width={15}
-          height={15}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
+      <div className="relative">
+        <input
+          type="text"
+          disabled={disabled}
+          value={typed}
+          onChange={(e) => setTyped(e.target.value)}
+          onFocus={() => !disabled && setOpen(true)}
+          onBlur={commitTypedDate}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              commitTypedDate()
+              setOpen(false)
+            }
+            if (e.key === 'Escape') {
+              setTyped(formatInput(value))
+              setOpen(false)
+            }
+          }}
+          placeholder={placeholder}
+          className={`pr-10 disabled:cursor-not-allowed disabled:opacity-50 ${cls}`}
+        />
+        <button
+          type="button"
+          disabled={disabled}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => !disabled && setOpen((o) => !o)}
+          className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 disabled:cursor-not-allowed disabled:opacity-50"
+          aria-label="Abrir calendário"
         >
-          <rect x="3" y="4" width="18" height="18" rx="2" />
-          <path d="M16 2v4M8 2v4M3 10h18" />
-        </svg>
-      </button>
+          <svg
+            width={15}
+            height={15}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+            <path d="M16 2v4M8 2v4M3 10h18" />
+          </svg>
+        </button>
+      </div>
 
       {open && (
-        <div className="absolute top-full left-0 mt-1.5 z-50 w-72 select-none rounded-2xl border border-zinc-100 bg-white shadow-2xl">
-          {/* Header */}
+        <div className="absolute top-full left-0 mt-1.5 z-50 w-80 max-w-[calc(100vw-2rem)] select-none rounded-2xl border border-zinc-100 bg-white shadow-2xl">
           <div className="flex items-center justify-between px-4 pt-4 pb-3">
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={prev}
               className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100 transition"
             >
@@ -155,6 +227,7 @@ export default function DatePicker({
 
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={next}
               className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100 transition"
             >
@@ -164,7 +237,6 @@ export default function DatePicker({
             </button>
           </div>
 
-          {/* Weekday labels */}
           <div className="grid grid-cols-7 px-3 pb-1">
             {WEEK_PT.map((w) => (
               <span
@@ -176,7 +248,6 @@ export default function DatePicker({
             ))}
           </div>
 
-          {/* Day grid */}
           <div className="grid grid-cols-7 gap-y-0.5 px-3 pb-3">
             {grid.map(({ d, cur }) => {
               const iso = toISO(d)
@@ -187,7 +258,8 @@ export default function DatePicker({
                 <button
                   key={iso}
                   type="button"
-                  onClick={() => { onChange(iso); setOpen(false) }}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => { onChange(iso); setTyped(formatInput(iso)); setOpen(false) }}
                   className={[
                     'flex h-9 w-9 mx-auto items-center justify-center rounded-full text-sm transition',
                     isSelected
@@ -205,13 +277,13 @@ export default function DatePicker({
             })}
           </div>
 
-          {/* Footer */}
           {value && (
             <div className="border-t border-zinc-100 px-4 py-2.5 flex items-center justify-between">
-              <span className="text-xs text-zinc-500">{formatPT(value)}</span>
+              <span className="text-xs text-zinc-500">{formatLongPT(value)}</span>
               <button
                 type="button"
-                onClick={() => { onChange(''); setOpen(false) }}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => { onChange(''); setTyped(''); setOpen(false) }}
                 className="text-xs text-zinc-400 hover:text-zinc-700 transition"
               >
                 Limpar

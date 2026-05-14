@@ -24,6 +24,11 @@ type CourseDocument = {
   removeMessage: string
 }
 
+type CourseSettingRow = {
+  key: DocumentKey
+  value: string | null
+}
+
 const documents: CourseDocument[] = [
   {
     key: CLASS_SCHEDULE_PDF_KEY,
@@ -75,7 +80,7 @@ export default function AdminCursoPage() {
       } else {
         setUrls((current) => {
           const next = { ...current }
-          data?.forEach((item) => {
+          ;(data as CourseSettingRow[] | null)?.forEach((item) => {
             if (item.key === CLASS_SCHEDULE_PDF_KEY || item.key === PEDAGOGICAL_PROJECT_PDF_KEY) {
               next[item.key] = item.value ?? null
             }

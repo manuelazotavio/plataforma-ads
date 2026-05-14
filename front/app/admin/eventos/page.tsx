@@ -140,7 +140,7 @@ export default function AdminEventosPage() {
       
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 px-4 py-4 sm:items-center">
-          <div className="flex max-h-[90vh] w-full max-w-lg flex-col gap-5 overflow-y-auto rounded-2xl bg-white p-4 shadow-xl sm:p-7">
+          <div className="flex max-h-[90vh] w-full max-w-2xl flex-col gap-5 overflow-y-auto overflow-x-hidden rounded-2xl bg-white p-4 shadow-xl sm:p-7">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-zinc-900">
                 {editing ? 'Editar evento' : 'Novo evento'}
@@ -158,7 +158,7 @@ export default function AdminEventosPage() {
                 />
               </Field>
 
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 md:grid-cols-2">
                 <Field label="Edição">
                   <input
                     value={form.edition ?? ''}
@@ -186,7 +186,7 @@ export default function AdminEventosPage() {
                 />
               </Field>
 
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 md:grid-cols-2">
                 <Field label="Data de início">
                   <DatePicker
                     value={form.start_date ?? ''}
