@@ -7,10 +7,11 @@ import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import UserAvatar from '@/app/components/UserAvatar'
+import { formatFileSize } from '@/app/lib/files'
 
 type Author = { name: string; avatar_url: string | null }
 type Category = { id: string; name: string }
-type Attachment = { type: 'image' | 'video'; url: string }
+type Attachment = { type: 'image' | 'video' | 'file'; url: string; name?: string; size?: number }
 
 type Topic = {
   id: string
@@ -483,12 +484,23 @@ export default function ForumTopicPage() {
                     height={500}
                     className="w-full h-auto object-contain max-h-125"
                   />
-                ) : (() => {
+                ) : att.type === 'video' ? (() => {
                   const embed = getEmbedUrl(att.url)
                   return embed
                     ? <iframe src={embed} className="w-full aspect-video" allowFullScreen />
                     : <video src={att.url} controls className="w-full aspect-video" />
-                })()}
+                })() : (
+                  <a href={att.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-3 text-sm text-zinc-700 transition hover:bg-zinc-100">
+                    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="shrink-0 text-zinc-400">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <path d="M14 2v6h6" />
+                    </svg>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-medium">{att.name ?? 'Arquivo anexado'}</span>
+                      {att.size && <span className="block text-xs text-zinc-400">{formatFileSize(att.size)}</span>}
+                    </span>
+                  </a>
+                )}
               </div>
             ))}
           </div>

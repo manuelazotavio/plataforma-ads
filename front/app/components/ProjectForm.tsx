@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
 import { DEFAULT_PROJECT_TAGS, PROJECT_TAG_OPTIONS_TABLE, uniqueTagNames } from '@/app/lib/projectTags'
 import DatePicker from '@/app/components/DatePicker'
+import { fileKind, formatFileSize, getFileExtension } from '@/app/lib/files'
 
 export type Collaborator = {
   user_id: string | null
@@ -21,7 +22,7 @@ export type ProjectFormData = {
   end_date: string
   is_featured: boolean
   tags: string[]
-  images: { url: string; type: 'image' | 'video' }[]
+  images: { url: string; type: 'image' | 'video' | 'file'; name?: string; size?: number }[]
   collaborators: Collaborator[]
 }
 
@@ -50,7 +51,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
   const [isFeatured, setIsFeatured] = useState(initial?.is_featured ?? false)
   const [technologyTags, setTechnologyTags] = useState(DEFAULT_PROJECT_TAGS)
   const [tags, setTags] = useState<string[]>(uniqueTagNames(initial?.tags ?? []))
-  const [images, setImages] = useState<{ url: string; type: 'image' | 'video' }[]>(initial?.images ?? [])
+  const [images, setImages] = useState<{ url: string; type: 'image' | 'video' | 'file'; name?: string; size?: number }[]>(initial?.images ?? [])
   const [collaborators, setCollaborators] = useState<Collaborator[]>(initial?.collaborators ?? [])
   const [collabQuery, setCollabQuery] = useState('')
   const [userResults, setUserResults] = useState<UserResult[]>([])
@@ -92,9 +93,11 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
   useEffect(() => {
     const q = collabQuery.trim()
     if (q.length < 2) {
-      setUserResults([])
-      setShowDropdown(false)
-      return
+      const timeout = setTimeout(() => {
+        setUserResults([])
+        setShowDropdown(false)
+      }, 0)
+      return () => clearTimeout(timeout)
     }
 
     let cancelled = false
@@ -156,16 +159,15 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
     setCollaborators((prev) => prev.filter((_, i) => i !== index))
   }
 
-  async function handleMediaChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? [])
+  async function uploadMediaFiles(files: File[]) {
     if (!files.length) return
 
     setUploading(true)
-    const uploaded: { url: string; type: 'image' | 'video' }[] = []
+    const uploaded: { url: string; type: 'image' | 'video' | 'file'; name?: string; size?: number }[] = []
 
     for (const file of files) {
-      const isVideo = file.type.startsWith('video/')
-      const ext = file.name.split('.').pop()
+      const kind = fileKind(file)
+      const ext = getFileExtension(file)
       const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
 
       const { error } = await supabase.storage
@@ -174,13 +176,29 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
 
       if (!error) {
         const { data: { publicUrl } } = supabase.storage.from('project-images').getPublicUrl(path)
-        uploaded.push({ url: publicUrl, type: isVideo ? 'video' : 'image' })
+        uploaded.push({ url: publicUrl, type: kind, name: file.name, size: file.size })
       }
     }
 
     setImages((prev) => [...prev, ...uploaded])
     setUploading(false)
+  }
+
+  async function handleMediaChange(e: React.ChangeEvent<HTMLInputElement>) {
+    await uploadMediaFiles(Array.from(e.target.files ?? []))
     e.target.value = ''
+  }
+
+  async function handleMediaDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    await uploadMediaFiles(Array.from(e.dataTransfer.files ?? []))
+  }
+
+  async function handleMediaPaste(e: React.ClipboardEvent<HTMLDivElement>) {
+    const files = Array.from(e.clipboardData.files ?? [])
+    if (!files.length) return
+    e.preventDefault()
+    await uploadMediaFiles(files)
   }
 
   function removeMedia(index: number) {
@@ -212,12 +230,27 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
     <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-6">
 
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-zinc-700">Imagens e vídeos</label>
-        <div className="grid grid-cols-3 gap-2">
+        <label className="text-sm font-medium text-zinc-700">Imagens, vídeos e arquivos</label>
+        <div
+          className="grid grid-cols-3 gap-2 rounded-xl"
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={handleMediaDrop}
+          onPaste={handleMediaPaste}
+          tabIndex={0}
+        >
           {images.map((media, i) => (
             <div key={i} className="relative aspect-video rounded-xl overflow-hidden group bg-zinc-100">
               {media.type === 'video' ? (
                 <video src={media.url} className="w-full h-full object-cover" muted loop playsInline />
+              ) : media.type === 'file' ? (
+                <div className="flex h-full w-full flex-col items-center justify-center gap-1 px-3 text-center text-zinc-500">
+                  <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <path d="M14 2v6h6" />
+                  </svg>
+                  <span className="max-w-full truncate text-xs font-medium">{media.name ?? 'Arquivo'}</span>
+                  {media.size && <span className="text-[11px] text-zinc-400">{formatFileSize(media.size)}</span>}
+                </div>
               ) : (
                 <Image src={media.url} alt="" fill className="object-cover" />
               )}
@@ -229,7 +262,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
                 ×
               </button>
               <span className="absolute bottom-1 left-1 rounded-full bg-black/60 text-white text-xs px-1.5 py-0.5">
-                {i === 0 ? 'capa' : media.type === 'video' ? '▶ vídeo' : ''}
+                {i === 0 ? 'capa' : media.type === 'video' ? '▶ vídeo' : media.type === 'file' ? 'arquivo' : ''}
               </span>
             </div>
           ))}
@@ -243,11 +276,10 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
             <span>{uploading ? 'Enviando...' : 'Adicionar'}</span>
           </button>
         </div>
-        <p className="text-xs text-zinc-400">Aceita imagens e vídeos. O primeiro item é usado como capa.</p>
+        <p className="text-xs text-zinc-400">Arraste, cole ou faça upload de imagens e vídeos</p>
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*,video/*"
           multiple
           className="hidden"
           onChange={handleMediaChange}
@@ -385,7 +417,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
                 >
                   <span className="shrink-0 w-7 h-7 rounded-full border-2 border-dashed border-zinc-300 flex items-center justify-center text-zinc-400 text-xs">+</span>
                   <span className="text-sm text-zinc-600">
-                    Adicionar <span className="font-medium text-zinc-900">"{collabQuery.trim()}"</span> sem conta
+                    Adicionar <span className="font-medium text-zinc-900">&quot;{collabQuery.trim()}&quot;</span> sem conta
                   </span>
                 </button>
               )}

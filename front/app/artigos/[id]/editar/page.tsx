@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import RichTextEditor from '@/app/components/RichTextEditor'
+import TechnologyTagPicker from '@/app/components/TechnologyTagPicker'
 
 function toSlug(text: string) {
   return text
@@ -27,8 +28,6 @@ export default function EditarArtigoPage() {
   const [content, setContent] = useState('')
   const [coverUrl, setCoverUrl] = useState('')
   const [tags, setTags] = useState<string[]>([])
-  const [newTag, setNewTag] = useState('')
-  const [status, setStatus] = useState<'rascunho' | 'pendente' | 'publicado' | 'rejeitado'>('rascunho')
 
   const [loading, setLoading] = useState(true)
   const [uploadingCover, setUploadingCover] = useState(false)
@@ -57,7 +56,6 @@ export default function EditarArtigoPage() {
       setSummary(data.summary)
       setContent(data.content)
       setCoverUrl(data.cover_image_url ?? '')
-      setStatus(data.status)
       setTags(data.article_tags.map((t: { tag_name: string }) => t.tag_name))
       setLoading(false)
     }
@@ -89,17 +87,6 @@ export default function EditarArtigoPage() {
     const { data: { publicUrl } } = supabase.storage.from('covers').getPublicUrl(path)
     setCoverUrl(publicUrl)
     setUploadingCover(false)
-  }
-
-  function addTag() {
-    const trimmed = newTag.trim()
-    if (!trimmed || tags.includes(trimmed)) return
-    setTags((prev) => [...prev, trimmed])
-    setNewTag('')
-  }
-
-  function removeTag(tag: string) {
-    setTags((prev) => prev.filter((t) => t !== tag))
   }
 
   async function save(newStatus: 'rascunho' | 'pendente') {
@@ -237,42 +224,7 @@ export default function EditarArtigoPage() {
           </Field>
 
           <Field label="Tags">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                className={inputClass + ' flex-1'}
-                placeholder="Ex: React, Carreira..."
-              />
-              <button
-                type="button"
-                onClick={addTag}
-                className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 transition"
-              >
-                Adicionar
-              </button>
-            </div>
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="flex items-center gap-1 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700"
-                  >
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => removeTag(tag)}
-                      className="text-zinc-400 hover:text-zinc-700 transition"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
+            <TechnologyTagPicker value={tags} onChange={setTags} />
           </Field>
 
           {error && (

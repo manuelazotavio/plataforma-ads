@@ -141,7 +141,17 @@ export default async function ProjetosPage({
                     {cover
                       ? isVideoMedia(cover)
                         ? <video src={cover.image_url} className="h-full w-full object-cover" autoPlay muted loop playsInline />
-                        : <Image src={cover.image_url} alt={project.title} fill className="object-cover" />
+                        : isFileMedia(cover)
+                          ? (
+                            <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-zinc-400">
+                              <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <path d="M14 2v6h6" />
+                              </svg>
+                              <span className="text-xs font-medium">Arquivo anexado</span>
+                            </div>
+                          )
+                          : <Image src={cover.image_url} alt={project.title} fill className="object-cover" />
                       : <div className="w-full h-full flex items-center justify-center text-zinc-300 text-3xl">◻</div>
                     }
                     {project.is_featured && (
@@ -194,4 +204,8 @@ export default async function ProjetosPage({
 function isVideoMedia(media: { image_url: string; media_type?: string | null }) {
   if (media.media_type === 'video') return true
   return /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(media.image_url)
+}
+
+function isFileMedia(media: { media_type?: string | null }) {
+  return media.media_type === 'file'
 }

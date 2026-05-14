@@ -66,6 +66,7 @@ export default function AdminVagasPage() {
     setUpdatingId(id)
     await supabase.from('jobs').update({ is_active: value }).eq('id', id)
     setJobs((prev) => prev.map((j) => j.id === id ? { ...j, is_active: value } : j))
+    if (value) void sendJobNotificationEmails(id)
     setUpdatingId(null)
   }
 
@@ -114,6 +115,7 @@ export default function AdminVagasPage() {
     }
 
     setJobs((prev) => [{ ...newJob, job_tags: rawTags.map((t) => ({ tag_name: t })) } as Job, ...prev])
+    if (newJob.is_active) void sendJobNotificationEmails(newJob.id)
     setForm(EMPTY_FORM)
     setShowForm(false)
     setSaving(false)
@@ -126,6 +128,15 @@ export default function AdminVagasPage() {
   })
 
   const pendingCount = jobs.filter((j) => !j.is_active).length
+
+  async function sendJobNotificationEmails(jobId: string) {
+    const { error: notifyError } = await supabase.functions.invoke('send-job-notifications', {
+      body: { job_id: jobId },
+    })
+    if (notifyError) {
+      console.error('Erro ao enviar notificações de oportunidade:', notifyError.message)
+    }
+  }
 
   if (loading) return <p className="text-sm text-zinc-500">Carregando...</p>
 

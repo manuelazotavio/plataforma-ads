@@ -172,10 +172,10 @@ export default function OnboardingPage() {
   const progress = ((step + 1) / TOTAL) * 100
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col dark:bg-zinc-950">
 
       {/* Header */}
-      <header className="sticky top-0 bg-white/90 backdrop-blur border-b border-zinc-100 px-5 py-4 z-10">
+      <header className="sticky top-0 bg-white/90 backdrop-blur border-b border-zinc-100 px-5 py-4 z-10 dark:bg-zinc-950/90 dark:border-zinc-800">
         <div className="max-w-lg mx-auto">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-bold text-[#2F9E41] tracking-tight">ADS Comunica</span>
@@ -211,7 +211,7 @@ export default function OnboardingPage() {
                 <label className="text-sm font-semibold text-zinc-700">Tecnologias</label>
                 <div ref={tagRef} className="relative">
                   <div
-                    className="flex flex-wrap items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2.5 min-h-[46px] focus-within:border-[#2F9E41] focus-within:ring-2 focus-within:ring-[#2F9E41]/20 transition cursor-text bg-white"
+                    className="flex flex-wrap items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2.5 min-h-[46px] focus-within:border-[#2F9E41] focus-within:ring-2 focus-within:ring-[#2F9E41]/20 transition cursor-text bg-white dark:bg-zinc-900 dark:border-zinc-800"
                     onClick={() => tagInputRef.current?.focus()}
                   >
                     {skills.map((tag) => (
@@ -245,7 +245,7 @@ export default function OnboardingPage() {
                   </div>
 
                   {showTagDrop && filteredTags.length > 0 && (
-                    <div className="absolute top-full mt-1 left-0 right-0 z-30 rounded-xl border border-zinc-200 bg-white shadow-lg max-h-44 overflow-y-auto">
+                    <div className="absolute top-full mt-1 left-0 right-0 z-30 rounded-xl border border-zinc-200 bg-white shadow-lg max-h-44 overflow-y-auto dark:bg-zinc-900 dark:border-zinc-800">
                       {filteredTags.map((tag) => (
                         <button
                           key={tag}
@@ -533,12 +533,12 @@ export default function OnboardingPage() {
                 </p>
                 <div className="grid grid-cols-2 gap-3 pt-1">
                   {[
-                    { label: 'Duração', value: '5 semestres' },
+                    { label: 'Duração', value: '6 semestres' },
                     { label: 'Modalidade', value: 'Presencial' },
-                    { label: 'Área', value: 'Tecnologia' },
+                    { label: 'Período', value: 'Noturno' },
                     { label: 'Formação', value: 'Tecnólogo' },
                   ].map((item) => (
-                    <div key={item.label} className="rounded-xl bg-white border border-zinc-200 px-4 py-3">
+                    <div key={item.label} className="rounded-xl bg-white border border-zinc-200 px-4 py-3 dark:bg-zinc-900 dark:border-zinc-800">
                       <p className="text-xs text-zinc-400">{item.label}</p>
                       <p className="mt-0.5 text-sm font-semibold text-zinc-800">{item.value}</p>
                     </div>
@@ -556,7 +556,7 @@ export default function OnboardingPage() {
       </main>
 
       {/* Footer nav */}
-      <footer className="sticky bottom-0 bg-white/90 backdrop-blur border-t border-zinc-100 px-5 py-4">
+      <footer className="sticky bottom-0 bg-white/90 backdrop-blur border-t border-zinc-100 px-5 py-4 dark:bg-zinc-950/90 dark:border-zinc-800">
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <button
             type="button"

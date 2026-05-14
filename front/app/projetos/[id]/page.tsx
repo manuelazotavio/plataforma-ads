@@ -40,6 +40,14 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
         <div className="relative w-full h-72 bg-zinc-900 overflow-hidden">
           {isVideoMedia(cover) ? (
             <video src={cover.image_url} className="w-full h-full object-cover opacity-80" autoPlay muted loop playsInline />
+          ) : isFileMedia(cover) ? (
+            <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-zinc-100 text-zinc-500">
+              <svg width={32} height={32} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <path d="M14 2v6h6" />
+              </svg>
+              <span className="text-sm font-medium">Arquivo anexado</span>
+            </div>
           ) : (
             <Image src={cover.image_url} alt={project.title} fill className="object-cover opacity-80" />
           )}
@@ -193,6 +201,10 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
 function isVideoMedia(media: { image_url: string; media_type?: string | null }) {
   if (media.media_type === 'video') return true
   return /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(media.image_url)
+}
+
+function isFileMedia(media: { media_type?: string | null }) {
+  return media.media_type === 'file'
 }
 
 function formatProjectPeriod(start: string | null, end: string | null) {

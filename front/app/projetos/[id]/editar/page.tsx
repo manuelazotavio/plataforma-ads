@@ -41,7 +41,7 @@ export default function EditarProjetoPage() {
         tags: data.project_tags.map((t: { tag_name: string }) => t.tag_name),
         images: data.project_images
           .sort((a: { display_order: number }, b: { display_order: number }) => a.display_order - b.display_order)
-          .map((img: { image_url: string; media_type: string }) => ({ url: img.image_url, type: (img.media_type ?? 'image') as 'image' | 'video' })),
+          .map((img: { image_url: string; media_type: string }) => ({ url: img.image_url, type: (img.media_type ?? 'image') as 'image' | 'video' | 'file' })),
         collaborators: data.project_collaborators.map((c: { user_id: string | null; name: string }) => ({ user_id: c.user_id, name: c.name })),
       })
     }

@@ -76,6 +76,54 @@ function SearchIcon() {
   )
 }
 
+function ResultsList({
+  open,
+  loading,
+  results,
+  query,
+  selected,
+  onSelect,
+  onHover,
+}: {
+  open: boolean
+  loading: boolean
+  results: Result[]
+  query: string
+  selected: number
+  onSelect: (result: Result) => void
+  onHover: (index: number) => void
+}) {
+  if (!open) return null
+  return (
+    <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl min-w-72">
+      {loading ? (
+        <div className="px-4 py-4 text-sm text-zinc-400">Buscando...</div>
+      ) : results.length === 0 ? (
+        <div className="px-4 py-5 text-center text-sm text-zinc-400">
+          Nenhum resultado para <span className="font-medium text-zinc-600">{query}</span>
+        </div>
+      ) : (
+        <div className="max-h-80 overflow-y-auto py-1">
+          {results.map((r, i) => (
+            <button
+              key={`${r.type}:${r.id}`}
+              onMouseEnter={() => onHover(i)}
+              onClick={() => onSelect(r)}
+              className={`flex w-full items-start gap-3 px-4 py-2.5 text-left transition ${selected === i ? 'bg-zinc-50' : 'hover:bg-zinc-50'}`}
+            >
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm leading-snug text-zinc-800">{r.title}</p>
+                {r.subtitle && <p className="mt-0.5 truncate text-xs text-zinc-400">{r.subtitle}</p>}
+              </div>
+              <TypeBadge type={r.type} />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function SearchBar() {
   const router = useRouter()
   const desktopRef = useRef<HTMLDivElement>(null)
@@ -98,13 +146,15 @@ export default function SearchBar() {
   useEffect(() => {
     const q = query.trim()
     if (q.length < 2) {
-      setResults([])
-      setOpen(false)
-      return
+      const timer = setTimeout(() => {
+        setResults([])
+        setOpen(false)
+      }, 0)
+      return () => clearTimeout(timer)
     }
 
-    setLoading(true)
     const timer = setTimeout(async () => {
+      setLoading(true)
       const like = `%${q}%`
       const [
         { data: projects },
@@ -117,52 +167,54 @@ export default function SearchBar() {
         await Promise.all([
           supabase.from('projects').select('id, title, description').eq('approved', true).ilike('title', like).limit(5),
           supabase.from('articles').select('id, title, summary').eq('status', 'publicado').ilike('title', like).limit(5),
-          supabase
-            .from('project_tags')
-            .select('tag_name, projects!inner(id, title, description, approved)')
-            .eq('projects.approved', true)
-            .ilike('tag_name', like)
-            .limit(5),
-          supabase
-            .from('article_tags')
-            .select('tag_name, articles!inner(id, title, summary, status)')
-            .eq('articles.status', 'publicado')
-            .ilike('tag_name', like)
-            .limit(5),
+          supabase.from('project_tags').select('project_id, tag_name').ilike('tag_name', like).limit(20),
+          supabase.from('article_tags').select('article_id, tag_name').ilike('tag_name', like).limit(20),
           supabase.from('forum_topics').select('id, title').ilike('title', like).limit(5),
           supabase.from('users').select('id, name, role').ilike('name', like).limit(5),
         ])
+
+      const projectTagMap = new Map((projectTags ?? []).map((row) => [row.project_id, row.tag_name]))
+      const articleTagMap = new Map((articleTags ?? []).map((row) => [row.article_id, row.tag_name]))
+      const projectIdsFromTags = [...projectTagMap.keys()]
+      const articleIdsFromTags = [...articleTagMap.keys()]
+
+      const [{ data: taggedProjects }, { data: taggedArticles }] = await Promise.all([
+        projectIdsFromTags.length > 0
+          ? supabase
+              .from('projects')
+              .select('id, title, description')
+              .eq('approved', true)
+              .in('id', projectIdsFromTags)
+              .limit(5)
+          : Promise.resolve({ data: [] }),
+        articleIdsFromTags.length > 0
+          ? supabase
+              .from('articles')
+              .select('id, title, summary')
+              .eq('status', 'publicado')
+              .in('id', articleIdsFromTags)
+              .limit(5)
+          : Promise.resolve({ data: [] }),
+      ])
 
       const pages = STATIC_PAGES
         .filter((p) => matchesQuery(p, q))
         .slice(0, 3)
         .map((p) => ({ id: p.url, title: p.title, type: 'page' as const, subtitle: p.subtitle, url: p.url }))
 
-      const projectTagResults = (projectTags ?? [])
-        .map((row) => {
-          const project = row.projects as unknown as { id: string; title: string; description: string | null } | null
-          if (!project) return null
-          return {
-            id: project.id,
-            title: project.title,
-            type: 'project' as const,
-            subtitle: `Tag: ${row.tag_name}`,
-          }
-        })
-        .filter(Boolean) as Result[]
+      const projectTagResults = (taggedProjects ?? []).map((project) => ({
+        id: project.id,
+        title: project.title,
+        type: 'project' as const,
+        subtitle: `Tag: ${projectTagMap.get(project.id) ?? q}`,
+      }))
 
-      const articleTagResults = (articleTags ?? [])
-        .map((row) => {
-          const article = row.articles as unknown as { id: string; title: string; summary: string | null } | null
-          if (!article) return null
-          return {
-            id: article.id,
-            title: article.title,
-            type: 'article' as const,
-            subtitle: `Tag: ${row.tag_name}`,
-          }
-        })
-        .filter(Boolean) as Result[]
+      const articleTagResults = (taggedArticles ?? []).map((article) => ({
+        id: article.id,
+        title: article.title,
+        type: 'article' as const,
+        subtitle: `Tag: ${articleTagMap.get(article.id) ?? q}`,
+      }))
 
       const all: Result[] = dedupeResults([
         ...(projects ?? []).map((p) => ({ id: p.id, title: p.title, type: 'project' as const, subtitle: p.description?.slice(0, 60) ?? undefined })),
@@ -230,38 +282,6 @@ export default function SearchBar() {
     }
   }
 
-  function ResultsList() {
-    if (!open) return null
-    return (
-      <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl min-w-72">
-        {loading ? (
-          <div className="px-4 py-4 text-sm text-zinc-400">Buscando…</div>
-        ) : results.length === 0 ? (
-          <div className="px-4 py-5 text-center text-sm text-zinc-400">
-            Nenhum resultado para <span className="font-medium text-zinc-600">{query}</span>
-          </div>
-        ) : (
-          <div className="max-h-80 overflow-y-auto py-1">
-            {results.map((r, i) => (
-              <button
-                key={r.id}
-                onMouseEnter={() => setSelected(i)}
-                onClick={() => navigateTo(r)}
-                className={`flex w-full items-start gap-3 px-4 py-2.5 text-left transition ${selected === i ? 'bg-zinc-50' : 'hover:bg-zinc-50'}`}
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm leading-snug text-zinc-800">{r.title}</p>
-                  {r.subtitle && <p className="mt-0.5 truncate text-xs text-zinc-400">{r.subtitle}</p>}
-                </div>
-                <TypeBadge type={r.type} />
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    )
-  }
-
   return (
     <>
       {/* Mobile: ícone de busca */}
@@ -292,7 +312,15 @@ export default function SearchBar() {
               autoComplete="off"
               className="h-10 w-full rounded-xl border border-zinc-300 bg-white pl-10 pr-4 text-sm font-medium text-zinc-800 shadow-sm outline-none transition placeholder:text-zinc-500 focus:border-[#2F9E41] focus:ring-2 focus:ring-[#2F9E41]/15"
             />
-            <ResultsList />
+            <ResultsList
+              open={open}
+              loading={loading}
+              results={results}
+              query={query}
+              selected={selected}
+              onSelect={navigateTo}
+              onHover={setSelected}
+            />
           </div>
           <button
             type="button"
@@ -320,7 +348,15 @@ export default function SearchBar() {
           autoComplete="off"
           className="h-10 w-full rounded-xl border border-zinc-300 bg-white pl-10 pr-4 text-sm font-medium text-zinc-800 shadow-sm outline-none transition placeholder:text-zinc-500 hover:border-zinc-400 focus:border-[#2F9E41] focus:ring-2 focus:ring-[#2F9E41]/15"
         />
-        <ResultsList />
+        <ResultsList
+          open={open}
+          loading={loading}
+          results={results}
+          query={query}
+          selected={selected}
+          onSelect={navigateTo}
+          onHover={setSelected}
+        />
       </div>
     </>
   )

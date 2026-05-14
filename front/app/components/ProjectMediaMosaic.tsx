@@ -226,6 +226,23 @@ function MediaTile({
     )
   }
 
+  if (isFileMedia(media)) {
+    return (
+      <a
+        href={media.image_url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex h-full w-full flex-col items-center justify-center gap-2 bg-zinc-50 px-4 text-center text-zinc-500 transition hover:bg-zinc-100"
+      >
+        <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <path d="M14 2v6h6" />
+        </svg>
+        <span className="text-sm font-medium">Abrir arquivo</span>
+      </a>
+    )
+  }
+
   return (
     <Image
       src={media.image_url}
@@ -256,4 +273,8 @@ function ArrowRightIcon() {
 function isVideoMedia(media: ProjectMedia) {
   if (media.media_type === 'video') return true
   return /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(media.image_url)
+}
+
+function isFileMedia(media: ProjectMedia) {
+  return media.media_type === 'file'
 }

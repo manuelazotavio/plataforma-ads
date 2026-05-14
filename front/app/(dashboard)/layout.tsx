@@ -15,10 +15,16 @@ type UserProfile = {
   name: string
   avatar_url: string | null
   semester: number | null
+  semester_confirmed_at: string | null
+  semester_confirmation_snoozed_until: string | null
   role: string | null
   suspended: boolean
   onboarding_completed: boolean
 }
+
+const SEMESTER_CONFIRMATION_INTERVAL_DAYS = 180
+const SEMESTER_CONFIRMATION_SNOOZE_DAYS = 30
+const MAX_STUDENT_SEMESTER = 8
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -28,6 +34,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [semesterPromptOpen, setSemesterPromptOpen] = useState(false)
+  const [semesterPromptSaving, setSemesterPromptSaving] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -43,7 +51,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       setUserId(authUser.id)
       const { data: profile } = await supabase
         .from('users')
-        .select('name, avatar_url, semester, role, suspended, onboarding_completed')
+        .select('name, avatar_url, semester, semester_confirmed_at, semester_confirmation_snoozed_until, role, suspended, onboarding_completed')
         .eq('id', authUser.id)
         .single()
       if (profile?.suspended) {
@@ -56,6 +64,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         return
       }
       setUser(profile)
+      setSemesterPromptOpen(shouldAskSemesterConfirmation(profile))
       setLoading(false)
     }
     loadUser()
@@ -67,6 +76,49 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       setUserMenuOpen(false)
     })
   }, [pathname])
+
+  async function confirmNextSemester() {
+    if (!userId || !user?.semester) return
+    const nextSemester = Math.min(user.semester + 1, MAX_STUDENT_SEMESTER)
+    setSemesterPromptSaving(true)
+
+    const { error } = await supabase
+      .from('users')
+      .update({
+        semester: nextSemester,
+        semester_confirmation_snoozed_until: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', userId)
+
+    setSemesterPromptSaving(false)
+    if (error) return
+
+    setUser((current) => current ? {
+      ...current,
+      semester: nextSemester,
+      semester_confirmed_at: new Date().toISOString(),
+      semester_confirmation_snoozed_until: null,
+    } : current)
+    setSemesterPromptOpen(false)
+  }
+
+  async function snoozeSemesterConfirmation() {
+    if (!userId) return
+    const snoozedUntil = addDays(new Date(), SEMESTER_CONFIRMATION_SNOOZE_DAYS).toISOString()
+    setSemesterPromptSaving(true)
+
+    const { error } = await supabase
+      .from('users')
+      .update({ semester_confirmation_snoozed_until: snoozedUntil })
+      .eq('id', userId)
+
+    setSemesterPromptSaving(false)
+    if (error) return
+
+    setUser((current) => current ? { ...current, semester_confirmation_snoozed_until: snoozedUntil } : current)
+    setSemesterPromptOpen(false)
+  }
 
   useEffect(() => {
     function close(e: MouseEvent) {
@@ -180,6 +232,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </header>
 
+        {semesterPromptOpen && user?.semester && (
+          <SemesterConfirmationModal
+            currentSemester={user.semester}
+            nextSemester={Math.min(user.semester + 1, MAX_STUDENT_SEMESTER)}
+            saving={semesterPromptSaving}
+            onConfirm={confirmNextSemester}
+            onSnooze={snoozeSemesterConfirmation}
+          />
+        )}
+
         <main className="flex-1 overflow-y-auto overflow-x-hidden bg-white">
           <div className="flex flex-col min-h-full">
             <div className="flex-1">
@@ -219,6 +281,79 @@ const protectedPathPrefixes = [
 
 function isProtectedPath(pathname: string) {
   return protectedPathPrefixes.some((path) => pathname === path || pathname.startsWith(`${path}/`))
+}
+
+function shouldAskSemesterConfirmation(profile: UserProfile | null | undefined) {
+  if (!profile) return false
+  if (profile.role === 'professor') return false
+  if (!profile.semester || profile.semester >= MAX_STUDENT_SEMESTER) return false
+
+  const now = new Date()
+  if (profile.semester_confirmation_snoozed_until && new Date(profile.semester_confirmation_snoozed_until) > now) {
+    return false
+  }
+
+  const confirmedAt = profile.semester_confirmed_at ? new Date(profile.semester_confirmed_at) : null
+  if (!confirmedAt || Number.isNaN(confirmedAt.getTime())) return true
+
+  return addDays(confirmedAt, SEMESTER_CONFIRMATION_INTERVAL_DAYS) <= now
+}
+
+function addDays(date: Date, days: number) {
+  const next = new Date(date)
+  next.setDate(next.getDate() + days)
+  return next
+}
+
+function SemesterConfirmationModal({
+  currentSemester,
+  nextSemester,
+  saving,
+  onConfirm,
+  onSnooze,
+}: {
+  currentSemester: number
+  nextSemester: number
+  saving: boolean
+  onConfirm: () => void
+  onSnooze: () => void
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" role="dialog" aria-modal="true">
+      <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl">
+        <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-[#2F9E41]/10 text-[#2F9E41]">
+          <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M8 2v4" />
+            <path d="M16 2v4" />
+            <rect width={18} height={18} x={3} y={4} rx={2} />
+            <path d="M3 10h18" />
+          </svg>
+        </div>
+        <h2 className="text-lg font-semibold text-zinc-900">Atualizar semestre?</h2>
+        <p className="mt-2 text-sm leading-relaxed text-zinc-500">
+          Você está marcado como {currentSemester}º semestre. Já podemos atualizar seu perfil para o {nextSemester}º semestre?
+        </p>
+        <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+          <button
+            type="button"
+            onClick={onSnooze}
+            disabled={saving}
+            className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50 disabled:opacity-50"
+          >
+            Agora não
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={saving}
+            className="rounded-lg bg-[#2F9E41] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
+          >
+            {saving ? 'Atualizando...' : `Sim, ir para o ${nextSemester}º`}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 

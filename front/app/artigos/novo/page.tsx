@@ -6,6 +6,10 @@ import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import RichTextEditor from '@/app/components/RichTextEditor'
+import TechnologyTagPicker from '@/app/components/TechnologyTagPicker'
+import { fileKind, formatFileSize, getFileExtension } from '@/app/lib/files'
+
+type ArticleAttachment = { type: 'image' | 'file'; url: string; name: string; size: number }
 
 function toSlug(text: string) {
   return text
@@ -15,6 +19,14 @@ function toSlug(text: string) {
     .replace(/[^a-z0-9\s-]/g, '')
     .trim()
     .replace(/\s+/g, '-')
+}
+
+function escapeHtml(text: string) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
 }
 
 export default function NovoArtigoPage() {
@@ -27,14 +39,16 @@ export default function NovoArtigoPage() {
   const [summary, setSummary] = useState('')
   const [content, setContent] = useState('')
   const [coverUrl, setCoverUrl] = useState('')
+  const [attachments, setAttachments] = useState<ArticleAttachment[]>([])
   const [tags, setTags] = useState<string[]>([])
-  const [newTag, setNewTag] = useState('')
 
   const [uploadingCover, setUploadingCover] = useState(false)
+  const [uploadingAttachments, setUploadingAttachments] = useState(false)
   const [savingAs, setSavingAs] = useState<'rascunho' | 'pendente' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const attachmentInputRef = useRef<HTMLInputElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
 
   useEffect(() => {
@@ -54,14 +68,13 @@ export default function NovoArtigoPage() {
     setSlugEdited(true)
   }
 
-  async function handleCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
+  async function uploadCoverFile(file: File | undefined) {
     if (!file || !userId) return
 
     setUploadingCover(true)
     setError(null)
 
-    const ext = file.name.split('.').pop()
+    const ext = getFileExtension(file)
     const path = `${userId}/${Date.now()}.${ext}`
 
     const { error: uploadError } = await supabase.storage
@@ -79,15 +92,83 @@ export default function NovoArtigoPage() {
     setUploadingCover(false)
   }
 
-  function addTag() {
-    const trimmed = newTag.trim()
-    if (!trimmed || tags.includes(trimmed)) return
-    setTags((prev) => [...prev, trimmed])
-    setNewTag('')
+  async function handleCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
+    await uploadCoverFile(e.target.files?.[0])
+    e.target.value = ''
   }
 
-  function removeTag(tag: string) {
-    setTags((prev) => prev.filter((t) => t !== tag))
+  async function handleCoverDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    await uploadCoverFile(Array.from(e.dataTransfer.files ?? []).find((file) => file.type.startsWith('image/')))
+  }
+
+  async function handleCoverPaste(e: React.ClipboardEvent<HTMLDivElement>) {
+    const image = Array.from(e.clipboardData.files ?? []).find((file) => file.type.startsWith('image/'))
+    if (!image) return
+    e.preventDefault()
+    await uploadCoverFile(image)
+  }
+
+  async function uploadArticleFiles(files: File[]) {
+    if (!files.length || !userId) return
+    setUploadingAttachments(true)
+    setError(null)
+
+    const uploaded: ArticleAttachment[] = []
+
+    for (const file of files) {
+      const kind = fileKind(file)
+      const ext = getFileExtension(file)
+      const path = `articles/${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('forum-media')
+        .upload(path, file, { upsert: true })
+
+      if (uploadError) {
+        setError(`Erro ao enviar ${file.name}: ${uploadError.message}`)
+        continue
+      }
+
+      const { data: { publicUrl } } = supabase.storage.from('forum-media').getPublicUrl(path)
+      uploaded.push({ type: kind === 'image' ? 'image' : 'file', url: publicUrl, name: file.name, size: file.size })
+    }
+
+    setAttachments((prev) => [...prev, ...uploaded])
+    setUploadingAttachments(false)
+  }
+
+  async function handleArticleFilesChange(e: React.ChangeEvent<HTMLInputElement>) {
+    await uploadArticleFiles(Array.from(e.target.files ?? []))
+    e.target.value = ''
+  }
+
+  async function handleArticleFilesDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    await uploadArticleFiles(Array.from(e.dataTransfer.files ?? []))
+  }
+
+  async function handleArticleFilesPaste(e: React.ClipboardEvent<HTMLDivElement>) {
+    const files = Array.from(e.clipboardData.files ?? [])
+    if (!files.length) return
+    e.preventDefault()
+    await uploadArticleFiles(files)
+  }
+
+  function removeAttachment(index: number) {
+    setAttachments((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  function contentWithAttachments() {
+    if (attachments.length === 0) return content
+    const blocks = attachments.map((file) => {
+      if (file.type === 'image') {
+        return `<figure><img src="${file.url}" alt="${escapeHtml(file.name)}" /><figcaption>${escapeHtml(file.name)}</figcaption></figure>`
+      }
+      return `<p><a href="${file.url}" target="_blank" rel="noopener noreferrer">${escapeHtml(file.name)}</a> <span>(${formatFileSize(file.size)})</span></p>`
+    }).join('')
+
+    return `${content}<h2>Anexos</h2>${blocks}`
   }
 
   async function save(status: 'rascunho' | 'pendente') {
@@ -105,7 +186,7 @@ export default function NovoArtigoPage() {
         title,
         slug,
         summary,
-        content,
+        content: contentWithAttachments(),
         cover_image_url: coverUrl || null,
         status,
         published_at: null,
@@ -146,6 +227,10 @@ export default function NovoArtigoPage() {
             <label className="text-sm font-medium text-zinc-700">Capa</label>
             <div
               onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={handleCoverDrop}
+              onPaste={handleCoverPaste}
+              tabIndex={0}
               className="relative w-full h-48 rounded-xl border-2 border-dashed border-zinc-300 bg-white overflow-hidden cursor-pointer hover:border-zinc-400 transition flex items-center justify-center"
             >
               {coverUrl ? (
@@ -154,7 +239,7 @@ export default function NovoArtigoPage() {
                 <div className="flex flex-col items-center gap-2 text-zinc-400 select-none">
                   <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
                   <span className="text-sm">
-                    {uploadingCover ? 'Enviando...' : 'Clique para adicionar uma capa'}
+                    {uploadingCover ? 'Enviando...' : 'Clique, arraste ou cole uma capa'}
                   </span>
                 </div>
               )}
@@ -221,43 +306,40 @@ export default function NovoArtigoPage() {
             </div>
           </Field>
 
-          <Field label="Tags">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                className={inputClass + ' flex-1'}
-                placeholder="Ex: React, Carreira..."
-              />
+          <Field label="Anexos">
+            <div
+              className="rounded-xl border-2 border-dashed border-zinc-300 px-4 py-5 text-center transition focus-within:border-zinc-500"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={handleArticleFilesDrop}
+              onPaste={handleArticleFilesPaste}
+              tabIndex={0}
+            >
               <button
                 type="button"
-                onClick={addTag}
-                className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 transition"
+                onClick={() => attachmentInputRef.current?.click()}
+                disabled={uploadingAttachments}
+                className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-50"
               >
-                Adicionar
+                {uploadingAttachments ? 'Enviando...' : 'Adicionar arquivos'}
               </button>
+              <p className="mt-2 text-xs text-zinc-400">Clique, arraste ou cole imagens e arquivos. Eles entram no final do artigo.</p>
             </div>
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="flex items-center gap-1 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700"
-                  >
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => removeTag(tag)}
-                      className="text-zinc-400 hover:text-zinc-700 transition"
-                    >
-                      ×
-                    </button>
-                  </span>
+            <input ref={attachmentInputRef} type="file" multiple className="hidden" onChange={handleArticleFilesChange} />
+            {attachments.length > 0 && (
+              <div className="mt-2 flex flex-col gap-2">
+                {attachments.map((file, index) => (
+                  <div key={`${file.url}-${index}`} className="flex items-center gap-3 rounded-lg border border-zinc-200 px-3 py-2">
+                    <span className="flex-1 truncate text-sm text-zinc-700">{file.name}</span>
+                    <span className="text-xs text-zinc-400">{formatFileSize(file.size)}</span>
+                    <button type="button" onClick={() => removeAttachment(index)} className="text-zinc-400 transition hover:text-zinc-700">×</button>
+                  </div>
                 ))}
               </div>
             )}
+          </Field>
+
+          <Field label="Tags">
+            <TechnologyTagPicker value={tags} onChange={setTags} />
           </Field>
 
           {error && (

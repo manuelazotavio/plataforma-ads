@@ -7,9 +7,10 @@ import Image from 'next/image'
 import Select from '@/app/components/Select'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
+import { fileKind, formatFileSize, getFileExtension } from '@/app/lib/files'
 
 type Category = { id: string; name: string }
-type Attachment = { type: 'image' | 'video'; url: string }
+type Attachment = { type: 'image' | 'video' | 'file'; url: string; name?: string; size?: number }
 
 export default function NovoTopicoPage() {
   const router = useRouter()
@@ -31,25 +32,44 @@ export default function NovoTopicoPage() {
     })
   }, [])
 
-  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? [])
+  async function uploadAttachmentFiles(files: File[]) {
     if (!files.length) return
     setUploading(true)
+    setError(null)
 
     const user = await getAuthUser()
     if (!user) { setUploading(false); return }
 
     for (const file of files) {
-      const ext = file.name.split('.').pop()
+      const kind = fileKind(file)
+      const ext = getFileExtension(file)
       const path = `forum/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
       const { error: uploadError } = await supabase.storage.from('forum-media').upload(path, file)
       if (!uploadError) {
         const { data: { publicUrl } } = supabase.storage.from('forum-media').getPublicUrl(path)
-        setAttachments(prev => [...prev, { type: 'image', url: publicUrl }])
+        setAttachments(prev => [...prev, { type: kind, url: publicUrl, name: file.name, size: file.size }])
+      } else {
+        setError(`Erro ao enviar ${file.name}: ${uploadError.message}`)
       }
     }
     setUploading(false)
+  }
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    await uploadAttachmentFiles(Array.from(e.target.files ?? []))
     e.target.value = ''
+  }
+
+  async function handleAttachmentDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    await uploadAttachmentFiles(Array.from(e.dataTransfer.files ?? []))
+  }
+
+  async function handleAttachmentPaste(e: React.ClipboardEvent<HTMLDivElement>) {
+    const files = Array.from(e.clipboardData.files ?? [])
+    if (!files.length) return
+    e.preventDefault()
+    await uploadAttachmentFiles(files)
   }
 
   function addVideo() {
@@ -140,8 +160,14 @@ export default function NovoTopicoPage() {
         </div>
 
         
-        <div className="flex flex-col gap-3">
-          <label className="text-sm font-medium text-zinc-700">Imagens e vídeos</label>
+        <div
+          className="flex flex-col gap-3 rounded-xl"
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={handleAttachmentDrop}
+          onPaste={handleAttachmentPaste}
+          tabIndex={0}
+        >
+          <label className="text-sm font-medium text-zinc-700">Imagens, vídeos e arquivos</label>
 
           <div className="flex flex-col gap-2">
             <button
@@ -155,9 +181,10 @@ export default function NovoTopicoPage() {
                 <circle cx={8.5} cy={8.5} r={1.5} />
                 <polyline points="21 15 16 10 5 21" />
               </svg>
-              {uploading ? 'Enviando...' : 'Adicionar imagem'}
+              {uploading ? 'Enviando...' : 'Adicionar arquivo'}
             </button>
-            <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} />
+            <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileUpload} />
+            <p className="text-xs text-zinc-400">Clique, arraste arquivos para esta área ou cole com Ctrl+V.</p>
 
             <div className="flex gap-2">
               <input
@@ -187,12 +214,23 @@ export default function NovoTopicoPage() {
                     <div className="relative w-full max-h-64 bg-zinc-100">
                       <Image src={att.url} alt="" width={800} height={400} className="w-full h-full object-contain max-h-64" />
                     </div>
-                  ) : (
+                  ) : att.type === 'video' ? (
                     <div className="flex items-center gap-3 px-4 py-3">
                       <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="text-zinc-400 shrink-0">
                         <polygon points="23 7 16 12 23 17 23 7" /><rect x={1} y={5} width={15} height={14} rx={2} ry={2} />
                       </svg>
                       <span className="text-xs text-zinc-600 truncate">{att.url}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3 px-4 py-3">
+                      <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="text-zinc-400 shrink-0">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <path d="M14 2v6h6" />
+                      </svg>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-zinc-700">{att.name ?? 'Arquivo'}</p>
+                        {att.size && <p className="text-xs text-zinc-400">{formatFileSize(att.size)}</p>}
+                      </div>
                     </div>
                   )}
                   <button

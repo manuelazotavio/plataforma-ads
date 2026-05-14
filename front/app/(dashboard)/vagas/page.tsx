@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
+import JobNotificationSubscribeButton from '@/app/components/JobNotificationSubscribeButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,9 +30,12 @@ export default async function VagasPage({
   return (
     <div className="px-4 md:px-6 py-8 w-full">
 
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-zinc-900">Oportunidades</h1>
-        <p className="text-sm text-zinc-500 mt-1">Estágios, bolsas e eventos externos para alunos de ADS.</p>
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-zinc-900">Oportunidades</h1>
+          <p className="text-sm text-zinc-500 mt-1">Estágios, bolsas e eventos externos para alunos de ADS.</p>
+        </div>
+        <JobNotificationSubscribeButton />
       </div>
       <div className="-mx-4 px-4 md:mx-0 md:px-0 mb-8">
         <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1 md:flex-wrap">
