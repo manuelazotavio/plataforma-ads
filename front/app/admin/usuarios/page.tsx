@@ -85,7 +85,10 @@ export default function AdminUsuariosPage() {
     })
 
     if (error || data?.error) {
-      setError('Erro ao excluir usuário: ' + (data?.error ?? error?.message ?? 'Erro desconhecido'))
+      const message = error?.message === 'Failed to send a request to the Edge Function'
+        ? 'Não foi possível chamar a Edge Function delete-user. Publique a function no Supabase e verifique o CORS.'
+        : data?.error ?? error?.message ?? 'Erro desconhecido'
+      setError('Erro ao excluir usuário: ' + message)
       setUpdatingId(null)
       return
     }
@@ -160,7 +163,7 @@ export default function AdminUsuariosPage() {
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-zinc-500 text-xs">{user.email ?? '—'}</td>
+                  <td className="px-4 py-3 text-zinc-500 text-xs">{user.email ?? '-'}</td>
                   <td className="px-4 py-3 text-zinc-400 text-xs">
                     {new Date(user.created_at).toLocaleDateString('pt-BR')}
                   </td>
