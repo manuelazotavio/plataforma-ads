@@ -313,15 +313,15 @@ export default function AdminVagasPage() {
                     job.is_active ? 'border-green-200 text-green-700' : 'border-amber-200 text-amber-700'
                   }`}>
                     <span className={`h-1.5 w-1.5 rounded-full ${job.is_active ? 'bg-green-500' : 'bg-amber-500'}`} />
-                    {job.is_active ? 'ativa' : 'pendente'}
+                    {job.is_active ? 'Ativa' : 'Pendente'}
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-1">
                   {job.job_type && (
-                    <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">{job.job_type}</span>
+                    <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs capitalize text-zinc-600">{job.job_type}</span>
                   )}
                   {job.work_mode && (
-                    <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">{job.work_mode}</span>
+                    <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs capitalize text-zinc-600">{job.work_mode}</span>
                   )}
                   {job.application_url && (
                     <a href={job.application_url} target="_blank" rel="noopener noreferrer" className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-[#2F9E41] hover:bg-green-100">
@@ -329,7 +329,7 @@ export default function AdminVagasPage() {
                     </a>
                   )}
                   {job.job_tags.map(({ tag_name }) => (
-                    <span key={tag_name} className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">{tag_name}</span>
+                    <span key={tag_name} className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs capitalize text-zinc-600">{tag_name}</span>
                   ))}
                 </div>
               </div>

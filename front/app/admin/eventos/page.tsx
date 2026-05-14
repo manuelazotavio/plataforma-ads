@@ -291,11 +291,11 @@ export default function AdminEventosPage() {
                 <div className="mt-2 flex flex-wrap gap-2">
                   <span className={`inline-flex items-center gap-1.5 rounded-full border bg-white px-2.5 py-1 text-[11px] font-semibold ${event.is_active ? 'border-green-200 text-green-700' : 'border-zinc-200 text-zinc-500'}`}>
                     <span className={`h-1.5 w-1.5 rounded-full ${event.is_active ? 'bg-green-500' : 'bg-zinc-400'}`} />
-                    {event.is_active ? 'publicado' : 'oculto'}
+                    {event.is_active ? 'Publicado' : 'Oculto'}
                   </span>
                   <span className={`inline-flex items-center gap-1.5 rounded-full border bg-white px-2.5 py-1 text-[11px] font-semibold ${event.registration_open ? 'border-blue-200 text-blue-700' : 'border-zinc-200 text-zinc-500'}`}>
                     <span className={`h-1.5 w-1.5 rounded-full ${event.registration_open ? 'bg-blue-500' : 'bg-zinc-400'}`} />
-                    inscrições {event.registration_open ? 'abertas' : 'encerradas'}
+                    Inscrições {event.registration_open ? 'Abertas' : 'Encerradas'}
                   </span>
                 </div>
               </div>

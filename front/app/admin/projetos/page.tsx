@@ -195,13 +195,13 @@ export default function AdminProjetosPage() {
                           status === 'reprovado' ? 'bg-red-500' :
                           'bg-amber-500'
                         }`} />
-                        {status}
+                        <span className="capitalize">{status}</span>
                       </span>
                     </div>
                     {project.project_tags.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {project.project_tags.map(({ tag_name }) => (
-                          <span key={tag_name} className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">
+                          <span key={tag_name} className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs capitalize text-zinc-600">
                             {tag_name}
                           </span>
                         ))}

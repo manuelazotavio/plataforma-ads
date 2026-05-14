@@ -156,7 +156,7 @@ export default async function ProjetosPage({
                     }
                     {project.is_featured && (
                       <span className="absolute top-2 left-2 rounded-full bg-amber-400 px-2 py-0.5 text-xs font-semibold text-amber-900">
-                        destaque
+                        Destaque
                       </span>
                     )}
                   </Link>
@@ -168,7 +168,7 @@ export default async function ProjetosPage({
                     {tags.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {tags.map(({ tag_name }) => (
-                          <span key={tag_name} className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">
+                          <span key={tag_name} className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs capitalize text-zinc-600">
                             {tag_name}
                           </span>
                         ))}

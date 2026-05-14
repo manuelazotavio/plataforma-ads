@@ -276,7 +276,7 @@ export default function PermissoesPage() {
                 <span className="w-3 h-3 rounded-full" style={{ backgroundColor: selectedRole.color }} />
                 <h1 className="text-xl font-bold text-zinc-900">{selectedRole.label}</h1>
                 {selectedRole.is_system && (
-                  <span className="text-xs font-medium text-zinc-400 bg-zinc-100 px-2 py-0.5 rounded-full">sistema</span>
+                  <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-400">Sistema</span>
                 )}
               </div>
               {selectedRole.description && (

@@ -19,10 +19,10 @@ type Article = {
 type Filter = 'pendentes' | 'publicados' | 'rejeitados' | 'todos'
 
 const statusConfig: Record<string, { label: string; class: string; dot: string }> = {
-  pendente:   { label: 'pendente',   class: 'border-amber-200 text-amber-700', dot: 'bg-amber-500' },
-  publicado:  { label: 'publicado',  class: 'border-green-200 text-green-700', dot: 'bg-green-500' },
-  rejeitado:  { label: 'rejeitado',  class: 'border-red-200 text-red-600', dot: 'bg-red-500' },
-  rascunho:   { label: 'rascunho',   class: 'border-zinc-200 text-zinc-500', dot: 'bg-zinc-400' },
+  pendente:   { label: 'Pendente',   class: 'border-amber-200 text-amber-700', dot: 'bg-amber-500' },
+  publicado:  { label: 'Publicado',  class: 'border-green-200 text-green-700', dot: 'bg-green-500' },
+  rejeitado:  { label: 'Rejeitado',  class: 'border-red-200 text-red-600', dot: 'bg-red-500' },
+  rascunho:   { label: 'Rascunho',   class: 'border-zinc-200 text-zinc-500', dot: 'bg-zinc-400' },
 }
 
 export default function AdminArtigosPage() {
@@ -138,7 +138,7 @@ export default function AdminArtigosPage() {
                     {article.article_tags.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {article.article_tags.map(({ tag_name }) => (
-                          <span key={tag_name} className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">
+                          <span key={tag_name} className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs capitalize text-zinc-600">
                             {tag_name}
                           </span>
                         ))}

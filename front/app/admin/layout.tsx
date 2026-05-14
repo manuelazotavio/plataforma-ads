@@ -18,6 +18,7 @@ const nav = [
   { href: '/admin', label: 'Visão geral', exact: true, icon: <IconGrid /> },
   { href: '/admin/usuarios', label: 'Usuários', icon: <IconUsers /> },
   { href: '/admin/projetos', label: 'Projetos', icon: <IconFolder /> },
+  { href: '/admin/curso', label: 'Curso', icon: <IconBook /> },
   { href: '/admin/tecnologias', label: 'Tecnologias', icon: <IconTags /> },
   { href: '/admin/matriz-curricular', label: 'Matriz Curricular', icon: <IconBook /> },
   { href: '/admin/artigos', label: 'Artigos', icon: <IconBook /> },

@@ -422,7 +422,7 @@ export default function PerfilPage() {
                 <h2 className="text-sm font-semibold text-zinc-900 mb-3">Habilidades</h2>
                 <div className="flex flex-wrap gap-2">
                   {skills.map((skill) => (
-                    <span key={skill} className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600">
+                    <span key={skill} className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium capitalize text-zinc-600">
                       {skill}
                     </span>
                   ))}
@@ -522,7 +522,7 @@ export default function PerfilPage() {
               {skills.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mb-4">
                   {skills.map((skill) => (
-                    <span key={skill} className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-600">
+                    <span key={skill} className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium capitalize text-zinc-600">
                       {skill}
                     </span>
                   ))}
@@ -714,7 +714,7 @@ export default function PerfilPage() {
             {skills.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {skills.map((skill) => (
-                  <span key={skill} className="flex items-center gap-1 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700">
+                  <span key={skill} className="flex items-center gap-1 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium capitalize text-zinc-700">
                     {skill}
                     <button type="button" onClick={() => removeSkill(skill)} className="text-zinc-400 hover:text-zinc-700 transition ml-0.5">×</button>
                   </span>

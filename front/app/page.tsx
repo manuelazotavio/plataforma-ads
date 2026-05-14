@@ -164,7 +164,7 @@ function ProjectsSection({ projects }: { projects: Project[] }) {
                 {tags.length > 0 && (
                   <div className="mt-auto flex flex-wrap gap-2">
                     {tags.slice(0, 3).map((tag) => (
-                      <span key={tag.tag_name} className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-sm text-zinc-600">
+                      <span key={tag.tag_name} className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-sm capitalize text-zinc-600">
                         {tag.tag_name}
                       </span>
                     ))}

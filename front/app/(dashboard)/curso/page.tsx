@@ -10,9 +10,10 @@ import {
   CurriculumSubject,
   groupCurriculumSubjects,
 } from '@/app/lib/curriculum'
+import { CLASS_SCHEDULE_PDF_KEY, COURSE_SETTINGS_TABLE } from '@/app/lib/courseSettings'
 
 export default async function CursoPage() {
-  const [{ data: professors }, { data: subjects, error: subjectsError }] = await Promise.all([
+  const [{ data: professors }, { data: subjects, error: subjectsError }, { data: scheduleSetting }] = await Promise.all([
     supabase
       .from('professors')
       .select('id, user_id, name, avatar_url, bio, cargo, years_at_if, email, whatsapp, linkedin, cnpq')
@@ -25,11 +26,17 @@ export default async function CursoPage() {
       .order('semester', { ascending: true })
       .order('display_order', { ascending: true })
       .order('name', { ascending: true }),
+    supabase
+      .from(COURSE_SETTINGS_TABLE)
+      .select('value')
+      .eq('key', CLASS_SCHEDULE_PDF_KEY)
+      .maybeSingle(),
   ])
 
   const curriculum = !subjectsError && subjects?.length
     ? groupCurriculumSubjects(subjects as CurriculumSubject[])
     : DEFAULT_CURRICULUM
+  const classSchedulePdfUrl = scheduleSetting?.value ?? null
 
   return (
     <div className="px-4 md:px-6 py-8 flex flex-col gap-12 w-full bg-white">
@@ -76,6 +83,25 @@ export default async function CursoPage() {
               ))}
             </ul>
           </div>
+
+          {classSchedulePdfUrl && (
+            <div className="rounded-xl border border-zinc-100 bg-zinc-50 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-zinc-900">Horário de aulas</p>
+                  <p className="mt-1 text-sm text-zinc-500">Consulte o documento oficial com os horários das turmas.</p>
+                </div>
+                <a
+                  href={classSchedulePdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex justify-center rounded-lg bg-[#2F9E41] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+                >
+                  Abrir PDF
+                </a>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

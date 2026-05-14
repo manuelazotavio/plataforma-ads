@@ -126,7 +126,7 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {tags.slice(0, 2).map(({ tag_name }) => (
-                      <span key={tag_name} className="text-xs text-zinc-500 bg-zinc-100 rounded-full px-2 py-0.5">
+                      <span key={tag_name} className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs capitalize text-zinc-500">
                         {tag_name}
                       </span>
                     ))}

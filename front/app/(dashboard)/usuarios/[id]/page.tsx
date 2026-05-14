@@ -210,7 +210,7 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
               <h2 className="text-sm font-semibold text-zinc-900 mb-3">Habilidades</h2>
               <div className="flex flex-wrap gap-2">
                 {skillNames.map((skill) => (
-                  <span key={skill} className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600">
+                  <span key={skill} className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium capitalize text-zinc-600">
                     {skill}
                   </span>
                 ))}

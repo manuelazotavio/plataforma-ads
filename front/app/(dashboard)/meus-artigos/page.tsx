@@ -127,14 +127,14 @@ export default function MeusArtigosPage() {
                           article.status === 'pendente' ? 'bg-amber-500' :
                           'bg-zinc-400'
                         }`} />
-                        {article.status}
+                        <span className="capitalize">{article.status}</span>
                       </span>
                     </div>
                     <p className="text-xs text-zinc-500 line-clamp-2">{article.summary}</p>
                     {article.article_tags.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2">
                         {article.article_tags.map(({ tag_name }) => (
-                          <span key={tag_name} className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">
+                          <span key={tag_name} className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs capitalize text-zinc-600">
                             {tag_name}
                           </span>
                         ))}

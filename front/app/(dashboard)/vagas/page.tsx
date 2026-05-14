@@ -98,7 +98,7 @@ export default async function VagasPage({
                   {tags.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mt-0.5">
                       {tags.map(({ tag_name }) => (
-                        <span key={tag_name} className="text-xs text-zinc-500 border border-zinc-200 rounded-full px-2.5 py-0.5">
+                        <span key={tag_name} className="rounded-full border border-zinc-200 px-2.5 py-0.5 text-xs capitalize text-zinc-500">
                           {tag_name}
                         </span>
                       ))}

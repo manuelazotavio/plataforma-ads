@@ -101,7 +101,7 @@ export default async function ArtigosPage({
                       {tags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
                           {tags.map(({ tag_name }) => (
-                            <span key={tag_name} className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600">
+                            <span key={tag_name} className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs capitalize text-zinc-600">
                               {tag_name}
                             </span>
                           ))}

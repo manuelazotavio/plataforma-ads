@@ -478,7 +478,7 @@ export default function OnboardingPage() {
                     <p className="text-sm font-medium text-zinc-800">{item.q}</p>
                     <div className="mt-1.5 flex gap-1.5 flex-wrap">
                       {item.tags.map((t) => (
-                        <span key={t} className="rounded-full bg-zinc-200 text-zinc-600 text-xs px-2 py-0.5">{t}</span>
+                        <span key={t} className="rounded-full bg-zinc-200 px-2 py-0.5 text-xs capitalize text-zinc-600">{t}</span>
                       ))}
                     </div>
                   </div>

@@ -124,7 +124,7 @@ export default function AdminUsuariosPage() {
                       {isSelf && <span className="text-xs text-zinc-400">(você)</span>}
                       {user.suspended && (
                         <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-                          suspenso
+                          Suspenso
                         </span>
                       )}
                     </div>

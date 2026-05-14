@@ -44,7 +44,7 @@ export default async function ArtigoDetalhe({ params }: { params: Promise<{ id: 
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-4">
               {tags.map(({ tag_name }) => (
-                <span key={tag_name} className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600">
+                <span key={tag_name} className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium capitalize text-zinc-600">
                   {tag_name}
                 </span>
               ))}

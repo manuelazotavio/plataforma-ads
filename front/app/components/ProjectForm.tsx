@@ -324,7 +324,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
                 ×
               </button>
               <span className="absolute bottom-1 left-1 rounded-full bg-black/60 text-white text-xs px-1.5 py-0.5">
-                {i === 0 ? 'capa' : media.type === 'video' ? '▶ vídeo' : media.type === 'file' ? 'arquivo' : ''}
+                {i === 0 ? 'Capa' : media.type === 'video' ? '▶ Vídeo' : media.type === 'file' ? 'Arquivo' : ''}
               </span>
             </div>
           ))}
