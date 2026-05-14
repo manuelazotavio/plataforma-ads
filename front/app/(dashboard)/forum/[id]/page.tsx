@@ -357,7 +357,7 @@ export default function ForumTopicPage() {
       .eq('id', pendingDelete.id)
 
     if (error) {
-      setModerationError('Nao foi possivel remover esta resposta. Verifique as permissoes de moderacao no banco.')
+      setModerationError('Não foi possível remover esta resposta. Verifique as permissões de moderação no banco.')
       setDeletingReplyId(null)
       return
     }

@@ -346,9 +346,9 @@ function LevelsModal({
         <div className="mb-4 flex items-start justify-between gap-4">
           <div>
             <h3 id="levels-modal-title" className="text-base font-semibold text-zinc-900">
-              Niveis de XP
+              Níveis de XP
             </h3>
-            <p className="mt-0.5 text-xs text-zinc-400">Veja o que cada nivel representa.</p>
+            <p className="mt-0.5 text-xs text-zinc-400">Veja o que cada nível representa.</p>
           </div>
           <button
             type="button"
@@ -385,17 +385,17 @@ function LevelsModal({
                     </span>
                   </div>
                   <p className="text-xs leading-relaxed text-zinc-500">
-                    {level.description ?? 'Descricao ainda nao cadastrada para este nivel.'}
+                    {level.description ?? 'Descrição ainda não cadastrada para este nível.'}
                   </p>
                   {isCurrent && (
-                    <p className="mt-2 text-[11px] font-semibold text-[#2F9E41]">Seu nivel atual</p>
+                    <p className="mt-2 text-[11px] font-semibold text-[#2F9E41]">Seu nível atual</p>
                   )}
                 </div>
               )
             })
           ) : (
             <div className="rounded-xl border border-zinc-100 px-3 py-4 text-sm text-zinc-500">
-              Nenhum nivel cadastrado ainda.
+              Nenhum nível cadastrado ainda.
             </div>
           )}
         </div>

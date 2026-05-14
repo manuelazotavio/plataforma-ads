@@ -56,7 +56,7 @@ export default function AdminProjetosPage() {
       .single()
 
     if (error || !data?.approved) {
-      setActionError(error?.message ?? 'NÃ£o foi possÃ­vel aprovar o projeto. Verifique as permissÃµes no Supabase.')
+      setActionError(error?.message ?? 'Não foi possível aprovar o projeto. Verifique as permissões no Supabase.')
       setUpdatingId(null)
       return
     }
@@ -76,7 +76,7 @@ export default function AdminProjetosPage() {
       .single()
 
     if (error || !data) {
-      setActionError(error?.message ?? 'NÃ£o foi possÃ­vel revogar a aprovaÃ§Ã£o do projeto.')
+      setActionError(error?.message ?? 'Não foi possível revogar a aprovação do projeto.')
       setUpdatingId(null)
       return
     }
@@ -98,7 +98,7 @@ export default function AdminProjetosPage() {
       .single()
 
     if (error || !data) {
-      setActionError(error?.message ?? 'NÃ£o foi possÃ­vel reprovar o projeto.')
+      setActionError(error?.message ?? 'Não foi possível reprovar o projeto.')
       setUpdatingId(null)
       return
     }

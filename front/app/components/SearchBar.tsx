@@ -18,7 +18,7 @@ const TYPE_LABEL: Record<ResultType, string> = {
   project:     'Projeto',
   article:     'Artigo',
   forum_topic: 'Fórum',
-  user:        'Usuario',
+  user:        'Usuário',
   page:        'Página',
 }
 

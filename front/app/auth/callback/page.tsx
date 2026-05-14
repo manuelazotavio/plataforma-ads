@@ -18,7 +18,7 @@ export default function AuthCallbackPage() {
       if (!active) return
 
       if (!authUser) {
-        setError('Nao foi possivel concluir o login com Google.')
+        setError('Não foi possível concluir o login com Google.')
         return
       }
 
@@ -31,14 +31,14 @@ export default function AuthCallbackPage() {
       if (!active) return
 
       if (profileError) {
-        setError('Login feito, mas nao foi possivel verificar seu perfil: ' + profileError.message)
+        setError('Login feito, mas não foi possível verificar seu perfil: ' + profileError.message)
         return
       }
 
       if (!profile) {
         const metadata = authUser.user_metadata as Record<string, string | undefined>
         const name =
-          metadata.full_name || metadata.name || authUser.email?.split('@')[0] || 'Usuario'
+          metadata.full_name || metadata.name || authUser.email?.split('@')[0] || 'Usuário'
         const avatarUrl = metadata.avatar_url || metadata.picture || null
 
         const { error: insertError } = await supabase.from('users').insert({
@@ -53,7 +53,7 @@ export default function AuthCallbackPage() {
         if (!active) return
 
         if (insertError) {
-          setError('Login feito, mas nao foi possivel criar seu perfil: ' + insertError.message)
+          setError('Login feito, mas não foi possível criar seu perfil: ' + insertError.message)
           return
         }
       }
@@ -73,7 +73,7 @@ export default function AuthCallbackPage() {
       <div className="w-full max-w-sm rounded-2xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
         {error ? (
           <>
-            <h1 className="text-xl font-semibold text-zinc-900">Nao foi possivel entrar</h1>
+            <h1 className="text-xl font-semibold text-zinc-900">Não foi possível entrar</h1>
             <p className="mt-3 text-sm text-zinc-600">{error}</p>
             <Link
               href="/login"
