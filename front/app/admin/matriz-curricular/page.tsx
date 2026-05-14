@@ -303,7 +303,7 @@ export default function AdminMatrizCurricularPage() {
             value={form.workload_hours}
             onChange={(e) => setForm((prev) => ({ ...prev, workload_hours: e.target.value }))}
             className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
-            placeholder="Ex: 33,5"
+            placeholder="Ex: 66,7"
           />
         </label>
 

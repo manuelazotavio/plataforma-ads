@@ -125,7 +125,7 @@ export default async function ProjetosPage({
             <p className="text-lg">Nenhum projeto encontrado.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
             {projects.map((project) => {
               const cover = (project.project_images as { image_url: string; display_order: number; media_type?: string | null }[])
                 .sort((a, b) => a.display_order - b.display_order)[0]
@@ -137,7 +137,7 @@ export default async function ProjetosPage({
                   key={project.id}
                   className="bg-white rounded-2xl border border-zinc-200 overflow-hidden flex flex-col hover:border-zinc-300 hover:shadow-sm transition"
                 >
-                  <Link href={`/projetos/${project.id}`} className="relative h-44 bg-zinc-100">
+                  <Link href={`/projetos/${project.id}`} className="relative h-56 bg-zinc-100 sm:h-72">
                     {cover
                       ? isVideoMedia(cover)
                         ? <video src={cover.image_url} className="h-full w-full object-cover" autoPlay muted loop playsInline />
@@ -162,8 +162,8 @@ export default async function ProjetosPage({
                   </Link>
 
                   <div className="p-4 flex flex-col gap-2 flex-1">
-                    <Link href={`/projetos/${project.id}`} className="text-sm font-semibold text-zinc-900 hover:text-[#2F9E41] transition">{project.title}</Link>
-                    <Link href={`/projetos/${project.id}`} className="text-xs text-zinc-500 line-clamp-2 flex-1 hover:text-zinc-700 transition">{project.description}</Link>
+                    <Link href={`/projetos/${project.id}`} className="text-base font-semibold text-zinc-900 transition hover:text-[#2F9E41]">{project.title}</Link>
+                    <Link href={`/projetos/${project.id}`} className="line-clamp-3 flex-1 text-sm leading-relaxed text-zinc-500 transition hover:text-zinc-700">{project.description}</Link>
 
                     {tags.length > 0 && (
                       <div className="flex flex-wrap gap-1">
