@@ -116,11 +116,12 @@ export default function DatePicker({
 
   useEffect(() => {
     if (open) {
-      const d = parseISO(value)
+      const typedISO = parseTypedDate(typed)
+      const d = typedISO ? parseISO(typedISO) : parseISO(value)
       setVy(d?.getFullYear() ?? today.getFullYear())
       setVm(d?.getMonth() ?? today.getMonth())
     }
-  }, [open, value])
+  }, [open, value, typed])
 
   useEffect(() => {
     if (!open) return
@@ -156,6 +157,19 @@ export default function DatePicker({
     setTyped(formatInput(value))
   }
 
+  function handleTypedChange(nextTyped: string) {
+    setTyped(nextTyped)
+    const parsed = parseTypedDate(nextTyped)
+    if (parsed !== null) {
+      onChange(parsed)
+      if (parsed) {
+        const d = parseISO(parsed)
+        setVy(d?.getFullYear() ?? today.getFullYear())
+        setVm(d?.getMonth() ?? today.getMonth())
+      }
+    }
+  }
+
   const grid = buildGrid(vy, vm)
   const cls = className ?? DEFAULT_CLS
 
@@ -166,7 +180,7 @@ export default function DatePicker({
           type="text"
           disabled={disabled}
           value={typed}
-          onChange={(e) => setTyped(e.target.value)}
+          onChange={(e) => handleTypedChange(e.target.value)}
           onFocus={() => !disabled && setOpen(true)}
           onBlur={commitTypedDate}
           onKeyDown={(e) => {
@@ -208,20 +222,20 @@ export default function DatePicker({
       </div>
 
       {open && (
-        <div className="absolute top-full left-0 mt-1.5 z-50 w-80 max-w-[calc(100vw-2rem)] select-none rounded-2xl border border-zinc-100 bg-white shadow-2xl">
-          <div className="flex items-center justify-between px-4 pt-4 pb-3">
+        <div className="absolute top-full left-0 mt-1.5 z-50 w-72 max-w-[calc(100vw-2rem)] select-none rounded-xl border border-zinc-100 bg-white shadow-2xl">
+          <div className="flex items-center justify-between px-3 pt-3 pb-2">
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={prev}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100 transition"
+              className="flex h-7 w-7 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100 transition"
             >
               <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                 <path d="M15 18l-6-6 6-6" />
               </svg>
             </button>
 
-            <span className="text-sm font-semibold text-zinc-800 tracking-wide">
+            <span className="text-xs font-semibold text-zinc-800 tracking-wide">
               {MONTHS_PT[vm]} {vy}
             </span>
 
@@ -229,7 +243,7 @@ export default function DatePicker({
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={next}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100 transition"
+              className="flex h-7 w-7 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100 transition"
             >
               <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 18l6-6-6-6" />
@@ -237,18 +251,18 @@ export default function DatePicker({
             </button>
           </div>
 
-          <div className="grid grid-cols-7 px-3 pb-1">
+          <div className="grid grid-cols-7 px-2 pb-1">
             {WEEK_PT.map((w) => (
               <span
                 key={w}
-                className="flex h-8 items-center justify-center text-[11px] font-medium text-zinc-400"
+                className="flex h-6 items-center justify-center text-[10px] font-medium text-zinc-400"
               >
                 {w}
               </span>
             ))}
           </div>
 
-          <div className="grid grid-cols-7 gap-y-0.5 px-3 pb-3">
+          <div className="grid grid-cols-7 gap-y-0.5 px-2 pb-2">
             {grid.map(({ d, cur }) => {
               const iso = toISO(d)
               const isSelected = iso === value
@@ -261,7 +275,7 @@ export default function DatePicker({
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => { onChange(iso); setTyped(formatInput(iso)); setOpen(false) }}
                   className={[
-                    'flex h-9 w-9 mx-auto items-center justify-center rounded-full text-sm transition',
+                    'flex h-8 w-8 mx-auto items-center justify-center rounded-full text-xs transition',
                     isSelected
                       ? 'bg-[#2F9E41] text-white font-semibold shadow-sm'
                       : isToday
@@ -278,7 +292,7 @@ export default function DatePicker({
           </div>
 
           {value && (
-            <div className="border-t border-zinc-100 px-4 py-2.5 flex items-center justify-between">
+            <div className="border-t border-zinc-100 px-3 py-2 flex items-center justify-between">
               <span className="text-xs text-zinc-500">{formatLongPT(value)}</span>
               <button
                 type="button"

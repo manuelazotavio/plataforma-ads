@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Select from '@/app/components/Select'
 import DatePicker from '@/app/components/DatePicker'
 import { supabase } from '@/app/lib/supabase'
@@ -46,8 +46,10 @@ export default function AdminEventosPage() {
   const [editing, setEditing] = useState<Event | null>(null)
   const [form, setForm] = useState(empty())
   const [saving, setSaving] = useState(false)
+  const [uploadingBanner, setUploadingBanner] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
+  const bannerInputRef = useRef<HTMLInputElement>(null)
 
   async function load() {
     const { data } = await supabase
@@ -108,6 +110,38 @@ export default function AdminEventosPage() {
   async function toggleField(id: string, field: 'is_active' | 'registration_open', value: boolean) {
     await supabase.from('events').update({ [field]: value }).eq('id', id)
     setEvents((prev) => prev.map((e) => e.id === id ? { ...e, [field]: value } : e))
+  }
+
+  async function uploadBanner(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      alert('Envie uma imagem.')
+      return
+    }
+
+    setUploadingBanner(true)
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+    const path = `eventos/evento-${Date.now()}.${ext}`
+    const { error } = await supabase.storage
+      .from('covers')
+      .upload(path, file, {
+        cacheControl: '3600',
+        upsert: true,
+        contentType: file.type,
+      })
+
+    if (error) {
+      alert('Erro ao enviar imagem: ' + error.message)
+      setUploadingBanner(false)
+      return
+    }
+
+    const { data: { publicUrl } } = supabase.storage.from('covers').getPublicUrl(path)
+    setForm((current) => ({ ...current, banner_url: publicUrl }))
+    setUploadingBanner(false)
   }
 
   async function deleteEvent(id: string) {
@@ -214,13 +248,50 @@ export default function AdminEventosPage() {
                 />
               </Field>
 
-              <Field label="URL do banner">
-                <input
-                  value={form.banner_url ?? ''}
-                  onChange={(e) => setForm({ ...form, banner_url: e.target.value })}
-                  className={input}
-                  placeholder="https://..."
-                />
+              <Field label="Foto do evento">
+                <div className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+                  {form.banner_url ? (
+                    <div
+                      role="img"
+                      aria-label="Foto do evento"
+                      className="h-40 overflow-hidden rounded-lg border border-zinc-200 bg-white bg-cover bg-center"
+                      style={{ backgroundImage: `url(${form.banner_url})` }}
+                    />
+                  ) : (
+                    <div className="flex h-32 items-center justify-center rounded-lg border border-dashed border-zinc-300 bg-white text-sm text-zinc-400">
+                      Nenhuma foto enviada
+                    </div>
+                  )}
+
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <button
+                      type="button"
+                      onClick={() => bannerInputRef.current?.click()}
+                      disabled={uploadingBanner}
+                      className="rounded-lg bg-[#2F9E41] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
+                    >
+                      {uploadingBanner ? 'Enviando...' : form.banner_url ? 'Trocar foto' : 'Enviar foto'}
+                    </button>
+                    {form.banner_url && (
+                      <button
+                        type="button"
+                        onClick={() => setForm({ ...form, banner_url: '' })}
+                        disabled={uploadingBanner}
+                        className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50 disabled:opacity-50"
+                      >
+                        Remover foto
+                      </button>
+                    )}
+                  </div>
+
+                  <input
+                    ref={bannerInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={uploadBanner}
+                  />
+                </div>
               </Field>
 
               <div className="flex flex-col gap-3 sm:flex-row sm:gap-6">
