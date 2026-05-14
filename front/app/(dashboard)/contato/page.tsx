@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Select from '@/app/components/Select'
+import ContactInfoCard from '@/app/components/ContactInfoCard'
 import { supabase } from '@/app/lib/supabase'
 
 const SUBJECTS = [
@@ -51,7 +52,6 @@ export default function ContatoPage() {
 
   return (
     <div className="px-4 md:px-6 py-8 w-full">
-
       <div className="mb-10">
         <h1 className="text-2xl font-bold text-zinc-900">Contato</h1>
         <p className="text-sm text-zinc-500 mt-1">
@@ -60,36 +60,15 @@ export default function ContatoPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-8 items-start">
-
         <div className="flex flex-col gap-4">
-
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 flex flex-col gap-5">
-            <h2 className="text-sm font-semibold text-zinc-900">Coordenação de ADS</h2>
-
-            <InfoItem
-              icon={<IconMail />}
-              label="E-mail"
-              value="ads@ifspcaraguatatuba.edu.br"
-              href="mailto:ads@ifspcaraguatatuba.edu.br"
-            />
-            <InfoItem
-              icon={<IconMap />}
-              label="Endereço"
-              value="Avenida Bahia, 1739 - Indaiá, Caraguatatuba - SP, CEP: 11665-071"
-            />
-            <InfoItem
-              icon={<IconInfo />}
-              label="Localização"
-              value="A sala da coordenação fica na sala dos professores, no segundo andar do IFSP."
-            />
-          </div>
+          <ContactInfoCard />
 
           <div className="rounded-2xl border border-zinc-200 bg-white p-6 flex flex-col gap-4">
             <h2 className="text-sm font-semibold text-zinc-900">Sistemas institucionais</h2>
             <div className="flex flex-col gap-2">
               {[
                 { label: 'Portal do Aluno (SUAP)', href: 'https://suap.ifsp.edu.br' },
-                { label: 'Moodle — Ambiente Virtual', href: 'https://ead.ifsp.edu.br' },
+                { label: 'Moodle - Ambiente Virtual', href: 'https://ead.ifsp.edu.br' },
                 { label: 'Site do IFSP', href: 'https://ifsp.edu.br' },
               ].map((link) => (
                 <a
@@ -108,7 +87,6 @@ export default function ContatoPage() {
               ))}
             </div>
           </div>
-
         </div>
 
         <div className="rounded-2xl border border-zinc-200 bg-white p-6 md:p-8">
@@ -196,7 +174,7 @@ export default function ContatoPage() {
                     <svg className="animate-spin" width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                       <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
                     </svg>
-                    Enviando…
+                    Enviando...
                   </>
                 ) : (
                   <>
@@ -210,38 +188,7 @@ export default function ContatoPage() {
             </form>
           )}
         </div>
-
       </div>
     </div>
   )
-}
-
-function InfoItem({ icon, label, value, href }: { icon: React.ReactNode; label: string; value: string; href?: string }) {
-  const content = (
-    <div className="flex items-start gap-3">
-      <span className="mt-0.5 shrink-0 text-[#2F9E41]">{icon}</span>
-      <div>
-        <p className="text-xs font-semibold text-zinc-400 leading-none mb-1">{label}</p>
-        <p className="text-sm text-zinc-700 leading-snug">{value}</p>
-      </div>
-    </div>
-  )
-  if (href) {
-    return (
-      <a href={href} className="block hover:opacity-80 transition" target={href.startsWith('mailto') ? undefined : '_blank'} rel="noopener noreferrer">
-        {content}
-      </a>
-    )
-  }
-  return content
-}
-
-function IconMail() {
-  return <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-}
-function IconInfo() {
-  return <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><circle cx={12} cy={12} r={10}/><line x1={12} y1={16} x2={12} y2={12}/><line x1={12} y1={8} x2={12} y2={8}/></svg>
-}
-function IconMap() {
-  return <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx={12} cy={10} r={3}/></svg>
 }

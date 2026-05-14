@@ -1,6 +1,7 @@
 export const COURSE_SETTINGS_TABLE = 'course_settings'
 export const COURSE_DOCUMENTS_BUCKET = 'course-documents'
 export const CLASS_SCHEDULE_PDF_KEY = 'class_schedule_pdf_url'
+export const PEDAGOGICAL_PROJECT_PDF_KEY = 'pedagogical_project_pdf_url'
 
 export type CourseSetting = {
   key: string

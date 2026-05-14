@@ -1,5 +1,7 @@
 export const dynamic = 'force-dynamic'
 
+import type { ReactNode } from 'react'
+import ContactInfoCard from '@/app/components/ContactInfoCard'
 import { supabase } from '@/app/lib/supabase'
 import CurriculumTabs from './CurriculumTabs'
 import InfrastructureSection from './InfrastructureSection'
@@ -10,10 +12,10 @@ import {
   CurriculumSubject,
   groupCurriculumSubjects,
 } from '@/app/lib/curriculum'
-import { CLASS_SCHEDULE_PDF_KEY, COURSE_SETTINGS_TABLE } from '@/app/lib/courseSettings'
+import { CLASS_SCHEDULE_PDF_KEY, COURSE_SETTINGS_TABLE, PEDAGOGICAL_PROJECT_PDF_KEY } from '@/app/lib/courseSettings'
 
 export default async function CursoPage() {
-  const [{ data: professors }, { data: subjects, error: subjectsError }, { data: scheduleSetting }] = await Promise.all([
+  const [{ data: professors }, { data: subjects, error: subjectsError }, { data: courseSettings }] = await Promise.all([
     supabase
       .from('professors')
       .select('id, user_id, name, avatar_url, bio, cargo, years_at_if, email, whatsapp, linkedin, cnpq')
@@ -28,20 +30,18 @@ export default async function CursoPage() {
       .order('name', { ascending: true }),
     supabase
       .from(COURSE_SETTINGS_TABLE)
-      .select('value')
-      .eq('key', CLASS_SCHEDULE_PDF_KEY)
-      .maybeSingle(),
+      .select('key, value')
+      .in('key', [CLASS_SCHEDULE_PDF_KEY, PEDAGOGICAL_PROJECT_PDF_KEY]),
   ])
 
   const curriculum = !subjectsError && subjects?.length
     ? groupCurriculumSubjects(subjects as CurriculumSubject[])
     : DEFAULT_CURRICULUM
-  const classSchedulePdfUrl = scheduleSetting?.value ?? null
+  const classSchedulePdfUrl = courseSettings?.find((setting) => setting.key === CLASS_SCHEDULE_PDF_KEY)?.value ?? null
+  const pedagogicalProjectPdfUrl = courseSettings?.find((setting) => setting.key === PEDAGOGICAL_PROJECT_PDF_KEY)?.value ?? null
 
   return (
     <div className="px-4 md:px-6 py-8 flex flex-col gap-12 w-full bg-white">
-
-     
       <section id="sobre-o-curso" className="scroll-mt-24">
         <SectionTitle>Sobre o curso</SectionTitle>
         <div className="rounded-2xl bg-white p-4 md:p-8 flex flex-col gap-6">
@@ -84,34 +84,33 @@ export default async function CursoPage() {
             </ul>
           </div>
 
-          {classSchedulePdfUrl && (
-            <div className="rounded-xl border border-zinc-100 bg-zinc-50 p-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-zinc-900">Horário de aulas</p>
-                  <p className="mt-1 text-sm text-zinc-500">Consulte o documento oficial com os horários das turmas.</p>
-                </div>
-                <a
-                  href={classSchedulePdfUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex justify-center rounded-lg bg-[#2F9E41] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
-                >
-                  Abrir PDF
-                </a>
-              </div>
-            </div>
-          )}
+          <div className="flex flex-col gap-3">
+            {classSchedulePdfUrl && (
+              <CourseDocumentLink
+                title="Horário de aulas"
+                description="Consulte o documento oficial com os horários das turmas."
+                href={classSchedulePdfUrl}
+              />
+            )}
+
+            {pedagogicalProjectPdfUrl && (
+              <CourseDocumentLink
+                title="Projeto Pedagógico de Curso"
+                description="Consulte o documento oficial com a estrutura, objetivos e organização do curso."
+                href={pedagogicalProjectPdfUrl}
+              />
+            )}
+          </div>
+
+          <ContactInfoCard />
         </div>
       </section>
 
-    
       <section id="matriz-curricular" className="scroll-mt-24">
         <SectionTitle>Matriz curricular</SectionTitle>
         <CurriculumTabs curriculum={curriculum} />
       </section>
 
-     
       <section id="professores" className="scroll-mt-24">
         <SectionTitle>Professores</SectionTitle>
         {!professors || professors.length === 0 ? (
@@ -123,47 +122,58 @@ export default async function CursoPage() {
         )}
       </section>
 
-     
       <section id="infraestrutura" className="scroll-mt-24">
         <SectionTitle>Infraestrutura</SectionTitle>
         <InfrastructureSection infrastructure={infrastructure} />
       </section>
-
     </div>
   )
 }
 
-function SectionTitle({ children }: { children: React.ReactNode }) {
+function SectionTitle({ children }: { children: ReactNode }) {
   return (
     <h2 className="text-xl font-bold text-zinc-900 mb-4">{children}</h2>
   )
 }
 
+function CourseDocumentLink({ title, description, href }: { title: string; description: string; href: string }) {
+  return (
+    <div className="rounded-xl border border-zinc-100 bg-zinc-50 p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-zinc-900">{title}</p>
+          <p className="mt-1 text-sm text-zinc-500">{description}</p>
+        </div>
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex justify-center rounded-lg bg-[#2F9E41] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+        >
+          Abrir PDF
+        </a>
+      </div>
+    </div>
+  )
+}
+
 const infrastructure = [
   {
-    icon: '🖥️',
-    bg: '#f0fdf4',
     title: 'Laboratórios de Informática',
     description: 'Laboratórios equipados com computadores modernos e acesso a softwares e ferramentas de desenvolvimento profissional.',
     tags: ['Hardware atualizado', 'IDEs instaladas', 'Acesso remoto', 'Suporte técnico'],
   },
   {
-    icon: '📶',
-    bg: '#eff6ff',
     title: 'Rede e Conectividade',
     description: 'Wi-Fi de alta velocidade em todo o campus, servidores dedicados para projetos e ambientes de desenvolvimento em nuvem.',
     tags: ['Wi-Fi 6', 'Alta disponibilidade'],
   },
   {
-    icon: '📚',
-    bg: '#fefce8',
     title: 'Biblioteca e Acervo Digital',
     description: 'Acervo de livros técnicos, assinatura de plataformas de ensino online e acesso a periódicos e artigos científicos.',
     tags: ['Livros técnicos', 'IEEE Access', 'E-books'],
   },
   {
-    icon: '🏗️',
-    bg: '#fdf4ff',
     title: 'LabTech',
     description: 'Laboratório de prototipagem com impressoras 3D, Arduino, Raspberry Pi e equipamentos de IoT para projetos práticos.',
     tags: ['Impressão 3D', 'Arduino & RPi', 'IoT', 'Prototipagem rápida'],
