@@ -34,6 +34,11 @@ export default function CadastroPage() {
       return
     }
 
+    if (isEgresso && graduationYear && parseInt(graduationYear) < 0) {
+      setError('O ano de formatura não pode ser negativo.')
+      return
+    }
+
     setLoading(true)
 
     const { data, error: authError } = await supabase.auth.signUp({ email, password })
@@ -60,6 +65,7 @@ export default function CadastroPage() {
       password_hash: 'managed_by_supabase_auth',
       role: 'aluno',
       semester: !isEgresso && semester ? parseInt(semester) : null,
+      onboarding_completed: false,
     })
 
     if (dbError) {
@@ -83,7 +89,7 @@ export default function CadastroPage() {
       }
     }
 
-    router.push('/')
+    router.push('/onboarding')
   }
 
   async function handleGoogleSignup() {
@@ -242,6 +248,7 @@ export default function CadastroPage() {
                 <label className="text-sm font-medium text-zinc-700">Ano de formatura</label>
                 <input
                   type="number"
+                  min={0}
                   value={graduationYear}
                   onChange={(e) => setGraduationYear(e.target.value)}
                   className={normalInputClass}

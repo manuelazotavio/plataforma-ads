@@ -57,6 +57,16 @@ function matchesQuery(page: typeof STATIC_PAGES[number], q: string) {
   return page.title.toLowerCase().includes(lower) || page.keywords.toLowerCase().includes(lower)
 }
 
+function dedupeResults(results: Result[]) {
+  const seen = new Set<string>()
+  return results.filter((result) => {
+    const key = `${result.type}:${result.id}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
 function SearchIcon() {
   return (
     <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -96,10 +106,29 @@ export default function SearchBar() {
     setLoading(true)
     const timer = setTimeout(async () => {
       const like = `%${q}%`
-      const [{ data: projects }, { data: articles }, { data: topics }, { data: users }] =
+      const [
+        { data: projects },
+        { data: articles },
+        { data: projectTags },
+        { data: articleTags },
+        { data: topics },
+        { data: users },
+      ] =
         await Promise.all([
-          supabase.from('projects').select('id, title, description').ilike('title', like).limit(5),
+          supabase.from('projects').select('id, title, description').eq('approved', true).ilike('title', like).limit(5),
           supabase.from('articles').select('id, title, summary').eq('status', 'publicado').ilike('title', like).limit(5),
+          supabase
+            .from('project_tags')
+            .select('tag_name, projects!inner(id, title, description, approved)')
+            .eq('projects.approved', true)
+            .ilike('tag_name', like)
+            .limit(5),
+          supabase
+            .from('article_tags')
+            .select('tag_name, articles!inner(id, title, summary, status)')
+            .eq('articles.status', 'publicado')
+            .ilike('tag_name', like)
+            .limit(5),
           supabase.from('forum_topics').select('id, title').ilike('title', like).limit(5),
           supabase.from('users').select('id, name, role').ilike('name', like).limit(5),
         ])
@@ -109,13 +138,41 @@ export default function SearchBar() {
         .slice(0, 3)
         .map((p) => ({ id: p.url, title: p.title, type: 'page' as const, subtitle: p.subtitle, url: p.url }))
 
-      const all: Result[] = [
+      const projectTagResults = (projectTags ?? [])
+        .map((row) => {
+          const project = row.projects as unknown as { id: string; title: string; description: string | null } | null
+          if (!project) return null
+          return {
+            id: project.id,
+            title: project.title,
+            type: 'project' as const,
+            subtitle: `Tag: ${row.tag_name}`,
+          }
+        })
+        .filter(Boolean) as Result[]
+
+      const articleTagResults = (articleTags ?? [])
+        .map((row) => {
+          const article = row.articles as unknown as { id: string; title: string; summary: string | null } | null
+          if (!article) return null
+          return {
+            id: article.id,
+            title: article.title,
+            type: 'article' as const,
+            subtitle: `Tag: ${row.tag_name}`,
+          }
+        })
+        .filter(Boolean) as Result[]
+
+      const all: Result[] = dedupeResults([
         ...(projects ?? []).map((p) => ({ id: p.id, title: p.title, type: 'project' as const, subtitle: p.description?.slice(0, 60) ?? undefined })),
         ...(articles ?? []).map((a) => ({ id: a.id, title: a.title, type: 'article' as const, subtitle: a.summary?.slice(0, 60) ?? undefined })),
+        ...projectTagResults,
+        ...articleTagResults,
         ...(topics ?? []).map((t) => ({ id: t.id, title: t.title, type: 'forum_topic' as const })),
         ...(users ?? []).map((u) => ({ id: u.id, title: u.name, type: 'user' as const, subtitle: u.role ? `Perfil ${u.role}` : 'Perfil' })),
         ...pages,
-      ]
+      ]).slice(0, 15)
 
       setResults(all)
       setSelected(-1)

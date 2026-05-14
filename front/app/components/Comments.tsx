@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
+import UserAvatar from '@/app/components/UserAvatar'
 import { REACTIONS, ReactionPicker, type ReactionType } from './LikeButton'
 
 type Comment = {
@@ -28,9 +29,7 @@ function Avatar({ user }: { user: Comment['users'] }) {
   const content = user?.avatar_url ? (
     <Image src={user.avatar_url} alt={user.name} width={28} height={28} className="w-7 h-7 rounded-full object-cover shrink-0" />
   ) : (
-    <div className="w-7 h-7 rounded-full bg-zinc-200 flex items-center justify-center text-xs font-medium text-zinc-500 shrink-0">
-      {user?.name?.charAt(0).toUpperCase()}
-    </div>
+    <UserAvatar name={user?.name} className="h-7 w-7" sizes="28px" />
   )
 
   if (user?.id) {

@@ -405,12 +405,13 @@ export default function AdminMatrizCurricularPage() {
                       type="button"
                       onClick={() => toggleSubject(subject)}
                       disabled={saving}
-                      className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium transition disabled:opacity-50 ${
+                        className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full border bg-white px-2.5 py-1 text-[11px] font-semibold transition disabled:opacity-50 ${
                         subject.is_active
-                          ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                          : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'
+                          ? 'border-green-200 text-green-700 hover:bg-green-50'
+                          : 'border-zinc-200 text-zinc-500 hover:bg-zinc-50'
                       }`}
                     >
+                      <span className={`h-1.5 w-1.5 rounded-full ${subject.is_active ? 'bg-green-500' : 'bg-zinc-400'}`} />
                       {subject.is_active ? 'Ativa' : 'Oculta'}
                     </button>
                     <button

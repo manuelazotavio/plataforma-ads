@@ -39,6 +39,8 @@ export default function NovoProjetoPage() {
         repo_url: data.repo_url || null,
         deploy_url: data.deploy_url || null,
         semester: data.semester ? parseInt(data.semester) : null,
+        start_date: data.start_date || null,
+        end_date: data.end_date || null,
         is_featured: data.is_featured,
         approved: userRow?.role === 'admin',
       })
@@ -60,6 +62,12 @@ export default function NovoProjetoPage() {
     if (data.images.length > 0) {
       await supabase.from('project_images').insert(
         data.images.map((img, i) => ({ project_id: project.id, image_url: img.url, display_order: i, media_type: img.type }))
+      )
+    }
+
+    if (data.collaborators.length > 0) {
+      await supabase.from('project_collaborators').insert(
+        data.collaborators.map((c) => ({ project_id: project.id, user_id: c.user_id ?? null, name: c.name }))
       )
     }
 

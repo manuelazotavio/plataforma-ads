@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
+import UserAvatar from '@/app/components/UserAvatar'
 
 type Egresso = {
   id: string
@@ -46,7 +47,7 @@ function EgressoCard({ egresso, index }: { egresso: Egresso; index: number }) {
       }}
     >
       <div className="flex items-start justify-between gap-2 mb-4">
-        <div className="relative w-14 h-14 rounded-full overflow-hidden bg-zinc-100 shrink-0">
+        <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full bg-zinc-100">
           {egresso.avatar_url ? (
             <Image
               src={egresso.avatar_url}
@@ -56,9 +57,7 @@ function EgressoCard({ egresso, index }: { egresso: Egresso; index: number }) {
               style={{ transform: hovered ? 'scale(1.08)' : 'scale(1)', transition: 'transform 0.4s ease' }}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-xl font-black text-zinc-300">
-              {egresso.name.charAt(0).toUpperCase()}
-            </div>
+            <UserAvatar name={egresso.name} className="h-14 w-14" sizes="56px" />
           )}
         </div>
         {egresso.graduation_year && (

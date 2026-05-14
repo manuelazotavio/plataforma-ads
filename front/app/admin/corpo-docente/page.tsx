@@ -337,7 +337,8 @@ export default function AdminCorpoDocentePage() {
                         )}
                       </div>
                       <div className="flex flex-wrap items-center gap-1.5 sm:shrink-0">
-                        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${prof.is_active ? 'bg-green-100 text-green-700' : 'bg-zinc-100 text-zinc-500'}`}>
+                        <span className={`inline-flex items-center gap-1.5 rounded-full border bg-white px-2.5 py-1 text-[11px] font-semibold ${prof.is_active ? 'border-green-200 text-green-700' : 'border-zinc-200 text-zinc-500'}`}>
+                          <span className={`h-1.5 w-1.5 rounded-full ${prof.is_active ? 'bg-green-500' : 'bg-zinc-400'}`} />
                           {prof.is_active ? 'visível' : 'oculto'}
                         </span>
                         <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-500">

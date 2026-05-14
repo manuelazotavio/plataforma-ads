@@ -298,9 +298,10 @@ export default function AdminVagasPage() {
                       </span>
                     )}
                   </div>
-                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
-                    job.is_active ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                  <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border bg-white px-2.5 py-1 text-[11px] font-semibold ${
+                    job.is_active ? 'border-green-200 text-green-700' : 'border-amber-200 text-amber-700'
                   }`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${job.is_active ? 'bg-green-500' : 'bg-amber-500'}`} />
                     {job.is_active ? 'ativa' : 'pendente'}
                   </span>
                 </div>

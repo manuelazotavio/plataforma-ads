@@ -5,6 +5,7 @@ import { supabase } from '@/app/lib/supabase'
 import LikeButton from '@/app/components/LikeButton'
 import ProjectMediaMosaic from '@/app/components/ProjectMediaMosaic'
 import ShareProjectButton from '@/app/components/ShareProjectButton'
+import UserAvatar from '@/app/components/UserAvatar'
 
 export const dynamic = 'force-dynamic'
 import Comments from '@/app/components/Comments'
@@ -14,7 +15,7 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
 
   const { data: project } = await supabase
     .from('projects')
-    .select('id, title, description, repo_url, deploy_url, semester, is_featured, like_count, created_at, users(id, name, avatar_url), project_tags(tag_name), project_images(image_url, display_order, media_type)')
+    .select('id, title, description, repo_url, deploy_url, semester, start_date, end_date, is_featured, like_count, created_at, users(id, name, avatar_url), project_tags(tag_name), project_images(image_url, display_order, media_type)')
     .eq('id', id)
     .single()
 
@@ -30,6 +31,7 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
   const createdAt = new Date(project.created_at).toLocaleDateString('pt-BR', {
     day: 'numeric', month: 'long', year: 'numeric',
   })
+  const projectPeriod = formatProjectPeriod(project.start_date, project.end_date)
 
   return (
     <div className="min-h-screen bg-white">
@@ -51,7 +53,7 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
           Todos os projetos
         </Link>
         <div className="mx-auto w-full max-w-6xl">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               {project.is_featured && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700 mb-2">
@@ -61,6 +63,15 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
               )}
               <h1 className="text-2xl font-bold text-zinc-900">{project.title}</h1>
             </div>
+            {author && (
+              <div className="flex flex-col gap-3 sm:ml-auto sm:mr-12">
+                <p className="text-sm font-semibold text-zinc-700">Autor</p>
+                <Link href={`/usuarios/${author.id}`} className="flex items-center gap-3 transition hover:opacity-80">
+                  <UserAvatar src={author.avatar_url} name={author.name} className="h-9 w-9" />
+                  <span className="text-sm font-medium text-zinc-900">{author.name}</span>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -117,7 +128,7 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
 
         </div>
 
-        <section className="grid gap-5 border-t border-zinc-100 pt-8 md:grid-cols-2 xl:grid-cols-4">
+        <section className="grid gap-6 border-t border-zinc-100 pt-8 md:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(280px,1fr))]">
 
           {(project.repo_url || project.deploy_url) && (
             <div className="flex flex-col gap-2 rounded-2xl border border-zinc-200 p-4">
@@ -140,28 +151,18 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
             </div>
           )}
 
-          {author && (
-            <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200 p-4">
-              <p className="text-sm font-semibold text-zinc-700">Autor</p>
-              <Link href={`/usuarios/${author.id}`} className="flex items-center gap-3 hover:opacity-80 transition">
-                {author.avatar_url ? (
-                  <Image src={author.avatar_url} alt={author.name} width={36} height={36} className="w-9 h-9 rounded-full object-cover shrink-0" />
-                ) : (
-                  <div className="w-9 h-9 rounded-full bg-zinc-200 flex items-center justify-center text-sm font-semibold text-zinc-500 shrink-0">
-                    {author.name.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <span className="text-sm font-medium text-zinc-900">{author.name}</span>
-              </Link>
-            </div>
-          )}
-
           <div className="flex flex-col gap-2.5 rounded-2xl border border-zinc-200 p-4">
             <p className="text-sm font-semibold text-zinc-700">Detalhes</p>
+            {projectPeriod && (
+              <div className="flex items-center gap-2.5">
+                <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 shrink-0"><path d="M8 2v4"/><path d="M16 2v4"/><rect width={18} height={18} x={3} y={4} rx={2}/><path d="M3 10h18"/></svg>
+                <span className="text-sm text-zinc-500">{projectPeriod}</span>
+              </div>
+            )}
             {project.semester && (
               <div className="flex items-center gap-2.5">
                 <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 shrink-0"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-                <span className="text-sm text-zinc-500">Desenvolvido no {project.semester}º semestre</span>
+                <span className="text-sm text-zinc-500">Desenvolvido no {project.semester}{String.fromCharCode(186)} semestre</span>
               </div>
             )}
             <div className="flex items-center gap-2.5">
@@ -192,4 +193,13 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
 function isVideoMedia(media: { image_url: string; media_type?: string | null }) {
   if (media.media_type === 'video') return true
   return /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(media.image_url)
+}
+
+function formatProjectPeriod(start: string | null, end: string | null) {
+  if (!start && !end) return null
+  const format = (value: string) => new Date(`${value}T00:00:00`).toLocaleDateString('pt-BR')
+  if (start && end && start !== end) return `${format(start)} até ${format(end)}`
+  if (start) return `Início em ${format(start)}`
+  if (end) return `Término em ${format(end)}`
+  return null
 }

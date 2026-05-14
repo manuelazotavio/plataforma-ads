@@ -18,11 +18,11 @@ type Article = {
 
 type Filter = 'pendentes' | 'publicados' | 'rejeitados' | 'todos'
 
-const statusConfig: Record<string, { label: string; class: string }> = {
-  pendente:   { label: 'pendente',   class: 'bg-amber-100 text-amber-700' },
-  publicado:  { label: 'publicado',  class: 'bg-green-100 text-green-700' },
-  rejeitado:  { label: 'rejeitado',  class: 'bg-red-100 text-red-600' },
-  rascunho:   { label: 'rascunho',   class: 'bg-zinc-100 text-zinc-500' },
+const statusConfig: Record<string, { label: string; class: string; dot: string }> = {
+  pendente:   { label: 'pendente',   class: 'border-amber-200 text-amber-700', dot: 'bg-amber-500' },
+  publicado:  { label: 'publicado',  class: 'border-green-200 text-green-700', dot: 'bg-green-500' },
+  rejeitado:  { label: 'rejeitado',  class: 'border-red-200 text-red-600', dot: 'bg-red-500' },
+  rascunho:   { label: 'rascunho',   class: 'border-zinc-200 text-zinc-500', dot: 'bg-zinc-400' },
 }
 
 export default function AdminArtigosPage() {
@@ -130,7 +130,8 @@ export default function AdminArtigosPage() {
                           {article.users?.name} · {new Date(article.created_at).toLocaleDateString('pt-BR')}
                         </p>
                       </div>
-                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${cfg.class}`}>
+                      <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border bg-white px-2.5 py-1 text-[11px] font-semibold ${cfg.class}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
                         {cfg.label}
                       </span>
                     </div>

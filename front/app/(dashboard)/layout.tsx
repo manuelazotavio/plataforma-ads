@@ -3,13 +3,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import NotificationBell from '@/app/components/NotificationBell'
 import SearchBar from '@/app/components/SearchBar'
 import AppSidebar from '@/app/components/AppSidebar'
 import ThemeToggle from '@/app/components/ThemeToggle'
+import UserAvatar from '@/app/components/UserAvatar'
 
 type UserProfile = {
   name: string
@@ -17,6 +17,7 @@ type UserProfile = {
   semester: number | null
   role: string | null
   suspended: boolean
+  onboarding_completed: boolean
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -42,12 +43,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       setUserId(authUser.id)
       const { data: profile } = await supabase
         .from('users')
-        .select('name, avatar_url, semester, role, suspended')
+        .select('name, avatar_url, semester, role, suspended, onboarding_completed')
         .eq('id', authUser.id)
         .single()
       if (profile?.suspended) {
         await supabase.auth.signOut()
         router.replace('/login?suspended=1')
+        return
+      }
+      if (profile && !profile.onboarding_completed) {
+        router.replace('/onboarding')
         return
       }
       setUser(profile)
@@ -126,25 +131,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     {user.semester ? `${user.semester}º Semestre` : 'Aluno'}
                   </p>
                 </div>
-                <div className="w-9 h-9 rounded-full overflow-hidden bg-zinc-200 shrink-0 ring-2 ring-zinc-100">
-                  {user.avatar_url ? (
-                    <Image src={user.avatar_url} alt={user.name} width={36} height={36} className="object-cover w-full h-full" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-zinc-500 text-sm font-semibold">
-                      {user.name?.charAt(0)?.toUpperCase()}
-                    </div>
-                  )}
-                </div>
+                <UserAvatar src={user.avatar_url} name={user.name} className="h-9 w-9 ring-2 ring-zinc-100" />
               </button>
 
               {userMenuOpen && (
                 <div className="absolute right-0 top-full mt-2 w-52 rounded-xl border border-zinc-200 bg-white shadow-lg py-1 z-50">
-                  <div className="px-4 py-2.5 border-b border-zinc-100">
-                    <p className="text-sm font-semibold text-zinc-900 truncate">{user.name}</p>
-                    <p className="text-xs text-zinc-400 mt-0.5">
-                      {user.semester ? `${user.semester}º Semestre` : 'Aluno'}
-                    </p>
-                  </div>
                   <div className="py-1">
                     <Link href="/perfil" className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50 transition">
                       <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 shrink-0"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx={12} cy={7} r={4}/></svg>

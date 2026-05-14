@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import ThemeToggle from '@/app/components/ThemeToggle'
+import UserAvatar from '@/app/components/UserAvatar'
 
 type UserProfile = {
   name: string
@@ -38,6 +38,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [ready, setReady] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [unreadMsgs, setUnreadMsgs] = useState(0)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     async function check() {
@@ -70,6 +72,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     if (pathname === '/admin/mensagens') setUnreadMsgs(0)
   }, [pathname])
+
+  useEffect(() => {
+    function close(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [])
 
   if (!ready) return <div className="min-h-screen bg-white" />
 
@@ -166,16 +179,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
           <div className="flex items-center gap-3 ml-auto">
             <ThemeToggle />
-            <div className="text-right leading-tight hidden sm:block">
-              <p className="text-sm font-semibold text-zinc-900">{user?.name}</p>
-              <p className="text-xs text-zinc-400 mt-0.5">Administrador</p>
-            </div>
-            <div className="w-9 h-9 rounded-full overflow-hidden bg-zinc-200 shrink-0 ring-2 ring-zinc-100">
-              {user?.avatar_url ? (
-                <Image src={user.avatar_url} alt={user.name} width={36} height={36} className="object-cover w-full h-full" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-zinc-500 text-sm font-semibold">
-                  {user?.name?.charAt(0)?.toUpperCase()}
+            <div ref={userMenuRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setUserMenuOpen((value) => !value)}
+                className="flex items-center gap-3 rounded-xl px-2 py-1.5 transition hover:bg-zinc-50"
+              >
+                <div className="text-right leading-tight hidden sm:block">
+                  <p className="text-sm font-semibold text-zinc-900">{user?.name}</p>
+                  <p className="text-xs text-zinc-400 mt-0.5">Administrador</p>
+                </div>
+                <UserAvatar src={user?.avatar_url} name={user?.name} className="h-9 w-9 ring-2 ring-zinc-100" />
+              </button>
+
+              {userMenuOpen && (
+                <div className="absolute right-0 top-full z-50 mt-2 w-52 rounded-xl border border-zinc-200 bg-white py-1 shadow-lg">
+                  <Link
+                    href="/"
+                    onClick={() => setUserMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 transition hover:bg-zinc-50"
+                  >
+                    <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-zinc-400">
+                      <path d="M19 12H5" />
+                      <path d="m12 19-7-7 7-7" />
+                    </svg>
+                    Voltar ao site
+                  </Link>
                 </div>
               )}
             </div>

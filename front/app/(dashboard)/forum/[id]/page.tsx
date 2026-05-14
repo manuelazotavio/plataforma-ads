@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
+import UserAvatar from '@/app/components/UserAvatar'
 
 type Author = { name: string; avatar_url: string | null }
 type Category = { id: string; name: string }
@@ -72,9 +73,7 @@ function Avatar({ author, size = 32 }: { author: Author | null; size?: number })
     )
   }
   return (
-    <div className="rounded-full bg-zinc-100 flex items-center justify-center shrink-0 text-xs font-semibold text-zinc-400" style={{ width: size, height: size }}>
-      {author?.name?.[0]?.toUpperCase() ?? '?'}
-    </div>
+    <UserAvatar name={author?.name} className="" sizes={`${size}px`} style={{ width: size, height: size }} />
   )
 }
 

@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 import ProjectFilters from '@/app/components/ProjectFilters'
+import UserAvatar from '@/app/components/UserAvatar'
 
 export const dynamic = 'force-dynamic'
 import { DEFAULT_PROJECT_TAGS, PROJECT_TAG_OPTIONS_TABLE, uniqueTagNames } from '@/app/lib/projectTags'
@@ -168,7 +169,7 @@ export default async function ProjetosPage({
                       <Link href={author ? `/usuarios/${author.id}` : '#'} className="flex items-center gap-2 hover:opacity-80 transition">
                         {author?.avatar_url
                           ? <Image src={author.avatar_url} alt={author.name} width={16} height={16} className="w-4 h-4 rounded-full object-cover shrink-0" />
-                          : <div className="w-4 h-4 rounded-full bg-zinc-200" />
+                          : <UserAvatar name={author?.name} className="h-4 w-4" sizes="16px" />
                         }
                         <span className="text-xs text-zinc-400">{author?.name}</span>
                       </Link>

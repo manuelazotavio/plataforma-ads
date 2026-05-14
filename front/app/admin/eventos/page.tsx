@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Select from '@/app/components/Select'
+import DatePicker from '@/app/components/DatePicker'
 import { supabase } from '@/app/lib/supabase'
 
 const CATEGORIES = [
@@ -187,18 +188,18 @@ export default function AdminEventosPage() {
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="Data de início">
-                  <input
-                    type="date"
+                  <DatePicker
                     value={form.start_date ?? ''}
-                    onChange={(e) => setForm({ ...form, start_date: e.target.value })}
+                    onChange={(val) => setForm({ ...form, start_date: val || null })}
+                    placeholder="Selecionar data"
                     className={input}
                   />
                 </Field>
                 <Field label="Data de encerramento">
-                  <input
-                    type="date"
+                  <DatePicker
                     value={form.end_date ?? ''}
-                    onChange={(e) => setForm({ ...form, end_date: e.target.value })}
+                    onChange={(val) => setForm({ ...form, end_date: val || null })}
+                    placeholder="Selecionar data"
                     className={input}
                   />
                 </Field>
@@ -288,10 +289,12 @@ export default function AdminEventosPage() {
                   </p>
                 )}
                 <div className="mt-2 flex flex-wrap gap-2">
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${event.is_active ? 'bg-green-100 text-green-700' : 'bg-zinc-100 text-zinc-500'}`}>
+                  <span className={`inline-flex items-center gap-1.5 rounded-full border bg-white px-2.5 py-1 text-[11px] font-semibold ${event.is_active ? 'border-green-200 text-green-700' : 'border-zinc-200 text-zinc-500'}`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${event.is_active ? 'bg-green-500' : 'bg-zinc-400'}`} />
                     {event.is_active ? 'publicado' : 'oculto'}
                   </span>
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${event.registration_open ? 'bg-blue-100 text-blue-700' : 'bg-zinc-100 text-zinc-500'}`}>
+                  <span className={`inline-flex items-center gap-1.5 rounded-full border bg-white px-2.5 py-1 text-[11px] font-semibold ${event.registration_open ? 'border-blue-200 text-blue-700' : 'border-zinc-200 text-zinc-500'}`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${event.registration_open ? 'bg-blue-500' : 'bg-zinc-400'}`} />
                     inscrições {event.registration_open ? 'abertas' : 'encerradas'}
                   </span>
                 </div>

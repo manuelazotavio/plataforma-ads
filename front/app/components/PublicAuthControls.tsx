@@ -1,10 +1,10 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
+import UserAvatar from '@/app/components/UserAvatar'
 
 type Level = { id: number; name: string; min_xp: number; description: string | null }
 
@@ -74,23 +74,13 @@ export function PublicHeaderAuth() {
       <button
         type="button"
         onClick={() => setMenuOpen((v) => !v)}
-        className="h-9 w-9 overflow-hidden rounded-full bg-zinc-200 ring-2 ring-zinc-100"
+        className="rounded-full ring-2 ring-zinc-100"
       >
-        {data.avatar_url ? (
-          <Image src={data.avatar_url} alt={data.name} width={36} height={36} className="h-full w-full object-cover" />
-        ) : (
-          <span className="flex h-full w-full items-center justify-center text-sm font-semibold text-zinc-500">
-            {data.name.charAt(0).toUpperCase()}
-          </span>
-        )}
+        <UserAvatar src={data.avatar_url} name={data.name} className="h-9 w-9" />
       </button>
 
       {menuOpen && (
         <div className="absolute right-0 top-full mt-2 w-52 rounded-xl border border-zinc-200 bg-white shadow-lg py-1 z-50">
-          <div className="px-4 py-2.5 border-b border-zinc-100">
-            <p className="text-sm font-semibold text-zinc-900 truncate">{data.name}</p>
-            <p className="text-xs text-zinc-400 mt-0.5">{profileLabel(data)}</p>
-          </div>
           <div className="py-1">
             <Link href="/perfil" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50 transition">
               <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 shrink-0"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx={12} cy={7} r={4}/></svg>

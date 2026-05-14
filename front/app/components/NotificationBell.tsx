@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
+import UserAvatar from '@/app/components/UserAvatar'
 
 type Notification = {
   id: string
@@ -194,9 +195,7 @@ export default function NotificationBell({ userId }: { userId: string | null }) 
                       className="w-8 h-8 rounded-full object-cover shrink-0 mt-0.5"
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-zinc-200 shrink-0 mt-0.5 flex items-center justify-center text-xs font-semibold text-zinc-500">
-                      {n.actor?.name?.charAt(0)?.toUpperCase() ?? '?'}
-                    </div>
+                    <UserAvatar name={n.actor?.name} className="mt-0.5 h-8 w-8" sizes="32px" />
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-zinc-700 leading-snug">{notifText(n)}</p>

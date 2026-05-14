@@ -6,6 +6,7 @@ import { supabase } from '@/app/lib/supabase'
 import HomeShell from '@/app/components/HomeShell'
 import { PublicProfileCard, PublicWelcomeCard } from '@/app/components/PublicAuthControls'
 import HomeCalendarCard from '@/app/components/HomeCalendarCard'
+import UserAvatar from '@/app/components/UserAvatar'
 
 type Project = {
   id: string
@@ -226,13 +227,7 @@ function TopContributorsCard({ contributors }: { contributors: Contributor[] }) 
             className="flex items-center gap-3 rounded-xl -mx-2 px-2 py-1.5 transition hover:bg-zinc-50"
           >
             <span className="w-4 shrink-0 text-xs font-bold text-zinc-300">{i + 1}</span>
-            <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-zinc-200">
-              {contributor.avatar_url ? (
-                <Image src={contributor.avatar_url} alt={contributor.name} width={32} height={32} className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-zinc-500">{contributor.name.charAt(0).toUpperCase()}</div>
-              )}
-            </div>
+            <UserAvatar src={contributor.avatar_url} name={contributor.name} className="h-8 w-8" sizes="32px" />
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-semibold text-zinc-900">{contributor.name}</p>
               <p className="text-xs text-zinc-400">{contributorLabel(contributor)}</p>

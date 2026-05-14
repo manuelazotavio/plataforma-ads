@@ -185,11 +185,16 @@ export default function AdminProjetosPage() {
                           {project.users?.name} · {new Date(project.created_at).toLocaleDateString('pt-BR')}
                         </p>
                       </div>
-                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
-                        status === 'aprovado' ? 'bg-green-100 text-green-700' :
-                        status === 'reprovado' ? 'bg-red-100 text-red-600' :
-                        'bg-amber-100 text-amber-700'
+                      <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border bg-white px-2.5 py-1 text-[11px] font-semibold ${
+                        status === 'aprovado' ? 'border-green-200 text-green-700' :
+                        status === 'reprovado' ? 'border-red-200 text-red-600' :
+                        'border-amber-200 text-amber-700'
                       }`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${
+                          status === 'aprovado' ? 'bg-green-500' :
+                          status === 'reprovado' ? 'bg-red-500' :
+                          'bg-amber-500'
+                        }`} />
                         {status}
                       </span>
                     </div>

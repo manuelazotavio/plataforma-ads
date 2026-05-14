@@ -14,6 +14,8 @@ type Project = {
   repo_url: string | null
   deploy_url: string | null
   semester: number | null
+  start_date: string | null
+  end_date: string | null
   is_featured: boolean
   approved: boolean
   rejection_message: string | null
@@ -37,7 +39,7 @@ export default function MeusProjetosPage() {
 
       const { data } = await supabase
         .from('projects')
-        .select('id, title, description, repo_url, deploy_url, semester, is_featured, approved, rejection_message, created_at, project_tags(tag_name), project_images(image_url, display_order)')
+        .select('id, title, description, repo_url, deploy_url, semester, start_date, end_date, is_featured, approved, rejection_message, created_at, project_tags(tag_name), project_images(image_url, display_order)')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
@@ -104,6 +106,7 @@ export default function MeusProjetosPage() {
               const cover = [...(project.project_images ?? [])]
                 .sort((a, b) => a.display_order - b.display_order)[0]
               const tags = project.project_tags ?? []
+              const period = formatProjectPeriod(project.start_date, project.end_date)
 
               return (
                 <div key={project.id} className={`bg-white rounded-2xl border overflow-hidden flex flex-col p-4 gap-3 ${project.rejection_message ? 'border-red-200' : 'border-zinc-200'}`}>
@@ -128,9 +131,10 @@ export default function MeusProjetosPage() {
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <h2 className="text-sm font-semibold text-zinc-900">{project.title}</h2>
-                          {project.semester && (
-                            <span className="text-xs text-zinc-400">{project.semester}º semestre</span>
-                          )}
+                          <div className="mt-0.5 flex flex-wrap gap-x-2 gap-y-1 text-xs text-zinc-400">
+                            {period && <span>{period}</span>}
+                            {project.semester && <span>{project.semester}{String.fromCharCode(186)} semestre</span>}
+                          </div>
                         </div>
                         {project.is_featured && (
                           <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700 shrink-0">
@@ -192,4 +196,13 @@ export default function MeusProjetosPage() {
       </div>
     </div>
   )
+}
+
+function formatProjectPeriod(start: string | null, end: string | null) {
+  if (!start && !end) return null
+  const format = (value: string) => new Date(`${value}T00:00:00`).toLocaleDateString('pt-BR')
+  if (start && end && start !== end) return `${format(start)} até ${format(end)}`
+  if (start) return `Início em ${format(start)}`
+  if (end) return `Término em ${format(end)}`
+  return null
 }

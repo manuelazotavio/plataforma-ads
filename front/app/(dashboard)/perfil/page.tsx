@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
+import ProfileActivityFeed, { type ProfileActivityItem } from '@/app/components/ProfileActivityFeed'
+import UserAvatar from '@/app/components/UserAvatar'
 
 type Profile = {
   name: string
@@ -24,6 +25,20 @@ type ProfessorData = {
   linkedin: string
   cnpq: string
   years_at_if: string
+}
+
+type ProfileStats = {
+  xp: number
+  levelName: string | null
+  projectsCount: number
+  articlesCount: number
+  topicsCount: number
+}
+
+type Level = {
+  id: number
+  name: string
+  min_xp: number
 }
 
 const EMPTY_PROFILE: Profile = {
@@ -57,6 +72,15 @@ export default function PerfilPage() {
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [stats, setStats] = useState<ProfileStats>({
+    xp: 0,
+    levelName: null,
+    projectsCount: 0,
+    articlesCount: 0,
+    topicsCount: 0,
+  })
+  const [feedItems, setFeedItems] = useState<ProfileActivityItem[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [role, setRole] = useState<string | null>(null)
@@ -113,6 +137,92 @@ export default function PerfilPage() {
         .from('user_skills').select('skill_name').eq('user_id', user.id)
       if (skillsData) setSkills(skillsData.map((s) => s.skill_name))
 
+      const [
+        { count: projectsCount },
+        { count: articlesCount },
+        { count: topicsCount },
+        { count: xpProjectsCount },
+        { count: xpArticlesCount },
+        { count: xpTopicsCount },
+        { count: projectCommentsCount },
+        { count: articleCommentsCount },
+        { data: xpProjects },
+        { data: xpArticles },
+        { data: projects },
+        { data: articles },
+        { data: topics },
+        { data: levels },
+      ] = await Promise.all([
+        supabase.from('projects').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('approved', true),
+        supabase.from('articles').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'publicado'),
+        supabase.from('forum_topics').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('projects').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('articles').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'publicado'),
+        supabase.from('forum_topics').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('project_comments').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('article_comments').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('projects').select('like_count').eq('user_id', user.id),
+        supabase.from('articles').select('like_count').eq('user_id', user.id),
+        supabase.from('projects').select('id, title, description, is_featured, created_at, like_count, project_images(image_url, display_order, media_type)').eq('user_id', user.id).eq('approved', true),
+        supabase.from('articles').select('id, title, summary, cover_image_url, published_at, like_count').eq('user_id', user.id).eq('status', 'publicado'),
+        supabase.from('forum_topics').select('id, title, created_at, replies_count').eq('user_id', user.id),
+        supabase.from('levels').select('id, name, min_xp').order('min_xp', { ascending: true }),
+      ])
+
+      const likesReceived =
+        (xpProjects ?? []).reduce((total, project) => total + (project.like_count ?? 0), 0) +
+        (xpArticles ?? []).reduce((total, article) => total + (article.like_count ?? 0), 0)
+      const commentsCount = (projectCommentsCount ?? 0) + (articleCommentsCount ?? 0)
+      const xp =
+        (xpProjectsCount ?? 0) * 50 +
+        (xpArticlesCount ?? 0) * 40 +
+        (xpTopicsCount ?? 0) * 20 +
+        commentsCount * 10 +
+        likesReceived * 5
+      const level = currentLevel((levels ?? []) as Level[], xp)
+      setStats({
+        xp,
+        levelName: level?.name ?? null,
+        projectsCount: projectsCount ?? 0,
+        articlesCount: articlesCount ?? 0,
+        topicsCount: topicsCount ?? 0,
+      })
+      setFeedItems([
+        ...(projects ?? []).map((project) => ({
+          id: project.id,
+          type: 'project' as const,
+          title: project.title,
+          description: project.description,
+          href: `/projetos/${project.id}`,
+          date: project.created_at,
+          isPinned: project.is_featured,
+          meta: `${project.like_count ?? 0} curtidas`,
+          imageUrl: getProjectCover(project.project_images)?.image_url ?? null,
+          imageType: getProjectCover(project.project_images)?.media_type ?? null,
+        })),
+        ...(articles ?? [])
+          .map((article) => ({
+            id: article.id,
+            type: 'article' as const,
+            title: article.title,
+            description: article.summary,
+            href: `/artigos/${article.id}`,
+            date: article.published_at ?? '',
+            meta: `${article.like_count ?? 0} curtidas`,
+            imageUrl: article.cover_image_url,
+          }))
+          .filter((item) => item.date),
+        ...(topics ?? []).map((topic) => ({
+          id: topic.id,
+          type: 'topic' as const,
+          title: topic.title,
+          description: null,
+          href: `/forum/${topic.id}`,
+          date: topic.created_at,
+          meta: `${topic.replies_count ?? 0} respostas`,
+        })),
+      ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()))
+
       const { data: egressoData } = await supabase
         .from('egressos').select('id, graduation_year, role, company').eq('user_id', user.id).single()
       if (egressoData) {
@@ -163,6 +273,10 @@ export default function PerfilPage() {
     e.preventDefault()
     setSubmitted(true)
     if (!userId || !profile.name.trim()) return
+    if (isEgresso && egressoForm.graduation_year && parseInt(egressoForm.graduation_year) < 0) {
+      setError('O ano de formatura não pode ser negativo.')
+      return
+    }
     setSaving(true)
     setError(null)
     setSuccess(false)
@@ -224,19 +338,140 @@ export default function PerfilPage() {
 
     setSuccess(true)
     setSaving(false)
+    setEditing(false)
   }
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center bg-white"><p className="text-sm text-zinc-500">Carregando...</p></div>
   }
 
+  if (!editing) {
+    const socials = [
+      profile.github_url ? { label: 'GitHub', url: profile.github_url } : null,
+      profile.linkedin_url ? { label: 'LinkedIn', url: profile.linkedin_url } : null,
+      profile.portfolio_url ? { label: 'Portfolio', url: profile.portfolio_url } : null,
+    ].filter(Boolean) as { label: string; url: string }[]
+
+    return (
+      <div className="px-4 md:px-6 py-8 w-full">
+        <div className="mb-8 flex items-center justify-between gap-4">
+          <Link href="/" className="text-sm text-zinc-400 hover:text-zinc-700 transition inline-flex items-center gap-1.5">
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+            Voltar
+          </Link>
+        </div>
+
+        <section className="border-b border-zinc-100 pb-8">
+          <div className="flex items-start gap-5">
+            <UserAvatar src={profile.avatar_url} name={profile.name} className="h-20 w-20" sizes="80px" />
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-2xl font-bold text-zinc-900">{profile.name}</h1>
+                  <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-500">
+                    {isEgresso ? 'Egresso' : roleLabel(role)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setEditing(true)}
+                    className="ml-6 inline-flex shrink-0 items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 hover:text-zinc-900"
+                  >
+                    <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 20h9" />
+                      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                    </svg>
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => { await supabase.auth.signOut(); router.push('/login') }}
+                    className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 hover:text-red-700"
+                  >
+                    Sair
+                  </button>
+                </div>
+              </div>
+              {profile.semester && role !== 'professor' && (
+                <p className="mt-1 text-sm text-zinc-400">{profile.semester}{String.fromCharCode(186)} semestre</p>
+              )}
+              {isEgresso && (
+                <p className="mt-1 text-sm text-zinc-400">
+                  Egresso{egressoForm.graduation_year ? ` ${egressoForm.graduation_year}` : ''}
+                  {egressoForm.role ? ` - ${egressoForm.role}` : ''}
+                  {egressoForm.company ? ` @ ${egressoForm.company}` : ''}
+                </p>
+              )}
+              {profile.bio && (
+                <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-zinc-600">{profile.bio}</p>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="grid grid-cols-2 gap-3 py-6 border-b border-zinc-100 sm:grid-cols-4">
+          <ProfileStat label="XP" value={stats.xp.toLocaleString('pt-BR')} detail={stats.levelName} />
+          <ProfileStat label="Projetos" value={stats.projectsCount} />
+          <ProfileStat label="Artigos" value={stats.articlesCount} />
+          <ProfileStat label="Topicos" value={stats.topicsCount} />
+        </section>
+
+        {(skills.length > 0 || socials.length > 0) && (
+          <section className="py-6 flex flex-col gap-6">
+            {skills.length > 0 && (
+              <div>
+                <h2 className="text-sm font-semibold text-zinc-900 mb-3">Habilidades</h2>
+                <div className="flex flex-wrap gap-2">
+                  {skills.map((skill) => (
+                    <span key={skill} className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {socials.length > 0 && (
+              <div>
+                <h2 className="text-sm font-semibold text-zinc-900 mb-3">Links</h2>
+                <div className="flex flex-col gap-2">
+                  {socials.map((social) => (
+                    <a
+                      key={social.url}
+                      href={social.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-between rounded-xl border border-zinc-200 px-4 py-2.5 text-sm text-zinc-600 hover:bg-zinc-50 transition"
+                    >
+                      <span className="font-medium text-zinc-800">{social.label}</span>
+                      <span className="text-xs text-zinc-400">{externalLabel(social.url)}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
+        <ProfileActivityFeed items={feedItems} />
+      </div>
+    )
+  }
+
   return (
     <div className="px-4 md:px-6 py-8 w-full">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900">Meu perfil</h1>
+          <h1 className="text-2xl font-bold text-zinc-900">Editar perfil</h1>
           <p className="text-sm text-zinc-500 mt-0.5">Visualize e edite suas informações</p>
         </div>
+        <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => setEditing(false)}
+          className="text-sm text-zinc-400 hover:text-zinc-700 transition"
+        >
+          Cancelar
+        </button>
         <button
           type="button"
           onClick={async () => { await supabase.auth.signOut(); router.push('/login') }}
@@ -244,6 +479,7 @@ export default function PerfilPage() {
         >
           Sair
         </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[300px_minmax(0,42rem)_300px] justify-center gap-6 items-start">
@@ -254,15 +490,7 @@ export default function PerfilPage() {
 
             <div className="px-6 pb-6">
               <div className="relative -mt-10 mb-4">
-                <div className="w-20 h-20 rounded-full border-4 border-white bg-zinc-100 overflow-hidden shadow-sm">
-                  {profile.avatar_url ? (
-                    <Image src={profile.avatar_url} alt={profile.name} width={80} height={80} className="object-cover w-full h-full" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-3xl font-black text-zinc-300 select-none">
-                      {profile.name ? profile.name.charAt(0).toUpperCase() : '?'}
-                    </div>
-                  )}
-                </div>
+                <UserAvatar src={profile.avatar_url} name={profile.name} className="h-20 w-20 border-4 border-white shadow-sm" sizes="80px" />
               </div>
 
               <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -277,7 +505,7 @@ export default function PerfilPage() {
               </div>
 
               {profile.semester && !isEgresso && (
-                <p className="text-xs text-zinc-400 mb-3">{profile.semester}º semestre</p>
+                <p className="text-xs text-zinc-400 mb-3">{profile.semester}{String.fromCharCode(186)} semestre</p>
               )}
               {isEgresso && egressoForm.role && (
                 <p className="text-xs text-zinc-400 mb-3">
@@ -348,13 +576,7 @@ export default function PerfilPage() {
 
               <Field label="Avatar">
                 <div className="flex items-center gap-4">
-                  <div className="relative w-14 h-14 rounded-full overflow-hidden bg-zinc-100 border border-zinc-200 shrink-0">
-                    {profile.avatar_url ? (
-                      <Image src={profile.avatar_url} alt="Avatar" fill className="object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-zinc-400 text-xl select-none">?</div>
-                    )}
-                  </div>
+                  <UserAvatar src={profile.avatar_url} name={profile.name} className="h-14 w-14 border border-zinc-200" sizes="56px" />
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
@@ -518,6 +740,7 @@ export default function PerfilPage() {
                 <Field label="Ano de formatura">
                   <input
                     type="number"
+                    min={0}
                     value={egressoForm.graduation_year}
                     onChange={(e) => setEgressoForm((f) => ({ ...f, graduation_year: e.target.value }))}
                     className={inputClass}
@@ -563,6 +786,40 @@ export default function PerfilPage() {
 const inputClass = 'rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 transition w-full'
 
 const inputErrorClass = 'rounded-lg border border-red-400 bg-red-50/30 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 transition w-full'
+
+function roleLabel(role: string | null) {
+  if (role === 'admin') return 'Admin'
+  if (role === 'moderador') return 'Moderador'
+  if (role === 'professor') return 'Professor'
+  return 'Aluno'
+}
+
+function externalLabel(url: string) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '')
+  } catch {
+    return url
+  }
+}
+
+function getProjectCover(images: unknown) {
+  const media = (images as { image_url: string; display_order: number; media_type?: string | null }[] | null) ?? []
+  return [...media].sort((a, b) => a.display_order - b.display_order)[0] ?? null
+}
+
+function currentLevel(levels: Level[], xp: number) {
+  return [...levels].reverse().find((level) => xp >= level.min_xp) ?? levels[0] ?? null
+}
+
+function ProfileStat({ label, value, detail }: { label: string; value: string | number; detail?: string | null }) {
+  return (
+    <div>
+      <p className="text-xl font-bold text-zinc-900">{value}</p>
+      <p className="text-xs text-zinc-400">{label}</p>
+      {detail && <p className="mt-1 text-xs font-semibold text-[#2F9E41]">{detail}</p>}
+    </div>
+  )
+}
 
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (

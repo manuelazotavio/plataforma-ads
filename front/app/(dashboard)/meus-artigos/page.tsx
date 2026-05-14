@@ -115,12 +115,18 @@ export default function MeusArtigosPage() {
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <h2 className="text-sm font-semibold text-zinc-900 truncate">{article.title}</h2>
-                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
-                        article.status === 'publicado' ? 'bg-green-100 text-green-700' :
-                        article.status === 'rejeitado' ? 'bg-red-100 text-red-600' :
-                        article.status === 'pendente' ? 'bg-amber-100 text-amber-700' :
-                        'bg-zinc-100 text-zinc-500'
+                      <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border bg-white px-2.5 py-1 text-[11px] font-semibold ${
+                        article.status === 'publicado' ? 'border-green-200 text-green-700' :
+                        article.status === 'rejeitado' ? 'border-red-200 text-red-600' :
+                        article.status === 'pendente' ? 'border-amber-200 text-amber-700' :
+                        'border-zinc-200 text-zinc-500'
                       }`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${
+                          article.status === 'publicado' ? 'bg-green-500' :
+                          article.status === 'rejeitado' ? 'bg-red-500' :
+                          article.status === 'pendente' ? 'bg-amber-500' :
+                          'bg-zinc-400'
+                        }`} />
                         {article.status}
                       </span>
                     </div>

@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { supabase } from '@/app/lib/supabase'
 import LikeButton from '@/app/components/LikeButton'
+import UserAvatar from '@/app/components/UserAvatar'
 
 export const dynamic = 'force-dynamic'
 import Comments from '@/app/components/Comments'
@@ -56,7 +57,7 @@ export default async function ArtigoDetalhe({ params }: { params: Promise<{ id: 
                 <Link href={`/usuarios/${author.id}`} className="flex items-center gap-2 hover:opacity-80 transition">
                   {author.avatar_url
                     ? <Image src={author.avatar_url} alt={author.name} width={28} height={28} className="w-7 h-7 rounded-full object-cover shrink-0" />
-                    : <div className="w-7 h-7 rounded-full bg-zinc-200 shrink-0" />
+                    : <UserAvatar name={author.name} className="h-7 w-7" sizes="28px" />
                   }
                   <span className="text-sm text-zinc-600 font-medium">{author.name}</span>
                 </Link>

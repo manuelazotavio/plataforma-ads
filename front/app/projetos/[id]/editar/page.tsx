@@ -22,7 +22,7 @@ export default function EditarProjetoPage() {
 
       const { data, error } = await supabase
         .from('projects')
-        .select('title, description, repo_url, deploy_url, semester, is_featured, project_tags(tag_name), project_images(image_url, display_order, media_type)')
+        .select('title, description, repo_url, deploy_url, semester, start_date, end_date, is_featured, project_tags(tag_name), project_images(image_url, display_order, media_type), project_collaborators(user_id, name)')
         .eq('id', id)
         .eq('user_id', user.id)
         .single()
@@ -35,11 +35,14 @@ export default function EditarProjetoPage() {
         repo_url: data.repo_url ?? '',
         deploy_url: data.deploy_url ?? '',
         semester: data.semester?.toString() ?? '',
+        start_date: data.start_date ?? '',
+        end_date: data.end_date ?? '',
         is_featured: data.is_featured,
         tags: data.project_tags.map((t: { tag_name: string }) => t.tag_name),
         images: data.project_images
           .sort((a: { display_order: number }, b: { display_order: number }) => a.display_order - b.display_order)
           .map((img: { image_url: string; media_type: string }) => ({ url: img.image_url, type: (img.media_type ?? 'image') as 'image' | 'video' })),
+        collaborators: data.project_collaborators.map((c: { user_id: string | null; name: string }) => ({ user_id: c.user_id, name: c.name })),
       })
     }
     load()
@@ -58,6 +61,8 @@ export default function EditarProjetoPage() {
         repo_url: data.repo_url || null,
         deploy_url: data.deploy_url || null,
         semester: data.semester ? parseInt(data.semester) : null,
+        start_date: data.start_date || null,
+        end_date: data.end_date || null,
         is_featured: data.is_featured,
         approved: false,
         rejection_message: null,
@@ -82,6 +87,13 @@ export default function EditarProjetoPage() {
     if (data.images.length > 0) {
       await supabase.from('project_images').insert(
         data.images.map((img, i) => ({ project_id: id, image_url: img.url, display_order: i, media_type: img.type }))
+      )
+    }
+
+    await supabase.from('project_collaborators').delete().eq('project_id', id)
+    if (data.collaborators.length > 0) {
+      await supabase.from('project_collaborators').insert(
+        data.collaborators.map((c) => ({ project_id: id, user_id: c.user_id ?? null, name: c.name }))
       )
     }
 
