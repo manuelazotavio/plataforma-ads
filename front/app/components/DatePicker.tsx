@@ -114,14 +114,16 @@ export default function DatePicker({
     setTyped(formatInput(value))
   }, [value])
 
+  // Ao abrir o calendário, posiciona a visualização na data digitada ou selecionada
   useEffect(() => {
-    if (open) {
-      const typedISO = parseTypedDate(typed)
-      const d = typedISO ? parseISO(typedISO) : parseISO(value)
-      setVy(d?.getFullYear() ?? today.getFullYear())
-      setVm(d?.getMonth() ?? today.getMonth())
-    }
-  }, [open, value, typed])
+    if (!open) return
+    const typedISO = parseTypedDate(typed)
+    const d = typedISO ? parseISO(typedISO) : parseISO(value)
+    setVy(d?.getFullYear() ?? today.getFullYear())
+    setVm(d?.getMonth() ?? today.getMonth())
+    // Só roda quando o calendário abre — a navegação durante a digitação é feita no handleTypedChange
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
 
   useEffect(() => {
     if (!open) return

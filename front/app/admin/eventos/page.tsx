@@ -21,7 +21,7 @@ type Event = {
   start_date: string | null
   end_date: string | null
   registration_url: string | null
-  registration_open: boolean
+  registration_open: boolean | null
   banner_url: string | null
   is_active: boolean
 }
@@ -34,7 +34,7 @@ const empty = (): Omit<Event, 'id'> => ({
   start_date: '',
   end_date: '',
   registration_url: '',
-  registration_open: false,
+  registration_open: null,
   banner_url: '',
   is_active: true,
 })
@@ -294,16 +294,29 @@ export default function AdminEventosPage() {
                 </div>
               </Field>
 
-              <div className="flex flex-col gap-3 sm:flex-row sm:gap-6">
-                <label className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={form.registration_open}
-                    onChange={(e) => setForm({ ...form, registration_open: e.target.checked })}
-                    className="w-4.5 h-4.5 accent-[#2F9E41]"
-                  />
-                  Inscrições abertas
-                </label>
+              <div className="flex flex-col gap-4">
+                <Field label="Status das inscrições">
+                  <div className="flex flex-wrap gap-2">
+                    {([
+                      { value: null, label: 'Não iniciado' },
+                      { value: true, label: 'Abertas' },
+                      { value: false, label: 'Encerradas' },
+                    ] as const).map(({ value, label }) => (
+                      <button
+                        key={String(value)}
+                        type="button"
+                        onClick={() => setForm({ ...form, registration_open: value })}
+                        className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
+                          form.registration_open === value
+                            ? 'border-[#2F9E41] bg-[#2F9E41]/10 text-[#2F9E41]'
+                            : 'border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </Field>
                 <label className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer">
                   <input
                     type="checkbox"
@@ -364,9 +377,19 @@ export default function AdminEventosPage() {
                     <span className={`h-1.5 w-1.5 rounded-full ${event.is_active ? 'bg-green-500' : 'bg-zinc-400'}`} />
                     {event.is_active ? 'Publicado' : 'Oculto'}
                   </span>
-                  <span className={`inline-flex items-center gap-1.5 rounded-full border bg-white px-2.5 py-1 text-[11px] font-semibold ${event.registration_open ? 'border-blue-200 text-blue-700' : 'border-zinc-200 text-zinc-500'}`}>
-                    <span className={`h-1.5 w-1.5 rounded-full ${event.registration_open ? 'bg-blue-500' : 'bg-zinc-400'}`} />
-                    Inscrições {event.registration_open ? 'Abertas' : 'Encerradas'}
+                  <span className={`inline-flex items-center gap-1.5 rounded-full border bg-white px-2.5 py-1 text-[11px] font-semibold ${
+                    event.registration_open === true ? 'border-blue-200 text-blue-700' :
+                    event.registration_open === null ? 'border-amber-200 text-amber-700' :
+                    'border-zinc-200 text-zinc-500'
+                  }`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${
+                      event.registration_open === true ? 'bg-blue-500' :
+                      event.registration_open === null ? 'bg-amber-400' :
+                      'bg-zinc-400'
+                    }`} />
+                    {event.registration_open === true ? 'Inscrições Abertas' :
+                     event.registration_open === null ? 'Não iniciado' :
+                     'Inscrições Encerradas'}
                   </span>
                 </div>
               </div>

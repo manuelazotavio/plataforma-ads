@@ -75,7 +75,7 @@ function EventCard({ event }: {
     description: string | null
     start_date: string | null
     end_date: string | null
-    registration_open: boolean
+    registration_open: boolean | null
     banner_url: string | null
   }
 }) {
@@ -101,7 +101,12 @@ function EventCard({ event }: {
             {event.edition && (
               <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-500">{event.edition}</span>
             )}
-            {event.registration_open && (
+            {event.registration_open === null && (
+              <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-500">
+                Em breve
+              </span>
+            )}
+            {event.registration_open === true && (
               <span className="rounded-full bg-[#2F9E41] px-2.5 py-1 text-xs font-semibold text-white">
                 Inscrições abertas
               </span>

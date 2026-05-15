@@ -85,7 +85,7 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
         <div className="rounded-xl bg-zinc-50 border border-zinc-100 p-4">
           <p className="text-xs text-zinc-400  mb-1">Inscrições</p>
           <p className="text-sm font-semibold text-zinc-900">
-            {event.registration_open ? 'Abertas' : 'Encerradas'}
+            {event.registration_open === null ? 'Em breve' : event.registration_open ? 'Abertas' : 'Encerradas'}
           </p>
         </div>
       </div>
