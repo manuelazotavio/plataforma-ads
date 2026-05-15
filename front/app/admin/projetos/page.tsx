@@ -219,13 +219,13 @@ export default function AdminProjetosPage() {
                         Aprovar
                       </button>
                     )}
-                    {status === 'aprovado' && (
+                    {status !== 'pendente' && (
                       <button
                         onClick={() => revoke(project.id)}
                         disabled={updatingId === project.id}
                         className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 transition"
                       >
-                        Revogar
+                        Devolver para revisão
                       </button>
                     )}
                     {status !== 'reprovado' && (
