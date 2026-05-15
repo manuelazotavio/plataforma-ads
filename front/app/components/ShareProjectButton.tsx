@@ -4,10 +4,11 @@ import { useState } from 'react'
 
 type Props = {
   title: string
+  label?: string
   className?: string
 }
 
-export default function ShareProjectButton({ title, className = '' }: Props) {
+export default function ShareProjectButton({ title, label = 'Compartilhar projeto', className = '' }: Props) {
   const [copied, setCopied] = useState(false)
 
   async function share() {
@@ -34,7 +35,7 @@ export default function ShareProjectButton({ title, className = '' }: Props) {
       className={`inline-flex items-center gap-2 rounded-full border border-zinc-200 px-4 py-2 text-base font-semibold text-zinc-900 transition hover:bg-zinc-50 ${className}`}
     >
       <ShareIcon />
-      {copied ? 'Link copiado' : 'Compartilhar projeto'}
+      {copied ? 'Link copiado' : label}
     </button>
   )
 }

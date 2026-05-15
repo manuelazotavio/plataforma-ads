@@ -2,6 +2,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { supabase } from '@/app/lib/supabase'
+import LikeButton from '@/app/components/LikeButton'
+import ShareProjectButton from '@/app/components/ShareProjectButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -89,17 +91,21 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
 
      
      
-      {event.registration_open && event.registration_url && (
-        <a
-          href={event.registration_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 rounded-xl px-8 py-3 text-sm font-bold text-white mb-12 transition hover:opacity-90"
-          style={{ backgroundColor: '#2F9E41' }}
-        >
-          Inscrever-se ↗
-        </a>
-      )}
+      <div className="flex flex-wrap items-center gap-3 mb-12">
+        {event.registration_open && event.registration_url && (
+          <a
+            href={event.registration_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full px-6 py-2 text-sm font-bold text-white transition hover:opacity-90"
+            style={{ backgroundColor: '#2F9E41' }}
+          >
+            Inscrever-se ↗
+          </a>
+        )}
+        <LikeButton type="event" targetId={event.id} initialCount={0} label="Curtir evento" variant="action" />
+        <ShareProjectButton title={event.title} label="Compartilhar evento" />
+      </div>
 
       
       {relatedProjects && relatedProjects.length > 0 && (

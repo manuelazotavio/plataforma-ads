@@ -104,7 +104,7 @@ export function ReactionPicker({
 }
 
 type Props = {
-  type: 'project' | 'article'
+  type: 'project' | 'article' | 'event'
   targetId: string
   initialCount: number
   label?: string
@@ -113,8 +113,8 @@ type Props = {
 }
 
 export default function LikeButton({ type, targetId, initialCount, label, variant = 'default', className = '' }: Props) {
-  const table = type === 'project' ? 'project_likes' : 'article_likes'
-  const field = type === 'project' ? 'project_id' : 'article_id'
+  const table = type === 'project' ? 'project_likes' : type === 'article' ? 'article_likes' : 'event_likes'
+  const field = type === 'project' ? 'project_id' : type === 'article' ? 'article_id' : 'event_id'
 
   const [userId, setUserId]         = useState<string | null>(null)
   const [myReaction, setMyReaction] = useState<ReactionType | null>(null)
