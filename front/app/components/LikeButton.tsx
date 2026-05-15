@@ -185,7 +185,7 @@ export default function LikeButton({ type, targetId, initialCount, label, varian
   return (
     <div ref={ref} className={`relative inline-flex ${variant === 'action' ? 'w-full sm:w-auto' : ''}`}>
       {open && userId && (
-        <div className="absolute bottom-full left-1/2 mb-2 z-50 -translate-x-1/2">
+        <div className="absolute bottom-full left-0 mb-2 z-50">
           <ReactionPicker myReaction={myReaction} onReact={react} />
         </div>
       )}
