@@ -1,16 +1,17 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import Select from '@/app/components/Select'
 import DatePicker from '@/app/components/DatePicker'
 import { supabase } from '@/app/lib/supabase'
 
-const CATEGORIES = [
-  { value: 'hackathon', label: 'Hackathon' },
-  { value: 'maratona', label: 'Maratona' },
-  { value: 'extensao', label: 'Extensão' },
-  { value: 'iniciacao_cientifica', label: 'Iniciação Científica' },
-]
+type Category = {
+  id: string
+  value: string
+  label: string
+  order: number
+}
 
 type Event = {
   id: string
@@ -41,6 +42,7 @@ const empty = (): Omit<Event, 'id'> => ({
 
 export default function AdminEventosPage() {
   const [events, setEvents] = useState<Event[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<Event | null>(null)
@@ -52,11 +54,12 @@ export default function AdminEventosPage() {
   const bannerInputRef = useRef<HTMLInputElement>(null)
 
   async function load() {
-    const { data } = await supabase
-      .from('events')
-      .select('*')
-      .order('start_date', { ascending: false })
-    setEvents((data as Event[]) ?? [])
+    const [{ data: eventsData }, { data: catsData }] = await Promise.all([
+      supabase.from('events').select('*').order('start_date', { ascending: false }),
+      supabase.from('event_categories').select('*').order('order', { ascending: true }),
+    ])
+    setEvents((eventsData as Event[]) ?? [])
+    setCategories((catsData as Category[]) ?? [])
     setLoading(false)
   }
 
@@ -161,14 +164,23 @@ export default function AdminEventosPage() {
           <h1 className="text-2xl font-semibold text-zinc-900">Eventos</h1>
           <p className="text-sm text-zinc-500 mt-0.5">{events.length} evento{events.length !== 1 ? 's' : ''}</p>
         </div>
-        <button
-          onClick={openCreate}
-          className="flex w-full items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-white transition sm:w-auto"
-          style={{ backgroundColor: '#2F9E41' }}
-        >
-          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-          Novo evento
-        </button>
+        <div className="flex w-full items-center gap-2 sm:w-auto">
+          <Link
+            href="/admin/eventos/categorias"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50 sm:flex-none"
+          >
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
+            Categorias
+          </Link>
+          <button
+            onClick={openCreate}
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-white transition sm:flex-none"
+            style={{ backgroundColor: '#2F9E41' }}
+          >
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            Novo evento
+          </button>
+        </div>
       </div>
 
       
@@ -205,7 +217,7 @@ export default function AdminEventosPage() {
                   <Select
                     value={form.category ?? ''}
                     onChange={(value) => setForm({ ...form, category: value || null })}
-                    options={CATEGORIES}
+                    options={categories}
                     placeholder="Sem categoria"
                   />
                 </Field>
@@ -360,7 +372,7 @@ export default function AdminEventosPage() {
                 <div className="mb-1 flex flex-wrap items-center gap-2">
                   {event.category && (
                     <span className="text-xs font-semibold text-[#2F9E41]">
-                      {CATEGORIES.find((c) => c.value === event.category)?.label}
+                      {categories.find((c) => c.value === event.category)?.label ?? event.category}
                     </span>
                   )}
                   {event.edition && <span className="text-xs text-zinc-400">{event.edition}</span>}

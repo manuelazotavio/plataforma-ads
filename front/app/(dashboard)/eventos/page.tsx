@@ -4,24 +4,24 @@ import { supabase } from '@/app/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
-const CATEGORY_LABELS: Record<string, string> = {
-  hackathon: 'Hackathon',
-  maratona: 'Maratona',
-  extensao: 'Extensão',
-  iniciacao_cientifica: 'Iniciação Científica',
-}
-
 function formatDate(date: string | null) {
   if (!date) return null
   return new Date(date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
 export default async function EventosPage() {
-  const { data: events } = await supabase
-    .from('events')
-    .select('id, title, edition, category, description, start_date, end_date, registration_open, banner_url')
-    .eq('is_active', true)
-    .order('start_date', { ascending: false })
+  const [{ data: events }, { data: categoriesData }] = await Promise.all([
+    supabase
+      .from('events')
+      .select('id, title, edition, category, description, start_date, end_date, registration_open, banner_url')
+      .eq('is_active', true)
+      .order('start_date', { ascending: false }),
+    supabase.from('event_categories').select('value, label'),
+  ])
+
+  const categoryLabel: Record<string, string> = Object.fromEntries(
+    (categoriesData ?? []).map((c: { value: string; label: string }) => [c.value, c.label])
+  )
 
   const upcoming = (events ?? []).filter((event) => event.start_date && new Date(event.start_date) >= new Date())
   const past = (events ?? []).filter((event) => !event.start_date || new Date(event.start_date) < new Date())
@@ -44,7 +44,7 @@ export default async function EventosPage() {
               <p className="mb-5 text-xs font-semibold text-zinc-400">Próximos</p>
               <div className="flex flex-col gap-4">
                 {upcoming.map((event) => (
-                  <EventCard key={event.id} event={event} />
+                  <EventCard key={event.id} event={event} categoryLabel={categoryLabel} />
                 ))}
               </div>
             </section>
@@ -55,7 +55,7 @@ export default async function EventosPage() {
               <p className="mb-5 text-xs font-semibold text-zinc-400">Anteriores</p>
               <div className="flex flex-col gap-4">
                 {past.map((event) => (
-                  <EventCard key={event.id} event={event} />
+                  <EventCard key={event.id} event={event} categoryLabel={categoryLabel} />
                 ))}
               </div>
             </section>
@@ -66,7 +66,7 @@ export default async function EventosPage() {
   )
 }
 
-function EventCard({ event }: {
+function EventCard({ event, categoryLabel }: {
   event: {
     id: string
     title: string
@@ -78,6 +78,7 @@ function EventCard({ event }: {
     registration_open: boolean | null
     banner_url: string | null
   }
+  categoryLabel: Record<string, string>
 }) {
   return (
     <Link
@@ -95,7 +96,7 @@ function EventCard({ event }: {
           <div className="flex flex-wrap items-center gap-2">
             {event.category && (
               <span className="rounded-full bg-[#2F9E41]/10 px-2.5 py-1 text-xs font-semibold text-[#2F9E41]">
-                {CATEGORY_LABELS[event.category] ?? event.category}
+                {categoryLabel[event.category] ?? event.category}
               </span>
             )}
             {event.edition && (

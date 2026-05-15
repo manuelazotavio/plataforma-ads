@@ -5,13 +5,6 @@ import { supabase } from '@/app/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
-const CATEGORY_LABELS: Record<string, string> = {
-  hackathon: 'Hackathon',
-  maratona: 'Maratona',
-  extensao: 'Extensão',
-  iniciacao_cientifica: 'Iniciação Científica',
-}
-
 function formatDate(date: string | null) {
   if (!date) return null
   return new Date(date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -20,11 +13,14 @@ function formatDate(date: string | null) {
 export default async function EventoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
-  const { data: event } = await supabase
-    .from('events')
-    .select('*')
-    .eq('id', id)
-    .single()
+  const [{ data: event }, { data: categoriesData }] = await Promise.all([
+    supabase.from('events').select('*').eq('id', id).single(),
+    supabase.from('event_categories').select('value, label'),
+  ])
+
+  const categoryLabel: Record<string, string> = Object.fromEntries(
+    (categoriesData ?? []).map((c: { value: string; label: string }) => [c.value, c.label])
+  )
 
   if (!event) notFound()
 
@@ -55,7 +51,7 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
         <div className="flex items-center gap-2">
           {event.category && (
             <span className="text-xs font-semibold text-[#2F9E41]">
-              {CATEGORY_LABELS[event.category] ?? event.category}
+              {categoryLabel[event.category] ?? event.category}
             </span>
           )}
           {event.edition && (
