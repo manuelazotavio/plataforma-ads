@@ -51,6 +51,7 @@ export default function AdminEventosPage() {
   const [uploadingBanner, setUploadingBanner] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
+  const [draggingBanner, setDraggingBanner] = useState(false)
   const bannerInputRef = useRef<HTMLInputElement>(null)
 
   async function load() {
@@ -115,33 +116,28 @@ export default function AdminEventosPage() {
     setEvents((prev) => prev.map((e) => e.id === id ? { ...e, [field]: value } : e))
   }
 
-  async function uploadBanner(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    e.target.value = ''
-    if (!file) return
+  async function handleBannerDrop(e: React.DragEvent) {
+    e.preventDefault()
+    setDraggingBanner(false)
+    const file = e.dataTransfer.files?.[0]
+    if (file?.type.startsWith('image/')) await uploadBannerFile(file)
+  }
 
-    if (!file.type.startsWith('image/')) {
-      alert('Envie uma imagem.')
-      return
-    }
+  async function handleBannerPaste(e: React.ClipboardEvent) {
+    const file = Array.from(e.clipboardData.files).find((f) => f.type.startsWith('image/'))
+    if (file) await uploadBannerFile(file)
+  }
 
+  async function uploadBannerFile(file: File) {
     setUploadingBanner(true)
     const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
     const path = `eventos/evento-${Date.now()}.${ext}`
-    const { error } = await supabase.storage
-      .from('covers')
-      .upload(path, file, {
-        cacheControl: '3600',
-        upsert: true,
-        contentType: file.type,
-      })
-
-    if (error) {
-      alert('Erro ao enviar imagem: ' + error.message)
-      setUploadingBanner(false)
-      return
-    }
-
+    const { error } = await supabase.storage.from('covers').upload(path, file, {
+      cacheControl: '3600',
+      upsert: true,
+      contentType: file.type,
+    })
+    if (error) { alert('Erro ao enviar imagem: ' + error.message); setUploadingBanner(false); return }
     const { data: { publicUrl } } = supabase.storage.from('covers').getPublicUrl(path)
     setForm((current) => ({ ...current, banner_url: publicUrl }))
     setUploadingBanner(false)
@@ -261,49 +257,73 @@ export default function AdminEventosPage() {
               </Field>
 
               <Field label="Foto do evento">
-                <div className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setDraggingBanner(true) }}
+                  onDragLeave={() => setDraggingBanner(false)}
+                  onDrop={handleBannerDrop}
+                  onPaste={handleBannerPaste}
+                  tabIndex={0}
+                  className={`relative overflow-hidden rounded-xl border-2 transition outline-none focus-visible:ring-2 focus-visible:ring-[#2F9E41]/40 ${
+                    form.banner_url
+                      ? 'border-transparent'
+                      : draggingBanner
+                      ? 'border-[#2F9E41] bg-[#2F9E41]/5'
+                      : 'border-dashed border-zinc-300 bg-zinc-50 hover:border-zinc-400'
+                  }`}
+                >
                   {form.banner_url ? (
-                    <div
-                      role="img"
-                      aria-label="Foto do evento"
-                      className="h-40 overflow-hidden rounded-lg border border-zinc-200 bg-white bg-cover bg-center"
-                      style={{ backgroundImage: `url(${form.banner_url})` }}
-                    />
-                  ) : (
-                    <div className="flex h-32 items-center justify-center rounded-lg border border-dashed border-zinc-300 bg-white text-sm text-zinc-400">
-                      Nenhuma foto enviada
+                    <div className="group relative aspect-video bg-zinc-100">
+                      <img src={form.banner_url} alt="Banner do evento" className="h-full w-full object-cover" />
+                      <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/40 opacity-0 transition group-hover:opacity-100">
+                        <button
+                          type="button"
+                          onClick={() => bannerInputRef.current?.click()}
+                          disabled={uploadingBanner}
+                          className="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-zinc-800 transition hover:bg-zinc-100 disabled:opacity-50"
+                        >
+                          Trocar foto
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setForm({ ...form, banner_url: '' })}
+                          disabled={uploadingBanner}
+                          className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-600 disabled:opacity-50"
+                        >
+                          Remover
+                        </button>
+                      </div>
+                      {uploadingBanner && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                          <span className="text-sm font-medium text-white">Enviando...</span>
+                        </div>
+                      )}
                     </div>
-                  )}
-
-                  <div className="flex flex-col gap-2 sm:flex-row">
+                  ) : (
                     <button
                       type="button"
                       onClick={() => bannerInputRef.current?.click()}
                       disabled={uploadingBanner}
-                      className="rounded-lg bg-[#2F9E41] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
+                      className="flex aspect-video w-full flex-col items-center justify-center gap-2 text-zinc-400 transition hover:text-zinc-600 disabled:opacity-50"
                     >
-                      {uploadingBanner ? 'Enviando...' : form.banner_url ? 'Trocar foto' : 'Enviar foto'}
+                      <svg width={32} height={32} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <path d="m21 15-5-5L5 21" />
+                      </svg>
+                      <div className="text-center">
+                        <p className="text-sm font-medium">{uploadingBanner ? 'Enviando...' : 'Clique para adicionar'}</p>
+                        <p className="text-xs">ou arraste e solte · cole com Ctrl+V</p>
+                      </div>
                     </button>
-                    {form.banner_url && (
-                      <button
-                        type="button"
-                        onClick={() => setForm({ ...form, banner_url: '' })}
-                        disabled={uploadingBanner}
-                        className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50 disabled:opacity-50"
-                      >
-                        Remover foto
-                      </button>
-                    )}
-                  </div>
-
-                  <input
-                    ref={bannerInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={uploadBanner}
-                  />
+                  )}
                 </div>
+                <input
+                  ref={bannerInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void uploadBannerFile(f) }}
+                />
               </Field>
 
               <div className="flex flex-col gap-4">
