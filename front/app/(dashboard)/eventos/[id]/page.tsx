@@ -7,7 +7,8 @@ export const dynamic = 'force-dynamic'
 
 function formatDate(date: string | null) {
   if (!date) return null
-  return new Date(date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
+  const [y, m, d] = date.split('-').map(Number)
+  return new Date(y, m - 1, d).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
 export default async function EventoPage({ params }: { params: Promise<{ id: string }> }) {

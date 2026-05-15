@@ -400,8 +400,8 @@ export default function AdminEventosPage() {
                 <p className="text-sm font-semibold text-zinc-900">{event.title}</p>
                 {(event.start_date || event.end_date) && (
                   <p className="text-xs text-zinc-400 mt-0.5">
-                    {event.start_date && new Date(event.start_date).toLocaleDateString('pt-BR')}
-                    {event.end_date && ` – ${new Date(event.end_date).toLocaleDateString('pt-BR')}`}
+                    {event.start_date && localDate(event.start_date).toLocaleDateString('pt-BR')}
+                    {event.end_date && ` – ${localDate(event.end_date).toLocaleDateString('pt-BR')}`}
                   </p>
                 )}
                 <div className="mt-2 flex flex-wrap gap-2">
@@ -459,6 +459,11 @@ export default function AdminEventosPage() {
       )}
     </div>
   )
+}
+
+function localDate(iso: string) {
+  const [y, m, d] = iso.split('-').map(Number)
+  return new Date(y, m - 1, d)
 }
 
 const input = 'w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-400 transition'
