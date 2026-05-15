@@ -10,7 +10,11 @@ const CATEGORIES = [
   { value: 'evento_externo', label: 'Evento externo' },
 ]
 
-const WORK_MODES = ['Presencial', 'Remoto', 'Híbrido']
+const WORK_MODES = [
+  { value: 'presencial', label: 'Presencial' },
+  { value: 'remoto', label: 'Remoto' },
+  { value: 'hibrido', label: 'Híbrido' },
+]
 
 type Job = {
   id: string
@@ -237,7 +241,7 @@ export default function AdminVagasPage() {
                   <Select
                     value={form.work_mode}
                     onChange={(value) => setForm((f) => ({ ...f, work_mode: value }))}
-                    options={WORK_MODES.map((mode) => ({ value: mode, label: mode }))}
+                    options={WORK_MODES}
                     placeholder="Selecionar"
                   />
                 </div>
