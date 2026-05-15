@@ -31,7 +31,8 @@ const semesterOptions = Array.from({ length: 8 }, (_, index) => {
 
 export default function AdminMatrizCurricularPage() {
   const [subjects, setSubjects] = useState<CurriculumSubject[]>([])
-  const [form, setForm] = useState<FormState>(emptyForm)
+  const [addForm, setAddForm] = useState<FormState>(emptyForm)
+  const [editForm, setEditForm] = useState<FormState>(emptyForm)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -74,60 +75,61 @@ export default function AdminMatrizCurricularPage() {
     void Promise.resolve().then(loadSubjects)
   }, [])
 
-  async function saveSubject(e: React.FormEvent) {
+  async function addSubject(e: React.FormEvent) {
     e.preventDefault()
-
-    const name = form.name.trim()
+    const name = addForm.name.trim()
     if (!name) return
-
-    const workload = parseWorkloadHours(form.workload_hours)
-
+    const workload = parseWorkloadHours(addForm.workload_hours)
     if (workload !== null && (!Number.isFinite(workload) || workload <= 0)) {
       setError('Informe uma carga horária válida ou deixe o campo em branco.')
       return
     }
-
     setSaving(true)
     setError(null)
     setNotice(null)
-
-    const payload = {
-      semester: form.semester,
+    const nextOrder = subjects
+      .filter((s) => s.semester === addForm.semester)
+      .reduce((max, s) => Math.max(max, s.display_order ?? 0), 0) + 1
+    const { error } = await supabase.from(CURRICULUM_SUBJECTS_TABLE).insert({
+      semester: addForm.semester,
       name,
       workload_hours: workload,
-    }
-
-    if (editingId) {
-      const { error } = await supabase
-        .from(CURRICULUM_SUBJECTS_TABLE)
-        .update(payload)
-        .eq('id', editingId)
-
-      if (error) {
-        setError(error.message)
-      } else {
-        setNotice('Disciplina atualizada.')
-        cancelEdit()
-        await loadSubjects()
-      }
+      display_order: nextOrder,
+      is_active: true,
+    })
+    if (error) {
+      setError(error.message)
     } else {
-      const nextOrder = subjects
-        .filter((subject) => subject.semester === form.semester)
-        .reduce((max, subject) => Math.max(max, subject.display_order ?? 0), 0) + 1
-
-      const { error } = await supabase
-        .from(CURRICULUM_SUBJECTS_TABLE)
-        .insert({ ...payload, display_order: nextOrder, is_active: true })
-
-      if (error) {
-        setError(error.message)
-      } else {
-        setNotice('Disciplina adicionada.')
-        setForm(emptyForm)
-        await loadSubjects()
-      }
+      setNotice('Disciplina adicionada.')
+      setAddForm(emptyForm)
+      await loadSubjects()
     }
+    setSaving(false)
+  }
 
+  async function saveEdit(e: React.FormEvent) {
+    e.preventDefault()
+    const name = editForm.name.trim()
+    if (!name || !editingId) return
+    const workload = parseWorkloadHours(editForm.workload_hours)
+    if (workload !== null && (!Number.isFinite(workload) || workload <= 0)) {
+      setError('Informe uma carga horária válida ou deixe o campo em branco.')
+      return
+    }
+    setSaving(true)
+    setError(null)
+    setNotice(null)
+    const { error } = await supabase
+      .from(CURRICULUM_SUBJECTS_TABLE)
+      .update({ semester: editForm.semester, name, workload_hours: workload })
+      .eq('id', editingId)
+    if (error) {
+      setError(error.message)
+    } else {
+      setNotice('Disciplina atualizada.')
+      cancelEdit()
+      await loadSubjects()
+    }
     setSaving(false)
   }
 
@@ -135,7 +137,7 @@ export default function AdminMatrizCurricularPage() {
     setEditingId(subject.id)
     setNotice(null)
     setError(null)
-    setForm({
+    setEditForm({
       semester: subject.semester,
       name: subject.name,
       workload_hours: subject.workload_hours ? String(subject.workload_hours) : '',
@@ -144,7 +146,8 @@ export default function AdminMatrizCurricularPage() {
 
   function cancelEdit() {
     setEditingId(null)
-    setForm(emptyForm)
+    setEditForm(emptyForm)
+    setError(null)
   }
 
   async function seedDefaultCurriculum() {
@@ -274,12 +277,70 @@ export default function AdminMatrizCurricularPage() {
         </button>
       </div>
 
-      <form onSubmit={saveSubject} className="mb-5 grid gap-3 rounded-xl border border-zinc-200 bg-white p-4 lg:grid-cols-[110px_1fr_140px_auto]">
+      {/* Modal de edição */}
+      {editingId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="text-base font-semibold text-zinc-900">Editar disciplina</h2>
+              <button type="button" onClick={cancelEdit} className="text-zinc-400 hover:text-zinc-700 transition">
+                <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} />
+                </svg>
+              </button>
+            </div>
+            <form onSubmit={saveEdit} className="flex flex-col gap-4">
+              <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500">
+                Semestre
+                <Select
+                  value={String(editForm.semester)}
+                  onChange={(value) => setEditForm((prev) => ({ ...prev, semester: Number(value) }))}
+                  options={semesterOptions}
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500">
+                Disciplina
+                <input
+                  type="text"
+                  value={editForm.name}
+                  autoFocus
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
+                  className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
+                  placeholder="Ex: Banco de Dados I"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500">
+                Carga horária
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={editForm.workload_hours}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, workload_hours: e.target.value }))}
+                  className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
+                  placeholder="Ex: 66,7"
+                />
+              </label>
+              {error && <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>}
+              <div className="flex justify-end gap-2 pt-1">
+                <button type="button" onClick={cancelEdit} className="cursor-pointer rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">
+                  Cancelar
+                </button>
+                <button type="submit" disabled={saving || !editForm.name.trim()} className="cursor-pointer rounded-lg bg-[#2F9E41] px-5 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50">
+                  {saving ? 'Salvando…' : 'Salvar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Formulário de adição */}
+      <form onSubmit={addSubject} className="mb-5 grid gap-3 rounded-xl border border-zinc-200 bg-white p-4 lg:grid-cols-[110px_1fr_140px_auto]">
         <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500">
           Semestre
           <Select
-            value={String(form.semester)}
-            onChange={(value) => setForm((prev) => ({ ...prev, semester: Number(value) }))}
+            value={String(addForm.semester)}
+            onChange={(value) => setAddForm((prev) => ({ ...prev, semester: Number(value) }))}
             options={semesterOptions}
           />
         </label>
@@ -288,8 +349,8 @@ export default function AdminMatrizCurricularPage() {
           Disciplina
           <input
             type="text"
-            value={form.name}
-            onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+            value={addForm.name}
+            onChange={(e) => setAddForm((prev) => ({ ...prev, name: e.target.value }))}
             className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
             placeholder="Ex: Banco de Dados I"
           />
@@ -300,8 +361,8 @@ export default function AdminMatrizCurricularPage() {
           <input
             type="text"
             inputMode="decimal"
-            value={form.workload_hours}
-            onChange={(e) => setForm((prev) => ({ ...prev, workload_hours: e.target.value }))}
+            value={addForm.workload_hours}
+            onChange={(e) => setAddForm((prev) => ({ ...prev, workload_hours: e.target.value }))}
             className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
             placeholder="Ex: 66,7"
           />
@@ -310,20 +371,11 @@ export default function AdminMatrizCurricularPage() {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
           <button
             type="submit"
-            disabled={saving || !form.name.trim()}
+            disabled={saving || !addForm.name.trim()}
             className="cursor-pointer rounded-lg bg-[#2F9E41] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
           >
-            {editingId ? 'Salvar' : 'Adicionar'}
+            Adicionar
           </button>
-          {editingId && (
-            <button
-              type="button"
-              onClick={cancelEdit}
-              className="cursor-pointer rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
-            >
-              Cancelar
-            </button>
-          )}
         </div>
       </form>
 

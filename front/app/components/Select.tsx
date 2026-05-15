@@ -18,6 +18,7 @@ export default function Select({ value, onChange, options, placeholder, classNam
   const [rect, setRect] = useState<DOMRect | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const btnRef = useRef<HTMLButtonElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   const selected = options.find((o) => o.value === value)
 
@@ -33,7 +34,10 @@ export default function Select({ value, onChange, options, placeholder, classNam
 
   useEffect(() => {
     if (!open) return
-    function onScroll() { setOpen(false) }
+    function onScroll(e: Event) {
+      if (dropdownRef.current?.contains(e.target as Node)) return
+      setOpen(false)
+    }
     window.addEventListener('scroll', onScroll, true)
     return () => window.removeEventListener('scroll', onScroll, true)
   }, [open])
@@ -73,6 +77,7 @@ export default function Select({ value, onChange, options, placeholder, classNam
 
       {open && rect && (
         <div
+          ref={dropdownRef}
           style={{
             position: 'fixed',
             top: rect.bottom + 4,

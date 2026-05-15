@@ -40,6 +40,8 @@ const EMPTY_FORM = {
   job_type: '',
   work_mode: '',
   application_url: '',
+  description: '',
+  requirements: '',
   tags: '',
 }
 
@@ -92,6 +94,8 @@ export default function AdminVagasPage() {
     setSaving(true)
     setError(null)
 
+    const { data: { user } } = await supabase.auth.getUser()
+
     const { data: newJob, error: err } = await supabase
       .from('jobs')
       .insert({
@@ -102,7 +106,10 @@ export default function AdminVagasPage() {
         job_type:  form.job_type.trim() || null,
         work_mode: form.work_mode || null,
         application_url: form.application_url.trim() || null,
+        description: form.description.trim() || null,
+        requirements: form.requirements.trim() || null,
         is_active: true,
+        user_id:   user?.id ?? null,
       })
       .select('id, position, company, location, job_type, work_mode, application_url, category, is_active, created_at')
       .single()
@@ -243,6 +250,26 @@ export default function AdminVagasPage() {
                     onChange={(value) => setForm((f) => ({ ...f, work_mode: value }))}
                     options={WORK_MODES}
                     placeholder="Selecionar"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5 col-span-2">
+                  <label className="text-xs font-semibold text-zinc-600">Descrição</label>
+                  <textarea
+                    value={form.description}
+                    onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                    placeholder="Descreva a oportunidade, requisitos, benefícios..."
+                    rows={3}
+                    className="rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-[#2F9E41] transition resize-none"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5 col-span-2">
+                  <label className="text-xs font-semibold text-zinc-600">Requisitos <span className="text-zinc-400 font-normal">(opcional)</span></label>
+                  <textarea
+                    value={form.requirements}
+                    onChange={(e) => setForm((f) => ({ ...f, requirements: e.target.value }))}
+                    placeholder="Ex: Conhecimento em React, disponibilidade de 6h/dia..."
+                    rows={2}
+                    className="rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-[#2F9E41] transition resize-none"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5 col-span-2">
