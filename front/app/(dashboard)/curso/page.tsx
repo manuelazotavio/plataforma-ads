@@ -12,10 +12,10 @@ import {
   CurriculumSubject,
   groupCurriculumSubjects,
 } from '@/app/lib/curriculum'
-import { CLASS_SCHEDULE_PDF_KEY, COURSE_SETTINGS_TABLE, PEDAGOGICAL_PROJECT_PDF_KEY } from '@/app/lib/courseSettings'
+import { CLASS_SCHEDULE_PDF_KEY, COURSE_SETTINGS_TABLE } from '@/app/lib/courseSettings'
 
 export default async function CursoPage() {
-  const [{ data: professors }, { data: rawSubjects, error: subjectsError }, { data: courseSettings }, { data: versions }] = await Promise.all([
+  const [{ data: professors }, { data: rawSubjects, error: subjectsError }, { data: courseSettings }, { data: versions }, { data: ppcDocs }] = await Promise.all([
     supabase
       .from('professors')
       .select('id, user_id, name, avatar_url, bio, cargo, years_at_if, email, whatsapp, linkedin, cnpq')
@@ -31,11 +31,15 @@ export default async function CursoPage() {
     supabase
       .from(COURSE_SETTINGS_TABLE)
       .select('key, value')
-      .in('key', [CLASS_SCHEDULE_PDF_KEY, PEDAGOGICAL_PROJECT_PDF_KEY]),
+      .eq('key', CLASS_SCHEDULE_PDF_KEY),
     supabase
       .from('curriculum_versions')
       .select('id, name, year, is_current')
       .order('year', { ascending: false }),
+    supabase
+      .from('course_ppc_documents')
+      .select('id, label, url')
+      .order('display_order', { ascending: false }),
   ])
 
   type SubjectWithVersion = CurriculumSubject & { version_id: string | null }
@@ -59,15 +63,15 @@ export default async function CursoPage() {
         .filter((v) => v.semesters.length > 0)
 
       if (unversionedSubjects.length > 0) {
-        versionGroups.push({ id: null, name: 'Histórico', year: null, is_current: false, semesters: groupCurriculumSubjects(unversionedSubjects as CurriculumSubject[]) })
+        curriculumVersions.push({ id: null, name: 'Histórico', year: null, is_current: false, semesters: groupCurriculumSubjects(unversionedSubjects as CurriculumSubject[]) })
       }
-      curriculumVersions = versionGroups
+      curriculumVersions.push(...versionGroups)
     } else {
       curriculum = groupCurriculumSubjects(subjects as CurriculumSubject[])
     }
   }
-  const classSchedulePdfUrl = courseSettings?.find((setting) => setting.key === CLASS_SCHEDULE_PDF_KEY)?.value ?? null
-  const pedagogicalProjectPdfUrl = courseSettings?.find((setting) => setting.key === PEDAGOGICAL_PROJECT_PDF_KEY)?.value ?? null
+  const classSchedulePdfUrl = courseSettings?.find((s) => s.key === CLASS_SCHEDULE_PDF_KEY)?.value ?? null
+  const ppcs = (ppcDocs ?? []) as { id: string; label: string; url: string }[]
 
   return (
     <div className="px-4 md:px-6 py-8 flex flex-col gap-12 w-full bg-white">
@@ -122,12 +126,25 @@ export default async function CursoPage() {
               />
             )}
 
-            {pedagogicalProjectPdfUrl && (
-              <CourseDocumentLink
-                title="Projeto Pedagógico de Curso"
-                description="Consulte o documento oficial com a estrutura, objetivos e organização do curso."
-                href={pedagogicalProjectPdfUrl}
-              />
+            {ppcs.length > 0 && (
+              <div className="rounded-xl border border-zinc-100 bg-zinc-50 p-4">
+                <p className="text-sm font-semibold text-zinc-900 mb-3">Projeto Pedagógico de Curso</p>
+                <div className="flex flex-col gap-2">
+                  {ppcs.map((ppc) => (
+                    <div key={ppc.id} className="flex items-center justify-between gap-4">
+                      <p className="text-sm text-zinc-700">{ppc.label}</p>
+                      <a
+                        href={ppc.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0 rounded-lg bg-[#2F9E41] px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90"
+                      >
+                        Abrir PDF
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
 
