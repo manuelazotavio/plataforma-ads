@@ -14,7 +14,7 @@ export type CurriculumSemester = {
   semester: number
   subjects: {
     name: string
-    abbreviation: string | null
+    abbreviation?: string | null
     workload_hours: number | null
   }[]
 }
