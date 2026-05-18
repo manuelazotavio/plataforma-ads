@@ -2,6 +2,30 @@ export const COURSE_SETTINGS_TABLE = 'course_settings'
 export const COURSE_DOCUMENTS_BUCKET = 'course-documents'
 export const CLASS_SCHEDULE_PDF_KEY = 'class_schedule_pdf_url'
 export const PEDAGOGICAL_PROJECT_PDF_KEY = 'pedagogical_project_pdf_url'
+export const COURSE_DESCRIPTION_KEY = 'course_description'
+export const COURSE_INFO_CARDS_KEY = 'course_info_cards'
+export const COURSE_LEARNING_ITEMS_KEY = 'course_learning_items'
+
+export type InfoCard = { label: string; value: string }
+
+export const DEFAULT_COURSE_DESCRIPTION =
+  'O curso Tecnológico em Análise e Desenvolvimento de Sistemas (ADS) forma profissionais capazes de desenvolver, implantar e manter sistemas computacionais. Com foco em soluções práticas e inovadoras, o curso prepara os alunos para o mercado de trabalho em todas as etapas do ciclo de desenvolvimento de software.'
+
+export const DEFAULT_INFO_CARDS: InfoCard[] = [
+  { label: 'Duração', value: '3 anos (6 semestres)' },
+  { label: 'Modalidade', value: 'Presencial' },
+  { label: 'Turno', value: 'Noturno' },
+  { label: 'Grau', value: 'Tecnólogo' },
+]
+
+export const DEFAULT_LEARNING_ITEMS: string[] = [
+  'Desenvolvimento web e mobile',
+  'Banco de dados e modelagem de dados',
+  'Engenharia e qualidade de software',
+  'Redes e infraestrutura de TI',
+  'Inteligência artificial e ciência de dados',
+  'Empreendedorismo e gestão de projetos',
+]
 
 export type CourseSetting = {
   key: string

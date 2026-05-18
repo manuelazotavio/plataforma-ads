@@ -7,6 +7,7 @@ type Semester = {
   semester: number
   subjects: {
     name: string
+    abbreviation: string | null
     workload_hours: number | null
   }[]
 }

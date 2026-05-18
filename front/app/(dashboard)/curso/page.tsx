@@ -12,7 +12,17 @@ import {
   CurriculumSubject,
   groupCurriculumSubjects,
 } from '@/app/lib/curriculum'
-import { CLASS_SCHEDULE_PDF_KEY, COURSE_SETTINGS_TABLE } from '@/app/lib/courseSettings'
+import {
+  CLASS_SCHEDULE_PDF_KEY,
+  COURSE_DESCRIPTION_KEY,
+  COURSE_INFO_CARDS_KEY,
+  COURSE_LEARNING_ITEMS_KEY,
+  COURSE_SETTINGS_TABLE,
+  DEFAULT_COURSE_DESCRIPTION,
+  DEFAULT_INFO_CARDS,
+  DEFAULT_LEARNING_ITEMS,
+  InfoCard,
+} from '@/app/lib/courseSettings'
 
 export default async function CursoPage() {
   const [{ data: professors }, { data: rawSubjects, error: subjectsError }, { data: courseSettings }, { data: versions }, { data: ppcDocs }] = await Promise.all([
@@ -31,7 +41,7 @@ export default async function CursoPage() {
     supabase
       .from(COURSE_SETTINGS_TABLE)
       .select('key, value')
-      .eq('key', CLASS_SCHEDULE_PDF_KEY),
+      .in('key', [CLASS_SCHEDULE_PDF_KEY, COURSE_DESCRIPTION_KEY, COURSE_INFO_CARDS_KEY, COURSE_LEARNING_ITEMS_KEY]),
     supabase
       .from('curriculum_versions')
       .select('id, name, year, is_current')
@@ -70,7 +80,11 @@ export default async function CursoPage() {
       curriculum = groupCurriculumSubjects(subjects as CurriculumSubject[])
     }
   }
-  const classSchedulePdfUrl = courseSettings?.find((s) => s.key === CLASS_SCHEDULE_PDF_KEY)?.value ?? null
+  const settingsMap = Object.fromEntries(((courseSettings ?? []) as { key: string; value: string | null }[]).map((s) => [s.key, s.value]))
+  const classSchedulePdfUrl = settingsMap[CLASS_SCHEDULE_PDF_KEY] ?? null
+  const courseDescription = settingsMap[COURSE_DESCRIPTION_KEY] ?? DEFAULT_COURSE_DESCRIPTION
+  const infoCards: InfoCard[] = settingsMap[COURSE_INFO_CARDS_KEY] ? (() => { try { return JSON.parse(settingsMap[COURSE_INFO_CARDS_KEY]!) } catch { return DEFAULT_INFO_CARDS } })() : DEFAULT_INFO_CARDS
+  const learningItems: string[] = settingsMap[COURSE_LEARNING_ITEMS_KEY] ? (() => { try { return JSON.parse(settingsMap[COURSE_LEARNING_ITEMS_KEY]!) } catch { return DEFAULT_LEARNING_ITEMS } })() : DEFAULT_LEARNING_ITEMS
   const ppcs = (ppcDocs ?? []) as { id: string; label: string; url: string }[]
 
   return (
@@ -78,44 +92,34 @@ export default async function CursoPage() {
       <section id="sobre-o-curso" className="scroll-mt-24">
         <SectionTitle>Sobre o curso</SectionTitle>
         <div className="rounded-2xl bg-white p-4 md:p-8 flex flex-col gap-6">
-          <p className="text-base text-zinc-600 leading-relaxed">
-            O curso Tecnológico em <strong className="text-zinc-900">Análise e Desenvolvimento de Sistemas (ADS)</strong> forma
-            profissionais capazes de desenvolver, implantar e manter sistemas computacionais. Com foco em soluções práticas e
-            inovadoras, o curso prepara os alunos para o mercado de trabalho em todas as etapas do ciclo de desenvolvimento de software.
-          </p>
+          {courseDescription && (
+            <p className="text-base text-zinc-600 leading-relaxed">{courseDescription}</p>
+          )}
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {[
-              { label: 'Duração', value: '3 anos (6 semestres)' },
-              { label: 'Modalidade', value: 'Presencial' },
-              { label: 'Turno', value: 'Noturno' },
-              { label: 'Grau', value: 'Tecnólogo' },
-            ].map((item) => (
-              <div key={item.label} className="rounded-xl bg-zinc-50 border border-zinc-100 p-4">
-                <p className="text-xs text-zinc-400 font-medium mb-1">{item.label}</p>
-                <p className="text-sm font-semibold text-zinc-900">{item.value}</p>
-              </div>
-            ))}
-          </div>
-
-          <div>
-            <p className="text-sm font-semibold text-zinc-900 mb-3">O que você vai aprender</p>
-            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {[
-                'Desenvolvimento web e mobile',
-                'Banco de dados e modelagem de dados',
-                'Engenharia e qualidade de software',
-                'Redes e infraestrutura de TI',
-                'Inteligência artificial e ciência de dados',
-                'Empreendedorismo e gestão de projetos',
-              ].map((item) => (
-                <li key={item} className="flex items-center gap-2 text-sm text-zinc-600">
-                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: '#2F9E41' }} />
-                  {item}
-                </li>
+          {infoCards.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {infoCards.map((item) => (
+                <div key={item.label} className="rounded-xl bg-zinc-50 border border-zinc-100 p-4">
+                  <p className="text-xs text-zinc-400 font-medium mb-1">{item.label}</p>
+                  <p className="text-sm font-semibold text-zinc-900">{item.value}</p>
+                </div>
               ))}
-            </ul>
-          </div>
+            </div>
+          )}
+
+          {learningItems.length > 0 && (
+            <div>
+              <p className="text-sm font-semibold text-zinc-900 mb-3">O que você vai aprender</p>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {learningItems.map((item) => (
+                  <li key={item} className="flex items-center gap-2 text-sm text-zinc-600">
+                    <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: '#2F9E41' }} />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <div className="flex flex-col gap-3">
             {classSchedulePdfUrl && (
