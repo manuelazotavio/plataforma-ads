@@ -16,6 +16,8 @@ type Props = {
 export default function Select({ value, onChange, options, placeholder, className, disabled }: Props) {
   const [open, setOpen] = useState(false)
   const [rect, setRect] = useState<DOMRect | null>(null)
+  const [flipUp, setFlipUp] = useState(false)
+  const [dropdownMaxHeight, setDropdownMaxHeight] = useState<number>(240)
   const containerRef = useRef<HTMLDivElement>(null)
   const btnRef = useRef<HTMLButtonElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -45,7 +47,13 @@ export default function Select({ value, onChange, options, placeholder, classNam
   function handleToggle() {
     if (disabled) return
     if (!open && btnRef.current) {
-      setRect(btnRef.current.getBoundingClientRect())
+      const r = btnRef.current.getBoundingClientRect()
+      setRect(r)
+      const spaceBelow = window.innerHeight - r.bottom - 8
+      const spaceAbove = r.top - 8
+      const wantsFlip = spaceBelow < 160 && spaceAbove > spaceBelow
+      setFlipUp(wantsFlip)
+      setDropdownMaxHeight(Math.min(240, Math.max(120, wantsFlip ? spaceAbove : spaceBelow)))
     }
     setOpen((v) => !v)
   }
@@ -80,12 +88,15 @@ export default function Select({ value, onChange, options, placeholder, classNam
           ref={dropdownRef}
           style={{
             position: 'fixed',
-            top: rect.bottom + 4,
+            ...(flipUp
+              ? { bottom: window.innerHeight - rect.top + 4 }
+              : { top: rect.bottom + 4 }),
             left: rect.left,
-            width: rect.width,
+            minWidth: rect.width,
+            maxHeight: dropdownMaxHeight,
             zIndex: 9999,
           }}
-          className="min-w-max rounded-xl border border-zinc-200 bg-white shadow-lg py-1 max-h-60 overflow-y-auto"
+          className="rounded-xl border border-zinc-200 bg-white shadow-lg py-1 overflow-y-auto"
         >
           {placeholder !== undefined && (
             <button

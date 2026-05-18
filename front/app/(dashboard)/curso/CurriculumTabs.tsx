@@ -1,15 +1,19 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { formatWorkloadHours } from '@/app/lib/curriculum'
+
+type Subject = {
+  id?: string
+  name: string
+  abbreviation?: string | null
+  workload_hours: number | null
+}
 
 type Semester = {
   semester: number
-  subjects: {
-    name: string
-    abbreviation?: string | null
-    workload_hours: number | null
-  }[]
+  subjects: Subject[]
 }
 
 type VersionGroup = {
@@ -49,23 +53,53 @@ function SemesterView({ curriculum }: { curriculum: Semester[] }) {
         ))}
       </div>
       <div className="curriculum-subject-list divide-y divide-zinc-100">
-        {current.subjects.map((subject) => (
-          <div key={subject.name} className="flex items-center justify-between gap-4 py-3.5">
-            <div className="flex items-center gap-2 min-w-0">
-              {subject.abbreviation && (
-                <span className="shrink-0 rounded bg-zinc-100 px-1.5 py-0.5 text-[11px] font-mono font-medium text-zinc-500">
-                  {subject.abbreviation}
-                </span>
-              )}
-              <p className="text-base text-zinc-800">{subject.name}</p>
+        {current.subjects.map((subject) => {
+          const inner = (
+            <>
+              <div className="min-w-0">
+                <p className="text-base text-zinc-800">
+                  {subject.name}
+                  {subject.abbreviation && (
+                    <span className="ml-1.5 text-sm text-zinc-400">({subject.abbreviation})</span>
+                  )}
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                {subject.workload_hours && (
+                  <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-500">
+                    {formatWorkloadHours(subject.workload_hours)}h
+                  </span>
+                )}
+                {subject.id && (
+                  <svg className="text-zinc-300" width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M6 3l5 5-5 5" />
+                  </svg>
+                )}
+              </div>
+            </>
+          )
+
+          if (subject.id) {
+            return (
+              <Link
+                key={subject.id}
+                href={`/curso/disciplina/${subject.id}`}
+                className="flex items-center justify-between gap-4 py-3.5 cursor-pointer rounded-lg px-2 -mx-2 transition-colors hover:bg-zinc-50"
+              >
+                {inner}
+              </Link>
+            )
+          }
+
+          return (
+            <div
+              key={subject.name}
+              className="flex items-center justify-between gap-4 py-3.5"
+            >
+              {inner}
             </div>
-            {subject.workload_hours && (
-              <span className="shrink-0 rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-500">
-                {formatWorkloadHours(subject.workload_hours)}h
-              </span>
-            )}
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

@@ -9,9 +9,10 @@ type Props = {
   value: string
   onChange: (html: string) => void
   placeholder?: string
+  minHeightClass?: string
 }
 
-export default function RichTextEditor({ value, onChange, placeholder }: Props) {
+export default function RichTextEditor({ value, onChange, placeholder, minHeightClass }: Props) {
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -24,7 +25,7 @@ export default function RichTextEditor({ value, onChange, placeholder }: Props) 
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-sm max-w-none focus:outline-none min-h-64 px-4 py-3',
+        class: `prose prose-sm max-w-none focus:outline-none ${minHeightClass ?? 'min-h-64'} px-4 py-3`,
       },
     },
   })

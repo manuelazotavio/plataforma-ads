@@ -1,6 +1,6 @@
 export default function PrivacidadePage() {
   return (
-    <div className="px-4 md:px-6 py-8 md:py-12 w-full">
+    <div className="mx-auto w-full max-w-4xl px-6 py-8 md:px-12 md:py-12 lg:px-16">
       <h1 className="text-2xl font-black text-zinc-900 mb-2">Política de Privacidade</h1>
       <p className="text-sm text-zinc-400 mb-10">Última atualização: abril de 2026</p>
 
