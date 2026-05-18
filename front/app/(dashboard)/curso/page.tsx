@@ -15,7 +15,7 @@ import {
 import { CLASS_SCHEDULE_PDF_KEY, COURSE_SETTINGS_TABLE, PEDAGOGICAL_PROJECT_PDF_KEY } from '@/app/lib/courseSettings'
 
 export default async function CursoPage() {
-  const [{ data: professors }, { data: subjects, error: subjectsError }, { data: courseSettings }] = await Promise.all([
+  const [{ data: professors }, { data: rawSubjects, error: subjectsError }, { data: courseSettings }, { data: versions }] = await Promise.all([
     supabase
       .from('professors')
       .select('id, user_id, name, avatar_url, bio, cargo, years_at_if, email, whatsapp, linkedin, cnpq')
@@ -23,7 +23,7 @@ export default async function CursoPage() {
       .order('display_order', { ascending: true }),
     supabase
       .from(CURRICULUM_SUBJECTS_TABLE)
-      .select('id, semester, name, workload_hours, display_order, is_active')
+      .select('id, semester, name, abbreviation, workload_hours, display_order, is_active, version_id')
       .eq('is_active', true)
       .order('semester', { ascending: true })
       .order('display_order', { ascending: true })
@@ -32,11 +32,40 @@ export default async function CursoPage() {
       .from(COURSE_SETTINGS_TABLE)
       .select('key, value')
       .in('key', [CLASS_SCHEDULE_PDF_KEY, PEDAGOGICAL_PROJECT_PDF_KEY]),
+    supabase
+      .from('curriculum_versions')
+      .select('id, name, year, is_current')
+      .order('year', { ascending: false }),
   ])
 
-  const curriculum = !subjectsError && subjects?.length
-    ? groupCurriculumSubjects(subjects as CurriculumSubject[])
-    : DEFAULT_CURRICULUM
+  type SubjectWithVersion = CurriculumSubject & { version_id: string | null }
+  const subjects = rawSubjects as SubjectWithVersion[] | null
+  const allVersions = (versions ?? []) as { id: string; name: string; year: number; is_current: boolean }[]
+
+  const versionedSubjectIds = new Set((subjects ?? []).filter((s) => s.version_id).map((s) => s.id))
+  const hasVersionedSubjects = versionedSubjectIds.size > 0
+
+  let curriculum = DEFAULT_CURRICULUM
+  let curriculumVersions: { id: string | null; name: string; year: number | null; is_current: boolean; semesters: ReturnType<typeof groupCurriculumSubjects> }[] = []
+
+  if (!subjectsError && subjects?.length) {
+    if (hasVersionedSubjects) {
+      const unversionedSubjects = subjects.filter((s) => !s.version_id)
+      const versionGroups = allVersions
+        .map((v) => {
+          const vSubjects = subjects.filter((s) => s.version_id === v.id)
+          return { id: v.id, name: v.name, year: v.year, is_current: v.is_current, semesters: groupCurriculumSubjects(vSubjects as CurriculumSubject[]) }
+        })
+        .filter((v) => v.semesters.length > 0)
+
+      if (unversionedSubjects.length > 0) {
+        versionGroups.push({ id: null, name: 'Histórico', year: null, is_current: false, semesters: groupCurriculumSubjects(unversionedSubjects as CurriculumSubject[]) })
+      }
+      curriculumVersions = versionGroups
+    } else {
+      curriculum = groupCurriculumSubjects(subjects as CurriculumSubject[])
+    }
+  }
   const classSchedulePdfUrl = courseSettings?.find((setting) => setting.key === CLASS_SCHEDULE_PDF_KEY)?.value ?? null
   const pedagogicalProjectPdfUrl = courseSettings?.find((setting) => setting.key === PEDAGOGICAL_PROJECT_PDF_KEY)?.value ?? null
 
@@ -108,7 +137,10 @@ export default async function CursoPage() {
 
       <section id="matriz-curricular" className="scroll-mt-24">
         <SectionTitle>Matriz curricular</SectionTitle>
-        <CurriculumTabs curriculum={curriculum} />
+        {curriculumVersions.length > 0
+          ? <CurriculumTabs versions={curriculumVersions} />
+          : <CurriculumTabs curriculum={curriculum} />
+        }
       </section>
 
       <section id="professores" className="scroll-mt-24">

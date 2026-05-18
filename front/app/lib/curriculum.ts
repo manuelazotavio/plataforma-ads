@@ -4,6 +4,7 @@ export type CurriculumSubject = {
   id: string
   semester: number
   name: string
+  abbreviation: string | null
   workload_hours: number | null
   display_order: number
   is_active: boolean
@@ -13,6 +14,7 @@ export type CurriculumSemester = {
   semester: number
   subjects: {
     name: string
+    abbreviation: string | null
     workload_hours: number | null
   }[]
 }
@@ -127,6 +129,7 @@ export function groupCurriculumSubjects(subjects: CurriculumSubject[]): Curricul
 
     bySemester.get(subject.semester)!.subjects.push({
       name: subject.name,
+      abbreviation: subject.abbreviation,
       workload_hours: subject.workload_hours,
     })
   }
