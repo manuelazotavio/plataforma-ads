@@ -15,6 +15,7 @@ type PublicHomeData = {
   avatar_url: string | null
   semester: number | null
   role: string | null
+  isProfessor: boolean
   topicsCount: number
   projectsCount: number
   articlesCount: number
@@ -251,6 +252,7 @@ async function loadHomeData(): Promise<PublicHomeData | null> {
     { data: ownProjects },
     { data: ownArticles },
     { data: levelsData },
+    { data: professorProfile },
   ] = await Promise.all([
     supabase.from('users').select('name, avatar_url, semester, role').eq('id', user.id).single(),
     supabase.from('forum_topics').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
@@ -261,6 +263,7 @@ async function loadHomeData(): Promise<PublicHomeData | null> {
     supabase.from('projects').select('like_count').eq('user_id', user.id),
     supabase.from('articles').select('like_count').eq('user_id', user.id),
     supabase.from('levels').select('id, name, min_xp, description').order('min_xp', { ascending: true }),
+    supabase.from('professors').select('id').eq('user_id', user.id).maybeSingle(),
   ])
 
   if (!profile) return null
@@ -292,6 +295,7 @@ async function loadHomeData(): Promise<PublicHomeData | null> {
     avatar_url: profile.avatar_url,
     semester: profile.semester,
     role: profile.role,
+    isProfessor: Boolean(professorProfile),
     topicsCount: topicsCount ?? 0,
     projectsCount: projectsCount ?? 0,
     articlesCount: articlesCount ?? 0,
@@ -305,8 +309,8 @@ async function loadHomeData(): Promise<PublicHomeData | null> {
   }
 }
 
-function profileLabel(profile: Pick<PublicHomeData, 'role' | 'semester'>) {
-  if (profile.role === 'professor') return 'Professor'
+function profileLabel(profile: Pick<PublicHomeData, 'role' | 'semester' | 'isProfessor'>) {
+  if (profile.role === 'professor' || profile.isProfessor) return 'Professor'
   if (profile.role === 'admin') return 'Administrador'
   if (profile.role === 'egresso') return 'Egresso'
   if (profile.semester) return `${profile.semester}º Semestre`
