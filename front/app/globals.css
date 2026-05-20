@@ -234,6 +234,100 @@ body * {
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
 }
 
+.dark .onboarding-page .text-zinc-950,
+.dark .onboarding-page .text-zinc-900,
+.dark .onboarding-page .text-zinc-800 {
+  color: #f4f4f5 !important;
+}
+
+.dark .onboarding-page .text-zinc-700,
+.dark .onboarding-page .text-zinc-600 {
+  color: #d4d4d8 !important;
+}
+
+.dark .onboarding-page .text-zinc-500,
+.dark .onboarding-page .text-zinc-400 {
+  color: #a1a1aa !important;
+}
+
+.dark .onboarding-page .bg-white {
+  background-color: #121214 !important;
+}
+
+.dark .onboarding-page .bg-zinc-50 {
+  background-color: #18181b !important;
+}
+
+.dark .onboarding-page .bg-zinc-100,
+.dark .onboarding-page .bg-zinc-200 {
+  background-color: #27272a !important;
+}
+
+.dark .onboarding-page .border-zinc-300,
+.dark .onboarding-page .border-zinc-200,
+.dark .onboarding-page .border-zinc-100 {
+  border-color: #3f3f46 !important;
+}
+
+.dark .onboarding-page input,
+.dark .onboarding-page textarea {
+  background-color: transparent;
+  color: #f4f4f5;
+}
+
+.dark .onboarding-page input::placeholder,
+.dark .onboarding-page textarea::placeholder {
+  color: #a1a1aa;
+}
+
+@media (prefers-color-scheme: dark) {
+  .onboarding-page .text-zinc-950,
+  .onboarding-page .text-zinc-900,
+  .onboarding-page .text-zinc-800 {
+    color: #f4f4f5 !important;
+  }
+
+  .onboarding-page .text-zinc-700,
+  .onboarding-page .text-zinc-600 {
+    color: #d4d4d8 !important;
+  }
+
+  .onboarding-page .text-zinc-500,
+  .onboarding-page .text-zinc-400 {
+    color: #a1a1aa !important;
+  }
+
+  .onboarding-page .bg-white {
+    background-color: #121214 !important;
+  }
+
+  .onboarding-page .bg-zinc-50 {
+    background-color: #18181b !important;
+  }
+
+  .onboarding-page .bg-zinc-100,
+  .onboarding-page .bg-zinc-200 {
+    background-color: #27272a !important;
+  }
+
+  .onboarding-page .border-zinc-300,
+  .onboarding-page .border-zinc-200,
+  .onboarding-page .border-zinc-100 {
+    border-color: #3f3f46 !important;
+  }
+
+  .onboarding-page input,
+  .onboarding-page textarea {
+    background-color: transparent;
+    color: #f4f4f5;
+  }
+
+  .onboarding-page input::placeholder,
+  .onboarding-page textarea::placeholder {
+    color: #a1a1aa;
+  }
+}
+
 
 button,
 [role="button"],

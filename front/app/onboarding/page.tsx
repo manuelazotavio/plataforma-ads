@@ -172,7 +172,7 @@ export default function OnboardingPage() {
   const progress = ((step + 1) / TOTAL) * 100
 
   return (
-    <div className="min-h-screen bg-white flex flex-col dark:bg-zinc-950">
+    <div className="onboarding-page min-h-screen bg-white flex flex-col dark:bg-zinc-950">
 
       {/* Header */}
       <header className="sticky top-0 bg-white/90 backdrop-blur border-b border-zinc-100 px-5 py-4 z-10 dark:bg-zinc-950/90 dark:border-zinc-800">
