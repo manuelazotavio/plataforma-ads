@@ -34,14 +34,12 @@ Deno.serve(async (req: Request) => {
       .from('users').select('role').eq('id', caller.id).single()
     if (callerProfile?.role !== 'admin') return json({ error: 'Acesso negado' }, 403)
 
-    // Busca o professor para usar o nome
     const { data: prof } = await adminClient
       .from('professors').select('name, user_id').eq('id', professor_id).single()
 
     if (!prof) return json({ error: 'Professor não encontrado' }, 404)
     if (prof.user_id) return json({ error: 'Este professor já possui acesso vinculado' }, 409)
 
-  
     const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
       email,
       password,
@@ -51,7 +49,6 @@ Deno.serve(async (req: Request) => {
 
     const newUserId = authData.user.id
 
-    
     const { error: userError } = await adminClient.from('users').insert({
       id: newUserId,
       name: prof.name,
@@ -63,7 +60,6 @@ Deno.serve(async (req: Request) => {
       return json({ error: 'Erro ao criar perfil: ' + userError.message }, 500)
     }
 
-  
     await adminClient.from('professors').update({ user_id: newUserId }).eq('id', professor_id)
 
     return json({ user_id: newUserId }, 200)

@@ -273,7 +273,12 @@ export default function AdminEventosPage() {
                 >
                   {form.banner_url ? (
                     <div className="group relative aspect-video bg-zinc-100">
-                      <img src={form.banner_url} alt="Banner do evento" className="h-full w-full object-cover" />
+                      <div
+                        role="img"
+                        aria-label="Banner do evento"
+                        className="h-full w-full bg-cover bg-center"
+                        style={{ backgroundImage: `url(${form.banner_url})` }}
+                      />
                       <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/40 opacity-0 transition group-hover:opacity-100">
                         <button
                           type="button"
