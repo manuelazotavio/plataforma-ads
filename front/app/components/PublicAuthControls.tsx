@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import UserAvatar from '@/app/components/UserAvatar'
@@ -29,16 +30,39 @@ type PublicHomeData = {
 }
 
 export function PublicHeaderAuth() {
+  const pathname = usePathname()
   const [data, setData] = useState<PublicHomeData | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    let active = true
     loadHomeData().then((value) => {
+      if (!active) return
       setData(value)
       setLoaded(true)
     })
+
+    return () => {
+      active = false
+    }
+  }, [pathname])
+
+  useEffect(() => {
+    function refresh() {
+      loadHomeData().then((value) => {
+        setData(value)
+        setLoaded(true)
+      })
+    }
+
+    window.addEventListener('focus', refresh)
+    document.addEventListener('visibilitychange', refresh)
+    return () => {
+      window.removeEventListener('focus', refresh)
+      document.removeEventListener('visibilitychange', refresh)
+    }
   }, [])
 
   useEffect(() => {
@@ -294,7 +318,7 @@ async function loadHomeData(): Promise<PublicHomeData | null> {
     firstName: profile.name?.split(' ')[0] ?? 'Aluno',
     avatar_url: profile.avatar_url,
     semester: profile.semester,
-    role: profile.role,
+    role: profile.role?.trim().toLowerCase() ?? null,
     isProfessor: Boolean(professorProfile),
     topicsCount: topicsCount ?? 0,
     projectsCount: projectsCount ?? 0,
