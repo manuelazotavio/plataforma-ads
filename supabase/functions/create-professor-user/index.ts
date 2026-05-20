@@ -53,6 +53,7 @@ Deno.serve(async (req: Request) => {
       id: newUserId,
       name: prof.name,
       email,
+      password_hash: 'managed_by_supabase_auth',
       role: 'professor',
     })
     if (userError) {
