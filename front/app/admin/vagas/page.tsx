@@ -24,6 +24,8 @@ type Job = {
   job_type: string | null
   work_mode: string | null
   application_url: string | null
+  description: string | null
+  requirements: string | null
   category: string | null
   is_active: boolean
   created_at: string
@@ -52,13 +54,14 @@ export default function AdminVagasPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [showForm, setShowForm]   = useState(false)
   const [form, setForm]           = useState(EMPTY_FORM)
+  const [editingJob, setEditingJob] = useState<Job | null>(null)
   const [saving, setSaving]       = useState(false)
   const [error, setError]         = useState<string | null>(null)
 
   async function load() {
     const { data } = await supabase
       .from('jobs')
-      .select('id, position, company, location, job_type, work_mode, application_url, category, is_active, created_at, job_tags(tag_name)')
+      .select('id, position, company, location, job_type, work_mode, application_url, description, requirements, category, is_active, created_at, job_tags(tag_name)')
       .order('created_at', { ascending: false })
     setJobs((data as Job[]) ?? [])
     setLoading(false)
@@ -85,7 +88,39 @@ export default function AdminVagasPage() {
     setUpdatingId(null)
   }
 
-  async function create(e: React.FormEvent) {
+  function openCreate() {
+    setEditingJob(null)
+    setForm(EMPTY_FORM)
+    setError(null)
+    setShowForm(true)
+  }
+
+  function openEdit(job: Job) {
+    setEditingJob(job)
+    setForm({
+      position: job.position ?? '',
+      company: job.company ?? '',
+      category: job.category ?? 'estagio',
+      location: job.location ?? '',
+      job_type: job.job_type ?? '',
+      work_mode: job.work_mode ?? '',
+      application_url: job.application_url ?? '',
+      description: job.description ?? '',
+      requirements: job.requirements ?? '',
+      tags: job.job_tags.map(({ tag_name }) => tag_name).join(', '),
+    })
+    setError(null)
+    setShowForm(true)
+  }
+
+  function closeForm() {
+    setShowForm(false)
+    setEditingJob(null)
+    setForm(EMPTY_FORM)
+    setError(null)
+  }
+
+  async function save(e: React.FormEvent) {
     e.preventDefault()
     if (!form.position.trim() || !form.company.trim()) {
       setError('Posição e empresa são obrigatórios.')
@@ -95,6 +130,47 @@ export default function AdminVagasPage() {
     setError(null)
 
     const { data: { user } } = await supabase.auth.getUser()
+    const payload = {
+      position:  form.position.trim(),
+      company:   form.company.trim(),
+      category:  form.category,
+      location:  form.location.trim() || null,
+      job_type:  form.job_type.trim() || null,
+      work_mode: form.work_mode || null,
+      application_url: form.application_url.trim() || null,
+      description: form.description.trim() || null,
+      requirements: form.requirements.trim() || null,
+    }
+    const rawTags = form.tags.split(',').map((t) => t.trim()).filter(Boolean)
+
+    if (editingJob) {
+      const { data: updatedJob, error: err } = await supabase
+        .from('jobs')
+        .update(payload)
+        .eq('id', editingJob.id)
+        .select('id, position, company, location, job_type, work_mode, application_url, description, requirements, category, is_active, created_at')
+        .single()
+
+      if (err || !updatedJob) {
+        setError('Erro ao editar oportunidade: ' + (err?.message ?? 'Verifique os campos e tente novamente.'))
+        setSaving(false)
+        return
+      }
+
+      await supabase.from('job_tags').delete().eq('job_id', editingJob.id)
+      if (rawTags.length > 0) {
+        await supabase.from('job_tags').insert(rawTags.map((tag_name) => ({ job_id: editingJob.id, tag_name })))
+      }
+
+      setJobs((prev) => prev.map((job) => (
+        job.id === editingJob.id
+          ? { ...updatedJob, job_tags: rawTags.map((tag_name) => ({ tag_name })) } as Job
+          : job
+      )))
+      closeForm()
+      setSaving(false)
+      return
+    }
 
     const { data: newJob, error: err } = await supabase
       .from('jobs')
@@ -111,7 +187,7 @@ export default function AdminVagasPage() {
         is_active: true,
         user_id:   user?.id ?? null,
       })
-      .select('id, position, company, location, job_type, work_mode, application_url, category, is_active, created_at')
+      .select('id, position, company, location, job_type, work_mode, application_url, description, requirements, category, is_active, created_at')
       .single()
 
     if (err || !newJob) {
@@ -120,15 +196,13 @@ export default function AdminVagasPage() {
       return
     }
 
-    const rawTags = form.tags.split(',').map((t) => t.trim()).filter(Boolean)
     if (rawTags.length > 0) {
       await supabase.from('job_tags').insert(rawTags.map((tag_name) => ({ job_id: newJob.id, tag_name })))
     }
 
-    setJobs((prev) => [{ ...newJob, job_tags: rawTags.map((t) => ({ tag_name: t })) } as Job, ...prev])
+    setJobs((prev) => [{ ...newJob, job_tags: rawTags.map((tag_name) => ({ tag_name })) } as Job, ...prev])
     if (newJob.is_active) void sendJobNotificationEmails(newJob.id)
-    setForm(EMPTY_FORM)
-    setShowForm(false)
+    closeForm()
     setSaving(false)
   }
 
@@ -175,7 +249,7 @@ export default function AdminVagasPage() {
             ))}
           </div>
           <button
-            onClick={() => { setShowForm(true); setError(null) }}
+            onClick={openCreate}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#2F9E41] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition sm:w-auto"
           >
             <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
@@ -190,14 +264,14 @@ export default function AdminVagasPage() {
         <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 px-4 py-4 sm:items-center">
           <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl sm:p-6">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-base font-semibold text-zinc-900">Nova oportunidade</h2>
-              <button onClick={() => setShowForm(false)} className="text-zinc-400 hover:text-zinc-700 transition">
+              <h2 className="text-base font-semibold text-zinc-900">{editingJob ? 'Editar oportunidade' : 'Nova oportunidade'}</h2>
+              <button onClick={closeForm} className="text-zinc-400 hover:text-zinc-700 transition">
                 <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                   <line x1={18} y1={6} x2={6} y2={18} /><line x1={6} y1={6} x2={18} y2={18} />
                 </svg>
               </button>
             </div>
-            <form onSubmit={create} className="flex flex-col gap-4">
+            <form onSubmit={save} className="flex flex-col gap-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-1.5 col-span-2">
                   <label className="text-xs font-semibold text-zinc-600">Posição / Cargo <span className="text-red-500">*</span></label>
@@ -298,7 +372,7 @@ export default function AdminVagasPage() {
               <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
                 <button
                   type="button"
-                  onClick={() => setShowForm(false)}
+                  onClick={closeForm}
                   className="px-4 py-2 rounded-xl text-sm font-medium text-zinc-600 border border-zinc-200 hover:bg-zinc-50 transition"
                 >
                   Cancelar
@@ -308,7 +382,7 @@ export default function AdminVagasPage() {
                   disabled={saving}
                   className="px-5 py-2 rounded-xl text-sm font-semibold text-white bg-[#2F9E41] hover:opacity-90 disabled:opacity-50 transition"
                 >
-                  {saving ? 'Salvando…' : 'Publicar'}
+                  {saving ? 'Salvando...' : editingJob ? 'Salvar alterações' : 'Publicar'}
                 </button>
               </div>
             </form>
@@ -366,6 +440,13 @@ export default function AdminVagasPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-1.5 sm:flex sm:shrink-0 sm:flex-col sm:justify-center">
+                <button
+                  onClick={() => openEdit(job)}
+                  disabled={updatingId === job.id}
+                  className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 transition"
+                >
+                  Editar
+                </button>
                 {!job.is_active ? (
                   <button
                     onClick={() => toggle(job.id, true)}
