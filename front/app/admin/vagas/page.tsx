@@ -115,7 +115,7 @@ export default function AdminVagasPage() {
       .single()
 
     if (err || !newJob) {
-      setError('Erro ao criar oportunidade. Verifique os campos e tente novamente.')
+      setError('Erro ao criar oportunidade: ' + (err?.message ?? 'Verifique os campos e tente novamente.'))
       setSaving(false)
       return
     }
