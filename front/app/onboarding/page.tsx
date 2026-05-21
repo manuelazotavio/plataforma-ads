@@ -52,6 +52,7 @@ const STEP_LABELS = [
 export default function OnboardingPage() {
   const router = useRouter()
   const [userId, setUserId] = useState<string | null>(null)
+  const [isProfessor, setIsProfessor] = useState(false)
   const [step, setStep] = useState(0)
   const [saving, setSaving] = useState(false)
 
@@ -73,9 +74,15 @@ export default function OnboardingPage() {
   const avatarInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    getAuthUser().then((user) => {
+    getAuthUser().then(async (user) => {
       if (!user) { router.replace('/login'); return }
       setUserId(user.id)
+      const [{ data: profile }, { data: professorProfile }] = await Promise.all([
+        supabase.from('users').select('role, preferred_area').eq('id', user.id).single(),
+        supabase.from('professors').select('id').eq('user_id', user.id).maybeSingle(),
+      ])
+      setIsProfessor(profile?.role === 'professor' || Boolean(professorProfile))
+      setAreas(splitPreferredAreas(profile?.preferred_area))
     })
   }, [router])
 
@@ -129,6 +136,7 @@ export default function OnboardingPage() {
   const filteredTags = allTags
     .filter((t) => !skills.includes(t))
     .filter((t) => tagQuery.length === 0 || t.toLowerCase().includes(tagQuery.toLowerCase()))
+  const interestOptions = AREAS.map((area) => area.value)
 
   async function handleNext() {
     if (!userId) return
@@ -141,9 +149,7 @@ export default function OnboardingPage() {
           skills.map((skill_name) => ({ user_id: userId, skill_name }))
         )
       }
-      if (areas.length > 0) {
-        await supabase.from('users').update({ preferred_area: areas.join(',') }).eq('id', userId)
-      }
+      await supabase.from('users').update({ preferred_area: areas.length > 0 ? areas.join(',') : null }).eq('id', userId)
       setSaving(false)
     }
 
@@ -264,22 +270,23 @@ export default function OnboardingPage() {
 
               {/* Área preferida */}
               <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-zinc-700">Área de interesse</label>
+                <label className="text-sm font-semibold text-zinc-700">{isProfessor ? 'Áreas de interesse' : 'Área de interesse'}</label>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {AREAS.map((a) => {
-                    const active = areas.includes(a.value)
+                  {interestOptions.map((interest) => {
+                    const active = areas.includes(interest)
+                    const label = AREAS.find((area) => area.value === interest)?.label ?? formatProfileArea(interest)
                     return (
                       <button
-                        key={a.value}
+                        key={interest}
                         type="button"
-                        onClick={() => setAreas((prev) => active ? prev.filter((v) => v !== a.value) : [...prev, a.value])}
+                        onClick={() => setAreas((prev) => active ? prev.filter((v) => v !== interest) : [...prev, interest])}
                         className={`rounded-xl border px-3 py-2.5 text-sm font-medium transition text-left ${
                           active
                             ? 'border-[#2F9E41] bg-[#2F9E41]/5 text-[#2F9E41]'
                             : 'border-zinc-200 text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50'
                         }`}
                       >
-                        {a.label}
+                        {label}
                       </button>
                     )
                   })}
@@ -609,3 +616,14 @@ function InfoStep({
 
 const inputCls =
   'w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-sm text-zinc-900 outline-none focus:border-[#2F9E41] focus:ring-2 focus:ring-[#2F9E41]/20 transition'
+
+function splitPreferredAreas(value?: string | null) {
+  return value?.split(',').map((item) => item.trim()).filter(Boolean) ?? []
+}
+
+function formatProfileArea(value: string) {
+  return value
+    .split(/([\s/-]+)/)
+    .map((part) => (/^[\s/-]+$/.test(part) ? part : part.charAt(0).toLocaleUpperCase('pt-BR') + part.slice(1)))
+    .join('')
+}

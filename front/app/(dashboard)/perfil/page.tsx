@@ -41,6 +41,17 @@ type Level = {
   min_xp: number
 }
 
+const AREAS = [
+  { value: 'front-end', label: 'Front-end' },
+  { value: 'back-end', label: 'Back-end' },
+  { value: 'full-stack', label: 'Full-stack' },
+  { value: 'mobile', label: 'Mobile' },
+  { value: 'dados', label: 'Dados & IA' },
+  { value: 'devops', label: 'DevOps & Cloud' },
+  { value: 'ux-design', label: 'UX & Design' },
+  { value: 'seguranca', label: 'Segurança' },
+]
+
 const EMPTY_PROFILE: Profile = {
   name: '',
   bio: '',
@@ -65,6 +76,7 @@ export default function PerfilPage() {
   const [userId, setUserId] = useState<string | null>(null)
   const [profile, setProfile] = useState<Profile>(EMPTY_PROFILE)
   const [skills, setSkills] = useState<string[]>([])
+  const [preferredAreas, setPreferredAreas] = useState<string[]>([])
   const [newSkill, setNewSkill] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -98,12 +110,17 @@ export default function PerfilPage() {
 
       const { data: profileData } = await supabase
         .from('users')
-        .select('name, bio, semester, github_url, linkedin_url, portfolio_url, avatar_url, role')
+        .select('name, bio, semester, github_url, linkedin_url, portfolio_url, avatar_url, role, preferred_area')
         .eq('id', user.id)
         .single()
 
       if (profileData) {
-        setRole(profileData.role ?? null)
+        const { data: pd } = await supabase
+          .from('professors')
+          .select('id, cargo, whatsapp, linkedin, cnpq, years_at_if')
+          .eq('user_id', user.id)
+          .maybeSingle()
+        setRole(profileData.role === 'professor' || pd ? 'professor' : profileData.role ?? null)
         setProfile({
           name: profileData.name ?? '',
           bio: profileData.bio ?? '',
@@ -113,23 +130,17 @@ export default function PerfilPage() {
           portfolio_url: profileData.portfolio_url ?? '',
           avatar_url: profileData.avatar_url ?? '',
         })
+        setPreferredAreas(splitPreferredAreas(profileData.preferred_area))
 
-        if (profileData.role === 'professor') {
-          const { data: pd } = await supabase
-            .from('professors')
-            .select('id, cargo, whatsapp, linkedin, cnpq, years_at_if')
-            .eq('user_id', user.id)
-            .single()
-          if (pd) {
-            setProfessorData({
-              id: pd.id,
-              cargo: pd.cargo ?? '',
-              whatsapp: pd.whatsapp ?? '',
-              linkedin: pd.linkedin ?? '',
-              cnpq: pd.cnpq ?? '',
-              years_at_if: pd.years_at_if?.toString() ?? '',
-            })
-          }
+        if (pd) {
+          setProfessorData({
+            id: pd.id,
+            cargo: pd.cargo ?? '',
+            whatsapp: pd.whatsapp ?? '',
+            linkedin: pd.linkedin ?? '',
+            cnpq: pd.cnpq ?? '',
+            years_at_if: pd.years_at_if?.toString() ?? '',
+          })
         }
       }
 
@@ -269,6 +280,12 @@ export default function PerfilPage() {
     setSkills((prev) => prev.filter((s) => s !== skill))
   }
 
+  function togglePreferredArea(area: string) {
+    setPreferredAreas((prev) => (
+      prev.includes(area) ? prev.filter((item) => item !== area) : [...prev, area]
+    ))
+  }
+
   async function handleSave(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setSubmitted(true)
@@ -281,7 +298,7 @@ export default function PerfilPage() {
     setError(null)
     setSuccess(false)
 
-    const { error: updateError } = await supabase.from('users').update({
+    const userUpdate = {
       name: profile.name,
       bio: profile.bio || null,
       semester: role === 'professor' ? null : (profile.semester ? parseInt(profile.semester) : null),
@@ -290,7 +307,10 @@ export default function PerfilPage() {
       portfolio_url: profile.portfolio_url || null,
       avatar_url: profile.avatar_url || null,
       updated_at: new Date().toISOString(),
-    }).eq('id', userId)
+      ...(role === 'professor' ? { preferred_area: preferredAreas.length > 0 ? preferredAreas.join(',') : null } : {}),
+    }
+
+    const { error: updateError } = await supabase.from('users').update(userUpdate).eq('id', userId)
 
     if (updateError) { setError('Erro ao salvar perfil: ' + updateError.message); setSaving(false); return }
 
@@ -415,15 +435,28 @@ export default function PerfilPage() {
           <ProfileStat label="Topicos" value={stats.topicsCount} />
         </section>
 
-        {(skills.length > 0 || socials.length > 0) && (
+        {(skills.length > 0 || preferredAreas.length > 0 || socials.length > 0) && (
           <section className="py-6 flex flex-col gap-6">
+            {preferredAreas.length > 0 && (
+              <div>
+                <h2 className="text-sm font-semibold text-zinc-900 mb-3">Áreas de interesse</h2>
+                <div className="flex flex-wrap gap-2">
+                  {preferredAreas.map((area) => (
+                    <span key={area} className="rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-[#2F9E41]">
+                      {formatProfileArea(area)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {skills.length > 0 && (
               <div>
                 <h2 className="text-sm font-semibold text-zinc-900 mb-3">Habilidades</h2>
                 <div className="flex flex-wrap gap-2">
                   {skills.map((skill) => (
                     <span key={skill} className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium capitalize text-zinc-600">
-                      {skill}
+                      {formatProfileArea(skill)}
                     </span>
                   ))}
                 </div>
@@ -504,7 +537,7 @@ export default function PerfilPage() {
                 )}
               </div>
 
-              {profile.semester && !isEgresso && (
+              {profile.semester && !isEgresso && role !== 'professor' && (
                 <p className="text-xs text-zinc-400 mb-3">{profile.semester}{String.fromCharCode(186)} semestre</p>
               )}
               {isEgresso && egressoForm.role && (
@@ -523,7 +556,17 @@ export default function PerfilPage() {
                 <div className="flex flex-wrap gap-1.5 mb-4">
                   {skills.map((skill) => (
                     <span key={skill} className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium capitalize text-zinc-600">
-                      {skill}
+                      {formatProfileArea(skill)}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {preferredAreas.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  {preferredAreas.map((area) => (
+                    <span key={area} className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-[#2F9E41]">
+                      {formatProfileArea(area)}
                     </span>
                   ))}
                 </div>
@@ -681,6 +724,32 @@ export default function PerfilPage() {
             </div>
           )}
 
+          {role === 'professor' && (
+            <div className="bg-white rounded-2xl border border-zinc-200 p-6">
+              <h3 className="text-sm font-semibold text-zinc-900 mb-2">Áreas de interesse</h3>
+              <p className="mb-4 text-xs text-zinc-400">Selecione as áreas relacionadas à sua atuação.</p>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {AREAS.map((area) => {
+                  const active = preferredAreas.includes(area.value)
+                  return (
+                    <button
+                      key={area.value}
+                      type="button"
+                      onClick={() => togglePreferredArea(area.value)}
+                      className={`rounded-xl border px-3 py-2.5 text-left text-sm font-medium transition ${
+                        active
+                          ? 'border-[#2F9E41] bg-[#2F9E41]/5 text-[#2F9E41]'
+                          : 'border-zinc-200 text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50'
+                      }`}
+                    >
+                      {area.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           <div className="bg-white rounded-2xl border border-zinc-200 p-6">
             <h3 className="text-sm font-semibold text-zinc-900 mb-5">Redes sociais</h3>
             <div className="flex flex-col gap-4">
@@ -715,7 +784,7 @@ export default function PerfilPage() {
               <div className="flex flex-wrap gap-2">
                 {skills.map((skill) => (
                   <span key={skill} className="flex items-center gap-1 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium capitalize text-zinc-700">
-                    {skill}
+                    {formatProfileArea(skill)}
                     <button type="button" onClick={() => removeSkill(skill)} className="text-zinc-400 hover:text-zinc-700 transition ml-0.5">×</button>
                   </span>
                 ))}
@@ -809,6 +878,20 @@ function getProjectCover(images: unknown) {
 
 function currentLevel(levels: Level[], xp: number) {
   return [...levels].reverse().find((level) => xp >= level.min_xp) ?? levels[0] ?? null
+}
+
+function splitPreferredAreas(value?: string | null) {
+  return value?.split(',').map((item) => item.trim()).filter(Boolean) ?? []
+}
+
+function formatProfileArea(value: string) {
+  const knownArea = AREAS.find((area) => area.value === value)
+  if (knownArea) return knownArea.label
+
+  return value
+    .split(/([\s/-]+)/)
+    .map((part) => (/^[\s/-]+$/.test(part) ? part : part.charAt(0).toLocaleUpperCase('pt-BR') + part.slice(1)))
+    .join('')
 }
 
 function ProfileStat({ label, value, detail }: { label: string; value: string | number; detail?: string | null }) {

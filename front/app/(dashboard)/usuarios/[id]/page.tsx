@@ -16,6 +16,7 @@ type Profile = {
   portfolio_url: string | null
   avatar_url: string | null
   role: string | null
+  preferred_area: string | null
 }
 
 type Level = {
@@ -23,6 +24,17 @@ type Level = {
   name: string
   min_xp: number
 }
+
+const AREAS = [
+  { value: 'front-end', label: 'Front-end' },
+  { value: 'back-end', label: 'Back-end' },
+  { value: 'full-stack', label: 'Full-stack' },
+  { value: 'mobile', label: 'Mobile' },
+  { value: 'dados', label: 'Dados & IA' },
+  { value: 'devops', label: 'DevOps & Cloud' },
+  { value: 'ux-design', label: 'UX & Design' },
+  { value: 'seguranca', label: 'Segurança' },
+]
 
 function roleLabel(role: string | null) {
   if (role === 'admin') return 'Admin'
@@ -46,6 +58,20 @@ function getProjectCover(images: unknown) {
 
 function currentLevel(levels: Level[], xp: number) {
   return [...levels].reverse().find((level) => xp >= level.min_xp) ?? levels[0] ?? null
+}
+
+function splitPreferredAreas(value?: string | null) {
+  return value?.split(',').map((item) => item.trim()).filter(Boolean) ?? []
+}
+
+function formatProfileArea(value: string) {
+  const knownArea = AREAS.find((area) => area.value === value)
+  if (knownArea) return knownArea.label
+
+  return value
+    .split(/([\s/-]+)/)
+    .map((part) => (/^[\s/-]+$/.test(part) ? part : part.charAt(0).toLocaleUpperCase('pt-BR') + part.slice(1)))
+    .join('')
 }
 
 export default async function PublicUserProfile({ params }: { params: Promise<{ id: string }> }) {
@@ -72,7 +98,7 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
   ] = await Promise.all([
     supabase
       .from('users')
-      .select('id, name, bio, semester, github_url, linkedin_url, portfolio_url, avatar_url, role')
+      .select('id, name, bio, semester, github_url, linkedin_url, portfolio_url, avatar_url, role, preferred_area')
       .eq('id', id)
       .single(),
     supabase.from('user_skills').select('skill_name').eq('user_id', id).order('skill_name'),
@@ -97,6 +123,7 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
 
   const user = profile as Profile
   const skillNames = (skills ?? []).map((skill) => skill.skill_name)
+  const preferredAreas = splitPreferredAreas(user.preferred_area)
   const likesReceived =
     (xpProjects ?? []).reduce((total, project) => total + (project.like_count ?? 0), 0) +
     (xpArticles ?? []).reduce((total, article) => total + (article.like_count ?? 0), 0)
@@ -166,7 +193,7 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
                 {egresso ? 'Egresso' : roleLabel(user.role)}
               </span>
             </div>
-            {user.semester && (
+            {user.semester && user.role !== 'professor' && (
               <p className="mt-1 text-sm text-zinc-400">{user.semester}{String.fromCharCode(186)} semestre</p>
             )}
             {egresso && (
@@ -203,15 +230,28 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
         </div>
       </section>
 
-      {(skillNames.length > 0 || socials.length > 0) && (
+      {(preferredAreas.length > 0 || skillNames.length > 0 || socials.length > 0) && (
         <section className="py-6 flex flex-col gap-6">
+          {preferredAreas.length > 0 && (
+            <div>
+              <h2 className="text-sm font-semibold text-zinc-900 mb-3">Áreas de interesse</h2>
+              <div className="flex flex-wrap gap-2">
+                {preferredAreas.map((area) => (
+                  <span key={area} className="rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-[#2F9E41]">
+                    {formatProfileArea(area)}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {skillNames.length > 0 && (
             <div>
               <h2 className="text-sm font-semibold text-zinc-900 mb-3">Habilidades</h2>
               <div className="flex flex-wrap gap-2">
                 {skillNames.map((skill) => (
                   <span key={skill} className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium capitalize text-zinc-600">
-                    {skill}
+                    {formatProfileArea(skill)}
                   </span>
                 ))}
               </div>
