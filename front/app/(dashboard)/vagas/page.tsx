@@ -85,9 +85,9 @@ export default async function VagasPage({
                     )}
                   </div>
 
-                  <p className="text-base md:text-xl font-black text-zinc-900 leading-snug">
+                  <Link href={`/vagas/${job.id}`} className="text-base md:text-xl font-black text-zinc-900 leading-snug transition hover:text-[#2F9E41]">
                     {job.position}
-                  </p>
+                  </Link>
 
                   <p className="text-sm text-zinc-500 leading-snug">
                     {job.company}
@@ -111,6 +111,12 @@ export default async function VagasPage({
                   <span className="text-xs text-zinc-400 whitespace-nowrap">
                     {new Date(job.created_at).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })}
                   </span>
+                  <Link
+                    href={`/vagas/${job.id}`}
+                    className="inline-flex items-center justify-center rounded-xl border border-zinc-200 px-4 py-2 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50"
+                  >
+                    Ver detalhes
+                  </Link>
                   {job.application_url && (
                     <a
                       href={job.application_url}
