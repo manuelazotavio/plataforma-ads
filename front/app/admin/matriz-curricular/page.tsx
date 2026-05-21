@@ -364,6 +364,34 @@ export default function AdminMatrizCurricularPage() {
     setSaving(false)
   }
 
+  async function removeAllVisibleSubjects() {
+    if (visibleSubjects.length === 0) return
+    const matrixLabel = selectedVersionId === 'unversioned'
+      ? 'matriz sem versão'
+      : `matriz "${versions.find((v) => v.id === selectedVersionId)?.name ?? 'selecionada'}"`
+    if (!confirm(`Remover todas as ${visibleSubjects.length} disciplina(s) desta ${matrixLabel}? Esta ação não pode ser desfeita.`)) return
+
+    setSaving(true)
+    setError(null)
+    setNotice(null)
+    const ids = visibleSubjects.map((s) => s.id)
+    const { error: err } = await supabase
+      .from(CURRICULUM_SUBJECTS_TABLE)
+      .delete()
+      .in('id', ids)
+
+    if (err) {
+      setError(err.message)
+    } else {
+      setSubjects((prev) => prev.filter((subject) => !ids.includes(subject.id)))
+      setCompareEquivMap({})
+      if (editingId && ids.includes(editingId)) cancelEdit()
+      if (planSubject && ids.includes(planSubject.id)) closePlanModal()
+      setNotice('Todas as disciplinas desta matriz foram removidas.')
+    }
+    setSaving(false)
+  }
+
   async function moveSubject(semesterSubjects: SubjectFull[], index: number, direction: -1 | 1) {
     const target = index + direction
     if (target < 0 || target >= semesterSubjects.length) return
@@ -659,7 +687,7 @@ export default function AdminMatrizCurricularPage() {
             >
               {v.name} ({v.year})
               {v.is_current && (
-                <span className="ml-1.5 rounded-full bg-[#2F9E41]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[#2F9E41]">atual</span>
+                <span className="ml-1.5 rounded-full bg-[#2F9E41]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[#2F9E41]">Atual</span>
               )}
             </button>
             {selectedVersionId === v.id && !compareMode && (
@@ -1103,6 +1131,23 @@ export default function AdminMatrizCurricularPage() {
         </div>
       )}
 
+      {!compareMode && visibleSubjects.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-100 bg-red-50 px-4 py-3">
+          <div>
+            <p className="text-sm font-semibold text-red-800">Remover disciplinas desta matriz</p>
+            <p className="mt-0.5 text-xs text-red-600">Remove todas as {visibleSubjects.length} disciplina(s) da matriz selecionada.</p>
+          </div>
+          <button
+            type="button"
+            onClick={removeAllVisibleSubjects}
+            disabled={saving}
+            className="cursor-pointer rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-100 disabled:opacity-40"
+          >
+            Remover tudo
+          </button>
+        </div>
+      )}
+
       {notice && <p className="mb-4 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">{notice}</p>}
       {error && (
         <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
@@ -1258,7 +1303,7 @@ export default function AdminMatrizCurricularPage() {
       ) : (
         <div className="flex flex-col gap-5">
           {grouped.map(([semester, semesterSubjects]) => (
-            <section key={semester} className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
+            <section key={semester} className="overflow-visible rounded-xl border border-zinc-200 bg-white">
               <div className="border-b border-zinc-100 bg-zinc-50 px-4 py-3">
                 <h2 className="text-sm font-semibold text-zinc-900">{semester}º Semestre</h2>
               </div>

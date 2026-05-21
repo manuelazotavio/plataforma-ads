@@ -25,7 +25,7 @@ import {
 } from '@/app/lib/courseSettings'
 
 export default async function CursoPage() {
-  const [{ data: professors }, { data: rawSubjects, error: subjectsError }, { data: courseSettings }, { data: versions }, { data: ppcDocs }] = await Promise.all([
+  const [{ data: professors }, { data: rawSubjects, error: subjectsError }, { data: courseSettings }, { data: versions }, { data: ppcDocs }, { data: equivalencyGroups }] = await Promise.all([
     supabase
       .from('professors')
       .select('id, user_id, name, avatar_url, bio, cargo, years_at_if, email, whatsapp, linkedin, cnpq')
@@ -50,9 +50,11 @@ export default async function CursoPage() {
       .from('course_ppc_documents')
       .select('id, label, url')
       .order('display_order', { ascending: false }),
+    supabase
+      .from('curriculum_equivalency_groups')
+      .select('id, note, from_subject_id, curriculum_equivalency_members(id, to_subject_id)'),
   ])
 
-  type SubjectWithVersion = CurriculumSubject & { version_id: string | null }
   const subjects = rawSubjects as SubjectWithVersion[] | null
   const allVersions = (versions ?? []) as { id: string; name: string; year: number; is_current: boolean }[]
 
@@ -60,7 +62,7 @@ export default async function CursoPage() {
   const hasVersionedSubjects = versionedSubjectIds.size > 0
 
   let curriculum = DEFAULT_CURRICULUM
-  let curriculumVersions: { id: string | null; name: string; year: number | null; is_current: boolean; semesters: ReturnType<typeof groupCurriculumSubjects> }[] = []
+  const curriculumVersions: { id: string | null; name: string; year: number | null; is_current: boolean; semesters: ReturnType<typeof groupCurriculumSubjects> }[] = []
 
   if (!subjectsError && subjects?.length) {
     if (hasVersionedSubjects) {
@@ -86,6 +88,11 @@ export default async function CursoPage() {
   const infoCards: InfoCard[] = settingsMap[COURSE_INFO_CARDS_KEY] ? (() => { try { return JSON.parse(settingsMap[COURSE_INFO_CARDS_KEY]!) } catch { return DEFAULT_INFO_CARDS } })() : DEFAULT_INFO_CARDS
   const learningItems: string[] = settingsMap[COURSE_LEARNING_ITEMS_KEY] ? (() => { try { return JSON.parse(settingsMap[COURSE_LEARNING_ITEMS_KEY]!) } catch { return DEFAULT_LEARNING_ITEMS } })() : DEFAULT_LEARNING_ITEMS
   const ppcs = (ppcDocs ?? []) as { id: string; label: string; url: string }[]
+  const equivalencies = buildEquivalencyViewData(
+    (equivalencyGroups ?? []) as RawEquivalencyGroup[],
+    subjects ?? [],
+    allVersions
+  )
 
   return (
     <div className="px-4 md:px-6 py-8 flex flex-col gap-12 w-full bg-white">
@@ -159,8 +166,8 @@ export default async function CursoPage() {
       <section id="matriz-curricular" className="scroll-mt-24">
         <SectionTitle>Matriz curricular</SectionTitle>
         {curriculumVersions.length > 0
-          ? <CurriculumTabs versions={curriculumVersions} />
-          : <CurriculumTabs curriculum={curriculum} />
+          ? <CurriculumTabs versions={curriculumVersions} equivalencies={equivalencies} />
+          : <CurriculumTabs curriculum={curriculum} equivalencies={equivalencies} />
         }
       </section>
 
@@ -181,6 +188,92 @@ export default async function CursoPage() {
       </section>
     </div>
   )
+}
+
+type RawEquivalencyGroup = {
+  id: string
+  note: string | null
+  from_subject_id: string
+  curriculum_equivalency_members: { id: string; to_subject_id: string }[]
+}
+
+type SubjectWithVersion = CurriculumSubject & { version_id: string | null }
+
+function buildEquivalencyViewData(
+  groups: RawEquivalencyGroup[],
+  subjects: SubjectWithVersion[],
+  versions: { id: string; name: string; year: number; is_current: boolean }[]
+) {
+  const subjectMap = new Map(subjects.map((subject) => [subject.id, subject]))
+  const versionMap = new Map(versions.map((version) => [version.id, version]))
+
+  return groups
+    .map((group) => {
+      const source = subjectMap.get(group.from_subject_id)
+      if (!source) return null
+
+      const members = group.curriculum_equivalency_members
+        .map((member) => {
+          const subject = subjectMap.get(member.to_subject_id)
+          if (!subject) return null
+          return {
+            id: member.id,
+            subjectId: subject.id,
+            name: subject.name,
+            semester: subject.semester,
+            versionId: subject.version_id,
+            versionName: versionLabel(subject.version_id, versionMap),
+          }
+        })
+        .filter(Boolean) as {
+          id: string
+          subjectId: string
+          name: string
+          semester: number
+          versionId: string | null
+          versionName: string
+        }[]
+
+      if (members.length === 0) return null
+
+      return {
+        id: group.id,
+        note: group.note,
+        from: {
+          subjectId: source.id,
+          name: source.name,
+          semester: source.semester,
+          versionId: source.version_id,
+          versionName: versionLabel(source.version_id, versionMap),
+        },
+        members,
+      }
+    })
+    .filter(Boolean) as {
+      id: string
+      note: string | null
+      from: {
+        subjectId: string
+        name: string
+        semester: number
+        versionId: string | null
+        versionName: string
+      }
+      members: {
+        id: string
+        subjectId: string
+        name: string
+        semester: number
+        versionId: string | null
+        versionName: string
+      }[]
+    }[]
+}
+
+function versionLabel(versionId: string | null, versionMap: Map<string, { name: string; year: number }>) {
+  if (!versionId) return 'Histórico'
+  const version = versionMap.get(versionId)
+  return version ? `${version.name} (${version.year})` : 'Matriz'
 }
 
 function SectionTitle({ children }: { children: ReactNode }) {

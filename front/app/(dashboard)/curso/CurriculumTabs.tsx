@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { formatWorkloadHours } from '@/app/lib/curriculum'
+import Select from '@/app/components/Select'
 
 type Subject = {
   id?: string
@@ -24,9 +25,29 @@ type VersionGroup = {
   semesters: Semester[]
 }
 
+type Equivalency = {
+  id: string
+  note: string | null
+  from: {
+    subjectId: string
+    name: string
+    semester: number
+    versionId: string | null
+    versionName: string
+  }
+  members: {
+    id: string
+    subjectId: string
+    name: string
+    semester: number
+    versionId: string | null
+    versionName: string
+  }[]
+}
+
 type Props =
-  | { curriculum: Semester[]; versions?: never }
-  | { versions: VersionGroup[]; curriculum?: never }
+  | ({ curriculum: Semester[]; versions?: never } & { equivalencies?: Equivalency[] })
+  | ({ versions: VersionGroup[]; curriculum?: never } & { equivalencies?: Equivalency[] })
 
 function SemesterView({ curriculum }: { curriculum: Semester[] }) {
   const firstSemester = curriculum[0]?.semester ?? 1
@@ -105,9 +126,10 @@ function SemesterView({ curriculum }: { curriculum: Semester[] }) {
   )
 }
 
-export default function CurriculumTabs({ curriculum, versions }: Props) {
+export default function CurriculumTabs({ curriculum, versions, equivalencies = [] }: Props) {
   const defaultVersion = versions?.find((v) => v.is_current) ?? versions?.[0] ?? null
   const [activeVersionId, setActiveVersionId] = useState<string | null>(defaultVersion?.id ?? null)
+  const [equivalenciesOpen, setEquivalenciesOpen] = useState(false)
 
   if (!versions) {
     if (!curriculum?.length) {
@@ -117,7 +139,13 @@ export default function CurriculumTabs({ curriculum, versions }: Props) {
         </div>
       )
     }
-    return <SemesterView curriculum={curriculum} />
+    return (
+      <div>
+        <EquivalencyButton equivalencies={equivalencies} onClick={() => setEquivalenciesOpen(true)} />
+        <SemesterView curriculum={curriculum} />
+        {equivalenciesOpen && <EquivalencyModal equivalencies={equivalencies} onClose={() => setEquivalenciesOpen(false)} />}
+      </div>
+    )
   }
 
   if (versions.length === 0) {
@@ -132,6 +160,7 @@ export default function CurriculumTabs({ curriculum, versions }: Props) {
 
   return (
     <div>
+      <EquivalencyButton equivalencies={equivalencies} onClick={() => setEquivalenciesOpen(true)} />
       {versions.length > 1 && (
         <div className="no-scrollbar flex gap-2 mb-6 overflow-x-auto pb-1">
           {versions.map((v) => (
@@ -149,7 +178,7 @@ export default function CurriculumTabs({ curriculum, versions }: Props) {
                 <span className={`text-[10px] font-semibold rounded-full px-1.5 py-0.5 ${
                   activeVersion.id === v.id ? 'bg-white/20 text-white' : 'bg-[#2F9E41]/10 text-[#2F9E41]'
                 }`}>
-                  atual
+                  Atual
                 </span>
               )}
             </button>
@@ -157,6 +186,259 @@ export default function CurriculumTabs({ curriculum, versions }: Props) {
         </div>
       )}
       <SemesterView curriculum={activeVersion.semesters} />
+      {equivalenciesOpen && <EquivalencyModal equivalencies={equivalencies} onClose={() => setEquivalenciesOpen(false)} />}
     </div>
   )
+}
+
+function EquivalencyButton({ equivalencies, onClick }: { equivalencies: Equivalency[]; onClick: () => void }) {
+  if (equivalencies.length === 0) return null
+
+  return (
+    <div className="mb-4 flex justify-end">
+      <button
+        type="button"
+        onClick={onClick}
+        className="inline-flex items-center justify-center rounded-xl border border-zinc-200 px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
+      >
+        Comparar equivalências
+      </button>
+    </div>
+  )
+}
+
+function EquivalencyModal({ equivalencies, onClose }: { equivalencies: Equivalency[]; onClose: () => void }) {
+  const pairs = buildEquivalencyPairs(equivalencies)
+  const matrixNames = Array.from(new Set(pairs.flatMap((pair) => [pair.from.versionName, pair.to.versionName]))).sort((a, b) => a.localeCompare(b, 'pt-BR'))
+  const matrixOptions = matrixNames.map((name) => ({ value: name, label: name }))
+  const [baseMatrix, setBaseMatrix] = useState(matrixNames[0] ?? '')
+  const targetOptions = matrixNames.filter((name) => name !== baseMatrix)
+  const targetSelectOptions = targetOptions.map((name) => ({ value: name, label: name }))
+  const [targetMatrix, setTargetMatrix] = useState(targetOptions[0] ?? '')
+  const effectiveTargetMatrix = targetOptions.includes(targetMatrix) ? targetMatrix : targetOptions[0] ?? ''
+  const availableSemesters = Array.from(new Set(
+    pairs
+      .filter((pair) => pair.from.versionName === baseMatrix && pair.to.versionName === effectiveTargetMatrix)
+      .map((pair) => pair.from.semester)
+  )).sort((a, b) => a - b)
+  const [activeSemester, setActiveSemester] = useState<number | null>(availableSemesters[0] ?? null)
+  const effectiveSemester = activeSemester && availableSemesters.includes(activeSemester) ? activeSemester : availableSemesters[0] ?? null
+
+  const rows = groupPairsBySubject(
+    pairs.filter((pair) => (
+      pair.from.versionName === baseMatrix &&
+      pair.to.versionName === effectiveTargetMatrix &&
+      pair.from.semester === effectiveSemester
+    ))
+  )
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 px-4 py-6" role="dialog" aria-modal="true">
+      <div className="w-full max-w-4xl rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-start justify-between gap-4 rounded-t-2xl border-b border-zinc-100 bg-white px-5 py-4">
+          <div>
+            <h2 className="text-base font-semibold text-zinc-900">Comparar equivalências</h2>
+            <p className="mt-1 text-sm text-zinc-500">Escolha duas matrizes e um semestre para ver a equivalência lado a lado.</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-2 text-zinc-400 transition hover:bg-zinc-50 hover:text-zinc-700"
+            aria-label="Fechar"
+          >
+            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="p-5">
+          <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto] md:items-end">
+            <label className="flex flex-col gap-1.5 text-xs font-semibold text-zinc-500">
+              Matriz base
+              <Select
+                value={baseMatrix}
+                onChange={(value) => {
+                  setBaseMatrix(value)
+                  setActiveSemester(null)
+                }}
+                options={matrixOptions}
+              />
+            </label>
+
+            <label className="flex flex-col gap-1.5 text-xs font-semibold text-zinc-500">
+              Comparar com
+              <Select
+                value={effectiveTargetMatrix}
+                onChange={(value) => {
+                  setTargetMatrix(value)
+                  setActiveSemester(null)
+                }}
+                options={targetSelectOptions}
+                disabled={targetSelectOptions.length === 0}
+              />
+            </label>
+
+            <button
+              type="button"
+              onClick={() => {
+                setBaseMatrix(effectiveTargetMatrix)
+                setTargetMatrix(baseMatrix)
+                setActiveSemester(null)
+              }}
+              disabled={!effectiveTargetMatrix}
+              className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-40"
+            >
+              Inverter
+            </button>
+          </div>
+
+          {availableSemesters.length > 0 ? (
+            <>
+              <div className="no-scrollbar mt-5 flex gap-2 overflow-x-auto pb-1">
+                {availableSemesters.map((semester) => (
+                  <button
+                    key={semester}
+                    type="button"
+                    onClick={() => setActiveSemester(semester)}
+                    className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+                      effectiveSemester === semester ? 'text-white' : 'text-zinc-400 hover:text-zinc-700'
+                    }`}
+                    style={effectiveSemester === semester ? { backgroundColor: '#2F9E41' } : undefined}
+                  >
+                    {semester}º semestre
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-5 overflow-hidden rounded-xl border border-zinc-200">
+                <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] bg-zinc-50 text-xs font-semibold text-zinc-500">
+                  <div className="border-r border-zinc-200 px-4 py-3">{baseMatrix}</div>
+                  <div className="px-4 py-3">{effectiveTargetMatrix}</div>
+                </div>
+
+                <div className="divide-y divide-zinc-100">
+                  {rows.map((row) => (
+                    <div key={row.subjectId} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+                      <div className="border-r border-zinc-100 px-4 py-4">
+                        <p className="text-sm font-semibold text-zinc-900">{row.name}</p>
+                        <p className="mt-1 text-xs text-zinc-400">{row.semester}º semestre</p>
+                      </div>
+                      <div className="px-4 py-4">
+                        <div className="flex flex-col gap-2">
+                          {row.equivalents.map((equivalent) => (
+                            <div key={equivalent.subjectId} className="rounded-lg bg-green-50 px-3 py-2">
+                              <p className="text-sm font-semibold text-[#2F9E41]">{equivalent.name}</p>
+                              <p className="mt-0.5 text-xs text-green-700/70">{equivalent.semester}º semestre</p>
+                              {equivalent.note && <p className="mt-1 text-xs text-green-700/70">{equivalent.note}</p>}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <p className="mt-4 text-xs text-zinc-400">
+                Mostrando apenas disciplinas com equivalência cadastrada entre as matrizes selecionadas.
+              </p>
+            </>
+          ) : (
+            <div className="mt-5 rounded-xl border border-dashed border-zinc-200 px-4 py-10 text-center">
+              <p className="text-sm font-medium text-zinc-900">Sem equivalências cadastradas entre essas matrizes.</p>
+              <p className="mt-1 text-sm text-zinc-400">Tente inverter as matrizes ou selecionar outra combinação.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+type EquivalencyPair = {
+  id: string
+  note: string | null
+  from: {
+    subjectId: string
+    name: string
+    semester: number
+    versionName: string
+  }
+  to: {
+    subjectId: string
+    name: string
+    semester: number
+    versionName: string
+  }
+}
+
+function buildEquivalencyPairs(equivalencies: Equivalency[]) {
+  return equivalencies.flatMap((equivalency) => equivalency.members.flatMap((member) => {
+    const forward = {
+      id: `${equivalency.id}-${member.id}-forward`,
+      note: equivalency.note,
+      from: {
+        subjectId: equivalency.from.subjectId,
+        name: equivalency.from.name,
+        semester: equivalency.from.semester,
+        versionName: equivalency.from.versionName,
+      },
+      to: {
+        subjectId: member.subjectId,
+        name: member.name,
+        semester: member.semester,
+        versionName: member.versionName,
+      },
+    }
+    const reverse = {
+      id: `${equivalency.id}-${member.id}-reverse`,
+      note: equivalency.note,
+      from: forward.to,
+      to: forward.from,
+    }
+    return [forward, reverse]
+  }))
+}
+
+function groupPairsBySubject(pairs: EquivalencyPair[]) {
+  const rowMap = new Map<string, {
+    subjectId: string
+    name: string
+    semester: number
+    equivalents: {
+      subjectId: string
+      name: string
+      semester: number
+      note: string | null
+    }[]
+  }>()
+
+  for (const pair of pairs) {
+    if (!rowMap.has(pair.from.subjectId)) {
+      rowMap.set(pair.from.subjectId, {
+        subjectId: pair.from.subjectId,
+        name: pair.from.name,
+        semester: pair.from.semester,
+        equivalents: [],
+      })
+    }
+    const row = rowMap.get(pair.from.subjectId)!
+    if (!row.equivalents.some((item) => item.subjectId === pair.to.subjectId)) {
+      row.equivalents.push({
+        subjectId: pair.to.subjectId,
+        name: pair.to.name,
+        semester: pair.to.semester,
+        note: pair.note,
+      })
+    }
+  }
+
+  return Array.from(rowMap.values())
+    .map((row) => ({
+      ...row,
+      equivalents: row.equivalents.sort((a, b) => a.semester - b.semester || a.name.localeCompare(b.name, 'pt-BR')),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
 }
