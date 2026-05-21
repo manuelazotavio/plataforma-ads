@@ -18,6 +18,7 @@ type UserProfile = {
   semester_confirmed_at: string | null
   semester_confirmation_snoozed_until: string | null
   role: string | null
+  isProfessor: boolean
   suspended: boolean
   onboarding_completed: boolean
 }
@@ -49,11 +50,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         return
       }
       setUserId(authUser.id)
-      const { data: profile } = await supabase
-        .from('users')
-        .select('name, avatar_url, semester, semester_confirmed_at, semester_confirmation_snoozed_until, role, suspended, onboarding_completed')
-        .eq('id', authUser.id)
-        .single()
+      const [{ data: profile }, { data: professorProfile }] = await Promise.all([
+        supabase
+          .from('users')
+          .select('name, avatar_url, semester, semester_confirmed_at, semester_confirmation_snoozed_until, role, suspended, onboarding_completed')
+          .eq('id', authUser.id)
+          .single(),
+        supabase.from('professors').select('id').eq('user_id', authUser.id).maybeSingle(),
+      ])
       if (profile?.suspended) {
         await supabase.auth.signOut()
         router.replace('/login?suspended=1')
@@ -63,8 +67,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         router.replace('/onboarding')
         return
       }
-      setUser(profile)
-      setSemesterPromptOpen(shouldAskSemesterConfirmation(profile))
+      const normalizedProfile = {
+        ...profile,
+        role: profile.role?.trim().toLowerCase() ?? null,
+        isProfessor: Boolean(professorProfile),
+      }
+      setUser(normalizedProfile)
+      setSemesterPromptOpen(shouldAskSemesterConfirmation(normalizedProfile))
       setLoading(false)
     }
     loadUser()
@@ -180,7 +189,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className="hidden md:block text-right leading-tight">
                   <p className="text-sm font-semibold text-zinc-900">{user.name}</p>
                   <p className="text-xs text-zinc-400 mt-0.5">
-                    {user.semester ? `${user.semester}º Semestre` : 'Aluno'}
+                    {profileLabel(user)}
                   </p>
                 </div>
                 <UserAvatar src={user.avatar_url} name={user.name} className="h-9 w-9 ring-2 ring-zinc-100" />
@@ -285,7 +294,7 @@ function isProtectedPath(pathname: string) {
 
 function shouldAskSemesterConfirmation(profile: UserProfile | null | undefined) {
   if (!profile) return false
-  if (profile.role === 'professor') return false
+  if (profile.role === 'professor' || profile.isProfessor) return false
   if (!profile.semester || profile.semester >= MAX_STUDENT_SEMESTER) return false
 
   const now = new Date()
@@ -297,6 +306,14 @@ function shouldAskSemesterConfirmation(profile: UserProfile | null | undefined) 
   if (!confirmedAt || Number.isNaN(confirmedAt.getTime())) return true
 
   return addDays(confirmedAt, SEMESTER_CONFIRMATION_INTERVAL_DAYS) <= now
+}
+
+function profileLabel(profile: Pick<UserProfile, 'role' | 'semester' | 'isProfessor'>) {
+  if (profile.role === 'professor' || profile.isProfessor) return 'Professor'
+  if (profile.role === 'admin') return 'Administrador'
+  if (profile.role === 'egresso') return 'Egresso'
+  if (profile.semester) return `${profile.semester}º Semestre`
+  return 'Aluno'
 }
 
 function addDays(date: Date, days: number) {
