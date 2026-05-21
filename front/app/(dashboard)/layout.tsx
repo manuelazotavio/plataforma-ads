@@ -63,6 +63,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         router.replace('/login?suspended=1')
         return
       }
+      if (!profile) {
+        setUser(null)
+        setLoading(false)
+        return
+      }
       if (profile && !profile.onboarding_completed) {
         router.replace('/onboarding')
         return
