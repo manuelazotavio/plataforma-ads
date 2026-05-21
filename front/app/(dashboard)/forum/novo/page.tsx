@@ -28,7 +28,11 @@ export default function NovoTopicoPage() {
 
   useEffect(() => {
     supabase.from('forum_categories').select('id, name').order('display_order').then(({ data }) => {
-      setCategories((data as Category[]) ?? [])
+      const loadedCategories = (data as Category[]) ?? []
+      setCategories(loadedCategories)
+      if (loadedCategories.length > 0) {
+        setCategoryId((current) => current || loadedCategories[0].id)
+      }
     })
   }, [])
 
@@ -86,7 +90,7 @@ export default function NovoTopicoPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSubmitted(true)
-    if (!title.trim() || !content.trim()) return
+    if (!title.trim() || !content.trim() || !categoryId) return
     setSaving(true)
     setError(null)
 
@@ -99,7 +103,7 @@ export default function NovoTopicoPage() {
         title: title.trim(),
         content: content.trim(),
         user_id: user.id,
-        category_id: categoryId || null,
+        category_id: categoryId,
         attachments,
         replies_count: 0,
         views_count: 0,
@@ -138,13 +142,16 @@ export default function NovoTopicoPage() {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-zinc-700">Categoria</label>
+          <label className="text-sm font-medium text-zinc-700">Categoria <span className="text-red-500">*</span></label>
           <Select
             value={categoryId}
             onChange={setCategoryId}
             options={categories.map((cat) => ({ value: cat.id, label: cat.name }))}
-            placeholder="Sem categoria"
+            placeholder="Selecione uma categoria"
           />
+          {submitted && !categoryId && (
+            <p className="text-xs text-red-500">Selecione uma categoria para publicar o tópico.</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -253,7 +260,7 @@ export default function NovoTopicoPage() {
         <div className="flex gap-3">
           <button
             type="submit"
-            disabled={saving || !title.trim() || !content.trim()}
+            disabled={saving || !title.trim() || !content.trim() || !categoryId}
             className="rounded-xl px-8 py-2.5 text-sm font-semibold text-white disabled:opacity-50 transition hover:opacity-90"
             style={{ backgroundColor: '#2F9E41' }}
           >
