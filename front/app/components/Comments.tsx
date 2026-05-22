@@ -20,9 +20,17 @@ type CommentWithReplies = Comment & { replies: Comment[] }
 
 type Reaction = { comment_id: string; reaction_type: string; user_id: string }
 
+type CommentType = 'project' | 'article' | 'event'
+
 type Props = {
-  type: 'project' | 'article'
+  type: CommentType
   targetId: string
+}
+
+const COMMENT_CONFIG: Record<CommentType, { table: string; field: string; reactionTable: string }> = {
+  project: { table: 'project_comments', field: 'project_id', reactionTable: 'project_comment_reactions' },
+  article: { table: 'article_comments', field: 'article_id', reactionTable: 'article_comment_reactions' },
+  event: { table: 'event_comments', field: 'event_id', reactionTable: 'event_comment_reactions' },
 }
 
 function Avatar({ user }: { user: Comment['users'] }) {
@@ -131,9 +139,7 @@ function CommentReactionBar({
 }
 
 export default function Comments({ type, targetId }: Props) {
-  const table = type === 'project' ? 'project_comments' : 'article_comments'
-  const field = type === 'project' ? 'project_id' : 'article_id'
-  const reactionTable = type === 'project' ? 'project_comment_reactions' : 'article_comment_reactions'
+  const { table, field, reactionTable } = COMMENT_CONFIG[type]
 
   const [threads, setThreads]       = useState<CommentWithReplies[]>([])
   const [reactions, setReactions]   = useState<Reaction[]>([])

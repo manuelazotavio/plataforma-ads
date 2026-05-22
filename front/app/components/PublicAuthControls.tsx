@@ -202,7 +202,7 @@ export function PublicProfileCard() {
 
   useEffect(() => {
     if (!data?.level) return
-    let timeout: ReturnType<typeof window.setTimeout> | null = null
+    let timeout: number | null = null
     if (searchParams.get('previewLevelUp') === '1') {
       timeout = window.setTimeout(() => setLevelCelebration(data.level), 0)
       return () => {

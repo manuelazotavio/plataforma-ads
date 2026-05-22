@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { supabase } from '@/app/lib/supabase'
 import LikeButton from '@/app/components/LikeButton'
 import ShareProjectButton from '@/app/components/ShareProjectButton'
+import Comments from '@/app/components/Comments'
 
 export const dynamic = 'force-dynamic'
 
@@ -144,6 +145,8 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
           </Link>
         </section>
       )}
+
+      <Comments type="event" targetId={event.id} />
 
     </div>
   )
