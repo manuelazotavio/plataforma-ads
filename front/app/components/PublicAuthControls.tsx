@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import UserAvatar from '@/app/components/UserAvatar'
@@ -187,9 +187,11 @@ export function PublicWelcomeCard() {
 }
 
 export function PublicProfileCard() {
+  const searchParams = useSearchParams()
   const [data, setData] = useState<PublicHomeData | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [levelsOpen, setLevelsOpen] = useState(false)
+  const [levelCelebration, setLevelCelebration] = useState<Level | null>(null)
 
   useEffect(() => {
     loadHomeData().then((value) => {
@@ -197,6 +199,35 @@ export function PublicProfileCard() {
       setLoaded(true)
     })
   }, [])
+
+  useEffect(() => {
+    if (!data?.level) return
+    let timeout: ReturnType<typeof window.setTimeout> | null = null
+    if (searchParams.get('previewLevelUp') === '1') {
+      timeout = window.setTimeout(() => setLevelCelebration(data.level), 0)
+      return () => {
+        if (timeout) window.clearTimeout(timeout)
+      }
+    }
+
+    const storageKey = `ads-comunica:last-level:${data.id}`
+    const stored = window.localStorage.getItem(storageKey)
+    const seen = stored ? safeParseStoredLevel(stored) : null
+
+    if (!seen) {
+      window.localStorage.setItem(storageKey, JSON.stringify({ id: data.level.id, min_xp: data.level.min_xp }))
+      return undefined
+    }
+
+    if (data.level.min_xp > seen.min_xp) {
+      timeout = window.setTimeout(() => setLevelCelebration(data.level), 0)
+      window.localStorage.setItem(storageKey, JSON.stringify({ id: data.level.id, min_xp: data.level.min_xp }))
+    }
+
+    return () => {
+      if (timeout) window.clearTimeout(timeout)
+    }
+  }, [data, searchParams])
 
   if (!loaded) {
     return <div className="h-48 rounded-2xl border border-zinc-200 bg-white p-5" />
@@ -222,6 +253,7 @@ export function PublicProfileCard() {
   }
 
   return (
+    <>
     <div className="rounded-2xl border border-zinc-200 bg-white p-5">
       <h3 className="mb-4 text-base font-semibold text-zinc-900">Seu perfil</h3>
       <div className="mb-5 flex items-center gap-4">
@@ -259,6 +291,14 @@ export function PublicProfileCard() {
         />
       )}
     </div>
+    {levelCelebration && (
+      <LevelUpModal
+        level={levelCelebration}
+        xp={data.xp}
+        onClose={() => setLevelCelebration(null)}
+      />
+    )}
+    </>
   )
 }
 
@@ -430,6 +470,68 @@ function LevelsModal({
       </div>
     </div>
   )
+}
+
+function LevelUpModal({ level, xp, onClose }: { level: Level; xp: number; onClose: () => void }) {
+  useEffect(() => {
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') onClose()
+    }
+
+    document.addEventListener('keydown', closeOnEscape)
+    return () => document.removeEventListener('keydown', closeOnEscape)
+  }, [onClose])
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="level-up-title"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-md animate-[levelUpPop_260ms_ease-out] overflow-hidden rounded-2xl border border-green-100 bg-white shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="bg-green-50 px-6 py-7 text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 animate-[levelUpPulse_1200ms_ease-in-out_infinite] items-center justify-center rounded-full bg-[#2F9E41] text-white shadow-lg shadow-green-200">
+            <svg width={30} height={30} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2 15 8l6 .9-4.5 4.4 1.1 6.2L12 16.6 6.4 19.5l1.1-6.2L3 8.9 9 8l3-6Z" />
+            </svg>
+          </div>
+          <p className="text-xs font-bold uppercase tracking-wide text-[#2F9E41]">Novo nível alcançado</p>
+          <h2 id="level-up-title" className="mt-2 text-2xl font-black text-zinc-900">{level.name}</h2>
+          <p className="mt-2 text-sm leading-relaxed text-zinc-500">
+            Você chegou a {xp.toLocaleString('pt-BR')} XP. Continue participando para desbloquear os próximos níveis.
+          </p>
+        </div>
+
+        <div className="px-6 py-5">
+          {level.description && (
+            <p className="mb-4 rounded-xl bg-zinc-50 px-4 py-3 text-sm leading-relaxed text-zinc-600">{level.description}</p>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full rounded-xl bg-[#2F9E41] px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
+          >
+            Continuar
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function safeParseStoredLevel(value: string) {
+  try {
+    const parsed = JSON.parse(value) as { id?: unknown; min_xp?: unknown }
+    if (typeof parsed.id !== 'number' || typeof parsed.min_xp !== 'number') return null
+    return { id: parsed.id, min_xp: parsed.min_xp }
+  } catch {
+    return null
+  }
 }
 
 function ProgressRing({ value }: { value: number }) {
