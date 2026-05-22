@@ -5,6 +5,7 @@ import { supabase } from '@/app/lib/supabase'
 import LikeButton from '@/app/components/LikeButton'
 import ShareProjectButton from '@/app/components/ShareProjectButton'
 import Comments from '@/app/components/Comments'
+import EventReminderButton from '@/app/components/EventReminderButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -105,6 +106,7 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
           </a>
         )}
         <LikeButton type="event" targetId={event.id} initialCount={0} label="Curtir evento" variant="action" />
+        <EventReminderButton eventId={event.id} startDate={event.start_date} />
         <ShareProjectButton title={event.title} label="Compartilhar evento" />
       </div>
 

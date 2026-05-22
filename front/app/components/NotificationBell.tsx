@@ -8,8 +8,8 @@ import UserAvatar from '@/app/components/UserAvatar'
 
 type Notification = {
   id: string
-  type: 'comment' | 'reply' | 'reaction' | 'comment_reaction'
-  target_type: 'article' | 'project' | 'forum_topic'
+  type: 'comment' | 'reply' | 'reaction' | 'comment_reaction' | 'event_reminder'
+  target_type: 'article' | 'project' | 'forum_topic' | 'event'
   target_id: string
   target_title: string | null
   read: boolean
@@ -34,8 +34,13 @@ function truncate(s: string, n: number) {
 }
 
 function notifText(n: Notification): string {
-  const actor = n.actor?.name ?? 'Alguém'
   const title = n.target_title ? `"${truncate(n.target_title, 32)}"` : ''
+
+  if (n.type === 'event_reminder') {
+    return `Lembrete: o evento ${title} está chegando`
+  }
+
+  const actor = n.actor?.name ?? 'Alguém'
 
   if (n.target_type === 'forum_topic') {
     return `${actor} respondeu ao seu tópico ${title}`
@@ -52,6 +57,7 @@ function notifText(n: Notification): string {
 }
 
 function notifUrl(n: Notification): string {
+  if (n.target_type === 'event')       return `/eventos/${n.target_id}`
   if (n.target_type === 'forum_topic') return `/forum/${n.target_id}`
   if (n.target_type === 'article')     return `/artigos/${n.target_id}`
   return `/projetos/${n.target_id}`
@@ -186,7 +192,14 @@ export default function NotificationBell({ userId }: { userId: string | null }) 
                   onClick={() => handleClick(n)}
                   className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-zinc-50 transition ${!n.read ? 'bg-green-50/40' : ''}`}
                 >
-                  {n.actor?.avatar_url ? (
+                  {n.type === 'event_reminder' ? (
+                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#2F9E41]/10 text-[#2F9E41]">
+                      <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M8 2v4M16 2v4M3 10h18" />
+                        <rect x={3} y={4} width={18} height={18} rx={2} />
+                      </svg>
+                    </div>
+                  ) : n.actor?.avatar_url ? (
                     <Image
                       src={n.actor.avatar_url}
                       alt={n.actor.name}

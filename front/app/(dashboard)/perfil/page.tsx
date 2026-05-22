@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import ProfileActivityFeed, { type ProfileActivityItem } from '@/app/components/ProfileActivityFeed'
+import ProfileEventReminders from '@/app/components/ProfileEventReminders'
 import UserAvatar from '@/app/components/UserAvatar'
 
 type Profile = {
@@ -484,6 +485,8 @@ export default function PerfilPage() {
             )}
           </section>
         )}
+
+        {userId && <ProfileEventReminders userId={userId} />}
 
         <ProfileActivityFeed items={feedItems} />
       </div>
