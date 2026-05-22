@@ -24,6 +24,13 @@ export default function MeusArtigosPage() {
   const [articles, setArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [submittedNotice, setSubmittedNotice] = useState(false)
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('enviado') === '1') {
+      setSubmittedNotice(true)
+    }
+  }, [])
 
   useEffect(() => {
     async function load() {
@@ -81,6 +88,24 @@ export default function MeusArtigosPage() {
             </Link>
           </div>
         </div>
+
+        {submittedNotice && (
+          <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 shrink-0 text-amber-600"><circle cx={12} cy={12} r={10}/><path d="M12 6v6l4 2"/></svg>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-amber-800">Seu artigo está sendo analisado</p>
+              <p className="mt-0.5 text-sm text-amber-700">Ele foi enviado para revisão e ficará visível publicamente após a aprovação.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSubmittedNotice(false)}
+              className="shrink-0 text-amber-400 transition hover:text-amber-700"
+              aria-label="Fechar aviso"
+            >
+              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><line x1={18} y1={6} x2={6} y2={18}/><line x1={6} y1={6} x2={18} y2={18}/></svg>
+            </button>
+          </div>
+        )}
 
         {articles.length === 0 ? (
           <div className="text-center py-20 text-zinc-400">

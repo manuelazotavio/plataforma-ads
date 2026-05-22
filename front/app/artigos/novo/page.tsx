@@ -211,7 +211,7 @@ export default function NovoArtigoPage() {
       }
     }
 
-    router.push('/meus-artigos')
+    router.push(status === 'pendente' ? '/meus-artigos?enviado=1' : '/meus-artigos')
   }
 
   return (

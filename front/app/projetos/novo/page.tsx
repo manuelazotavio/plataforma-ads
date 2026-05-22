@@ -30,6 +30,8 @@ export default function NovoProjetoPage() {
       .eq('id', userId)
       .single()
 
+    const isAdmin = userRow?.role === 'admin'
+
     const { data: project, error: insertError } = await supabase
       .from('projects')
       .insert({
@@ -42,7 +44,7 @@ export default function NovoProjetoPage() {
         start_date: data.start_date || null,
         end_date: data.end_date || null,
         is_featured: data.is_featured,
-        approved: userRow?.role === 'admin',
+        approved: isAdmin,
       })
       .select('id')
       .single()
@@ -71,7 +73,7 @@ export default function NovoProjetoPage() {
       )
     }
 
-    router.push('/meus-projetos')
+    router.push(isAdmin ? '/meus-projetos' : '/meus-projetos?enviado=1')
   }
 
   if (!userId) return null
