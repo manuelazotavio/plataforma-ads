@@ -222,6 +222,9 @@ export default function ForumTopicPage() {
   const [pendingDelete, setPendingDelete] = useState<Reply | null>(null)
   const [deletingReplyId, setDeletingReplyId] = useState<string | null>(null)
   const [moderationError, setModerationError] = useState<string | null>(null)
+  const [pendingTopicDelete, setPendingTopicDelete] = useState(false)
+  const [deletingTopic, setDeletingTopic] = useState(false)
+  const [topicDeleteError, setTopicDeleteError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     const [{ data: topicData }, user] = await Promise.all([
@@ -341,6 +344,22 @@ export default function ForumTopicPage() {
     setPendingDelete(reply)
   }
 
+  async function confirmDeleteTopic() {
+    if (!topic || !currentUserId) return
+    const canModerate = currentUserRole === 'admin' || currentUserRole === 'moderador'
+    if (topic.user_id !== currentUserId && !canModerate) return
+
+    setTopicDeleteError(null)
+    setDeletingTopic(true)
+    const { error } = await supabase.from('forum_topics').delete().eq('id', topic.id)
+    if (error) {
+      setTopicDeleteError('Não foi possível excluir o tópico. Verifique as permissões no banco.')
+      setDeletingTopic(false)
+      return
+    }
+    router.push('/forum')
+  }
+
   async function confirmDelete() {
     if (!pendingDelete || !currentUserId) return
 
@@ -427,6 +446,9 @@ export default function ForumTopicPage() {
   const cat = topic.forum_categories
   const attachments = topic.attachments ?? []
   const topicDate = new Date(topic.created_at).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
+  const canModerate = currentUserRole === 'admin' || currentUserRole === 'moderador'
+  const canDeleteTopic = !!currentUserId && (topic.user_id === currentUserId || canModerate)
+  const isOwnTopic = currentUserId === topic.user_id
 
   return (
     <div className="px-4 md:px-6 py-8 w-full">
@@ -462,8 +484,17 @@ export default function ForumTopicPage() {
               </div>
             </div>
           </div>
-          <div className="shrink-0 self-start sm:pt-1">
+          <div className="flex shrink-0 flex-col items-start gap-1.5 self-start sm:pt-1">
             <UpvoteButton count={topicVoters.length} voted={topicVoted} onToggle={handleTopicVote} disabled={!currentUserId} />
+            {canDeleteTopic && (
+              <button
+                type="button"
+                onClick={() => { setTopicDeleteError(null); setPendingTopicDelete(true) }}
+                className="px-3 text-xs font-semibold text-zinc-300 hover:text-red-500 transition cursor-pointer"
+              >
+                {isOwnTopic ? 'Excluir tópico' : 'Remover tópico'}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -536,6 +567,49 @@ export default function ForumTopicPage() {
           )}
         </div>
       </div>
+
+      {pendingTopicDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-red-500">
+              <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M3 6h18" />
+                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+              </svg>
+            </div>
+            <h3 className="text-base font-semibold text-zinc-900">
+              {isOwnTopic ? 'Excluir tópico?' : 'Remover tópico?'}
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-zinc-500">
+              O tópico e todas as respostas serão removidos permanentemente. Esta ação não pode ser desfeita.
+            </p>
+            {topicDeleteError && (
+              <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600">
+                {topicDeleteError}
+              </p>
+            )}
+            <div className="mt-5 flex gap-2">
+              <button
+                type="button"
+                onClick={() => { setPendingTopicDelete(false); setTopicDeleteError(null) }}
+                disabled={deletingTopic}
+                className="flex-1 rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteTopic}
+                disabled={deletingTopic}
+                className="flex-1 rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-600 disabled:opacity-50"
+              >
+                {deletingTopic ? 'Removendo...' : isOwnTopic ? 'Excluir' : 'Remover'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {pendingDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
