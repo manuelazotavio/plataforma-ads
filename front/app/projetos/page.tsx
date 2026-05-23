@@ -45,7 +45,19 @@ export default async function ProjetosPage({
       : query.in('id', ['00000000-0000-0000-0000-000000000000'])
   }
   if (semester) query = query.eq('semester', parseInt(semester))
-  if (aluno) query = query.eq('user_id', aluno)
+  if (aluno) {
+    const [{ data: ownedRows }, { data: collabProjects }] = await Promise.all([
+      supabase.from('projects').select('id').eq('user_id', aluno),
+      supabase.from('project_collaborators').select('project_id').eq('user_id', aluno),
+    ])
+    const alunoProjectIds = Array.from(new Set([
+      ...((ownedRows ?? []).map((r) => r.id)),
+      ...((collabProjects ?? []).map((r) => r.project_id)),
+    ]))
+    query = alunoProjectIds.length > 0
+      ? query.in('id', alunoProjectIds)
+      : query.in('id', ['00000000-0000-0000-0000-000000000000'])
+  }
   if (category) query = query.eq('category', category)
 
   const [
@@ -54,6 +66,7 @@ export default async function ProjetosPage({
     { data: configuredTagRows, error: configuredTagError },
     { data: semesterRows },
     { data: studentRows },
+    { data: collaboratorRows },
   ] =
     await Promise.all([
       query,
@@ -61,6 +74,7 @@ export default async function ProjetosPage({
       supabase.from(PROJECT_TAG_OPTIONS_TABLE).select('name').eq('is_active', true).order('display_order'),
       supabase.from('projects').select('semester').not('semester', 'is', null),
       supabase.from('projects').select('user_id, users(id, name)').not('user_id', 'is', null),
+      supabase.from('project_collaborators').select('user_id, users(id, name)').not('user_id', 'is', null),
     ])
 
   const configuredTags = configuredTagError ? [] : uniqueTagNames((configuredTagRows ?? []).map((r) => r.name))
@@ -69,8 +83,12 @@ export default async function ProjetosPage({
   const allSemesters = [...new Set((semesterRows ?? []).map((r) => r.semester as number))].sort((a, b) => a - b)
 
   type StudentRow = { user_id: string; users: { id: string; name: string } | null }
+  const combinedStudentRows = [
+    ...((studentRows ?? []) as unknown as StudentRow[]),
+    ...((collaboratorRows ?? []) as unknown as StudentRow[]),
+  ]
   const seenIds = new Set<string>()
-  const allStudents = (studentRows as unknown as StudentRow[] ?? [])
+  const allStudents = combinedStudentRows
     .filter((r) => r.users && !seenIds.has(r.user_id) && seenIds.add(r.user_id))
     .map((r) => ({ id: r.users!.id, name: r.users!.name }))
     .sort((a, b) => a.name.localeCompare(b.name))

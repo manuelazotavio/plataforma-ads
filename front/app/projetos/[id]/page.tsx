@@ -15,7 +15,7 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
 
   const { data: project } = await supabase
     .from('projects')
-    .select('id, title, description, repo_url, deploy_url, semester, start_date, end_date, is_featured, like_count, created_at, users(id, name, avatar_url), project_tags(tag_name), project_images(image_url, display_order, media_type)')
+    .select('id, title, description, repo_url, deploy_url, semester, start_date, end_date, is_featured, like_count, created_at, users(id, name, avatar_url), project_tags(tag_name), project_images(image_url, display_order, media_type), project_collaborators(id, user_id, name, users(id, name, avatar_url))')
     .eq('id', id)
     .single()
 
@@ -25,6 +25,12 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
     .sort((a, b) => a.display_order - b.display_order)
   const tags = project.project_tags as { tag_name: string }[]
   const author = project.users as unknown as { id: string; name: string; avatar_url: string | null } | null
+  const collaborators = (project.project_collaborators ?? []) as unknown as {
+    id: string
+    user_id: string | null
+    name: string
+    users: { id: string; name: string; avatar_url: string | null } | null
+  }[]
   const cover = images[0]
   const gallery = images.slice(1)
 
@@ -189,6 +195,42 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
                   </span>
                 ))}
               </div>
+            </div>
+          )}
+
+          {collaborators.length > 0 && (
+            <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200 p-4">
+              <p className="text-sm font-semibold text-zinc-700">
+                Colaboradores
+                <span className="ml-1.5 text-xs font-normal text-zinc-400">
+                  {collaborators.length}
+                </span>
+              </p>
+              <ul className="flex flex-col gap-2">
+                {collaborators.map((c) => {
+                  const linked = c.users
+                  const displayName = linked?.name ?? c.name
+                  const inner = (
+                    <>
+                      <UserAvatar src={linked?.avatar_url ?? null} name={displayName} className="h-8 w-8" />
+                      <span className="min-w-0 truncate text-sm font-medium text-zinc-800">{displayName}</span>
+                    </>
+                  )
+                  return (
+                    <li key={c.id}>
+                      {linked ? (
+                        <Link href={`/usuarios/${linked.id}`} className="flex items-center gap-2.5 rounded-lg px-1.5 py-1 -mx-1.5 transition hover:bg-zinc-50">
+                          {inner}
+                        </Link>
+                      ) : (
+                        <div className="flex items-center gap-2.5 px-1.5 py-1">
+                          {inner}
+                        </div>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
             </div>
           )}
 
