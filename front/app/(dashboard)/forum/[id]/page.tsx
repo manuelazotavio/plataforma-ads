@@ -177,9 +177,9 @@ function ReplyItem({ reply, depth, currentUserId, canModerate, voteMap, onVote, 
             </Link>
             <span className="text-xs text-zinc-400">{date}</span>
           </div>
-          <p className={`text-sm leading-relaxed whitespace-pre-wrap ${removed ? 'italic text-zinc-400' : 'text-zinc-700'}`}>{reply.content}</p>
+          <p className={`text-sm leading-relaxed whitespace-pre-wrap wrap-break-word ${removed ? 'italic text-zinc-400' : 'text-zinc-700'}`}>{reply.content}</p>
           {!removed && (
-            <div className="flex items-center gap-4 mt-2">
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
               <UpvoteButton count={votes.length} voted={voted} onToggle={() => onVote(reply.id)} disabled={!currentUserId} />
               {currentUserId && (
                 <button
@@ -378,7 +378,7 @@ export default function ForumTopicPage() {
     return nodes.map(node => {
       const visualDepth = Math.min(depth, 5)
       return (
-        <div key={node.reply.id} className={depth > 0 ? `pl-4 ${visualDepth > 0 ? 'border-l border-zinc-100' : ''}` : ''}>
+        <div key={node.reply.id} className={depth > 0 ? `pl-2 sm:pl-4 ${visualDepth > 0 ? 'border-l border-zinc-100' : ''}` : ''}>
           <ReplyItem
             reply={node.reply}
             depth={depth}
@@ -391,7 +391,7 @@ export default function ForumTopicPage() {
             replyingToId={replyingToId}
           />
           {replyingToId === node.reply.id && !isRemovedReply(node.reply.content) && (
-            <div className="pl-10 pb-2">
+            <div className="pl-6 sm:pl-10 pb-2">
               <ReplyForm
                 onSubmit={(content) => handleReply(content, node.reply.id)}
                 onCancel={() => setReplyingToId(null)}
@@ -400,7 +400,7 @@ export default function ForumTopicPage() {
             </div>
           )}
           {node.children.length > 0 && (
-            <div className="ml-4">
+            <div className="ml-1 sm:ml-4">
               {renderTree(node.children, depth + 1)}
             </div>
           )}
@@ -442,34 +442,34 @@ export default function ForumTopicPage() {
             {cat.name}
           </span>
         )}
-        <div className="flex items-start gap-4">
-          <div className="flex-1">
-            <h1 className="text-3xl font-black text-zinc-900 leading-tight mb-4">{topic.title}</h1>
-            <div className="flex items-center gap-3">
-              <Link href={`/usuarios/${topic.user_id}`} className="rounded-full hover:opacity-80 transition">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+          <div className="min-w-0 flex-1">
+            <h1 className="mb-4 text-2xl sm:text-3xl font-black text-zinc-900 leading-tight wrap-break-word">{topic.title}</h1>
+            <div className="flex items-start gap-3">
+              <Link href={`/usuarios/${topic.user_id}`} className="rounded-full hover:opacity-80 transition shrink-0">
                 <Avatar author={topic.users} size={32} />
               </Link>
-              <div className="flex items-center gap-2 text-sm text-zinc-400">
+              <div className="min-w-0 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:text-sm text-zinc-400">
                 <Link href={`/usuarios/${topic.user_id}`} className="font-medium text-zinc-600 hover:text-[#2F9E41] transition">
                   {topic.users?.name ?? 'Anonimo'}
                 </Link>
-                <span>&bull;</span>
+                <span aria-hidden="true">&bull;</span>
                 <span>{topicDate}</span>
-                <span>&bull;</span>
+                <span aria-hidden="true">&bull;</span>
                 <span>{topic.replies_count ?? 0} respostas</span>
-                <span>&bull;</span>
+                <span aria-hidden="true">&bull;</span>
                 <span>{(topic.views_count ?? 0) + 1} views</span>
               </div>
             </div>
           </div>
-          <div className="shrink-0 pt-1">
+          <div className="shrink-0 self-start sm:pt-1">
             <UpvoteButton count={topicVoters.length} voted={topicVoted} onToggle={handleTopicVote} disabled={!currentUserId} />
           </div>
         </div>
       </div>
 
       <div className="border-t border-zinc-100 pt-8">
-        <p className="text-base text-zinc-800 leading-relaxed whitespace-pre-wrap">{topic.content}</p>
+        <p className="text-base text-zinc-800 leading-relaxed whitespace-pre-wrap wrap-break-word">{topic.content}</p>
 
       
         {attachments.length > 0 && (
