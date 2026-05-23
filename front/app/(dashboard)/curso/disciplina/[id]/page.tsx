@@ -114,84 +114,78 @@ export default async function SubjectDetailPage({ params }: { params: Promise<{ 
 
       <section className="mb-8">
         <h2 className="mb-3 text-base font-semibold text-zinc-900">1. Identificação</h2>
-        <div className="overflow-x-auto rounded-lg border border-zinc-300">
-          <table className="w-full min-w-[640px] border-collapse text-sm">
-            <tbody>
-              <tr>
-                <td colSpan={6} className="border-b border-zinc-300 px-3 py-2">
-                  <span className="font-semibold text-zinc-800">CURSO: </span>
-                  <span className="text-zinc-700">{COURSE_NAME}</span>
-                </td>
-              </tr>
-              <tr>
-                <td colSpan={6} className="border-b border-zinc-300 px-3 py-2">
-                  <span className="font-semibold text-zinc-800">Componente Curricular: </span>
-                  <span className="uppercase text-zinc-700">{sub.name}</span>
-                </td>
-              </tr>
-              <tr>
-                <td colSpan={2} className="border-b border-r border-zinc-300 px-3 py-2">
-                  <span className="font-semibold text-zinc-800">Semestre: </span>
-                  <span className="text-zinc-700">{sub.semester}º</span>
-                </td>
-                <td colSpan={2} className="border-b border-r border-zinc-300 px-3 py-2">
-                  <span className="font-semibold text-zinc-800">Código: </span>
-                  <span className="text-zinc-700">{sub.abbreviation ?? '—'}</span>
-                </td>
-                <td colSpan={2} className="border-b border-zinc-300 px-3 py-2">
-                  <span className="font-semibold text-zinc-800">Tipo: </span>
-                  <span className="text-zinc-700">{p?.tipo ?? '—'}</span>
-                </td>
-              </tr>
-              <tr>
-                <td className="border-b border-r border-zinc-300 px-3 py-2 align-top">
-                  <p className="text-xs font-semibold text-zinc-800">Nº de docentes:</p>
-                  <p className="text-zinc-700">{p?.n_docentes ?? '—'}</p>
-                </td>
-                <td className="border-b border-r border-zinc-300 px-3 py-2 align-top">
-                  <p className="text-xs font-semibold text-zinc-800">Nº aulas semanais:</p>
-                  <p className="text-zinc-700">{p?.n_aulas_semanais ?? '—'}</p>
-                </td>
-                <td className="border-b border-r border-zinc-300 px-3 py-2 align-top">
-                  <p className="text-xs font-semibold text-zinc-800">Total de aulas:</p>
-                  <p className="text-zinc-700">{p?.total_aulas ?? '—'}</p>
-                </td>
-                <td colSpan={3} className="border-b border-zinc-300 px-3 py-2 align-top">
-                  <div className="flex flex-col gap-0.5 text-zinc-700">
-                    <p><span className="font-semibold text-zinc-800">C.H. Ensino:</span> {fmtHoras(sub.workload_hours)}</p>
-                    <p><span className="font-semibold text-zinc-800">C.H. EaD:</span> {fmtHoras(p?.ch_ead ?? null)}</p>
-                    <p><span className="font-semibold text-zinc-800">C.H. Extensão:</span> {fmtHoras(p?.ch_extensao ?? null)}</p>
-                    <p><span className="font-semibold text-zinc-800">Total de horas:</span> {fmtHoras(p?.ch_total ?? null)}</p>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td colSpan={3} className="border-r border-zinc-300 px-3 py-2 align-top">
-                  <p className="mb-2 text-xs font-semibold text-zinc-800">Abordagem Metodológica:</p>
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-zinc-700">
-                    <Marker label="Teórica" active={abordagem === 'T'} />
-                    <Marker label="Prática" active={abordagem === 'P'} />
-                    <Marker label="Teórico-Prática" active={abordagem === 'T-P'} />
-                  </div>
-                </td>
-                <td colSpan={3} className="px-3 py-2 align-top">
-                  <p className="mb-2 text-xs font-semibold text-zinc-800">Uso de laboratório ou outros ambientes além da sala de aula?</p>
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-zinc-700">
-                    <Marker label="Sim" active={p?.usa_laboratorio === true} />
-                    <Marker label="Não" active={p?.usa_laboratorio === false || p?.usa_laboratorio == null} />
-                    {p?.usa_laboratorio && p?.ch_laboratorio != null && (
-                      <span><span className="font-semibold text-zinc-800">C.H.:</span> {fmtHoras(p.ch_laboratorio)}</span>
-                    )}
-                  </div>
-                  {p?.usa_laboratorio && p?.laboratorio_descricao && (
-                    <p className="mt-1 text-zinc-700">
-                      <span className="font-semibold text-zinc-800">Qual(is):</span> {p.laboratorio_descricao}
-                    </p>
-                  )}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div className="overflow-hidden rounded-lg border border-zinc-300">
+          <div className="grid grid-cols-1 text-sm sm:grid-cols-6">
+
+            <div className="border-b border-zinc-300 px-3 py-2 sm:col-span-6">
+              <span className="font-semibold text-zinc-800">CURSO: </span>
+              <span className="text-zinc-700">{COURSE_NAME}</span>
+            </div>
+
+            <div className="border-b border-zinc-300 px-3 py-2 sm:col-span-6">
+              <span className="font-semibold text-zinc-800">Componente Curricular: </span>
+              <span className="uppercase text-zinc-700">{sub.name}</span>
+            </div>
+
+            <div className="border-b border-zinc-300 px-3 py-2 sm:col-span-2 sm:border-r">
+              <span className="font-semibold text-zinc-800">Semestre: </span>
+              <span className="text-zinc-700">{sub.semester}º</span>
+            </div>
+            <div className="border-b border-zinc-300 px-3 py-2 sm:col-span-2 sm:border-r">
+              <span className="font-semibold text-zinc-800">Código: </span>
+              <span className="text-zinc-700">{sub.abbreviation ?? '—'}</span>
+            </div>
+            <div className="border-b border-zinc-300 px-3 py-2 sm:col-span-2">
+              <span className="font-semibold text-zinc-800">Tipo: </span>
+              <span className="text-zinc-700">{p?.tipo ?? '—'}</span>
+            </div>
+
+            <div className="border-b border-zinc-300 px-3 py-2 align-top sm:col-span-1 sm:border-r">
+              <p className="text-xs font-semibold text-zinc-800">Nº de docentes:</p>
+              <p className="text-zinc-700">{p?.n_docentes ?? '—'}</p>
+            </div>
+            <div className="border-b border-zinc-300 px-3 py-2 align-top sm:col-span-1 sm:border-r">
+              <p className="text-xs font-semibold text-zinc-800">Nº aulas semanais:</p>
+              <p className="text-zinc-700">{p?.n_aulas_semanais ?? '—'}</p>
+            </div>
+            <div className="border-b border-zinc-300 px-3 py-2 align-top sm:col-span-1 sm:border-r">
+              <p className="text-xs font-semibold text-zinc-800">Total de aulas:</p>
+              <p className="text-zinc-700">{p?.total_aulas ?? '—'}</p>
+            </div>
+            <div className="border-b border-zinc-300 px-3 py-2 align-top sm:col-span-3">
+              <div className="flex flex-col gap-0.5 text-zinc-700">
+                <p><span className="font-semibold text-zinc-800">C.H. Ensino:</span> {fmtHoras(sub.workload_hours)}</p>
+                <p><span className="font-semibold text-zinc-800">C.H. EaD:</span> {fmtHoras(p?.ch_ead ?? null)}</p>
+                <p><span className="font-semibold text-zinc-800">C.H. Extensão:</span> {fmtHoras(p?.ch_extensao ?? null)}</p>
+                <p><span className="font-semibold text-zinc-800">Total de horas:</span> {fmtHoras(p?.ch_total ?? null)}</p>
+              </div>
+            </div>
+
+            <div className="border-b border-zinc-300 px-3 py-2 align-top sm:col-span-3 sm:border-r sm:border-b-0">
+              <p className="mb-2 text-xs font-semibold text-zinc-800">Abordagem Metodológica:</p>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-zinc-700">
+                <Marker label="Teórica" active={abordagem === 'T'} />
+                <Marker label="Prática" active={abordagem === 'P'} />
+                <Marker label="Teórico-Prática" active={abordagem === 'T-P'} />
+              </div>
+            </div>
+            <div className="px-3 py-2 align-top sm:col-span-3">
+              <p className="mb-2 text-xs font-semibold text-zinc-800">Uso de laboratório ou outros ambientes além da sala de aula?</p>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-zinc-700">
+                <Marker label="Sim" active={p?.usa_laboratorio === true} />
+                <Marker label="Não" active={p?.usa_laboratorio === false || p?.usa_laboratorio == null} />
+                {p?.usa_laboratorio && p?.ch_laboratorio != null && (
+                  <span><span className="font-semibold text-zinc-800">C.H.:</span> {fmtHoras(p.ch_laboratorio)}</span>
+                )}
+              </div>
+              {p?.usa_laboratorio && p?.laboratorio_descricao && (
+                <p className="mt-1 text-zinc-700">
+                  <span className="font-semibold text-zinc-800">Qual(is):</span> {p.laboratorio_descricao}
+                </p>
+              )}
+            </div>
+
+          </div>
         </div>
       </section>
 
@@ -200,27 +194,19 @@ export default async function SubjectDetailPage({ params }: { params: Promise<{ 
           <h2 className="mb-3 text-base font-semibold text-zinc-900">
             2. Grupos de Conhecimentos Essenciais do Currículo de Referência
           </h2>
-          <div className="overflow-x-auto rounded-lg border border-zinc-300">
-            <table className="w-full border-collapse text-sm">
-              <tbody>
-                {p?.nucleo_formacao && (
-                  <tr>
-                    <td className="border-b border-zinc-300 px-3 py-2">
-                      <span className="font-semibold text-zinc-800">Núcleo de Formação: </span>
-                      <span className="text-zinc-700">{p.nucleo_formacao}</span>
-                    </td>
-                  </tr>
-                )}
-                {p?.grupo_conhecimentos && (
-                  <tr>
-                    <td className="px-3 py-2">
-                      <span className="font-semibold text-zinc-800">Grupo de Conhecimentos: </span>
-                      <span className="text-zinc-700">{p.grupo_conhecimentos}</span>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+          <div className="overflow-hidden rounded-lg border border-zinc-300 text-sm">
+            {p?.nucleo_formacao && (
+              <div className={`px-3 py-2 ${p?.grupo_conhecimentos ? 'border-b border-zinc-300' : ''}`}>
+                <span className="font-semibold text-zinc-800">Núcleo de Formação: </span>
+                <span className="text-zinc-700">{p.nucleo_formacao}</span>
+              </div>
+            )}
+            {p?.grupo_conhecimentos && (
+              <div className="px-3 py-2">
+                <span className="font-semibold text-zinc-800">Grupo de Conhecimentos: </span>
+                <span className="text-zinc-700">{p.grupo_conhecimentos}</span>
+              </div>
+            )}
           </div>
         </section>
       )}
