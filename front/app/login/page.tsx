@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { getAuthRedirectUrl } from '@/app/lib/authRedirect'
 import { supabase } from '@/app/lib/supabase'
 import ThemeToggle from '@/app/components/ThemeToggle'
+import PasswordInput from '@/app/components/PasswordInput'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -102,9 +103,8 @@ export default function LoginPage() {
             <label htmlFor="password" className="text-sm font-medium text-zinc-700">
               Senha <span className="text-red-500">*</span>
             </label>
-            <input
+            <PasswordInput
               id="password"
-              type="password"
               autoComplete="current-password"
               required
               value={password}

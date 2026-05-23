@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { getAuthRedirectUrl } from '@/app/lib/authRedirect'
 import { supabase } from '@/app/lib/supabase'
 import ThemeToggle from '@/app/components/ThemeToggle'
+import PasswordInput from '@/app/components/PasswordInput'
 
 export default function CadastroPage() {
   const router = useRouter()
@@ -176,9 +177,8 @@ export default function CadastroPage() {
             <label htmlFor="password" className="text-sm font-medium text-zinc-700">
               Senha <span className="text-red-500">*</span>
             </label>
-            <input
+            <PasswordInput
               id="password"
-              type="password"
               autoComplete="new-password"
               required
               minLength={6}
@@ -193,9 +193,8 @@ export default function CadastroPage() {
             <label htmlFor="confirmPassword" className="text-sm font-medium text-zinc-700">
               Confirmar senha <span className="text-red-500">*</span>
             </label>
-            <input
+            <PasswordInput
               id="confirmPassword"
-              type="password"
               autoComplete="new-password"
               required
               minLength={6}
