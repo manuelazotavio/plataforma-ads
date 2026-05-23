@@ -8,6 +8,7 @@ import { getAuthUser } from '@/app/lib/auth'
 import ProfileActivityFeed, { type ProfileActivityItem } from '@/app/components/ProfileActivityFeed'
 import ProfileEventReminders from '@/app/components/ProfileEventReminders'
 import UserAvatar from '@/app/components/UserAvatar'
+import { computeXp, countProfileLinks, hasNonEmpty } from '@/app/lib/xp'
 
 type Profile = {
   name: string
@@ -185,12 +186,16 @@ export default function PerfilPage() {
         (xpProjects ?? []).reduce((total, project) => total + (project.like_count ?? 0), 0) +
         (xpArticles ?? []).reduce((total, article) => total + (article.like_count ?? 0), 0)
       const commentsCount = (projectCommentsCount ?? 0) + (articleCommentsCount ?? 0)
-      const xp =
-        (xpProjectsCount ?? 0) * 50 +
-        (xpArticlesCount ?? 0) * 40 +
-        (xpTopicsCount ?? 0) * 20 +
-        commentsCount * 10 +
-        likesReceived * 5
+      const xp = computeXp({
+        projectsCount: xpProjectsCount ?? 0,
+        articlesCount: xpArticlesCount ?? 0,
+        topicsCount: xpTopicsCount ?? 0,
+        commentsCount,
+        likesReceived,
+        hasAvatar: hasNonEmpty(profileData?.avatar_url),
+        hasBio: hasNonEmpty(profileData?.bio),
+        linksCount: countProfileLinks(profileData ?? {}),
+      })
       const level = currentLevel((levels ?? []) as Level[], xp)
       setStats({
         xp,

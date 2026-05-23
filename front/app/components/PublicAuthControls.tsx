@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import UserAvatar from '@/app/components/UserAvatar'
+import { computeXp, countProfileLinks, hasNonEmpty } from '@/app/lib/xp'
 
 type Level = { id: number; name: string; min_xp: number; description: string | null }
 
@@ -318,7 +319,7 @@ async function loadHomeData(): Promise<PublicHomeData | null> {
     { data: levelsData },
     { data: professorProfile },
   ] = await Promise.all([
-    supabase.from('users').select('name, avatar_url, semester, role').eq('id', user.id).single(),
+    supabase.from('users').select('name, avatar_url, semester, role, bio, github_url, linkedin_url, portfolio_url').eq('id', user.id).single(),
     supabase.from('forum_topics').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
     supabase.from('projects').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
     supabase.from('articles').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'publicado'),
@@ -337,12 +338,16 @@ async function loadHomeData(): Promise<PublicHomeData | null> {
     (ownArticles ?? []).reduce((sum, article) => sum + (article.like_count ?? 0), 0)
 
   const commentsCount = (projCommentsCount ?? 0) + (artCommentsCount ?? 0)
-  const xp =
-    (projectsCount ?? 0) * 50 +
-    (articlesCount ?? 0) * 40 +
-    (topicsCount ?? 0) * 20 +
-    commentsCount * 10 +
-    likesReceived * 5
+  const xp = computeXp({
+    projectsCount: projectsCount ?? 0,
+    articlesCount: articlesCount ?? 0,
+    topicsCount: topicsCount ?? 0,
+    commentsCount,
+    likesReceived,
+    hasAvatar: hasNonEmpty(profile.avatar_url),
+    hasBio: hasNonEmpty(profile.bio),
+    linksCount: countProfileLinks(profile),
+  })
 
   const levels = (levelsData ?? []) as Level[]
   const level = [...levels].reverse().find((item) => xp >= item.min_xp) ?? levels[0] ?? null
