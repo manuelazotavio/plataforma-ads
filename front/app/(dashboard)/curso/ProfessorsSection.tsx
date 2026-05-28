@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 type Professor = {
   id: string
@@ -211,13 +211,71 @@ function ProfessorDetailsModal({
 
 export default function ProfessorsSection({ professors }: { professors: Professor[] }) {
   const [selectedProfessor, setSelectedProfessor] = useState<Professor | null>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
+
+  const updateButtons = useCallback(() => {
+    const el = scrollRef.current
+    if (!el) return
+    setCanScrollLeft(el.scrollLeft > 4)
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4)
+  }, [])
+
+  useEffect(() => {
+    updateButtons()
+    const el = scrollRef.current
+    if (!el) return
+    el.addEventListener('scroll', updateButtons, { passive: true })
+    window.addEventListener('resize', updateButtons)
+    return () => {
+      el.removeEventListener('scroll', updateButtons)
+      window.removeEventListener('resize', updateButtons)
+    }
+  }, [updateButtons, professors.length])
+
+  function scrollBy(direction: -1 | 1) {
+    const el = scrollRef.current
+    if (!el) return
+    el.scrollBy({ left: direction * Math.round(el.clientWidth * 0.8), behavior: 'smooth' })
+  }
 
   return (
     <>
-      <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 md:-mx-6 md:px-6" style={{ scrollbarWidth: 'none' }}>
-        {professors.map((prof) => (
-          <ProfessorCard key={prof.id} prof={prof} onOpen={setSelectedProfessor} />
-        ))}
+      <div className="relative">
+        {canScrollLeft && (
+          <button
+            type="button"
+            onClick={() => scrollBy(-1)}
+            aria-label="Anterior"
+            className="absolute left-1 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-zinc-200 bg-white text-zinc-700 shadow-md transition hover:bg-zinc-50 hover:text-zinc-900 md:grid"
+          >
+            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+        )}
+        {canScrollRight && (
+          <button
+            type="button"
+            onClick={() => scrollBy(1)}
+            aria-label="Próximo"
+            className="absolute right-1 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-zinc-200 bg-white text-zinc-700 shadow-md transition hover:bg-zinc-50 hover:text-zinc-900 md:grid"
+          >
+            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </button>
+        )}
+        <div
+          ref={scrollRef}
+          className="flex gap-4 overflow-x-auto scroll-smooth pb-2 -mx-4 px-4 md:-mx-6 md:px-6"
+          style={{ scrollbarWidth: 'none' }}
+        >
+          {professors.map((prof) => (
+            <ProfessorCard key={prof.id} prof={prof} onOpen={setSelectedProfessor} />
+          ))}
+        </div>
       </div>
 
       {selectedProfessor && (
