@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/app/lib/supabase'
 
-type ResultType = 'project' | 'article' | 'forum_topic' | 'user' | 'page'
+type ResultType = 'project' | 'article' | 'forum_topic' | 'user' | 'page' | 'event'
 
 type Result = {
   id: string
@@ -20,6 +20,7 @@ const TYPE_LABEL: Record<ResultType, string> = {
   forum_topic: 'Fórum',
   user:        'Usuário',
   page:        'Página',
+  event:       'Evento',
 }
 
 function TypeBadge({ type }: { type: ResultType }) {
@@ -29,6 +30,7 @@ function TypeBadge({ type }: { type: ResultType }) {
     forum_topic: 'bg-purple-50 text-purple-600',
     user:        'bg-emerald-50 text-emerald-600',
     page:        'bg-zinc-100 text-zinc-600',
+    event:       'bg-rose-50 text-rose-600',
   }
   return (
     <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 ${colors[type]}`}>
@@ -163,6 +165,7 @@ export default function SearchBar() {
         { data: articleTags },
         { data: topics },
         { data: users },
+        { data: events },
       ] =
         await Promise.all([
           supabase.from('projects').select('id, title, description').eq('approved', true).ilike('title', like).limit(5),
@@ -171,6 +174,7 @@ export default function SearchBar() {
           supabase.from('article_tags').select('article_id, tag_name').ilike('tag_name', like).limit(20),
           supabase.from('forum_topics').select('id, title').ilike('title', like).limit(5),
           supabase.from('users').select('id, name, role').ilike('name', like).limit(5),
+          supabase.from('events').select('id, title, edition, start_date').eq('is_active', true).ilike('title', like).limit(5),
         ])
 
       const projectTagMap = new Map((projectTags ?? []).map((row) => [row.project_id, row.tag_name]))
@@ -223,6 +227,7 @@ export default function SearchBar() {
         ...articleTagResults,
         ...(topics ?? []).map((t) => ({ id: t.id, title: t.title, type: 'forum_topic' as const })),
         ...(users ?? []).map((u) => ({ id: u.id, title: u.name, type: 'user' as const, subtitle: u.role ? `Perfil ${u.role}` : 'Perfil' })),
+        ...(events ?? []).map((e) => ({ id: e.id, title: e.title, type: 'event' as const, subtitle: e.edition ?? undefined })),
         ...pages,
       ]).slice(0, 15)
 
@@ -255,6 +260,7 @@ export default function SearchBar() {
       r.type === 'project'     ? `/projetos/${r.id}` :
       r.type === 'article'     ? `/artigos/${r.id}`  :
       r.type === 'user'        ? `/usuarios/${r.id}` :
+      r.type === 'event'       ? `/eventos/${r.id}`  :
                                  `/forum/${r.id}`
     router.push(url)
   }
@@ -308,7 +314,7 @@ export default function SearchBar() {
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               onFocus={() => query.trim().length >= 2 && results.length > 0 && setOpen(true)}
-              placeholder="Buscar projetos, usuários, tópicos..."
+              placeholder="Buscar projetos, eventos, usuários..."
               autoComplete="off"
               className="h-10 w-full rounded-xl border border-zinc-300 bg-white pl-10 pr-4 text-sm font-medium text-zinc-800 shadow-sm outline-none transition placeholder:text-zinc-500 focus:border-[#2F9E41] focus:ring-2 focus:ring-[#2F9E41]/15"
             />
@@ -344,7 +350,7 @@ export default function SearchBar() {
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={() => query.trim().length >= 2 && results.length > 0 && setOpen(true)}
-          placeholder="Buscar projetos, usuários, tópicos..."
+          placeholder="Buscar projetos, eventos, usuários..."
           autoComplete="off"
           className="h-10 w-full rounded-xl border border-zinc-300 bg-white pl-10 pr-4 text-sm font-medium text-zinc-800 shadow-sm outline-none transition placeholder:text-zinc-500 hover:border-zinc-400 focus:border-[#2F9E41] focus:ring-2 focus:ring-[#2F9E41]/15"
         />

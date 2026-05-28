@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
+import EventStatusSelect from './EventStatusSelect'
+import EventSearchInput from './EventSearchInput'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,37 +12,121 @@ function formatDate(date: string | null) {
   return new Date(y, m - 1, d).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-export default async function EventosPage() {
+function isEventPast(startDate: string | null): boolean {
+  if (!startDate) return false
+  return new Date(startDate) < new Date()
+}
+
+export default async function EventosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ categoria?: string; status?: string; q?: string }>
+}) {
+  const { categoria, status, q } = await searchParams
+  const search = q?.trim() ?? ''
+
+  let query = supabase
+    .from('events')
+    .select('id, title, edition, category, description, start_date, end_date, registration_open, banner_url')
+    .eq('is_active', true)
+
+  if (categoria) query = query.eq('category', categoria)
+  if (search) query = query.ilike('title', `%${search}%`)
+  query = query.order('start_date', { ascending: false })
+
   const [{ data: events }, { data: categoriesData }] = await Promise.all([
-    supabase
-      .from('events')
-      .select('id, title, edition, category, description, start_date, end_date, registration_open, banner_url')
-      .eq('is_active', true)
-      .order('start_date', { ascending: false }),
-    supabase.from('event_categories').select('value, label'),
+    query,
+    supabase.from('event_categories').select('value, label').order('label'),
   ])
 
+  const categories = (categoriesData ?? []) as { value: string; label: string }[]
   const categoryLabel: Record<string, string> = Object.fromEntries(
-    (categoriesData ?? []).map((c: { value: string; label: string }) => [c.value, c.label])
+    categories.map((c) => [c.value, c.label])
   )
 
-  const upcoming = (events ?? []).filter((event) => event.start_date && new Date(event.start_date) >= new Date())
-  const past = (events ?? []).filter((event) => !event.start_date || new Date(event.start_date) < new Date())
+  const allEvents = events ?? []
+  const upcoming = allEvents.filter((event) => event.start_date && new Date(event.start_date) >= new Date())
+  const past = allEvents.filter((event) => !event.start_date || new Date(event.start_date) < new Date())
+  const openRegistration = allEvents.filter((event) => event.registration_open === true)
+
+  const showUpcoming = !status || status === 'proximos'
+  const showPast = !status || status === 'anteriores'
+  const showOpen = status === 'abertas'
+
+  function categoryUrl(nextCategoria?: string) {
+    const params = new URLSearchParams()
+    if (nextCategoria) params.set('categoria', nextCategoria)
+    if (status) params.set('status', status)
+    if (search) params.set('q', search)
+    const qs = params.toString()
+    return qs ? `/eventos?${qs}` : '/eventos'
+  }
 
   return (
     <div className="w-full px-4 py-8 md:px-6">
-      <div className="mx-auto mb-10 w-full max-w-2xl">
+      <div className="mx-auto mb-6 w-full max-w-2xl">
         <h1 className="text-2xl font-bold text-zinc-900">Eventos</h1>
         <p className="mt-1 text-sm text-zinc-500">Hackathons, maratonas, extensão e muito mais.</p>
       </div>
 
-      {!events || events.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-zinc-200 p-16 text-center">
-          <p className="text-sm text-zinc-400">Nenhum evento cadastrado ainda.</p>
+      <div className="mx-auto mb-4 w-full max-w-2xl">
+        <EventSearchInput initialValue={search} categoria={categoria} status={status} />
+      </div>
+
+      {categories.length > 0 && (
+        <div className="mx-auto mb-3 w-full max-w-2xl">
+          <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
+            <Link
+              href={categoryUrl(undefined)}
+              className={`shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold transition-colors cursor-pointer ${
+                !categoria ? 'text-white' : 'text-zinc-400 hover:text-zinc-700'
+              }`}
+              style={!categoria ? { backgroundColor: '#2F9E41' } : undefined}
+            >
+              Todos
+            </Link>
+            {categories.map((cat) => (
+              <Link
+                key={cat.value}
+                href={categoryUrl(cat.value)}
+                className={`shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold transition-colors cursor-pointer ${
+                  categoria === cat.value ? 'text-white' : 'text-zinc-400 hover:text-zinc-700'
+                }`}
+                style={categoria === cat.value ? { backgroundColor: '#2F9E41' } : undefined}
+              >
+                {cat.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="mx-auto mb-8 w-full max-w-2xl">
+        <EventStatusSelect value={status ?? ''} categoria={categoria} q={search} />
+      </div>
+
+      {allEvents.length === 0 ? (
+        <div className="mx-auto w-full max-w-2xl rounded-2xl border border-dashed border-zinc-200 p-16 text-center">
+          <p className="text-sm text-zinc-400">Nenhum evento encontrado com este filtro.</p>
         </div>
       ) : (
         <div className="flex flex-col gap-12">
-          {upcoming.length > 0 && (
+          {showOpen && (
+            <section className="mx-auto w-full max-w-2xl">
+              <p className="mb-5 text-xs font-semibold text-zinc-400">Inscrições abertas</p>
+              {openRegistration.length === 0 ? (
+                <p className="text-sm text-zinc-400">Nenhum evento com inscrições abertas no momento.</p>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  {openRegistration.map((event) => (
+                    <EventCard key={event.id} event={event} categoryLabel={categoryLabel} />
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
+
+          {showUpcoming && upcoming.length > 0 && (
             <section className="mx-auto w-full max-w-2xl">
               <p className="mb-5 text-xs font-semibold text-zinc-400">Próximos</p>
               <div className="flex flex-col gap-4">
@@ -51,7 +137,7 @@ export default async function EventosPage() {
             </section>
           )}
 
-          {past.length > 0 && (
+          {showPast && past.length > 0 && (
             <section className="mx-auto w-full max-w-2xl">
               <p className="mb-5 text-xs font-semibold text-zinc-400">Anteriores</p>
               <div className="flex flex-col gap-4">
@@ -103,7 +189,7 @@ function EventCard({ event, categoryLabel }: {
             {event.edition && (
               <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-500">{event.edition}</span>
             )}
-            {event.registration_open === null && (
+            {event.registration_open === null && !isEventPast(event.start_date) && (
               <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-500">
                 Em breve
               </span>
