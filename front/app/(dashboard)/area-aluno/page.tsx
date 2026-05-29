@@ -98,31 +98,31 @@ const links = [
 
 export default function AreaAlunoPage() {
   return (
-    <div className="min-h-screen bg-white px-4 py-10 md:px-6">
+    <div className="min-h-screen bg-white px-4 py-10 dark:bg-zinc-950 md:px-6">
       <div className="w-full">
         <header className="mb-10">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">
+            <h1 className="text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
               Recursos acadêmicos
             </h1>
-            <p className="mt-2 max-w-4xl text-sm leading-6 text-zinc-500">
+            <p className="mt-2 max-w-4xl text-sm leading-6 text-zinc-500 dark:text-zinc-400">
               Acesse materiais do curso, orientações importantes e atalhos usados no dia a dia.
             </p>
           </div>
         </header>
 
-        <section id="materiais" className="scroll-mt-24 border-t border-zinc-100 py-8">
-          <h2 className="text-lg font-semibold text-zinc-900">Materiais</h2>
-          <div className="mt-4 divide-y divide-zinc-100 rounded-xl border border-zinc-200">
+        <section id="materiais" className="scroll-mt-24 border-t border-zinc-100 py-8 dark:border-zinc-800">
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Materiais</h2>
+          <div className="mt-4 divide-y divide-zinc-100 rounded-xl border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
             {materials.map((item) => (
               <Link
                 key={item.title}
                 href={item.href}
-                className="flex flex-col gap-1 px-5 py-4 transition hover:bg-zinc-50 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-1 px-5 py-4 transition hover:bg-zinc-50 dark:hover:bg-zinc-900 sm:flex-row sm:items-center sm:justify-between"
               >
                 <span>
-                  <span className="block text-sm font-semibold text-zinc-900">{item.title}</span>
-                  <span className="mt-1 block text-sm leading-6 text-zinc-500">{item.description}</span>
+                  <span className="block text-sm font-semibold text-zinc-900 dark:text-zinc-100">{item.title}</span>
+                  <span className="mt-1 block text-sm leading-6 text-zinc-500 dark:text-zinc-400">{item.description}</span>
                 </span>
                 <span className="text-sm font-medium text-zinc-400">Acessar</span>
               </Link>
@@ -130,33 +130,33 @@ export default function AreaAlunoPage() {
           </div>
         </section>
 
-        <section id="orientacoes-academicas" className="scroll-mt-24 border-t border-zinc-100 py-8">
+        <section id="orientacoes-academicas" className="scroll-mt-24 border-t border-zinc-100 py-8 dark:border-zinc-800">
           <div className="max-w-4xl">
-            <h2 className="text-lg font-semibold text-zinc-900">Orientações acadêmicas</h2>
-            <p className="mt-2 text-sm leading-6 text-zinc-500">
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Orientações acadêmicas</h2>
+            <p className="mt-2 text-sm leading-6 text-zinc-500 dark:text-zinc-400">
               Escolha o assunto que você precisa consultar. Cada tema tem espaço para vídeo explicativo e passo a passo.
             </p>
           </div>
 
-          <div className="mt-6 divide-y divide-zinc-100 rounded-xl border border-zinc-200">
+          <div className="mt-6 divide-y divide-zinc-100 rounded-xl border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
             {guidance.map((item) => (
-              <details key={item.title} className="group open:bg-zinc-50/60">
-                <summary className="flex cursor-pointer list-none items-start justify-between gap-4 px-5 py-4">
+              <details key={item.title} className="group open:bg-zinc-50/60 dark:open:bg-zinc-900/60">
+                <summary className="flex cursor-pointer list-none items-start justify-between gap-4 px-5 py-4 transition hover:bg-zinc-50 dark:hover:bg-zinc-900">
                   <span>
-                    <span className="block text-sm font-semibold text-zinc-900">{item.title}</span>
-                    <span className="mt-1 block text-sm leading-6 text-zinc-500">{item.description}</span>
+                    <span className="block text-sm font-semibold text-zinc-900 dark:text-zinc-100">{item.title}</span>
+                    <span className="mt-1 block text-sm leading-6 text-zinc-500 dark:text-zinc-400">{item.description}</span>
                   </span>
-                  <svg className="mt-1 w-4 h-4 shrink-0 text-zinc-300 transition group-open:rotate-45" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                  <svg className="mt-1 h-4 w-4 shrink-0 text-zinc-300 transition group-open:rotate-45 dark:text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
                 </summary>
 
                 <div className="px-5 pb-5">
-                  <div className="mb-4 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-600">
+                  <div className="mb-4 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
                     Vídeo: {item.videoTitle}
                   </div>
                   <ol className="space-y-3">
                   {item.steps.map((step, index) => (
-                    <li key={step} className="grid grid-cols-[1.75rem_1fr] gap-3 text-sm leading-6 text-zinc-600">
-                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-100 text-xs font-semibold text-zinc-500">
+                    <li key={step} className="grid grid-cols-[1.75rem_1fr] gap-3 text-sm leading-6 text-zinc-600 dark:text-zinc-300">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-100 text-xs font-semibold text-zinc-500 dark:bg-zinc-800 dark:text-zinc-300">
                         {index + 1}
                       </span>
                       <span>{step}</span>
@@ -169,8 +169,8 @@ export default function AreaAlunoPage() {
           </div>
         </section>
 
-        <section id="links-uteis" className="scroll-mt-24 border-t border-zinc-100 py-8">
-          <h2 className="text-lg font-semibold text-zinc-900">Links úteis</h2>
+        <section id="links-uteis" className="scroll-mt-24 border-t border-zinc-100 py-8 dark:border-zinc-800">
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Links úteis</h2>
           <div className="mt-4 flex flex-wrap gap-2">
             {links.map((link) => (
               <Link
@@ -178,7 +178,7 @@ export default function AreaAlunoPage() {
                 href={link.href}
                 target={link.href.startsWith('http') ? '_blank' : undefined}
                 rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:border-zinc-300 hover:bg-zinc-50"
+                className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800 dark:text-zinc-300 dark:hover:border-zinc-700 dark:hover:bg-zinc-900"
               >
                 {link.label}
               </Link>

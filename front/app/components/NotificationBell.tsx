@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
@@ -70,36 +70,13 @@ export default function NotificationBell({ userId }: { userId: string | null }) 
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unread, setUnread] = useState(0)
 
-  useEffect(() => {
+  const load = useCallback(async () => {
     if (!userId) return
-    load()
 
-    const channel = supabase
-      .channel(`notif-${userId}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'notifications',
-        filter: `user_id=eq.${userId}`,
-      }, () => load())
-      .subscribe()
-
-    return () => { supabase.removeChannel(channel) }
-  }, [userId])
-
-  useEffect(() => {
-    function close(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', close)
-    return () => document.removeEventListener('mousedown', close)
-  }, [])
-
-  async function load() {
     const { data } = await supabase
       .from('notifications')
       .select('id, type, target_type, target_id, target_title, read, created_at, users!notifications_actor_id_fkey(name, avatar_url)')
-      .eq('user_id', userId!)
+      .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(25)
 
@@ -116,7 +93,32 @@ export default function NotificationBell({ userId }: { userId: string | null }) 
     }))
     setNotifications(mapped)
     setUnread(mapped.filter((n) => !n.read).length)
-  }
+  }, [userId])
+
+  useEffect(() => {
+    if (!userId) return
+    queueMicrotask(() => void load())
+
+    const channel = supabase
+      .channel(`notif-${userId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'notifications',
+        filter: `user_id=eq.${userId}`,
+      }, () => load())
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [userId, load])
+
+  useEffect(() => {
+    function close(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [])
 
   async function markAllRead() {
     if (!userId || unread === 0) return
@@ -142,7 +144,7 @@ export default function NotificationBell({ userId }: { userId: string | null }) 
 
   if (!userId) {
     return (
-      <button className="relative text-zinc-400 hover:text-zinc-700 transition p-1.5 rounded-lg hover:bg-zinc-100" disabled>
+      <button className="relative rounded-lg p-1.5 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200" disabled>
         <BellIcon />
       </button>
     )
@@ -152,28 +154,28 @@ export default function NotificationBell({ userId }: { userId: string | null }) 
     <div ref={ref} className="relative">
       <button
         onClick={handleOpen}
-        className="relative text-zinc-400 hover:text-zinc-700 transition p-1.5 rounded-lg hover:bg-zinc-100"
+        className="relative rounded-lg p-1.5 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
         title="Notificações"
       >
         <BellIcon />
         {unread > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 rounded-full bg-red-500 border-2 border-white flex items-center justify-center text-[9px] font-bold text-white px-0.5 leading-none">
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full border-2 border-white bg-red-500 px-0.5 text-[9px] font-bold leading-none text-white dark:border-zinc-950">
             {unread > 9 ? '9+' : unread}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="fixed inset-x-4 top-18 z-50 rounded-xl border border-zinc-200 bg-white shadow-xl overflow-hidden sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-80">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100">
-            <span className="text-sm font-semibold text-zinc-900">Notificações</span>
+        <div className="fixed inset-x-4 top-18 z-50 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-950 sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-80">
+          <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
+            <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Notificações</span>
             {notifications.some((n) => n.read) && unread === 0 && notifications.length > 0 && (
               <span className="text-xs text-zinc-400">Tudo lido</span>
             )}
             {unread > 0 && (
               <button
                 onClick={markAllRead}
-                className="text-xs text-zinc-400 hover:text-zinc-700 transition"
+                className="text-xs text-zinc-400 transition hover:text-zinc-700 dark:hover:text-zinc-200"
               >
                 Marcar todas como lidas
               </button>
@@ -185,12 +187,12 @@ export default function NotificationBell({ userId }: { userId: string | null }) 
               <p className="text-sm text-zinc-400">Nenhuma notificação ainda</p>
             </div>
           ) : (
-            <div className="max-h-[420px] overflow-y-auto divide-y divide-zinc-50">
+            <div className="max-h-[420px] divide-y divide-zinc-50 overflow-y-auto dark:divide-zinc-800">
               {notifications.map((n) => (
                 <button
                   key={n.id}
                   onClick={() => handleClick(n)}
-                  className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-zinc-50 transition ${!n.read ? 'bg-green-50/40' : ''}`}
+                  className={`flex w-full items-start gap-3 px-4 py-3 text-left transition hover:bg-zinc-50 dark:hover:bg-zinc-900 ${!n.read ? 'bg-green-50/40 dark:bg-green-950/20' : ''}`}
                 >
                   {n.type === 'event_reminder' ? (
                     <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#2F9E41]/10 text-[#2F9E41]">
@@ -211,7 +213,7 @@ export default function NotificationBell({ userId }: { userId: string | null }) 
                     <UserAvatar name={n.actor?.name} className="mt-0.5 h-8 w-8" sizes="32px" />
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-zinc-700 leading-snug">{notifText(n)}</p>
+                    <p className="text-xs leading-snug text-zinc-700 dark:text-zinc-200">{notifText(n)}</p>
                     <p className="text-[10px] text-zinc-400 mt-0.5">{timeAgo(n.created_at)}</p>
                   </div>
                   {!n.read && (

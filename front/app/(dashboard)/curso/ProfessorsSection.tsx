@@ -29,10 +29,20 @@ type Discipline = {
 
 type SocialLink = { href: string; label: string }
 
+const AREAS = [
+  { value: 'front-end', label: 'Front-end' },
+  { value: 'back-end', label: 'Back-end' },
+  { value: 'full-stack', label: 'Full-stack' },
+  { value: 'mobile', label: 'Mobile' },
+  { value: 'dados', label: 'Dados & IA' },
+  { value: 'devops', label: 'DevOps & Cloud' },
+  { value: 'ux-design', label: 'UX & Design' },
+  { value: 'seguranca', label: 'Segurança' },
+]
+
 function socialLinks(prof: Professor): SocialLink[] {
   const links: SocialLink[] = []
   const whatsappNumber = prof.whatsapp?.replace(/\D/g, '')
-  if (prof.email) links.push({ href: `mailto:${prof.email}`, label: 'Email' })
   if (whatsappNumber) links.push({ href: `https://wa.me/${whatsappNumber}`, label: 'WhatsApp' })
   if (prof.linkedin) links.push({ href: prof.linkedin, label: 'LinkedIn' })
   if (prof.cnpq) links.push({ href: prof.cnpq, label: 'Lattes' })
@@ -42,6 +52,16 @@ function socialLinks(prof: Professor): SocialLink[] {
 function formatCargo(cargo: string) {
   const normalized = cargo.toLocaleLowerCase('pt-BR')
   return normalized.charAt(0).toLocaleUpperCase('pt-BR') + normalized.slice(1)
+}
+
+function formatInterestArea(value: string) {
+  const knownArea = AREAS.find((area) => area.value === value)
+  if (knownArea) return knownArea.label
+
+  return value
+    .split(/([\s/-]+)/)
+    .map((part) => (/^[\s/-]+$/.test(part) ? part : part.charAt(0).toLocaleUpperCase('pt-BR') + part.slice(1)))
+    .join('')
 }
 
 function ProfessorCard({ prof, onOpen }: { prof: Professor; onOpen: (professor: Professor) => void }) {
@@ -134,15 +154,21 @@ function ProfessorDetailsModal({
   }, [onClose])
 
   useEffect(() => {
-    setDisciplinesLoading(true)
-    setAreas([])
+    let cancelled = false
+
+    queueMicrotask(() => {
+      if (cancelled) return
+      setDisciplinesLoading(true)
+      setDisciplines([])
+      setAreas([])
+    })
 
     const fetchDisciplines = supabase
       .from('curriculum_subject_professors')
       .select('period, curriculum_subjects(name, semester, abbreviation, curriculum_versions(year))')
       .eq('professor_id', professor.id)
       .then(({ data }) => {
-        if (!data) return
+        if (!data) return []
         const rows: Discipline[] = (data as unknown as {
           period: string | null
           curriculum_subjects: {
@@ -162,7 +188,7 @@ function ProfessorDetailsModal({
           }]
         })
         rows.sort((a, b) => (b.version_year ?? 0) - (a.version_year ?? 0) || (a.subject_semester ?? 0) - (b.subject_semester ?? 0))
-        setDisciplines(rows)
+        return rows
       })
 
     const fetchAreas = professor.user_id
@@ -173,11 +199,18 @@ function ProfessorDetailsModal({
           .maybeSingle()
           .then(({ data }) => {
             const raw = (data as { preferred_area: string | null } | null)?.preferred_area
-            setAreas(raw?.split(',').map((s) => s.trim()).filter(Boolean) ?? [])
+            return raw?.split(',').map((s) => s.trim()).filter(Boolean) ?? []
           })
-      : Promise.resolve()
+      : Promise.resolve([])
 
-    void Promise.all([fetchDisciplines, fetchAreas]).then(() => setDisciplinesLoading(false))
+    void Promise.all([fetchDisciplines, fetchAreas]).then(([nextDisciplines, nextAreas]) => {
+      if (cancelled) return
+      setDisciplines(nextDisciplines)
+      setAreas(nextAreas)
+      setDisciplinesLoading(false)
+    })
+
+    return () => { cancelled = true }
   }, [professor.id, professor.user_id])
 
   return (
@@ -228,7 +261,7 @@ function ProfessorDetailsModal({
 
         {/* Bio */}
         <div className="mt-5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Descrição</p>
+          <p className="text-xs font-semibold text-zinc-400">Descrição</p>
           {professor.bio ? (
             <p className="mt-2 text-sm leading-relaxed text-zinc-700">{professor.bio}</p>
           ) : (
@@ -238,7 +271,7 @@ function ProfessorDetailsModal({
 
         {/* Áreas de interesse */}
         <div className="mt-5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Áreas de interesse</p>
+          <p className="text-xs font-semibold text-zinc-400">Áreas de interesse</p>
           {areas.length > 0 ? (
             <div className="mt-2 flex flex-wrap gap-1.5">
               {areas.map((area) => (
@@ -246,7 +279,7 @@ function ProfessorDetailsModal({
                   key={area}
                   className="rounded-full bg-[#2F9E41]/10 px-3 py-1 text-xs font-medium text-[#2F9E41]"
                 >
-                  {area}
+                  {formatInterestArea(area)}
                 </span>
               ))}
             </div>
@@ -257,7 +290,7 @@ function ProfessorDetailsModal({
 
         {/* Histórico de disciplinas */}
         <div className="mt-5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Disciplinas ministradas</p>
+          <p className="text-xs font-semibold text-zinc-400">Disciplinas já ministradas</p>
           {disciplinesLoading ? (
             <p className="mt-2 text-sm text-zinc-400">Carregando...</p>
           ) : disciplines.length === 0 ? (
@@ -290,23 +323,26 @@ function ProfessorDetailsModal({
 
         {/* Redes sociais */}
         <div className="mt-5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Redes sociais</p>
-          <div className="mt-2 flex flex-wrap gap-2">
+          <p className="text-xs font-semibold text-zinc-400">Redes sociais</p>
+          {professor.email && (
+            <p className="mt-2 text-sm font-medium text-zinc-700">{professor.email}</p>
+          )}
+          <div className={`${professor.email ? 'mt-3' : 'mt-2'} flex flex-wrap gap-2`}>
             {links.length > 0 ? (
               links.map((link) => (
                 <a
                   key={`modal-${professor.id}-${link.label}`}
                   href={link.href}
-                  target={link.href.startsWith('mailto:') ? undefined : '_blank'}
-                  rel={link.href.startsWith('mailto:') ? undefined : 'noopener noreferrer'}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="rounded-full border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-zinc-700 transition hover:border-[#2F9E41] hover:text-[#2F9E41]"
                 >
                   {link.label}
                 </a>
               ))
-            ) : (
+            ) : !professor.email ? (
               <span className="text-sm text-zinc-400">Redes sociais ainda não cadastradas.</span>
-            )}
+            ) : null}
           </div>
         </div>
 
