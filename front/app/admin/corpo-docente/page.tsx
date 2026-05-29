@@ -210,11 +210,12 @@ export default function AdminCorpoDocentePage() {
     }
 
     const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
-    const { error: updateError } = await supabase.from('professors').update({ avatar_url: publicUrl }).eq('id', profId)
+    const urlWithBust = `${publicUrl}?v=${Date.now()}`
+    const { error: updateError } = await supabase.from('professors').update({ avatar_url: urlWithBust }).eq('id', profId)
     if (updateError) {
       setAvatarError(`Foto enviada, mas não foi possível salvar no professor: ${updateError.message}`)
     } else {
-      setProfessors((prev) => prev.map((p) => p.id === profId ? { ...p, avatar_url: publicUrl } : p))
+      setProfessors((prev) => prev.map((p) => p.id === profId ? { ...p, avatar_url: urlWithBust } : p))
     }
 
     setUploadingId(null)
