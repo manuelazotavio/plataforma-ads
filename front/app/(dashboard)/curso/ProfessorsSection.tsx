@@ -82,7 +82,7 @@ function ProfessorCard({ prof, onOpen }: { prof: Professor; onOpen: (professor: 
       onKeyDown={handleKeyDown}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="relative h-72 w-52 shrink-0 cursor-pointer overflow-hidden rounded-2xl bg-zinc-100 focus:outline-none"
+      className="relative h-72 w-52 shrink-0 cursor-pointer overflow-hidden rounded-2xl bg-transparent focus:outline-none"
       aria-label={`Ver detalhes de ${prof.name}`}
     >
       {prof.avatar_url ? (
@@ -222,14 +222,14 @@ function ProfessorDetailsModal({
       onClick={onClose}
     >
       <div
-        className="relative max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl"
+        className="relative max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white dark:bg-zinc-900 p-6 shadow-2xl"
         onClick={(event) => event.stopPropagation()}
       >
         {/* Cabeçalho */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700"
+          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-700 dark:hover:text-zinc-200"
           aria-label="Fechar detalhes"
         >
           <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round">
@@ -238,26 +238,26 @@ function ProfessorDetailsModal({
         </button>
 
         <div className="flex items-start gap-4 pr-8">
-          <div className="relative h-36 w-26 shrink-0 overflow-hidden rounded-2xl bg-zinc-100">
+          <div className="relative h-36 w-26 shrink-0 overflow-hidden rounded-2xl bg-zinc-100 dark:bg-zinc-800">
             {professor.avatar_url ? (
               <Image src={professor.avatar_url} alt={professor.name} fill className="object-cover" />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-4xl font-black text-zinc-300">
+              <div className="flex h-full w-full items-center justify-center text-4xl font-black text-zinc-300 dark:text-zinc-600">
                 {professor.name.charAt(0).toUpperCase()}
               </div>
             )}
           </div>
 
           <div className="min-w-0 flex-1">
-            <h3 className="text-xl font-bold leading-tight text-zinc-900">{professor.name}</h3>
+            <h3 className="text-xl font-bold leading-tight text-zinc-900 dark:text-zinc-100">{professor.name}</h3>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               {professor.cargo && (
-                <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-600">
+                <span className="rounded-full bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 text-xs font-semibold text-zinc-600 dark:text-zinc-300">
                   {professor.cargo}
                 </span>
               )}
               {professor.years_at_if != null && professor.years_at_if > 0 && (
-                <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-500">
+                <span className="rounded-full bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400">
                   {professor.years_at_if} {professor.years_at_if === 1 ? 'ano' : 'anos'} no IF
                 </span>
               )}
@@ -290,7 +290,7 @@ function ProfessorDetailsModal({
         <div className="mt-5">
           <p className="text-xs font-semibold text-zinc-400">Descrição</p>
           {professor.bio ? (
-            <p className="mt-2 text-sm leading-relaxed text-zinc-700">{professor.bio}</p>
+            <p className="mt-2 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">{professor.bio}</p>
           ) : (
             <p className="mt-2 text-sm text-zinc-400">Descrição ainda não cadastrada.</p>
           )}
@@ -304,18 +304,18 @@ function ProfessorDetailsModal({
           ) : disciplines.length === 0 ? (
             <p className="mt-2 text-sm text-zinc-400">Nenhuma disciplina vinculada.</p>
           ) : (
-            <div className="mt-2 flex flex-col divide-y divide-zinc-100 rounded-xl border border-zinc-100">
+            <div className="mt-2 flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800 rounded-xl border border-zinc-100 dark:border-zinc-800">
               {disciplines.map((d, i) => (
                 <div key={i} className="flex items-center justify-between gap-3 px-3 py-2">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-zinc-800">{d.subject_name}</p>
+                    <p className="truncate text-sm font-medium text-zinc-800 dark:text-zinc-200">{d.subject_name}</p>
                     {d.subject_semester != null && (
                       <p className="text-xs text-zinc-400">{d.subject_semester}º semestre</p>
                     )}
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-0.5">
                     {d.version_year && (
-                      <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-zinc-500">
+                      <span className="rounded-full bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
                         {d.version_year}
                       </span>
                     )}
@@ -340,7 +340,7 @@ function ProfessorDetailsModal({
                   href={link.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-full border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-zinc-700 transition hover:border-[#2F9E41] hover:text-[#2F9E41]"
+                  className="rounded-full border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-700 dark:text-zinc-300 transition hover:border-[#2F9E41] hover:text-[#2F9E41]"
                 >
                   {link.label}
                 </a>
@@ -402,7 +402,7 @@ export default function ProfessorsSection({ professors }: { professors: Professo
             type="button"
             onClick={() => scrollBy(-1)}
             aria-label="Anterior"
-            className="absolute left-1 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-zinc-200 bg-white text-zinc-700 shadow-md transition hover:bg-zinc-50 hover:text-zinc-900 md:grid"
+            className="absolute left-1 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 shadow-md transition hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:text-zinc-900 md:grid"
           >
             <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 18l-6-6 6-6" />
@@ -414,7 +414,7 @@ export default function ProfessorsSection({ professors }: { professors: Professo
             type="button"
             onClick={() => scrollBy(1)}
             aria-label="Próximo"
-            className="absolute right-1 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-zinc-200 bg-white text-zinc-700 shadow-md transition hover:bg-zinc-50 hover:text-zinc-900 md:grid"
+            className="absolute right-1 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 shadow-md transition hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:text-zinc-900 md:grid"
           >
             <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 18l6-6-6-6" />
