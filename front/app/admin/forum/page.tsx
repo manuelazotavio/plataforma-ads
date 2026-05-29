@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/app/lib/supabase'
+import { LoadingState } from '@/app/components/LoadingScreen'
 
 type Category = {
   id: string
@@ -70,7 +71,7 @@ export default function AdminForumPage() {
     setDeletingId(null)
   }
 
-  if (loading) return <p className="text-sm text-zinc-500">Carregando...</p>
+  if (loading) return <LoadingState message="Carregando categorias" />
 
   return (
     <div>

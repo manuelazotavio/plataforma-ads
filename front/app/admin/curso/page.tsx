@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   CLASS_SCHEDULE_PDF_KEY,
   COURSE_DESCRIPTION_KEY,
@@ -14,6 +14,7 @@ import {
   InfoCard,
   courseSettingsSql,
 } from '@/app/lib/courseSettings'
+import { LoadingState } from '@/app/components/LoadingScreen'
 import { supabase } from '@/app/lib/supabase'
 
 type PpcDoc = {
@@ -42,9 +43,7 @@ export default function AdminCursoPage() {
   const scheduleRef = useRef<HTMLInputElement | null>(null)
   const ppcRef = useRef<HTMLInputElement | null>(null)
 
-  useEffect(() => { void load() }, [])
-
-  async function load() {
+  const load = useCallback(async () => {
     const [{ data: settings }, { data: ppcs }] = await Promise.all([
       supabase.from(COURSE_SETTINGS_TABLE).select('key, value').in('key', ALL_SETTING_KEYS),
       supabase.from('course_ppc_documents').select('id, label, url, display_order').order('display_order', { ascending: false }),
@@ -60,7 +59,9 @@ export default function AdminCursoPage() {
     }
     setPpcDocs((ppcs as PpcDoc[]) ?? [])
     setLoading(false)
-  }
+  }, [])
+
+  useEffect(() => { queueMicrotask(() => void load()) }, [load])
 
   async function saveContent() {
     setSavingContent(true)
@@ -149,7 +150,7 @@ export default function AdminCursoPage() {
     setLearningItems((prev) => prev.filter((_, i) => i !== index))
   }
 
-  if (loading) return <p className="text-sm text-zinc-500">Carregando...</p>
+  if (loading) return <LoadingState message="Carregando dados do curso" />
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -248,7 +249,7 @@ export default function AdminCursoPage() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h2 className="text-sm font-semibold text-zinc-900">Horário de aulas</h2>
-              <p className="mt-1 text-sm text-zinc-500">PDF exibido na seção "Sobre o curso".</p>
+              <p className="mt-1 text-sm text-zinc-500">PDF exibido na seção &quot;Sobre o curso&quot;.</p>
             </div>
             <button type="button" onClick={() => scheduleRef.current?.click()} disabled={uploadingSchedule}
               className="cursor-pointer rounded-lg bg-[#2F9E41] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50">

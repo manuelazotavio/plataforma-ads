@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/app/lib/supabase'
+import { LoadingState } from '@/app/components/LoadingScreen'
 import {
   DEFAULT_PROJECT_TAGS,
   PROJECT_TAG_OPTIONS_TABLE,
@@ -282,7 +283,7 @@ export default function AdminTecnologiasPage() {
       )}
 
       {loading ? (
-        <p className="text-sm text-zinc-500">Carregando...</p>
+        <LoadingState message="Carregando tecnologias" />
       ) : tags.length === 0 ? (
         <div className="rounded-xl border border-zinc-200 bg-white px-4 py-10 text-center">
           <p className="text-sm font-medium text-zinc-900">Nenhuma tecnologia configurada.</p>

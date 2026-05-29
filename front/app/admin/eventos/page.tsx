@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import Select from '@/app/components/Select'
 import DatePicker from '@/app/components/DatePicker'
+import { LoadingState } from '@/app/components/LoadingScreen'
 import { supabase } from '@/app/lib/supabase'
 
 type Category = {
@@ -151,7 +152,7 @@ export default function AdminEventosPage() {
     setDeletingId(null)
   }
 
-  if (loading) return <p className="text-sm text-zinc-500">Carregando...</p>
+  if (loading) return <LoadingState message="Carregando eventos" />
 
   return (
     <div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/app/lib/supabase'
+import { LoadingState } from '@/app/components/LoadingScreen'
 
 type Role = {
   id: string
@@ -224,7 +225,7 @@ export default function PermissoesPage() {
   const totalPerms = ALL_PERMISSIONS.length
   const grantedCount = ALL_PERMISSIONS.filter(p => perms.has(p)).length
 
-  if (loading) return <p className="text-sm text-zinc-500">Carregando...</p>
+  if (loading) return <LoadingState message="Carregando permissões" />
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-6 lg:flex-row">

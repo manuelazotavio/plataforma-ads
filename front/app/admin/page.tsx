@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
+import { LoadingState } from '@/app/components/LoadingScreen'
 
 type Stats = {
   pendingProjects: number
@@ -46,7 +47,7 @@ export default function AdminDashboard() {
     { label: 'Total de usuários', value: stats.totalUsers, href: '/admin/usuarios', urgent: false },
   ]
 
-  if (loading) return <p className="text-sm text-zinc-500">Carregando...</p>
+  if (loading) return <LoadingState message="Carregando painel administrativo" />
 
   return (
     <div>

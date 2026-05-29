@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Select from '@/app/components/Select'
+import { LoadingState } from '@/app/components/LoadingScreen'
 import { supabase } from '@/app/lib/supabase'
 import {
   CALENDAR_COLOR_OPTIONS,
@@ -632,7 +633,7 @@ export default function AdminCalendarioPage() {
       )}
 
       {loading ? (
-        <p className="text-sm text-zinc-500">Carregando...</p>
+        <LoadingState message="Carregando calendário" />
       ) : (
         <div className="flex flex-col gap-8">
           {items.length === 0 ? (

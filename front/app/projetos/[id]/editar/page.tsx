@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import ProjectForm, { type ProjectFormData } from '@/app/components/ProjectForm'
+import { LoadingState } from '@/app/components/LoadingScreen'
 
 export default function EditarProjetoPage() {
   const router = useRouter()
@@ -103,7 +104,7 @@ export default function EditarProjetoPage() {
   if (!initial || !userId) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <p className="text-sm text-zinc-500">Carregando...</p>
+        <LoadingState message="Carregando projeto" />
       </div>
     )
   }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
+import { LoadingState } from '@/app/components/LoadingScreen'
 
 type Project = {
   id: string
@@ -119,7 +120,7 @@ export default function AdminProjetosPage() {
 
   const pendingCount = projects.filter((p) => projectStatus(p) === 'pendente').length
 
-  if (loading) return <p className="text-sm text-zinc-500">Carregando...</p>
+  if (loading) return <LoadingState message="Carregando projetos" />
 
   return (
     <div>

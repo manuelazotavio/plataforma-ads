@@ -300,7 +300,7 @@ function ProfessorDetailsModal({
         <div className="mt-5">
           <p className="text-xs font-semibold text-zinc-400">Disciplinas já ministradas</p>
           {disciplinesLoading ? (
-            <p className="mt-2 text-sm text-zinc-400">Carregando...</p>
+            <p className="mt-2 text-sm text-zinc-400">Buscando disciplinas...</p>
           ) : disciplines.length === 0 ? (
             <p className="mt-2 text-sm text-zinc-400">Nenhuma disciplina vinculada.</p>
           ) : (

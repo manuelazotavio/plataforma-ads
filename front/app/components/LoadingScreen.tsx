@@ -1,0 +1,28 @@
+type LoadingScreenProps = {
+  message?: string
+}
+
+export default function LoadingScreen({ message = 'Carregando o ADS Comunica' }: LoadingScreenProps) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-white px-6 dark:bg-zinc-950">
+      <LoadingState message={message} />
+    </div>
+  )
+}
+
+export function LoadingState({ message = 'Carregando' }: LoadingScreenProps) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-4 py-12 text-center">
+      <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-[#2F9E41]/10 text-[#2F9E41]">
+        <div className="absolute inset-0 rounded-2xl border border-[#2F9E41]/20 loading-ring" />
+        <span className="text-sm font-black">ADS</span>
+      </div>
+      <div>
+        <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{message}</p>
+        <div className="mx-auto mt-2 h-1 w-28 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+          <div className="h-full w-1/2 rounded-full bg-[#2F9E41] loading-progress" />
+        </div>
+      </div>
+    </div>
+  )
+}

@@ -7,6 +7,7 @@ import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import RichTextEditor from '@/app/components/RichTextEditor'
 import TechnologyTagPicker from '@/app/components/TechnologyTagPicker'
+import { LoadingState } from '@/app/components/LoadingScreen'
 
 function toSlug(text: string) {
   return text
@@ -136,7 +137,7 @@ export default function EditarArtigoPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <p className="text-sm text-zinc-500">Carregando...</p>
+        <LoadingState message="Carregando artigo" />
       </div>
     )
   }

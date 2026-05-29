@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/app/lib/supabase'
+import { LoadingState } from '@/app/components/LoadingScreen'
 
 type Message = {
   id: string
@@ -51,7 +52,7 @@ export default function MensagensPage() {
       </div>
 
       {loading ? (
-        <div className="text-sm text-zinc-400">Carregando…</div>
+        <LoadingState message="Carregando mensagens" />
       ) : messages.length === 0 ? (
         <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-12 text-center">
           <p className="text-sm text-zinc-400">Nenhuma mensagem recebida ainda.</p>

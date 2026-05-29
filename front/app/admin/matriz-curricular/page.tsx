@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Select from '@/app/components/Select'
 import RichTextEditor from '@/app/components/RichTextEditor'
+import { LoadingState } from '@/app/components/LoadingScreen'
 import { supabase } from '@/app/lib/supabase'
 import {
   CURRICULUM_SUBJECTS_TABLE,
@@ -853,7 +854,7 @@ export default function AdminMatrizCurricularPage() {
             </div>
             {planLoading ? (
               <div className="px-6 py-8">
-                <p className="text-sm text-zinc-400">Carregando...</p>
+                <LoadingState message="Carregando plano de ensino" />
               </div>
             ) : (
               <form onSubmit={savePlan} className="flex flex-col gap-6 px-6 py-5">
@@ -1159,7 +1160,7 @@ export default function AdminMatrizCurricularPage() {
       )}
 
       {loading ? (
-        <p className="text-sm text-zinc-500">Carregando...</p>
+        <LoadingState message="Carregando matriz curricular" />
       ) : compareMode ? (
         <div>
           <div className="mb-5 flex flex-wrap items-center gap-3 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
@@ -1176,7 +1177,7 @@ export default function AdminMatrizCurricularPage() {
                 placeholder="Selecionar versão..."
               />
             </div>
-            {compareEquivLoading && <span className="text-xs text-blue-500">Carregando...</span>}
+            {compareEquivLoading && <span className="text-xs text-blue-500">Comparando equivalências...</span>}
             {droppingGroup && <span className="text-xs text-blue-500">Salvando...</span>}
             {compareVersionId && !compareEquivLoading && (
               <span className="text-xs text-blue-500">

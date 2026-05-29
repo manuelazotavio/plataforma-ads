@@ -6,6 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
+import { LoadingState } from '@/app/components/LoadingScreen'
 
 type Project = {
   id: string
@@ -28,13 +29,12 @@ export default function MeusProjetosPage() {
   const router = useRouter()
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
-  const [userId, setUserId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [submittedNotice, setSubmittedNotice] = useState(false)
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('enviado') === '1') {
-      setSubmittedNotice(true)
+      queueMicrotask(() => setSubmittedNotice(true))
     }
   }, [])
 
@@ -42,7 +42,6 @@ export default function MeusProjetosPage() {
     async function load() {
       const user = await getAuthUser()
       if (!user) { router.push('/login'); return }
-      setUserId(user.id)
 
       const { data } = await supabase
         .from('projects')
@@ -71,7 +70,7 @@ export default function MeusProjetosPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <p className="text-sm text-zinc-500">Carregando...</p>
+        <LoadingState message="Carregando seus projetos" />
       </div>
     )
   }

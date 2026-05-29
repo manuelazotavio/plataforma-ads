@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
+import { LoadingState } from '@/app/components/LoadingScreen'
 
 type Article = {
   id: string
@@ -73,7 +74,7 @@ export default function AdminArtigosPage() {
 
   const pendingCount = articles.filter((a) => a.status === 'pendente').length
 
-  if (loading) return <p className="text-sm text-zinc-500">Carregando...</p>
+  if (loading) return <LoadingState message="Carregando artigos" />
 
   return (
     <div>

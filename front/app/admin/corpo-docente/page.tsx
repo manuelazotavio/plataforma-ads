@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import Select from '@/app/components/Select'
+import { LoadingState } from '@/app/components/LoadingScreen'
 
 type Professor = {
   id: string
@@ -339,7 +340,7 @@ export default function AdminCorpoDocentePage() {
   }
 
   if (loading) {
-    return <p className="text-sm text-zinc-500">Carregando...</p>
+    return <LoadingState message="Carregando corpo docente" />
   }
 
   return (

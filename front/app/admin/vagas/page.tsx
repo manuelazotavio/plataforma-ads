@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Select from '@/app/components/Select'
+import { LoadingState } from '@/app/components/LoadingScreen'
 import { supabase } from '@/app/lib/supabase'
 
 const CATEGORIES = [
@@ -223,7 +224,7 @@ export default function AdminVagasPage() {
     }
   }
 
-  if (loading) return <p className="text-sm text-zinc-500">Carregando...</p>
+  if (loading) return <LoadingState message="Carregando oportunidades" />
 
   return (
     <div>

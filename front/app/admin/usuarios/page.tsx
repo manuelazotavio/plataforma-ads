@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import Select from '@/app/components/Select'
+import { LoadingState } from '@/app/components/LoadingScreen'
 
 type User = {
   id: string
@@ -98,7 +99,7 @@ export default function AdminUsuariosPage() {
     setUpdatingId(null)
   }
 
-  if (loading) return <p className="text-sm text-zinc-500">Carregando...</p>
+  if (loading) return <LoadingState message="Carregando usuários" />
 
   const activeCount = users.filter((u) => !u.suspended).length
   const suspendedCount = users.filter((u) => u.suspended).length

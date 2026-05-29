@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
+import { LoadingState } from '@/app/components/LoadingScreen'
 
 type Egresso = {
   id: string
@@ -164,7 +165,7 @@ export default function AdminEgressosPage() {
     setDeletingId(null)
   }
 
-  if (loading) return <p className="text-sm text-zinc-500">Carregando...</p>
+  if (loading) return <LoadingState message="Carregando egressos" />
 
   return (
     <div>

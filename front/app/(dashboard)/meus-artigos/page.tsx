@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
+import { LoadingState } from '@/app/components/LoadingScreen'
 
 type Article = {
   id: string
@@ -28,7 +29,7 @@ export default function MeusArtigosPage() {
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('enviado') === '1') {
-      setSubmittedNotice(true)
+      queueMicrotask(() => setSubmittedNotice(true))
     }
   }, [])
 
@@ -60,7 +61,7 @@ export default function MeusArtigosPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <p className="text-sm text-zinc-500">Carregando...</p>
+        <LoadingState message="Carregando seus artigos" />
       </div>
     )
   }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/app/lib/supabase'
+import { LoadingState } from '@/app/components/LoadingScreen'
 
 type Level = { id: number; name: string; min_xp: number; description: string | null }
 
@@ -81,7 +82,7 @@ export default function NiveisPage() {
     setLevels((prev) => prev.filter((l) => l.id !== id))
   }
 
-  if (loading) return <p className="text-sm text-zinc-500">Carregando...</p>
+  if (loading) return <LoadingState message="Carregando níveis" />
 
   return (
     <div>

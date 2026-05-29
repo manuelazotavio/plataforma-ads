@@ -9,6 +9,7 @@ import ProfileActivityFeed, { type ProfileActivityItem } from '@/app/components/
 import ProfileEventReminders from '@/app/components/ProfileEventReminders'
 import UserAvatar from '@/app/components/UserAvatar'
 import { computeXp, countProfileLinks, hasNonEmpty } from '@/app/lib/xp'
+import { LoadingState } from '@/app/components/LoadingScreen'
 
 type Profile = {
   name: string
@@ -368,7 +369,7 @@ export default function PerfilPage() {
   }
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-white"><p className="text-sm text-zinc-500">Carregando...</p></div>
+    return <div className="min-h-screen flex items-center justify-center bg-white"><LoadingState message="Carregando seu perfil" /></div>
   }
 
   if (!editing) {
