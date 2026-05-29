@@ -24,6 +24,7 @@ const nav = [
   { href: '/admin/artigos', label: 'Artigos', icon: <IconBook /> },
   { href: '/admin/vagas', label: 'Oportunidades', icon: <IconBriefcase /> },
   { href: '/admin/eventos', label: 'Eventos', icon: <IconCalendar /> },
+  { href: '/admin/calendario', label: 'Calendário', icon: <IconCalendar /> },
   { href: '/admin/egressos', label: 'Egressos', icon: <IconGraduation /> },
   { href: '/admin/corpo-docente', label: 'Corpo Docente', icon: <IconPerson /> },
   { href: '/admin/forum', label: 'Fórum', icon: <IconChat /> },

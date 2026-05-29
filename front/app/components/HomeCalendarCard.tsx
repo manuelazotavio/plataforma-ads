@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { calendarItemDot } from '@/app/lib/calendarItems'
 
 export type HomeCalendarEvent = {
   id: string
@@ -9,6 +10,9 @@ export type HomeCalendarEvent = {
   category: string | null
   start_date: string | null
   end_date: string | null
+  kind?: 'event' | 'item'
+  color?: string | null
+  url?: string | null
 }
 
 const CATEGORY_COLOR: Record<string, string> = {
@@ -21,8 +25,14 @@ const CATEGORY_COLOR: Record<string, string> = {
 const MONTH_NAMES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
 const DAY_LABELS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
 
-function eventColor(category: string | null) {
-  return category ? (CATEGORY_COLOR[category] ?? 'bg-zinc-400') : 'bg-zinc-400'
+function eventColor(entry: HomeCalendarEvent) {
+  if (entry.kind === 'item') return calendarItemDot(entry.color ?? null)
+  return entry.category ? (CATEGORY_COLOR[entry.category] ?? 'bg-zinc-400') : 'bg-zinc-400'
+}
+
+function entryHref(entry: HomeCalendarEvent): string {
+  if (entry.kind === 'item') return entry.url ?? '/calendario'
+  return `/eventos/${entry.id}`
 }
 
 function parseLocalDate(str: string) {
@@ -118,7 +128,7 @@ export default function HomeCalendarCard({ events }: { events: HomeCalendarEvent
                       {day}
                     </button>
                     {dayEvents.length > 0 && (
-                      <span className={`h-1.5 w-1.5 rounded-full ${eventColor(dayEvents[0].category)}`} />
+                      <span className={`h-1.5 w-1.5 rounded-full ${eventColor(dayEvents[0])}`} />
                     )}
                   </>
                 )}
@@ -130,8 +140,8 @@ export default function HomeCalendarCard({ events }: { events: HomeCalendarEvent
         {nextEvents.length > 0 ? (
           <div className="mt-4 flex flex-col gap-2 border-t border-zinc-100 pt-3">
             {nextEvents.map((e) => (
-              <Link key={e.id} href="/eventos" className="flex items-start gap-2.5 rounded-lg px-1 py-1 hover:bg-zinc-50 transition group">
-                <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${eventColor(e.category)}`} />
+              <Link key={`${e.kind ?? 'event'}:${e.id}`} href={e.kind === 'item' ? '/calendario' : '/eventos'} className="flex items-start gap-2.5 rounded-lg px-1 py-1 hover:bg-zinc-50 transition group">
+                <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${eventColor(e)}`} />
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-zinc-800 truncate group-hover:text-zinc-900">{e.title}</p>
                   {e.start_date && (
@@ -180,12 +190,14 @@ export default function HomeCalendarCard({ events }: { events: HomeCalendarEvent
               <div className="flex max-h-[60vh] flex-col gap-2 overflow-y-auto">
                 {selectedEvents.map((event) => (
                   <Link
-                    key={event.id}
-                    href={`/eventos/${event.id}`}
+                    key={`${event.kind ?? 'event'}:${event.id}`}
+                    href={entryHref(event)}
+                    target={event.kind === 'item' && event.url ? '_blank' : undefined}
+                    rel={event.kind === 'item' && event.url ? 'noopener noreferrer' : undefined}
                     onClick={() => setSelectedDay(null)}
                     className="flex items-start gap-3 rounded-xl border border-zinc-100 px-3 py-3 transition hover:border-zinc-200 hover:bg-zinc-50"
                   >
-                    <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${eventColor(event.category)}`} />
+                    <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${eventColor(event)}`} />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold text-zinc-900">{event.title}</p>
                       {event.start_date && <p className="mt-1 text-xs text-zinc-400">{formatEventDate(event)}</p>}

@@ -11,6 +11,7 @@ export default function JobNotificationSubscribeButton() {
   const [subscribed, setSubscribed] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [loginPromptOpen, setLoginPromptOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -65,12 +66,18 @@ export default function JobNotificationSubscribeButton() {
 
   if (!userId) {
     return (
-      <Link
-        href="/login"
-        className="inline-flex items-center justify-center rounded-xl border border-zinc-200 px-4 py-2 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-50 hover:text-zinc-900"
-      >
-        Entrar para receber notificações
-      </Link>
+      <>
+        <button
+          type="button"
+          onClick={() => setLoginPromptOpen(true)}
+          className="inline-flex items-center justify-center rounded-xl border border-zinc-200 px-4 py-2 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-50 hover:text-zinc-900"
+        >
+          Entrar para receber notificações
+        </button>
+        {loginPromptOpen && (
+          <LoginPromptModal onClose={() => setLoginPromptOpen(false)} />
+        )}
+      </>
     )
   }
 
@@ -98,6 +105,64 @@ export default function JobNotificationSubscribeButton() {
       </button>
       {error && <p className="text-xs text-red-500">{error}</p>}
     </div>
+  )
+}
+
+function LoginPromptModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6"
+      role="dialog"
+      aria-modal="true"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="bg-green-50 px-6 py-6">
+          <LoginPromptIllustration />
+        </div>
+        <div className="px-6 py-5">
+          <h2 className="text-lg font-bold text-zinc-900">Entre para ativar os alertas</h2>
+          <p className="mt-2 text-sm leading-relaxed text-zinc-500">
+            Você precisa estar logado para receber por e-mail as novas oportunidades cadastradas.
+          </p>
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-50"
+            >
+              Agora não
+            </button>
+            <Link
+              href="/login"
+              className="inline-flex flex-1 items-center justify-center rounded-xl bg-[#2F9E41] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+            >
+              Ir para login
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function LoginPromptIllustration() {
+  return (
+    <svg viewBox="0 0 360 180" role="img" aria-label="Ilustração de notificação por e-mail" className="h-36 w-full">
+      <rect x="70" y="36" width="220" height="118" rx="24" fill="#ffffff" />
+      <path d="M94 64h172v72H94z" fill="#f0fdf4" />
+      <path d="m94 65 86 58 86-58" fill="none" stroke="#2F9E41" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M94 136 154 96M266 136l-60-40" fill="none" stroke="#86efac" strokeWidth="7" strokeLinecap="round" />
+      <circle cx="258" cy="46" r="22" fill="#2F9E41" />
+      <path d="M258 34v13l8 6" fill="none" stroke="#ffffff" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="118" y="20" width="88" height="20" rx="10" fill="#dcfce7" />
+      <rect x="132" y="144" width="96" height="14" rx="7" fill="#dcfce7" />
+      <circle cx="104" cy="42" r="8" fill="#bbf7d0" />
+      <circle cx="286" cy="126" r="10" fill="#bbf7d0" />
+    </svg>
   )
 }
 

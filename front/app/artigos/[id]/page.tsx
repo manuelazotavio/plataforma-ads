@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { supabase } from '@/app/lib/supabase'
 import LikeButton from '@/app/components/LikeButton'
+import ShareProjectButton from '@/app/components/ShareProjectButton'
 import UserAvatar from '@/app/components/UserAvatar'
 
 export const dynamic = 'force-dynamic'
@@ -73,7 +74,6 @@ export default async function ArtigoDetalhe({ params }: { params: Promise<{ id: 
                 </>
               )}
             </div>
-            <LikeButton type="article" targetId={article.id} initialCount={article.like_count} />
           </div>
         </div>
 
@@ -85,6 +85,24 @@ export default async function ArtigoDetalhe({ params }: { params: Promise<{ id: 
           className="prose prose-zinc prose-sm max-w-none"
           dangerouslySetInnerHTML={{ __html: article.content }}
         />
+
+        <div className="mb-6 mt-8 flex flex-col gap-3 border-t border-zinc-100 pt-8 sm:flex-row sm:flex-wrap sm:items-center sm:gap-8">
+          <div className="flex w-full sm:w-auto">
+            <LikeButton
+              type="article"
+              targetId={article.id}
+              initialCount={article.like_count}
+              label="Curtir artigo"
+              variant="action"
+              className="w-full justify-center sm:w-auto"
+            />
+          </div>
+          <ShareProjectButton
+            title={article.title}
+            label="Compartilhar artigo"
+            className="w-full justify-center sm:w-auto"
+          />
+        </div>
 
         <Comments type="article" targetId={article.id} />
 

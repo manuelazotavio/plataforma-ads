@@ -498,11 +498,12 @@ const inputClass = 'rounded-lg border border-zinc-300 px-3 py-2 text-xs text-zin
 
 const inputErrorClass = 'rounded-lg border border-red-400 bg-red-50/30 px-3 py-2 text-xs text-zinc-900 outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 transition w-full'
 
-function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+function Field({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
       <label className="text-xs font-medium text-zinc-600">
         {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+        {hint && <span className="ml-1 font-normal text-zinc-400">({hint})</span>}
       </label>
       {children}
     </div>

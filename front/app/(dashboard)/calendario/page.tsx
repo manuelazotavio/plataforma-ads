@@ -1,8 +1,21 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
+import { calendarItemChip, type CalendarItem } from '@/app/lib/calendarItems'
+
+type CalendarEntry = {
+  id: string
+  title: string
+  start_date: string
+  end_date: string | null
+  kind: 'event' | 'item'
+  category?: string | null
+  color?: string | null
+  url?: string | null
+  description?: string | null
+}
 
 type Evento = {
   id: string
@@ -27,24 +40,73 @@ function categoryColor(cat: string | null) {
   return cat && CATEGORY_COLORS[cat] ? CATEGORY_COLORS[cat] : 'bg-[#2F9E41]/10 text-[#2F9E41]'
 }
 
+function parseLocal(s: string) {
+  const [y, m, d] = s.split('-').map(Number)
+  return new Date(y, m - 1, d)
+}
+
+function formatRange(start: string, end: string | null) {
+  const fmt = (s: string) =>
+    parseLocal(s).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
+  if (!end || end === start) return fmt(start)
+  return `${fmt(start)} — ${fmt(end)}`
+}
+
 export default function CalendarioPage() {
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth())
-  const [eventos, setEventos] = useState<Evento[]>([])
+  const [entries, setEntries] = useState<CalendarEntry[]>([])
+  const [selectedItem, setSelectedItem] = useState<CalendarEntry | null>(null)
+  const modalRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const start = new Date(year, month, 1).toISOString().split('T')[0]
     const end = new Date(year, month + 1, 0).toISOString().split('T')[0]
 
-    supabase
-      .from('events')
-      .select('id, title, start_date, end_date, category')
-      .lte('start_date', end)
-      .or(`start_date.gte.${start},end_date.gte.${start}`)
-      .eq('is_active', true)
-      .then(({ data }) => setEventos(data ?? []))
+    void Promise.all([
+      supabase
+        .from('events')
+        .select('id, title, start_date, end_date, category')
+        .lte('start_date', end)
+        .or(`start_date.gte.${start},end_date.gte.${start}`)
+        .eq('is_active', true),
+      supabase
+        .from('calendar_items')
+        .select('id, title, description, start_date, end_date, color, url')
+        .lte('start_date', end)
+        .or(`start_date.gte.${start},end_date.gte.${start}`)
+        .eq('is_active', true),
+    ]).then(([{ data: events }, { data: items }]) => {
+      const eventEntries: CalendarEntry[] = ((events ?? []) as Evento[]).map((ev) => ({
+        id: `event:${ev.id}`,
+        title: ev.title,
+        start_date: ev.start_date,
+        end_date: ev.end_date,
+        kind: 'event',
+        category: ev.category,
+      }))
+      const itemEntries: CalendarEntry[] = ((items ?? []) as Pick<CalendarItem, 'id' | 'title' | 'description' | 'start_date' | 'end_date' | 'color' | 'url'>[]).map((it) => ({
+        id: `item:${it.id}`,
+        title: it.title,
+        description: it.description,
+        start_date: it.start_date,
+        end_date: it.end_date,
+        kind: 'item',
+        color: it.color,
+        url: it.url,
+      }))
+      setEntries([...eventEntries, ...itemEntries])
+    })
   }, [year, month])
+
+  // Fecha modal com Escape
+  useEffect(() => {
+    if (!selectedItem) return
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setSelectedItem(null) }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [selectedItem])
 
   function prevMonth() {
     if (month === 0) { setMonth(11); setYear(y => y - 1) }
@@ -74,14 +136,9 @@ export default function CalendarioPage() {
   for (let i = 1; i <= remaining; i++)
     cells.push({ date: new Date(year, month + 1, i), current: false })
 
-  function parseLocal(s: string) {
-    const [y, m, d] = s.split('-').map(Number)
-    return new Date(y, m - 1, d)
-  }
-
   function eventsForDay(date: Date) {
     const day = date.getTime()
-    return eventos
+    return entries
       .map(e => {
         const start = parseLocal(e.start_date)
         const end = e.end_date ? parseLocal(e.end_date) : start
@@ -92,7 +149,7 @@ export default function CalendarioPage() {
           isEnd:   day === end.getTime(),
         }
       })
-      .filter(Boolean) as (Evento & { isStart: boolean; isEnd: boolean })[]
+      .filter(Boolean) as (CalendarEntry & { isStart: boolean; isEnd: boolean })[]
   }
 
   function isToday(date: Date) {
@@ -103,8 +160,6 @@ export default function CalendarioPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
-
-      
       <div className="flex items-center gap-3 px-4 md:px-8 py-4 border-b border-zinc-100 shrink-0">
         <h1 className="text-xl font-bold text-zinc-900 capitalize">
           {MONTHS[month]} de {year}
@@ -129,7 +184,6 @@ export default function CalendarioPage() {
         </div>
       </div>
 
-      
       <div className="grid grid-cols-7 border-b border-zinc-100 shrink-0">
         {DAYS.map(d => (
           <div key={d} className="py-2 text-center text-xs font-semibold text-zinc-400">
@@ -138,7 +192,6 @@ export default function CalendarioPage() {
         ))}
       </div>
 
-     
       <div className="flex-1 grid grid-cols-7 grid-rows-6 border-l border-zinc-100 overflow-hidden">
         {cells.map((cell, i) => {
           const dayEvents = eventsForDay(cell.date)
@@ -163,20 +216,34 @@ export default function CalendarioPage() {
                 {cell.date.getDate()}
               </span>
 
-              {shown.map(ev => (
-                <Link
-                  key={ev.id}
-                  href={`/eventos/${ev.id}`}
-                  title={ev.title}
-                  className={`text-xs font-medium px-1.5 py-0.5 truncate transition hover:opacity-80 ${categoryColor(ev.category)} ${
-                    ev.isStart && ev.isEnd ? 'rounded' :
-                    ev.isStart             ? 'rounded-l' :
-                    ev.isEnd               ? 'rounded-r' : ''
-                  }`}
-                >
-                  {ev.isStart ? ev.title : ' '}
-                </Link>
-              ))}
+              {shown.map(ev => {
+                const rawId = ev.id.split(':')[1]
+                const colorClass = ev.kind === 'event'
+                  ? categoryColor(ev.category ?? null)
+                  : calendarItemChip(ev.color ?? null)
+                const shape = ev.isStart && ev.isEnd ? 'rounded' : ev.isStart ? 'rounded-l' : ev.isEnd ? 'rounded-r' : ''
+                const cls = `text-xs font-medium px-1.5 py-0.5 truncate transition hover:opacity-80 ${colorClass} ${shape}`
+                const label = ev.isStart ? ev.title : ' '
+
+                if (ev.kind === 'event') {
+                  return (
+                    <Link key={ev.id} href={`/eventos/${rawId}`} title={ev.title} className={cls}>
+                      {label}
+                    </Link>
+                  )
+                }
+                return (
+                  <button
+                    key={ev.id}
+                    type="button"
+                    title={ev.title}
+                    className={`${cls} text-left w-full`}
+                    onClick={() => setSelectedItem(ev)}
+                  >
+                    {label}
+                  </button>
+                )
+              })}
 
               {overflow > 0 && (
                 <span className="text-xs text-zinc-400 px-1.5">+ {overflow} mais</span>
@@ -185,6 +252,65 @@ export default function CalendarioPage() {
           )
         })}
       </div>
+
+      {/* Modal de detalhe para calendar items */}
+      {selectedItem && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="item-modal-title"
+          onClick={() => setSelectedItem(null)}
+        >
+          <div
+            ref={modalRef}
+            className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="mb-1 flex items-start justify-between gap-4">
+              <h2 id="item-modal-title" className="text-lg font-semibold text-zinc-900">
+                {selectedItem.title}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setSelectedItem(null)}
+                className="shrink-0 flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition"
+                aria-label="Fechar"
+              >
+                <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <p className="text-sm text-zinc-500 mb-4">
+              {formatRange(selectedItem.start_date, selectedItem.end_date)}
+            </p>
+
+            {selectedItem.description && (
+              <p className="text-sm text-zinc-700 whitespace-pre-line mb-4">
+                {selectedItem.description}
+              </p>
+            )}
+
+            {selectedItem.url && (
+              <a
+                href={selectedItem.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-lg bg-[#2F9E41] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+              >
+                <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                  <polyline points="15 3 21 3 21 9" />
+                  <line x1={10} y1={14} x2={21} y2={3} />
+                </svg>
+                Abrir link
+              </a>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

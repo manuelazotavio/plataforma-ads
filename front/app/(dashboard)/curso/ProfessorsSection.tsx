@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { supabase } from '@/app/lib/supabase'
 
 type Professor = {
   id: string
@@ -18,20 +19,23 @@ type Professor = {
   cnpq: string | null
 }
 
-type SocialLink = {
-  href: string
-  label: string
+type Discipline = {
+  subject_name: string
+  subject_semester: number | null
+  subject_abbreviation: string | null
+  period: string | null
+  version_year: number | null
 }
+
+type SocialLink = { href: string; label: string }
 
 function socialLinks(prof: Professor): SocialLink[] {
   const links: SocialLink[] = []
   const whatsappNumber = prof.whatsapp?.replace(/\D/g, '')
-
   if (prof.email) links.push({ href: `mailto:${prof.email}`, label: 'Email' })
   if (whatsappNumber) links.push({ href: `https://wa.me/${whatsappNumber}`, label: 'WhatsApp' })
   if (prof.linkedin) links.push({ href: prof.linkedin, label: 'LinkedIn' })
   if (prof.cnpq) links.push({ href: prof.cnpq, label: 'Lattes' })
-
   return links
 }
 
@@ -119,6 +123,62 @@ function ProfessorDetailsModal({
   const router = useRouter()
   const links = socialLinks(professor)
   const profileHref = professor.user_id ? `/usuarios/${professor.user_id}` : null
+  const [disciplines, setDisciplines] = useState<Discipline[]>([])
+  const [disciplinesLoading, setDisciplinesLoading] = useState(true)
+  const [areas, setAreas] = useState<string[]>([])
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  useEffect(() => {
+    setDisciplinesLoading(true)
+    setAreas([])
+
+    const fetchDisciplines = supabase
+      .from('curriculum_subject_professors')
+      .select('period, curriculum_subjects(name, semester, abbreviation, curriculum_versions(year))')
+      .eq('professor_id', professor.id)
+      .then(({ data }) => {
+        if (!data) return
+        const rows: Discipline[] = (data as unknown as {
+          period: string | null
+          curriculum_subjects: {
+            name: string
+            semester: number | null
+            abbreviation: string | null
+            curriculum_versions: { year: number }[] | null
+          } | null
+        }[]).flatMap((row) => {
+          if (!row.curriculum_subjects) return []
+          return [{
+            subject_name: row.curriculum_subjects.name,
+            subject_semester: row.curriculum_subjects.semester,
+            subject_abbreviation: row.curriculum_subjects.abbreviation,
+            period: row.period,
+            version_year: row.curriculum_subjects.curriculum_versions?.[0]?.year ?? null,
+          }]
+        })
+        rows.sort((a, b) => (b.version_year ?? 0) - (a.version_year ?? 0) || (a.subject_semester ?? 0) - (b.subject_semester ?? 0))
+        setDisciplines(rows)
+      })
+
+    const fetchAreas = professor.user_id
+      ? supabase
+          .from('users')
+          .select('preferred_area')
+          .eq('id', professor.user_id)
+          .maybeSingle()
+          .then(({ data }) => {
+            const raw = (data as { preferred_area: string | null } | null)?.preferred_area
+            setAreas(raw?.split(',').map((s) => s.trim()).filter(Boolean) ?? [])
+          })
+      : Promise.resolve()
+
+    void Promise.all([fetchDisciplines, fetchAreas]).then(() => setDisciplinesLoading(false))
+  }, [professor.id, professor.user_id])
 
   return (
     <div
@@ -132,8 +192,9 @@ function ProfessorDetailsModal({
         className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl"
         onClick={(event) => event.stopPropagation()}
       >
+        {/* Cabeçalho */}
         <div className="flex items-start gap-4">
-          <div className="relative h-36 w-[104px] shrink-0 overflow-hidden rounded-2xl bg-zinc-100">
+          <div className="relative h-36 w-26 shrink-0 overflow-hidden rounded-2xl bg-zinc-100">
             {professor.avatar_url ? (
               <Image src={professor.avatar_url} alt={professor.name} fill className="object-cover" />
             ) : (
@@ -159,24 +220,78 @@ function ProfessorDetailsModal({
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-200 text-sm font-bold text-zinc-500 transition hover:border-zinc-300 hover:bg-zinc-100 hover:text-zinc-800"
             aria-label="Fechar detalhes"
           >
-            <span aria-hidden="true">X</span>
+            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+            </svg>
           </button>
         </div>
 
-        <div className="mt-6">
-          <p className="text-xs font-semibold text-zinc-400">Descri&ccedil;&atilde;o</p>
+        {/* Bio */}
+        <div className="mt-5">
+          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Descrição</p>
           {professor.bio ? (
             <p className="mt-2 text-sm leading-relaxed text-zinc-700">{professor.bio}</p>
           ) : (
-            <p className="mt-2 text-sm leading-relaxed text-zinc-400">
-              Descri&ccedil;&atilde;o do professor ainda n&atilde;o cadastrada.
-            </p>
+            <p className="mt-2 text-sm text-zinc-400">Descrição ainda não cadastrada.</p>
           )}
         </div>
 
-        <div className="mt-6">
-          <p className="text-xs font-semibold text-zinc-400">Redes sociais</p>
-          <div className="mt-3 flex flex-wrap gap-2">
+        {/* Áreas de interesse */}
+        <div className="mt-5">
+          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Áreas de interesse</p>
+          {areas.length > 0 ? (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {areas.map((area) => (
+                <span
+                  key={area}
+                  className="rounded-full bg-[#2F9E41]/10 px-3 py-1 text-xs font-medium text-[#2F9E41]"
+                >
+                  {area}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-2 text-sm text-zinc-400">Áreas de interesse ainda não cadastradas.</p>
+          )}
+        </div>
+
+        {/* Histórico de disciplinas */}
+        <div className="mt-5">
+          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Disciplinas ministradas</p>
+          {disciplinesLoading ? (
+            <p className="mt-2 text-sm text-zinc-400">Carregando...</p>
+          ) : disciplines.length === 0 ? (
+            <p className="mt-2 text-sm text-zinc-400">Nenhuma disciplina vinculada.</p>
+          ) : (
+            <div className="mt-2 flex flex-col divide-y divide-zinc-100 rounded-xl border border-zinc-100">
+              {disciplines.map((d, i) => (
+                <div key={i} className="flex items-center justify-between gap-3 px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-zinc-800">{d.subject_name}</p>
+                    {d.subject_semester != null && (
+                      <p className="text-xs text-zinc-400">{d.subject_semester}º semestre</p>
+                    )}
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-0.5">
+                    {d.version_year && (
+                      <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-semibold text-zinc-500">
+                        {d.version_year}
+                      </span>
+                    )}
+                    {d.period && (
+                      <span className="text-[11px] text-zinc-400">{d.period}</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Redes sociais */}
+        <div className="mt-5">
+          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Redes sociais</p>
+          <div className="mt-2 flex flex-wrap gap-2">
             {links.length > 0 ? (
               links.map((link) => (
                 <a
@@ -190,7 +305,7 @@ function ProfessorDetailsModal({
                 </a>
               ))
             ) : (
-              <span className="text-sm text-zinc-400">Redes sociais ainda n&atilde;o cadastradas.</span>
+              <span className="text-sm text-zinc-400">Redes sociais ainda não cadastradas.</span>
             )}
           </div>
         </div>

@@ -66,6 +66,7 @@ export default async function HomePage() {
     { data: contributorProjectComments },
     { data: contributorArticleComments },
     { data: events },
+    { data: calendarItems },
   ] = await Promise.all([
     supabase
       .from('projects')
@@ -91,6 +92,11 @@ export default async function HomePage() {
       .select('id, title, category, start_date, end_date')
       .eq('is_active', true)
       .order('start_date', { ascending: true }),
+    supabase
+      .from('calendar_items')
+      .select('id, title, start_date, end_date, color, url')
+      .eq('is_active', true)
+      .order('start_date', { ascending: true }),
   ])
 
   const featuredProjects = (projects ?? []) as unknown as Project[]
@@ -104,7 +110,11 @@ export default async function HomePage() {
     projectComments: (contributorProjectComments ?? []) as XpContent[],
     articleComments: (contributorArticleComments ?? []) as XpContent[],
   })
-  const allEvents = (events ?? []) as { id: string; title: string; category: string | null; start_date: string | null; end_date: string | null }[]
+  const eventEntries = ((events ?? []) as { id: string; title: string; category: string | null; start_date: string | null; end_date: string | null }[])
+    .map((e) => ({ ...e, kind: 'event' as const, color: null, url: null }))
+  const itemEntries = ((calendarItems ?? []) as { id: string; title: string; start_date: string | null; end_date: string | null; color: string | null; url: string | null }[])
+    .map((it) => ({ id: it.id, title: it.title, category: null, start_date: it.start_date, end_date: it.end_date, kind: 'item' as const, color: it.color, url: it.url }))
+  const allEvents = [...eventEntries, ...itemEntries]
 
   return (
     <HomeShell>
