@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
+import ForumCategorySelect from './ForumCategorySelect'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,25 +45,7 @@ export default async function ForumPage({
 
       
       {(categories?.length ?? 0) > 0 && (
-        <div className="flex gap-2 mb-8 flex-wrap">
-          <Link
-            href="/forum"
-            className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${!category ? 'text-white' : 'text-zinc-400 hover:text-zinc-700'}`}
-            style={!category ? { backgroundColor: '#2F9E41' } : undefined}
-          >
-            Todos
-          </Link>
-          {categories!.map((cat) => (
-            <Link
-              key={cat.id}
-              href={`/forum?category=${cat.id}`}
-              className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${category === cat.id ? 'text-white' : 'text-zinc-400 hover:text-zinc-700'}`}
-              style={category === cat.id ? { backgroundColor: '#2F9E41' } : undefined}
-            >
-              {cat.name}
-            </Link>
-          ))}
-        </div>
+        <ForumCategorySelect value={category} categories={categories!} />
       )}
 
       {filtered.length === 0 ? (

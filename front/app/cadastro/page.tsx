@@ -29,6 +29,7 @@ export default function CadastroPage() {
     setError(null)
 
     if (!name || !email || !password || !confirmPassword) return
+    if (isEgresso && !graduationYear) return
 
     if (password !== confirmPassword) {
       setError('As senhas não coincidem.')
@@ -208,7 +209,7 @@ export default function CadastroPage() {
             )}
           </div>
 
-          <div className="flex rounded-lg border border-zinc-200 overflow-hidden text-sm font-medium">
+          <div className="flex rounded-lg border border-zinc-200 text-sm font-medium">
             <button
               type="button"
               onClick={() => setIsEgresso(false)}
@@ -219,9 +220,15 @@ export default function CadastroPage() {
             <button
               type="button"
               onClick={() => setIsEgresso(true)}
-              className={`flex-1 py-2 transition-colors ${isEgresso ? 'bg-[#2F9E41] text-white' : 'text-zinc-500 hover:text-zinc-900'}`}
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-r-lg py-2 transition-colors ${isEgresso ? 'bg-[#2F9E41] text-white' : 'text-zinc-500 hover:text-zinc-900'}`}
             >
               Sou egresso
+              <span className="group/help relative inline-flex h-4 w-4 items-center justify-center rounded-full border border-current text-[10px] font-bold leading-none opacity-80">
+                ?
+                <span className="pointer-events-none absolute bottom-full right-0 z-20 mb-2 hidden w-64 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-left text-xs font-normal leading-5 text-zinc-600 shadow-lg group-hover/help:block group-focus-visible/help:block">
+                  Egresso é quem já concluiu o curso e quer aparecer na página de egressos.
+                </span>
+              </span>
             </button>
           </div>
 
@@ -244,13 +251,16 @@ export default function CadastroPage() {
           ) : (
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-zinc-700">Ano de formatura</label>
+                <label className="text-sm font-medium text-zinc-700">
+                  Ano de formatura <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="number"
+                  required={isEgresso}
                   min={0}
                   value={graduationYear}
                   onChange={(e) => setGraduationYear(e.target.value)}
-                  className={normalInputClass}
+                  className={ic(submitted && isEgresso && !graduationYear)}
                   placeholder="Ex: 2023"
                 />
               </div>

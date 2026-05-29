@@ -81,10 +81,10 @@ export function PublicHeaderAuth() {
   if (!data) {
     return (
       <>
-        <Link href="/login" className="rounded-lg px-3 py-2 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900">
+        <Link href="/login" className="shrink-0 whitespace-nowrap rounded-lg px-2.5 py-2 text-xs font-semibold text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 sm:px-3 sm:text-sm">
           Entrar
         </Link>
-        <Link href="/cadastro" className="rounded-lg px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90" style={{ backgroundColor: '#2F9E41' }}>
+        <Link href="/cadastro" className="shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-xs font-semibold text-white transition hover:opacity-90 sm:px-4 sm:text-sm" style={{ backgroundColor: '#2F9E41' }}>
           Criar conta
         </Link>
       </>

@@ -222,11 +222,22 @@ function ProfessorDetailsModal({
       onClick={onClose}
     >
       <div
-        className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl"
+        className="relative max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl"
         onClick={(event) => event.stopPropagation()}
       >
         {/* Cabeçalho */}
-        <div className="flex items-start gap-4">
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700"
+          aria-label="Fechar detalhes"
+        >
+          <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+          </svg>
+        </button>
+
+        <div className="flex items-start gap-4 pr-8">
           <div className="relative h-36 w-26 shrink-0 overflow-hidden rounded-2xl bg-zinc-100">
             {professor.avatar_url ? (
               <Image src={professor.avatar_url} alt={professor.name} fill className="object-cover" />
@@ -239,24 +250,40 @@ function ProfessorDetailsModal({
 
           <div className="min-w-0 flex-1">
             <h3 className="text-xl font-bold leading-tight text-zinc-900">{professor.name}</h3>
-            {professor.cargo && <p className="mt-1 text-sm text-zinc-500">{professor.cargo}</p>}
-            {professor.years_at_if != null && professor.years_at_if > 0 && (
-              <p className="mt-2 text-xs font-medium text-zinc-400">
-                {professor.years_at_if} {professor.years_at_if === 1 ? 'ano' : 'anos'} no IF
-              </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              {professor.cargo && (
+                <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-600">
+                  {professor.cargo}
+                </span>
+              )}
+              {professor.years_at_if != null && professor.years_at_if > 0 && (
+                <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-500">
+                  {professor.years_at_if} {professor.years_at_if === 1 ? 'ano' : 'anos'} no IF
+                </span>
+              )}
+            </div>
+
+            {areas.length > 0 && (
+              <div className="mt-4">
+                <p className="text-xs font-semibold text-zinc-400">Áreas de interesse</p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {areas.map((area) => (
+                    <span
+                      key={area}
+                      className="rounded-full bg-[#2F9E41]/10 px-2.5 py-1 text-xs font-medium text-[#2F9E41]"
+                    >
+                      {formatInterestArea(area)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {professor.email && (
+              <p className="mt-3 break-all text-sm font-medium text-zinc-700">{professor.email}</p>
             )}
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-zinc-200 text-sm font-bold text-zinc-500 transition hover:border-zinc-300 hover:bg-zinc-100 hover:text-zinc-800"
-            aria-label="Fechar detalhes"
-          >
-            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 6 6 18" /><path d="m6 6 12 12" />
-            </svg>
-          </button>
         </div>
 
         {/* Bio */}
@@ -266,25 +293,6 @@ function ProfessorDetailsModal({
             <p className="mt-2 text-sm leading-relaxed text-zinc-700">{professor.bio}</p>
           ) : (
             <p className="mt-2 text-sm text-zinc-400">Descrição ainda não cadastrada.</p>
-          )}
-        </div>
-
-        {/* Áreas de interesse */}
-        <div className="mt-5">
-          <p className="text-xs font-semibold text-zinc-400">Áreas de interesse</p>
-          {areas.length > 0 ? (
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {areas.map((area) => (
-                <span
-                  key={area}
-                  className="rounded-full bg-[#2F9E41]/10 px-3 py-1 text-xs font-medium text-[#2F9E41]"
-                >
-                  {formatInterestArea(area)}
-                </span>
-              ))}
-            </div>
-          ) : (
-            <p className="mt-2 text-sm text-zinc-400">Áreas de interesse ainda não cadastradas.</p>
           )}
         </div>
 
@@ -322,14 +330,11 @@ function ProfessorDetailsModal({
         </div>
 
         {/* Redes sociais */}
+        {links.length > 0 && (
         <div className="mt-5">
           <p className="text-xs font-semibold text-zinc-400">Redes sociais</p>
-          {professor.email && (
-            <p className="mt-2 text-sm font-medium text-zinc-700">{professor.email}</p>
-          )}
-          <div className={`${professor.email ? 'mt-3' : 'mt-2'} flex flex-wrap gap-2`}>
-            {links.length > 0 ? (
-              links.map((link) => (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {links.map((link) => (
                 <a
                   key={`modal-${professor.id}-${link.label}`}
                   href={link.href}
@@ -339,12 +344,10 @@ function ProfessorDetailsModal({
                 >
                   {link.label}
                 </a>
-              ))
-            ) : !professor.email ? (
-              <span className="text-sm text-zinc-400">Redes sociais ainda não cadastradas.</span>
-            ) : null}
+            ))}
           </div>
         </div>
+        )}
 
         {profileHref && (
           <button

@@ -32,7 +32,7 @@ export default function HomeShell({ children }: { children: React.ReactNode }) {
       <AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="flex min-w-0 flex-1 flex-col ml-0 md:ml-56">
-        <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-end gap-4 border-b border-zinc-100 bg-white px-4 md:px-6">
+        <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-end gap-2 border-b border-zinc-100 bg-white px-3 sm:gap-4 sm:px-4 md:px-6">
           <button
             type="button"
             aria-label="Abrir menu"
@@ -46,7 +46,7 @@ export default function HomeShell({ children }: { children: React.ReactNode }) {
             </svg>
           </button>
 
-          <div className="flex min-w-0 flex-1 items-center justify-end gap-3 md:gap-4">
+          <div className="flex min-w-0 flex-1 items-center justify-end gap-2 md:gap-4">
             <SearchBar />
             <ThemeToggle />
             <NotificationBellWrapper />

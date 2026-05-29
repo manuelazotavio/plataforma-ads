@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
+import Select from '@/app/components/Select'
 
 type Professor = {
   id: string
@@ -20,6 +21,13 @@ type Professor = {
   is_active: boolean
   display_order: number
   user_id: string | null
+}
+
+type UserOption = {
+  id: string
+  name: string
+  email: string
+  role: string | null
 }
 
 const EMPTY_FORM = {
@@ -38,6 +46,7 @@ const EMPTY_FORM = {
 export default function AdminCorpoDocentePage() {
   const router = useRouter()
   const [professors, setProfessors] = useState<Professor[]>([])
+  const [userOptions, setUserOptions] = useState<UserOption[]>([])
   const [loading, setLoading] = useState(true)
 
   
@@ -62,6 +71,10 @@ export default function AdminCorpoDocentePage() {
   const [accessForm, setAccessForm] = useState({ email: '', password: '' })
   const [accessSaving, setAccessSaving] = useState(false)
   const [accessError, setAccessError] = useState<string | null>(null)
+  const [linkFormId, setLinkFormId] = useState<string | null>(null)
+  const [selectedUserId, setSelectedUserId] = useState('')
+  const [linkSaving, setLinkSaving] = useState(false)
+  const [linkError, setLinkError] = useState<string | null>(null)
 
   async function loadProfessors() {
     const { data } = await supabase
@@ -69,6 +82,14 @@ export default function AdminCorpoDocentePage() {
       .select('*')
       .order('display_order', { ascending: true })
     setProfessors(data ?? [])
+  }
+
+  async function loadUsers() {
+    const { data } = await supabase
+      .from('users')
+      .select('id, name, email, role')
+      .order('name', { ascending: true })
+    setUserOptions((data as UserOption[]) ?? [])
   }
 
   useEffect(() => {
@@ -94,7 +115,7 @@ export default function AdminCorpoDocentePage() {
         return
       }
 
-      await loadProfessors()
+      await Promise.all([loadProfessors(), loadUsers()])
       setLoading(false)
     }
     load()
@@ -207,8 +228,16 @@ export default function AdminCorpoDocentePage() {
 
   function openAccessForm(profId: string) {
     setAccessFormId(profId)
+    setLinkFormId(null)
     setAccessForm({ email: '', password: '' })
     setAccessError(null)
+  }
+
+  function openLinkForm(prof: Professor) {
+    setLinkFormId(prof.id)
+    setAccessFormId(null)
+    setSelectedUserId(prof.user_id ?? '')
+    setLinkError(null)
   }
 
   async function createAccess(profId: string) {
@@ -229,6 +258,84 @@ export default function AdminCorpoDocentePage() {
     setProfessors((prev) => prev.map((p) => p.id === profId ? { ...p, user_id: data.user_id } : p))
     setAccessFormId(null)
     setAccessSaving(false)
+  }
+
+  async function linkExistingUser(profId: string) {
+    if (!selectedUserId) {
+      setLinkError('Selecione um usuário.')
+      return
+    }
+
+    setLinkSaving(true)
+    setLinkError(null)
+
+    const { error: roleError } = await supabase
+      .from('users')
+      .update({ role: 'professor' })
+      .eq('id', selectedUserId)
+
+    if (roleError) {
+      setLinkError('Erro ao atualizar usuário para professor: ' + roleError.message)
+      setLinkSaving(false)
+      return
+    }
+
+    const { error } = await supabase
+      .from('professors')
+      .update({ user_id: selectedUserId, updated_at: new Date().toISOString() })
+      .eq('id', profId)
+
+    if (error) {
+      setLinkError('Erro ao vincular usuário: ' + error.message)
+      setLinkSaving(false)
+      return
+    }
+
+    setProfessors((prev) => prev.map((p) => p.id === profId ? { ...p, user_id: selectedUserId } : p))
+    setUserOptions((prev) => prev.map((u) => u.id === selectedUserId ? { ...u, role: 'professor' } : u))
+    setLinkFormId(null)
+    setSelectedUserId('')
+    setLinkSaving(false)
+  }
+
+  async function unlinkUser(profId: string) {
+    if (!confirm('Remover o vínculo deste professor com o usuário?')) return
+    setLinkSaving(true)
+    setLinkError(null)
+
+    const { error } = await supabase
+      .from('professors')
+      .update({ user_id: null, updated_at: new Date().toISOString() })
+      .eq('id', profId)
+
+    if (error) {
+      setLinkError('Erro ao remover vínculo: ' + error.message)
+      setLinkSaving(false)
+      return
+    }
+
+    setProfessors((prev) => prev.map((p) => p.id === profId ? { ...p, user_id: null } : p))
+    setLinkSaving(false)
+  }
+
+  function getLinkedUser(userId: string | null) {
+    if (!userId) return null
+    return userOptions.find((user) => user.id === userId) ?? null
+  }
+
+  function getAvailableUserOptions(prof: Professor) {
+    const linkedToOtherProfessor = new Set(
+      professors
+        .filter((item) => item.id !== prof.id && item.user_id)
+        .map((item) => item.user_id)
+    )
+
+    return userOptions
+      .filter((user) => !linkedToOtherProfessor.has(user.id))
+      .map((user) => ({
+        value: user.id,
+        label: `${user.name || user.email} (${user.email})${user.role === 'professor' ? ' - Professor' : ''}`,
+      }))
   }
 
   if (loading) {
@@ -422,12 +529,40 @@ export default function AdminCorpoDocentePage() {
                   </div>
                 ) : (
                   <div className="mt-3 border-t border-zinc-100 pt-3 flex flex-col gap-3">
-                    {prof.user_id ? (
+                    {linkFormId === prof.id ? (
+                      <div className="flex flex-col gap-2">
+                        <p className="text-xs font-medium text-zinc-700">Vincular este professor a um usuário existente</p>
+                        <Select
+                          value={selectedUserId}
+                          onChange={setSelectedUserId}
+                          options={getAvailableUserOptions(prof)}
+                          placeholder="Selecione um usuário"
+                        />
+                        {linkError && <p className="text-xs text-red-600">{linkError}</p>}
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                          <button
+                            onClick={() => linkExistingUser(prof.id)}
+                            disabled={linkSaving}
+                            className="rounded-lg bg-[#2F9E41] px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50 transition"
+                          >
+                            {linkSaving ? 'Vinculando...' : 'Vincular usuário'}
+                          </button>
+                          <button
+                            onClick={() => { setLinkFormId(null); setSelectedUserId(''); setLinkError(null) }}
+                            className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    ) : prof.user_id ? (
                       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
                         <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
                           Acesso vinculado
                         </span>
-                        <span className="text-xs text-zinc-400">O professor pode fazer login e editar o próprio perfil.</span>
+                        <span className="text-xs text-zinc-400">
+                          {getLinkedUser(prof.user_id)?.email ?? 'O professor pode fazer login e editar o próprio perfil.'}
+                        </span>
                       </div>
                     ) : accessFormId === prof.id ? (
                       <div className="flex flex-col gap-2">
@@ -466,15 +601,33 @@ export default function AdminCorpoDocentePage() {
                         </div>
                       </div>
                     ) : (
-                      <button
-                        onClick={() => openAccessForm(prof.id)}
-                        className="self-start rounded-lg border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-500 hover:bg-zinc-50 transition"
-                      >
-                        Criar acesso de login
-                      </button>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => openAccessForm(prof.id)}
+                          className="self-start rounded-lg border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-500 hover:bg-zinc-50 transition"
+                        >
+                          Criar acesso de login
+                        </button>
+                        <button
+                          onClick={() => openLinkForm(prof)}
+                          className="self-start rounded-lg border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-500 hover:bg-zinc-50 transition"
+                        >
+                          Vincular usuário existente
+                        </button>
+                      </div>
                     )}
 
                     <div className="flex justify-end gap-2">
+                      {prof.user_id && (
+                        <>
+                          <button onClick={() => openLinkForm(prof)} className="rounded-lg border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition">
+                            Trocar usuário
+                          </button>
+                          <button onClick={() => unlinkUser(prof.id)} disabled={linkSaving} className="rounded-lg border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 transition">
+                            Desvincular
+                          </button>
+                        </>
+                      )}
                       <button onClick={() => startEdit(prof)} className="rounded-lg border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition">
                         Editar
                       </button>

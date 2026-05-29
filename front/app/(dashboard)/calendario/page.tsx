@@ -159,24 +159,24 @@ export default function CalendarioPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)]">
-      <div className="flex items-center gap-3 px-4 md:px-8 py-4 border-b border-zinc-100 shrink-0">
-        <h1 className="text-xl font-bold text-zinc-900 capitalize">
+    <div className="flex h-[calc(100vh-4rem)] flex-col bg-white dark:bg-zinc-950">
+      <div className="flex shrink-0 items-center gap-3 border-b border-zinc-100 px-4 py-4 dark:border-zinc-800 md:px-8">
+        <h1 className="text-xl font-bold capitalize text-zinc-900 dark:text-zinc-100">
           {MONTHS[month]} de {year}
         </h1>
         <div className="flex items-center gap-1 ml-auto">
           <button
             onClick={goToday}
-            className="px-3 py-1.5 text-sm font-medium text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50 transition mr-1"
+            className="mr-1 rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50 dark:border-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-900"
           >
             Hoje
           </button>
-          <button onClick={prevMonth} className="p-1.5 rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition">
+          <button onClick={prevMonth} className="rounded-lg p-1.5 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-200">
             <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 18l-6-6 6-6" />
             </svg>
           </button>
-          <button onClick={nextMonth} className="p-1.5 rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition">
+          <button onClick={nextMonth} className="rounded-lg p-1.5 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-200">
             <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 18l6-6-6-6" />
             </svg>
@@ -184,7 +184,7 @@ export default function CalendarioPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-7 border-b border-zinc-100 shrink-0">
+      <div className="grid shrink-0 grid-cols-7 border-b border-zinc-100 dark:border-zinc-800">
         {DAYS.map(d => (
           <div key={d} className="py-2 text-center text-xs font-semibold text-zinc-400">
             {d}
@@ -192,7 +192,7 @@ export default function CalendarioPage() {
         ))}
       </div>
 
-      <div className="flex-1 grid grid-cols-7 grid-rows-6 border-l border-zinc-100 overflow-hidden">
+      <div className="grid flex-1 grid-cols-7 grid-rows-6 overflow-hidden border-l border-zinc-100 dark:border-zinc-800">
         {cells.map((cell, i) => {
           const dayEvents = eventsForDay(cell.date)
           const shown = dayEvents.slice(0, 3)
@@ -202,16 +202,16 @@ export default function CalendarioPage() {
           return (
             <div
               key={i}
-              className={`border-r border-b border-zinc-100 p-1.5 flex flex-col gap-1 overflow-hidden ${
-                !cell.current ? 'bg-zinc-50/60' : 'bg-white'
+              className={`flex flex-col gap-1 overflow-hidden border-b border-r border-zinc-100 p-1.5 dark:border-zinc-800 ${
+                !cell.current ? 'bg-zinc-50/60 dark:bg-zinc-900/45' : 'bg-white dark:bg-zinc-950'
               }`}
             >
               <span className={`text-xs font-bold self-start w-6 h-6 flex items-center justify-center rounded-full shrink-0 ${
                 todayCell
                   ? 'bg-[#2F9E41] text-white'
                   : cell.current
-                  ? 'text-zinc-800'
-                  : 'text-zinc-300'
+                  ? 'text-zinc-800 dark:text-zinc-100'
+                  : 'text-zinc-300 dark:text-zinc-600'
               }`}>
                 {cell.date.getDate()}
               </span>
@@ -264,17 +264,17 @@ export default function CalendarioPage() {
         >
           <div
             ref={modalRef}
-            className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl"
+            className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
             onClick={e => e.stopPropagation()}
           >
             <div className="mb-1 flex items-start justify-between gap-4">
-              <h2 id="item-modal-title" className="text-lg font-semibold text-zinc-900">
+              <h2 id="item-modal-title" className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                 {selectedItem.title}
               </h2>
               <button
                 type="button"
                 onClick={() => setSelectedItem(null)}
-                className="shrink-0 flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-200"
                 aria-label="Fechar"
               >
                 <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
@@ -283,12 +283,12 @@ export default function CalendarioPage() {
               </button>
             </div>
 
-            <p className="text-sm text-zinc-500 mb-4">
+            <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
               {formatRange(selectedItem.start_date, selectedItem.end_date)}
             </p>
 
             {selectedItem.description && (
-              <p className="text-sm text-zinc-700 whitespace-pre-line mb-4">
+              <p className="mb-4 whitespace-pre-line text-sm text-zinc-700 dark:text-zinc-300">
                 {selectedItem.description}
               </p>
             )}
