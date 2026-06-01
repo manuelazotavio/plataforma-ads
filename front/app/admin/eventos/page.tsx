@@ -22,6 +22,7 @@ type Event = {
   description: string | null
   start_date: string | null
   end_date: string | null
+  start_time: string | null
   registration_url: string | null
   registration_open: boolean | null
   banner_url: string | null
@@ -35,6 +36,7 @@ const empty = (): Omit<Event, 'id'> => ({
   description: '',
   start_date: '',
   end_date: '',
+  start_time: '',
   registration_url: '',
   registration_open: null,
   banner_url: '',
@@ -97,6 +99,7 @@ export default function AdminEventosPage() {
       description: form.description || null,
       start_date: form.start_date || null,
       end_date: form.end_date || null,
+      start_time: form.start_time || null,
       registration_url: form.registration_url || null,
       registration_open: form.registration_open,
       banner_url: form.banner_url || null,
@@ -238,6 +241,16 @@ export default function AdminEventosPage() {
                     className={input}
                   />
                 </Field>
+                <Field label="Horário de início">
+                  <input
+                    type="time"
+                    value={form.start_time ?? ''}
+                    onChange={(e) => setForm({ ...form, start_time: e.target.value || null })}
+                    className={input}
+                  />
+                </Field>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
                 <Field label="Data de encerramento">
                   <DatePicker
                     value={form.end_date ?? ''}

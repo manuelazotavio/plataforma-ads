@@ -3,6 +3,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
+import { COURSE_SETTINGS_TABLE } from '@/app/lib/courseSettings'
+import {
+  DEFAULT_MASCOT_PHRASES,
+  MASCOT_PHRASES_KEY,
+  getMascotPhraseForToday,
+  parseMascotPhrases,
+} from '@/app/lib/mascotSettings'
+import { supabase } from '@/app/lib/supabase'
 
 
 type SidebarItem = {
@@ -55,6 +64,7 @@ export default function AppSidebar({ open = true, onClose }: AppSidebarProps) {
   const router = useRouter()
   const [currentHash, setCurrentHash] = useState('')
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({})
+  const [mascotPhrase, setMascotPhrase] = useState(DEFAULT_MASCOT_PHRASES[0])
   const navRef = useRef<HTMLElement>(null)
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
@@ -67,6 +77,21 @@ export default function AppSidebar({ open = true, onClose }: AppSidebarProps) {
     window.addEventListener('hashchange', syncHash)
     return () => window.removeEventListener('hashchange', syncHash)
   }, [pathname])
+
+  useEffect(() => {
+    async function loadMascotPhrase() {
+      const { data } = await supabase
+        .from(COURSE_SETTINGS_TABLE)
+        .select('value')
+        .eq('key', MASCOT_PHRASES_KEY)
+        .maybeSingle()
+
+      const phrases = parseMascotPhrases(data?.value)
+      setMascotPhrase(getMascotPhraseForToday(phrases))
+    }
+
+    loadMascotPhrase()
+  }, [])
 
   return (
     <aside className={`w-56 shrink-0 bg-white flex flex-col fixed h-full z-30 transition-transform duration-300 ${open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
@@ -178,7 +203,26 @@ export default function AppSidebar({ open = true, onClose }: AppSidebarProps) {
             </div>
           )
         })}
+
       </nav>
+
+      <div className="shrink-0 border-t border-zinc-100 px-3 pb-4 pt-3">
+        <div className="flex items-center gap-2">
+          <div className="relative h-12 w-12 shrink-0">
+            <Image
+              src="/mascote.png"
+              alt="Mascote"
+              fill
+              className="object-contain drop-shadow-sm"
+              sizes="48px"
+            />
+          </div>
+          <div className="relative min-w-0 rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-medium leading-snug text-zinc-600">
+            <span className="absolute -left-1.5 top-1/2 h-3 w-3 -translate-y-1/2 rotate-45 border-b border-l border-zinc-200 bg-zinc-50" />
+            <span className="line-clamp-3 block">{mascotPhrase}</span>
+          </div>
+        </div>
+      </div>
 
     </aside>
   )

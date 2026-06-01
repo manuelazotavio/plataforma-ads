@@ -46,8 +46,15 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
 
       
       {event.banner_url && (
-        <div className="relative w-full h-56 rounded-2xl overflow-hidden mb-8">
-          <Image src={event.banner_url} alt={event.title} fill className="object-cover" />
+        <div className="relative w-full rounded-2xl overflow-hidden mb-8 bg-zinc-900 flex items-center justify-center" style={{ minHeight: 220 }}>
+          <Image
+            src={event.banner_url}
+            alt={event.title}
+            width={1200}
+            height={630}
+            className="w-full h-auto max-h-120 object-contain"
+            priority
+          />
         </div>
       )}
 
@@ -75,6 +82,9 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
           <div className="rounded-xl bg-zinc-50 border border-zinc-100 p-4">
             <p className="text-xs text-zinc-400 mb-1">Início</p>
             <p className="text-sm font-semibold text-zinc-900">{formatDate(event.start_date)}</p>
+            {event.start_time && (
+              <p className="text-xs text-zinc-400 mt-0.5">{event.start_time.slice(0, 5)}h</p>
+            )}
           </div>
         )}
         {event.end_date && (

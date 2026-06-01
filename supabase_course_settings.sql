@@ -29,6 +29,7 @@ with check (
   )
 );
 
+  
 insert into storage.buckets (id, name, public)
 values ('course-documents', 'course-documents', true)
 on conflict (id) do update set public = true;
