@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import { LoadingState } from '@/app/components/LoadingScreen'
+import { useAppDialog } from '@/app/components/AppDialog'
 
 type Project = {
   id: string
@@ -27,6 +28,7 @@ type Project = {
 
 export default function MeusProjetosPage() {
   const router = useRouter()
+  const { confirm, dialogNode } = useAppDialog()
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -56,7 +58,7 @@ export default function MeusProjetosPage() {
   }, [router])
 
   async function handleDelete(id: string, title: string) {
-    if (!confirm(`Excluir "${title}"?`)) return
+    if (!(await confirm({ message: `Excluir "${title}"?`, confirmLabel: 'Excluir' }))) return
     setDeletingId(id)
 
     await supabase.from('project_tags').delete().eq('project_id', id)
@@ -77,6 +79,7 @@ export default function MeusProjetosPage() {
 
   return (
     <div className="min-h-screen bg-white px-4 py-12 md:px-6">
+      {dialogNode}
       <div className="w-full">
         <div className="flex items-center justify-between mb-8">
           <div>

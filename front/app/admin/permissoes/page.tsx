@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/app/lib/supabase'
 import { LoadingState } from '@/app/components/LoadingScreen'
+import { useAppDialog } from '@/app/components/AppDialog'
 
 type Role = {
   id: string
@@ -91,6 +92,7 @@ function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (
 }
 
 export default function PermissoesPage() {
+  const { confirm, dialogNode } = useAppDialog()
   const [roles, setRoles] = useState<Role[]>([])
   const [selected, setSelected] = useState<string | null>(null)
   const [perms, setPerms] = useState<Set<string>>(new Set())
@@ -210,7 +212,10 @@ export default function PermissoesPage() {
   }
 
   async function deleteRole(roleId: string) {
-    if (!confirm(`Remover o perfil "${roleId}"? Isso não afeta usuários existentes com este perfil.`)) return
+    if (!(await confirm({
+      message: `Remover o perfil "${roleId}"? Isso não afeta usuários existentes com este perfil.`,
+      confirmLabel: 'Remover',
+    }))) return
     await supabase.from('role_permissions').delete().eq('role_id', roleId)
     await supabase.from('user_roles').delete().eq('id', roleId)
     setRoles(prev => prev.filter(r => r.id !== roleId))
@@ -229,6 +234,7 @@ export default function PermissoesPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-6 lg:flex-row">
+      {dialogNode}
 
     
       <div className="flex shrink-0 flex-col gap-2 lg:w-56">

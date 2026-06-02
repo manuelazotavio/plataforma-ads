@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/app/lib/supabase'
 import { LoadingState } from '@/app/components/LoadingScreen'
+import { useAppDialog } from '@/app/components/AppDialog'
 
 type Category = {
   id: string
@@ -26,6 +27,7 @@ function slugify(s: string) {
 const emptyForm = () => ({ value: '', label: '' })
 
 export default function AdminEventosCategorias() {
+  const { confirm, dialogNode } = useAppDialog()
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -117,12 +119,14 @@ export default function AdminEventosCategorias() {
       .eq('category', cat.value)
 
     if ((count ?? 0) > 0) {
-      const ok = confirm(
-        `A categoria "${cat.label}" está sendo usada em ${count} evento(s).\nAo remover, esses eventos ficarão sem categoria. Deseja continuar?`
-      )
+      const ok = await confirm({
+        title: 'Remover categoria em uso',
+        message: `A categoria "${cat.label}" está sendo usada em ${count} evento(s). Ao remover, esses eventos ficarão sem categoria. Deseja continuar?`,
+        confirmLabel: 'Remover',
+      })
       if (!ok) return
     } else {
-      if (!confirm(`Remover a categoria "${cat.label}"?`)) return
+      if (!(await confirm({ message: `Remover a categoria "${cat.label}"?`, confirmLabel: 'Remover' }))) return
     }
 
     setDeletingId(cat.id)
@@ -150,6 +154,7 @@ export default function AdminEventosCategorias() {
 
   return (
     <div>
+      {dialogNode}
       <div className="mb-2">
         <Link
           href="/admin/eventos"

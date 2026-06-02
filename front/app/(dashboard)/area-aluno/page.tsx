@@ -10,7 +10,7 @@ const materials = [
   {
     title: 'Modelos acadêmicos',
     description: 'Templates para trabalhos, relatórios, projetos e apresentações.',
-    href: '#',
+    href: 'https://drive.google.com/drive/folders/1uwdUxBcqMXekJorwt66Ot7zNji-8eGlk?usp=sharing',
   },
 ]
 

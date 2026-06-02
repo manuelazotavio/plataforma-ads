@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import Select from '@/app/components/Select'
 import DatePicker from '@/app/components/DatePicker'
 import { LoadingState } from '@/app/components/LoadingScreen'
+import { useAppDialog } from '@/app/components/AppDialog'
 import { supabase } from '@/app/lib/supabase'
 
 type Category = {
@@ -44,6 +45,7 @@ const empty = (): Omit<Event, 'id'> => ({
 })
 
 export default function AdminEventosPage() {
+  const { confirm, alert, dialogNode } = useAppDialog()
   const [events, setEvents] = useState<Event[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
@@ -141,14 +143,18 @@ export default function AdminEventosPage() {
       upsert: true,
       contentType: file.type,
     })
-    if (error) { alert('Erro ao enviar imagem: ' + error.message); setUploadingBanner(false); return }
+    if (error) {
+      await alert({ title: 'Erro ao enviar imagem', message: 'Erro ao enviar imagem: ' + error.message })
+      setUploadingBanner(false)
+      return
+    }
     const { data: { publicUrl } } = supabase.storage.from('covers').getPublicUrl(path)
     setForm((current) => ({ ...current, banner_url: publicUrl }))
     setUploadingBanner(false)
   }
 
   async function deleteEvent(id: string) {
-    if (!confirm('Remover este evento?')) return
+    if (!(await confirm({ message: 'Remover este evento?', confirmLabel: 'Remover' }))) return
     setDeletingId(id)
     await supabase.from('events').delete().eq('id', id)
     setEvents((prev) => prev.filter((e) => e.id !== id))
@@ -159,6 +165,7 @@ export default function AdminEventosPage() {
 
   return (
     <div>
+      {dialogNode}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900">Eventos</h1>

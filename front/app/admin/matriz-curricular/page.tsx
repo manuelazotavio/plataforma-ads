@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Select from '@/app/components/Select'
 import RichTextEditor from '@/app/components/RichTextEditor'
 import { LoadingState } from '@/app/components/LoadingScreen'
+import { useAppDialog } from '@/app/components/AppDialog'
 import { supabase } from '@/app/lib/supabase'
 import {
   CURRICULUM_SUBJECTS_TABLE,
@@ -128,6 +129,7 @@ const semesterOptions = Array.from({ length: 8 }, (_, i) => ({
 }))
 
 export default function AdminMatrizCurricularPage() {
+  const { confirm, dialogNode } = useAppDialog()
   const [versions, setVersions]   = useState<Version[]>([])
   const [subjects, setSubjects]   = useState<SubjectFull[]>([])
   const [loading, setLoading]     = useState(true)
@@ -259,7 +261,10 @@ export default function AdminMatrizCurricularPage() {
   }
 
   async function deleteVersion(v: Version) {
-    if (!confirm(`Remover a versão "${v.name} (${v.year})"? As disciplinas vinculadas ficarão sem versão.`)) return
+    if (!(await confirm({
+      message: `Remover a versão "${v.name} (${v.year})"? As disciplinas vinculadas ficarão sem versão.`,
+      confirmLabel: 'Remover',
+    }))) return
     setSaving(true)
     await supabase.from('curriculum_versions').delete().eq('id', v.id)
     if (selectedVersionId === v.id) setSelectedVersionId('unversioned')
@@ -328,7 +333,11 @@ export default function AdminMatrizCurricularPage() {
 
   async function bulkMoveToVersion() {
     if (!bulkVersionId || visibleSubjects.length === 0) return
-    if (!confirm(`Mover ${visibleSubjects.length} disciplina(s) para esta versão?`)) return
+    if (!(await confirm({
+      message: `Mover ${visibleSubjects.length} disciplina(s) para esta versão?`,
+      confirmLabel: 'Mover',
+      tone: 'default',
+    }))) return
     setSaving(true)
     const newVersionId = bulkVersionId === 'unversioned' ? null : bulkVersionId
     const ids = visibleSubjects.map((s) => s.id)
@@ -354,7 +363,7 @@ export default function AdminMatrizCurricularPage() {
   }
 
   async function removeSubject(s: SubjectFull) {
-    if (!confirm(`Remover "${s.name}"?`)) return
+    if (!(await confirm({ message: `Remover "${s.name}"?`, confirmLabel: 'Remover' }))) return
     setSaving(true)
     const { error: err } = await supabase.from(CURRICULUM_SUBJECTS_TABLE).delete().eq('id', s.id)
     if (err) setError(err.message)
@@ -370,7 +379,10 @@ export default function AdminMatrizCurricularPage() {
     const matrixLabel = selectedVersionId === 'unversioned'
       ? 'matriz sem versão'
       : `matriz "${versions.find((v) => v.id === selectedVersionId)?.name ?? 'selecionada'}"`
-    if (!confirm(`Remover todas as ${visibleSubjects.length} disciplina(s) desta ${matrixLabel}? Esta ação não pode ser desfeita.`)) return
+    if (!(await confirm({
+      message: `Remover todas as ${visibleSubjects.length} disciplina(s) desta ${matrixLabel}? Esta ação não pode ser desfeita.`,
+      confirmLabel: 'Remover tudo',
+    }))) return
 
     setSaving(true)
     setError(null)
@@ -502,7 +514,7 @@ export default function AdminMatrizCurricularPage() {
   }
 
   async function removeCompareEquiv(groupId: string, fromSubjectId: string) {
-    if (!confirm('Remover esta equivalência?')) return
+    if (!(await confirm({ message: 'Remover esta equivalência?', confirmLabel: 'Remover' }))) return
     await supabase.from('curriculum_equivalency_groups').delete().eq('id', groupId)
     setCompareEquivMap((prev) => ({
       ...prev,
@@ -622,6 +634,7 @@ export default function AdminMatrizCurricularPage() {
 
   return (
     <div>
+      {dialogNode}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900">Matriz curricular</h1>

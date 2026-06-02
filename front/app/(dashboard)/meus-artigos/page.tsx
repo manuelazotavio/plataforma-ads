@@ -7,6 +7,7 @@ import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import { LoadingState } from '@/app/components/LoadingScreen'
+import { useAppDialog } from '@/app/components/AppDialog'
 
 type Article = {
   id: string
@@ -22,6 +23,7 @@ type Article = {
 
 export default function MeusArtigosPage() {
   const router = useRouter()
+  const { confirm, dialogNode } = useAppDialog()
   const [articles, setArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -51,7 +53,10 @@ export default function MeusArtigosPage() {
   }, [router])
 
   async function handleDelete(id: string, title: string) {
-    if (!confirm(`Excluir "${title}"? Esta ação não pode ser desfeita.`)) return
+    if (!(await confirm({
+      message: `Excluir "${title}"? Esta ação não pode ser desfeita.`,
+      confirmLabel: 'Excluir',
+    }))) return
     setDeletingId(id)
     await supabase.from('articles').delete().eq('id', id)
     setArticles((prev) => prev.filter((a) => a.id !== id))
@@ -68,6 +73,7 @@ export default function MeusArtigosPage() {
 
   return (
     <div className="min-h-screen bg-white px-4 py-12 md:px-6">
+      {dialogNode}
       <div className="w-full">
         <div className="flex items-center justify-between mb-8">
           <div>

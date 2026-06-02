@@ -7,6 +7,7 @@ import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import Select from '@/app/components/Select'
 import { LoadingState } from '@/app/components/LoadingScreen'
+import { useAppDialog } from '@/app/components/AppDialog'
 
 type Professor = {
   id: string
@@ -46,6 +47,7 @@ const EMPTY_FORM = {
 
 export default function AdminCorpoDocentePage() {
   const router = useRouter()
+  const { confirm, alert, dialogNode } = useAppDialog()
   const [professors, setProfessors] = useState<Professor[]>([])
   const [userOptions, setUserOptions] = useState<UserOption[]>([])
   const [loading, setLoading] = useState(true)
@@ -106,12 +108,12 @@ export default function AdminCorpoDocentePage() {
 
       if (error) {
         console.error('Erro ao buscar role:', error)
-        alert(`Erro ao verificar permissões: ${error.message}`)
+        await alert({ title: 'Erro ao verificar permissões', message: `Erro ao verificar permissões: ${error.message}` })
         return
       }
 
       if (me?.role !== 'admin') {
-        alert(`Acesso negado. Seu role atual é: "${me?.role}". Esperado: "admin".`)
+        await alert({ title: 'Acesso negado', message: `Seu role atual é: "${me?.role}". Esperado: "admin".` })
         router.push('/')
         return
       }
@@ -223,7 +225,7 @@ export default function AdminCorpoDocentePage() {
   }
 
   async function handleDelete(id: string, name: string) {
-    if (!confirm(`Excluir "${name}"?`)) return
+    if (!(await confirm({ message: `Excluir "${name}"?`, confirmLabel: 'Excluir' }))) return
     await supabase.from('professors').delete().eq('id', id)
     setProfessors((prev) => prev.filter((p) => p.id !== id))
   }
@@ -301,7 +303,10 @@ export default function AdminCorpoDocentePage() {
   }
 
   async function unlinkUser(profId: string) {
-    if (!confirm('Remover o vínculo deste professor com o usuário?')) return
+    if (!(await confirm({
+      message: 'Remover o vínculo deste professor com o usuário?',
+      confirmLabel: 'Remover',
+    }))) return
     setLinkSaving(true)
     setLinkError(null)
 
@@ -341,11 +346,17 @@ export default function AdminCorpoDocentePage() {
   }
 
   if (loading) {
-    return <LoadingState message="Carregando corpo docente" />
+    return (
+      <>
+        <LoadingState message="Carregando corpo docente" />
+        {dialogNode}
+      </>
+    )
   }
 
   return (
     <div className="mx-auto max-w-3xl">
+      {dialogNode}
 
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>

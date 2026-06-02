@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/app/lib/supabase'
 import { LoadingState } from '@/app/components/LoadingScreen'
+import { useAppDialog } from '@/app/components/AppDialog'
 
 type Category = {
   id: string
@@ -12,6 +13,7 @@ type Category = {
 }
 
 export default function AdminForumPage() {
+  const { confirm, dialogNode } = useAppDialog()
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -64,7 +66,7 @@ export default function AdminForumPage() {
   }
 
   async function deleteCategory(id: string) {
-    if (!confirm('Remover esta categoria?')) return
+    if (!(await confirm({ message: 'Remover esta categoria?', confirmLabel: 'Remover' }))) return
     setDeletingId(id)
     await supabase.from('forum_categories').delete().eq('id', id)
     setCategories((prev) => prev.filter((c) => c.id !== id))
@@ -75,6 +77,7 @@ export default function AdminForumPage() {
 
   return (
     <div>
+      {dialogNode}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900">Categorias do Fórum</h1>

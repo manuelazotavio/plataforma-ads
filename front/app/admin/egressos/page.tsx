@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
 import { LoadingState } from '@/app/components/LoadingScreen'
+import { useAppDialog } from '@/app/components/AppDialog'
 
 type Egresso = {
   id: string
@@ -31,6 +32,7 @@ const empty = (): Omit<Egresso, 'id'> => ({
 })
 
 export default function AdminEgressosPage() {
+  const { confirm, dialogNode } = useAppDialog()
   const [egressos, setEgressos] = useState<Egresso[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -152,7 +154,7 @@ export default function AdminEgressosPage() {
   }
 
   async function deleteEgresso(id: string) {
-    if (!confirm('Remover este egresso?')) return
+    if (!(await confirm({ message: 'Remover este egresso?', confirmLabel: 'Remover' }))) return
     setDeletingId(id)
     setError(null)
     const { error } = await supabase.from('egressos').delete().eq('id', id)
@@ -169,6 +171,7 @@ export default function AdminEgressosPage() {
 
   return (
     <div>
+      {dialogNode}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900">Egressos</h1>

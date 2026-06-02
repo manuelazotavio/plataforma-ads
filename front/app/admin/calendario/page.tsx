@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Select from '@/app/components/Select'
 import { LoadingState } from '@/app/components/LoadingScreen'
+import { useAppDialog } from '@/app/components/AppDialog'
 import { supabase } from '@/app/lib/supabase'
 import {
   CALENDAR_COLOR_OPTIONS,
@@ -93,6 +94,7 @@ type EventEntry = {
 }
 
 export default function AdminCalendarioPage() {
+  const { confirm, dialogNode } = useAppDialog()
   const [items, setItems] = useState<CalendarItem[]>([])
   const [events, setEvents] = useState<EventEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -219,7 +221,7 @@ export default function AdminCalendarioPage() {
   }
 
   async function remove(item: CalendarItem) {
-    if (!confirm(`Excluir "${item.title}"?`)) return
+    if (!(await confirm({ message: `Excluir "${item.title}"?`, confirmLabel: 'Excluir' }))) return
     setSaving(true)
     await supabase.from('calendar_items').delete().eq('id', item.id)
     setItems((prev) => prev.filter((it) => it.id !== item.id))
@@ -444,6 +446,7 @@ export default function AdminCalendarioPage() {
 
   return (
     <div>
+      {dialogNode}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900">CalendÃ¡rio</h1>

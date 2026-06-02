@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Select from '@/app/components/Select'
 import { LoadingState } from '@/app/components/LoadingScreen'
+import { useAppDialog } from '@/app/components/AppDialog'
 import { supabase } from '@/app/lib/supabase'
 
 const CATEGORIES = [
@@ -49,6 +50,7 @@ const EMPTY_FORM = {
 }
 
 export default function AdminVagasPage() {
+  const { confirm, dialogNode } = useAppDialog()
   const [jobs, setJobs]           = useState<Job[]>([])
   const [loading, setLoading]     = useState(true)
   const [filter, setFilter]       = useState<Filter>('pendentes')
@@ -81,7 +83,7 @@ export default function AdminVagasPage() {
   }
 
   async function remove(id: string) {
-    if (!confirm('Remover esta oportunidade?')) return
+    if (!(await confirm({ message: 'Remover esta oportunidade?', confirmLabel: 'Remover' }))) return
     setUpdatingId(id)
     await supabase.from('job_tags').delete().eq('job_id', id)
     await supabase.from('jobs').delete().eq('id', id)
@@ -228,6 +230,7 @@ export default function AdminVagasPage() {
 
   return (
     <div>
+      {dialogNode}
       <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900">Oportunidades</h1>

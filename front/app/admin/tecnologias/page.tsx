@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/app/lib/supabase'
 import { LoadingState } from '@/app/components/LoadingScreen'
+import { useAppDialog } from '@/app/components/AppDialog'
 import {
   DEFAULT_PROJECT_TAGS,
   PROJECT_TAG_OPTIONS_TABLE,
@@ -43,6 +44,7 @@ with check (
 );`
 
 export default function AdminTecnologiasPage() {
+  const { confirm, dialogNode } = useAppDialog()
   const [tags, setTags] = useState<ProjectTagOption[]>([])
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(true)
@@ -178,7 +180,10 @@ export default function AdminTecnologiasPage() {
   }
 
   async function removeTag(tag: ProjectTagOption) {
-    const confirmed = window.confirm(`Remover "${tag.name}" da lista de tecnologias?`)
+    const confirmed = await confirm({
+      message: `Remover "${tag.name}" da lista de tecnologias?`,
+      confirmLabel: 'Remover',
+    })
     if (!confirmed) return
 
     setSaving(true)
@@ -229,6 +234,7 @@ export default function AdminTecnologiasPage() {
 
   return (
     <div>
+      {dialogNode}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900">Tecnologias</h1>

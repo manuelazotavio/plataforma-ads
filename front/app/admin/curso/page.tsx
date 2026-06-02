@@ -15,6 +15,7 @@ import {
   courseSettingsSql,
 } from '@/app/lib/courseSettings'
 import { LoadingState } from '@/app/components/LoadingScreen'
+import { useAppDialog } from '@/app/components/AppDialog'
 import { supabase } from '@/app/lib/supabase'
 
 type PpcDoc = {
@@ -27,6 +28,7 @@ type PpcDoc = {
 const ALL_SETTING_KEYS = [CLASS_SCHEDULE_PDF_KEY, COURSE_DESCRIPTION_KEY, COURSE_INFO_CARDS_KEY, COURSE_LEARNING_ITEMS_KEY]
 
 export default function AdminCursoPage() {
+  const { confirm, dialogNode } = useAppDialog()
   const [classScheduleUrl, setClassScheduleUrl] = useState<string | null>(null)
   const [description, setDescription] = useState(DEFAULT_COURSE_DESCRIPTION)
   const [infoCards, setInfoCards] = useState<InfoCard[]>(DEFAULT_INFO_CARDS)
@@ -121,7 +123,7 @@ export default function AdminCursoPage() {
   }
 
   async function removePpc(doc: PpcDoc) {
-    if (!confirm(`Remover "${doc.label}"?`)) return
+    if (!(await confirm({ message: `Remover "${doc.label}"?`, confirmLabel: 'Remover' }))) return
     const { error } = await supabase.from('course_ppc_documents').delete().eq('id', doc.id)
     if (error) { setError(error.message) } else { setPpcDocs((prev) => prev.filter((d) => d.id !== doc.id)); setNotice(`"${doc.label}" removido.`) }
   }
@@ -154,6 +156,7 @@ export default function AdminCursoPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
+      {dialogNode}
       <div className="mb-8">
         <h1 className="text-2xl font-semibold text-zinc-900">Curso</h1>
         <p className="mt-0.5 text-sm text-zinc-500">Configure o conteúdo e documentos exibidos na página pública do curso.</p>

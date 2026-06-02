@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/app/lib/supabase'
 import { LoadingState } from '@/app/components/LoadingScreen'
+import { useAppDialog } from '@/app/components/AppDialog'
 
 type Level = { id: number; name: string; min_xp: number; description: string | null }
 
@@ -17,6 +18,7 @@ const XP_TABLE = [
 const emptyForm = { name: '', min_xp: '', description: '' }
 
 export default function NiveisPage() {
+  const { confirm, dialogNode } = useAppDialog()
   const [levels, setLevels] = useState<Level[]>([])
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState(emptyForm)
@@ -77,7 +79,7 @@ export default function NiveisPage() {
   }
 
   async function remove(id: number) {
-    if (!confirm('Excluir este nível?')) return
+    if (!(await confirm({ message: 'Excluir este nível?', confirmLabel: 'Excluir' }))) return
     await supabase.from('levels').delete().eq('id', id)
     setLevels((prev) => prev.filter((l) => l.id !== id))
   }
@@ -86,6 +88,7 @@ export default function NiveisPage() {
 
   return (
     <div>
+      {dialogNode}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900">Níveis de usuário</h1>
