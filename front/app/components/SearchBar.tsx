@@ -312,7 +312,7 @@ export default function SearchBar() {
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               onFocus={() => query.trim().length >= 2 && results.length > 0 && setOpen(true)}
-              placeholder="Buscar projetos, eventos, usuÃ¡rios..."
+              placeholder="Buscar projetos, eventos, usuários..."
               autoComplete="off"
               className="h-10 w-full rounded-xl border border-zinc-300 bg-white pl-10 pr-4 text-sm font-medium text-zinc-800 shadow-sm outline-none transition placeholder:text-zinc-500 focus:border-[#2F9E41] focus:ring-2 focus:ring-[#2F9E41]/15"
             />
@@ -347,7 +347,7 @@ export default function SearchBar() {
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={() => query.trim().length >= 2 && results.length > 0 && setOpen(true)}
-          placeholder="Buscar projetos, eventos, usuÃ¡rios..."
+          placeholder="Buscar projetos, eventos, usuários..."
           autoComplete="off"
           className="h-10 w-full rounded-xl border border-zinc-300 bg-white pl-10 pr-4 text-sm font-medium text-zinc-800 shadow-sm outline-none transition placeholder:text-zinc-500 hover:border-zinc-400 focus:border-[#2F9E41] focus:ring-2 focus:ring-[#2F9E41]/15"
         />

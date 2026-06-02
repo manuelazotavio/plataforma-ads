@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import Select from '@/app/components/Select'
 import { LoadingState } from '@/app/components/LoadingScreen'
 import { supabase } from '@/app/lib/supabase'
 
@@ -29,6 +30,13 @@ const actionClass: Record<AuditAction, string> = {
   UPDATE: 'bg-amber-50 text-amber-700',
   DELETE: 'bg-red-50 text-red-700',
 }
+
+const actionFilterOptions = [
+  { value: '', label: 'Todas' },
+  { value: 'INSERT', label: 'Criações' },
+  { value: 'UPDATE', label: 'Alterações' },
+  { value: 'DELETE', label: 'Exclusões' },
+]
 
 export default function AdminAuditoriaPage() {
   const [logs, setLogs] = useState<AuditLog[]>([])
@@ -62,6 +70,11 @@ export default function AdminAuditoriaPage() {
     [logs]
   )
 
+  const tableOptions = useMemo(
+    () => tables.map((table) => ({ value: table, label: table })),
+    [tables]
+  )
+
   const filteredLogs = logs.filter((log) => {
     if (tableFilter && log.table_name !== tableFilter) return false
     if (actionFilter && log.action !== actionFilter) return false
@@ -70,9 +83,11 @@ export default function AdminAuditoriaPage() {
 
   if (loading) return <LoadingState message="Carregando auditoria" />
 
+  const hasFilters = tableFilter !== '' || actionFilter !== ''
+
   return (
     <div>
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900">Auditoria</h1>
           <p className="mt-0.5 text-sm text-zinc-500">
@@ -80,28 +95,47 @@ export default function AdminAuditoriaPage() {
           </p>
         </div>
 
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <select
-            value={tableFilter}
-            onChange={(event) => setTableFilter(event.target.value)}
-            className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 outline-none transition focus:border-zinc-400 focus:ring-2 focus:ring-zinc-100"
-          >
-            <option value="">Todas as tabelas</option>
-            {tables.map((table) => (
-              <option key={table} value={table}>{table}</option>
-            ))}
-          </select>
+        <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-end lg:w-auto">
+          <label className="flex min-w-0 flex-col gap-1 text-xs font-medium text-zinc-500 sm:w-56">
+            Tabela
+            <Select
+              value={tableFilter}
+              onChange={setTableFilter}
+              options={tableOptions}
+              placeholder="Todas as tabelas"
+            />
+          </label>
 
-          <select
-            value={actionFilter}
-            onChange={(event) => setActionFilter(event.target.value)}
-            className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 outline-none transition focus:border-zinc-400 focus:ring-2 focus:ring-zinc-100"
-          >
-            <option value="">Todas as ações</option>
-            <option value="INSERT">Criações</option>
-            <option value="UPDATE">Alterações</option>
-            <option value="DELETE">Exclusões</option>
-          </select>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-zinc-500">Ação</span>
+            <div className="flex w-full gap-1 rounded-lg border border-zinc-200 bg-white p-1 sm:w-auto">
+              {actionFilterOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setActionFilter(option.value)}
+                  className={`flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium transition sm:flex-none ${
+                    actionFilter === option.value ? 'bg-[#2F9E41] text-white' : 'text-zinc-500 hover:text-zinc-900'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {hasFilters && (
+            <button
+              type="button"
+              onClick={() => {
+                setTableFilter('')
+                setActionFilter('')
+              }}
+              className="rounded-lg border border-zinc-200 px-3 py-2 text-xs font-medium text-zinc-500 transition hover:bg-zinc-50 hover:text-zinc-900 sm:mb-0.5"
+            >
+              Limpar filtros
+            </button>
+          )}
         </div>
       </div>
 

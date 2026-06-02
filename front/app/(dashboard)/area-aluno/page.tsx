@@ -19,6 +19,7 @@ const guidance = [
     title: 'Passe escolar',
     description: 'Entenda quais dados reunir, onde acompanhar a solicitação e o que conferir antes de enviar.',
     videoTitle: 'Como solicitar o passe escolar',
+    videoEmbedUrl: null,
     steps: [
       'Confira se seus dados pessoais e acadêmicos estão atualizados nos sistemas institucionais.',
       'Separe os documentos solicitados para comprovar matrícula e vínculo com o campus.',
@@ -30,7 +31,8 @@ const guidance = [
   {
     title: 'Requerimentos no SUAP',
     description: 'Passo a passo para abrir solicitações acadêmicas no SUAP e anexar documentos quando necessário.',
-    videoTitle: null,
+    videoTitle: 'Como abrir requerimentos no SUAP',
+    videoEmbedUrl: 'https://www.youtube.com/embed/y3MWSuP7kLk',
     steps: [
       {
         title: 'Acesse o SUAP',
@@ -68,6 +70,7 @@ const guidance = [
     title: 'Processos acadêmicos no geral',
     description: 'Um guia para saber por onde começar quando o aluno não sabe qual setor procurar.',
     videoTitle: 'Como entender processos acadêmicos',
+    videoEmbedUrl: null,
     steps: [
       'Identifique primeiro qual é o assunto: matrícula, frequência, estágio, documentos, transporte ou disciplina.',
       'Verifique se existe prazo em calendário acadêmico, edital, comunicado ou sistema institucional.',
@@ -80,6 +83,7 @@ const guidance = [
     title: 'Estágio',
     description: 'Orientações sobre estágio obrigatório e não obrigatório, documentos, prazos, acompanhamento e encerramento.',
     videoTitle: null,
+    videoEmbedUrl: null,
     steps: [
       'O estágio é uma atividade acadêmica supervisionada que permite desenvolver experiências práticas na área de tecnologia.',
       'No curso de ADS, o estágio pode ser obrigatório ou não obrigatório.',
@@ -215,6 +219,7 @@ const guidance = [
     title: 'Iniciação científica',
     description: 'Entenda as modalidades de iniciação científica e tecnológica, editais, bolsas e responsabilidades.',
     videoTitle: null,
+    videoEmbedUrl: null,
     steps: [
       'A Iniciação Científica e Tecnológica permite participar de projetos de pesquisa e inovação com orientação de um professor.',
       'Os projetos podem ter bolsa ou serem voluntários, dependendo da modalidade escolhida e do edital vigente.',
@@ -324,19 +329,16 @@ const guidance = [
     title: 'TCC',
     description: 'Orientações para escolha do tema, desenvolvimento, estrutura, formatação e defesa do Trabalho de Conclusão de Curso.',
     videoTitle: null,
+    videoEmbedUrl: null,
     steps: [
-      'O Trabalho de Conclusão de Curso é uma etapa importante da formação acadêmica em ADS.',
+      'O Trabalho de Conclusão de Curso é uma etapa importante da formação acadêmica em ADS, porém não é obrigatório para a conclusão do curso.',
       'O aluno desenvolve um projeto de pesquisa, sistema, estudo ou solução tecnológica relacionada à área de Análise e Desenvolvimento de Sistemas.',
-      'O objetivo é aplicar conhecimentos do curso, desenvolvendo pesquisa, desenvolvimento, documentação e apresentação acadêmica.',
       'O trabalho deve ser acompanhado por um professor orientador e seguir o modelo institucional do IFSP.',
     ],
     sections: [
       {
         title: 'Como desenvolver o TCC',
         content: [
-          'Comece definindo um tema relacionado à tecnologia e ao desenvolvimento de sistemas.',
-          'O tema pode envolver desenvolvimento de software, inteligência artificial, banco de dados, segurança da informação, desenvolvimento web, mobile, automação, análise de dados ou outros assuntos da área de TI.',
-          'Depois de definir o tema, procure um professor orientador para acompanhar o desenvolvimento do trabalho.',
         ],
         steps: [
           'Escolha um tema relevante e que desperte seu interesse.',
@@ -430,6 +432,7 @@ const guidance = [
           'Anexos do Regimento do Trabalho de Conclusão de Curso em formato editável.',
           'Diretrizes para elaboração e diagramação do Trabalho de Conclusão de Curso.',
           'Consulte também a seção de Estágio, quando o trabalho ou documentação estiver relacionado às atividades práticas do curso.',
+          'https://www.ifspcaraguatatuba.edu.br/biblioteca/trabalho-de-conclusao-de-curso',
         ],
       },
     ],
@@ -498,10 +501,23 @@ export default function AreaAlunoPage() {
                 </summary>
 
                 <div className="px-5 pb-5">
-                  {item.videoTitle && (
-                  <div className="mb-4 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
-                    Vídeo: {item.videoTitle}
-                  </div>
+                  {item.videoEmbedUrl ? (
+                    <div className="mb-5 max-w-2xl overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+                      <div className="aspect-video w-full bg-zinc-100 dark:bg-zinc-900">
+                        <iframe
+                          className="h-full w-full"
+                          src={item.videoEmbedUrl}
+                          title={item.videoTitle ?? 'Vídeo de orientação acadêmica'}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          referrerPolicy="strict-origin-when-cross-origin"
+                          allowFullScreen
+                        />
+                      </div>
+                    </div>
+                  ) : item.videoTitle && (
+                    <div className="mb-4 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
+                      Vídeo: {item.videoTitle}
+                    </div>
                   )}
                   <ol className="space-y-3">
                   {item.steps.map((step, index) => (
