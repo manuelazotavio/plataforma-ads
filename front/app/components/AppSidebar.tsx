@@ -8,7 +8,7 @@ import { COURSE_SETTINGS_TABLE } from '@/app/lib/courseSettings'
 import {
   DEFAULT_MASCOT_PHRASES,
   MASCOT_PHRASES_KEY,
-  getMascotPhraseForToday,
+  getRandomMascotPhrase,
   parseMascotPhrases,
 } from '@/app/lib/mascotSettings'
 import { supabase } from '@/app/lib/supabase'
@@ -87,7 +87,7 @@ export default function AppSidebar({ open = true, onClose }: AppSidebarProps) {
         .maybeSingle()
 
       const phrases = parseMascotPhrases(data?.value)
-      setMascotPhrase(getMascotPhraseForToday(phrases))
+      setMascotPhrase(getRandomMascotPhrase(phrases))
     }
 
     loadMascotPhrase()

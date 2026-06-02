@@ -76,11 +76,6 @@ export default function AdminMascotePage() {
 
   if (loading) return <LoadingState message="Carregando frases do mascote" />
 
-  const phrases = phrasesText
-    .split('\n')
-    .map((phrase) => phrase.trim())
-    .filter(Boolean)
-
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-8">
@@ -94,7 +89,7 @@ export default function AdminMascotePage() {
         <div className="mb-5">
           <h2 className="text-sm font-semibold text-zinc-900">Frases do balão</h2>
           <p className="mt-1 text-sm text-zinc-500">
-            Escreva uma frase por linha. A plataforma alterna a frase exibida ao longo dos dias.
+            Escreva uma frase por linha. Uma delas aparece aleatoriamente quando o mascote e exibido.
           </p>
         </div>
 
@@ -106,34 +101,8 @@ export default function AdminMascotePage() {
           placeholder="Ex: Precisa de ajuda?"
         />
 
-        <div className="mt-4 rounded-xl border border-zinc-100 bg-zinc-50 p-4">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">
-            Previa
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {phrases.length > 0 ? (
-              phrases.map((phrase) => (
-                <span
-                  key={phrase}
-                  className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600"
-                >
-                  {phrase}
-                </span>
-              ))
-            ) : (
-              <span className="text-sm text-zinc-400">Nenhuma frase adicionada.</span>
-            )}
-          </div>
-        </div>
-
         <div className="mt-5 flex flex-col gap-3 border-t border-zinc-100 pt-4 sm:flex-row sm:justify-end">
-          <button
-            type="button"
-            onClick={restoreDefaults}
-            className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50"
-          >
-            Restaurar padrao
-          </button>
+          
           <button
             type="button"
             onClick={save}

@@ -29,11 +29,8 @@ export function parseMascotPhrases(value: string | null | undefined) {
   return phrases.length > 0 ? phrases : DEFAULT_MASCOT_PHRASES
 }
 
-export function getMascotPhraseForToday(phrases: string[]) {
+export function getRandomMascotPhrase(phrases: string[]) {
   if (phrases.length === 0) return DEFAULT_MASCOT_PHRASES[0]
 
-  const start = new Date(new Date().getFullYear(), 0, 0).getTime()
-  const day = Math.floor((Date.now() - start) / 86400000)
-
-  return phrases[day % phrases.length]
+  return phrases[Math.floor(Math.random() * phrases.length)]
 }
