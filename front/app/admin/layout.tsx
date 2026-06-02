@@ -30,6 +30,7 @@ const nav = [
   { href: '/admin/forum', label: 'Fórum', icon: <IconChat /> },
   { href: '/admin/mensagens', label: 'Mensagens', icon: <IconMail /> },
   { href: '/admin/mascote', label: 'Mascote', icon: <IconChat /> },
+  { href: '/admin/auditoria', label: 'Auditoria', icon: <IconShield /> },
   { href: '/admin/niveis', label: 'Níveis', icon: <IconStar /> },
   { href: '/admin/permissoes', label: 'Permissões', icon: <IconShield /> },
 ]
@@ -151,6 +152,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </nav>
 
         <div className="shrink-0 px-3 pb-4">
+          <div className="mb-2 flex items-center justify-between rounded-xl px-3 py-2">
+            <span className="text-sm font-semibold text-zinc-500">Tema</span>
+            <ThemeToggle />
+          </div>
           <Link
             href="/"
             onClick={() => setSidebarOpen(false)}
@@ -167,21 +172,35 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="flex flex-col flex-1 ml-0 md:ml-56 min-w-0">
 
         <header className="h-16 bg-white border-b border-zinc-100 flex items-center justify-end px-4 md:px-6 sticky top-0 z-10 shrink-0 gap-3 md:gap-4">
-          <button
-            type="button"
-            aria-label="Abrir menu"
-            onClick={() => setSidebarOpen(true)}
-            className="md:hidden p-2 rounded-lg text-zinc-500 hover:bg-zinc-100 transition shrink-0 mr-auto"
-          >
-            <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <line x1={3} y1={6} x2={21} y2={6} />
-              <line x1={3} y1={12} x2={21} y2={12} />
-              <line x1={3} y1={18} x2={21} y2={18} />
-            </svg>
-          </button>
+          <div className="mr-auto flex shrink-0 items-center gap-1 md:hidden">
+            <button
+              type="button"
+              aria-label="Abrir menu"
+              onClick={() => setSidebarOpen(true)}
+              className="rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-100"
+            >
+              <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <line x1={3} y1={6} x2={21} y2={6} />
+                <line x1={3} y1={12} x2={21} y2={12} />
+                <line x1={3} y1={18} x2={21} y2={18} />
+              </svg>
+            </button>
+            <Link
+              href="/"
+              aria-label="Ir para inicio"
+              className="rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-100"
+            >
+              <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <path d="M9 22V12h6v10" />
+              </svg>
+            </Link>
+          </div>
 
           <div className="flex items-center gap-3 ml-auto">
-            <ThemeToggle />
+            <div className="hidden md:block">
+              <ThemeToggle />
+            </div>
             <div ref={userMenuRef} className="relative">
               <button
                 type="button"

@@ -295,7 +295,7 @@ export default function SearchBar() {
         type="button"
         onClick={() => setMobileExpanded(true)}
         aria-label="Buscar"
-        className="md:hidden grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-zinc-200 bg-white text-zinc-500 shadow-sm transition hover:bg-zinc-50 hover:text-zinc-900"
+        className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-zinc-500 transition hover:bg-zinc-50 hover:text-zinc-900 md:hidden"
       >
         <SearchIcon />
       </button>

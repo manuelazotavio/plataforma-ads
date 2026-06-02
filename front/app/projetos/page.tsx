@@ -112,7 +112,7 @@ export default async function ProjetosPage({
         </div>
 
         
-        <div className="no-scrollbar mb-6 flex max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-2 -mx-6 px-6 sm:flex-wrap sm:overflow-visible md:mx-0 md:px-0">
+        <div className="no-scrollbar mb-6 flex max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-2 sm:flex-wrap sm:overflow-visible">
           <Link
             href="/projetos"
             className={`shrink-0 whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-semibold transition-colors cursor-pointer ${
