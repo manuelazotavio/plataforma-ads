@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 
@@ -19,7 +19,6 @@ export default function ShareProjectButton({ title, label = 'Compartilhar projet
         await navigator.share({ title, url })
         return
       } catch {
-        // User cancellation should fall through silently to the copy fallback.
       }
     }
 

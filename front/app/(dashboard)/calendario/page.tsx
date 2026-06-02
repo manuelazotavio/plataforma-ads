@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
@@ -25,9 +25,9 @@ type Evento = {
   category: string | null
 }
 
-const MONTHS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+const MONTHS = ['Janeiro', 'Fevereiro', 'MarÃ§o', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
-const DAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+const DAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'SÃ¡b']
 
 const CATEGORY_COLORS: Record<string, string> = {
   'Hackathon': 'bg-blue-100 text-blue-700',
@@ -49,7 +49,7 @@ function formatRange(start: string, end: string | null) {
   const fmt = (s: string) =>
     parseLocal(s).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
   if (!end || end === start) return fmt(start)
-  return `${fmt(start)} — ${fmt(end)}`
+  return `${fmt(start)} â€” ${fmt(end)}`
 }
 
 export default function CalendarioPage() {
@@ -100,7 +100,6 @@ export default function CalendarioPage() {
     })
   }, [year, month])
 
-  // Fecha modal com Escape
   useEffect(() => {
     if (!selectedItem) return
     function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setSelectedItem(null) }
@@ -223,7 +222,7 @@ export default function CalendarioPage() {
                   : calendarItemChip(ev.color ?? null)
                 const shape = ev.isStart && ev.isEnd ? 'rounded' : ev.isStart ? 'rounded-l' : ev.isEnd ? 'rounded-r' : ''
                 const cls = `text-xs font-medium px-1.5 py-0.5 truncate transition hover:opacity-80 ${colorClass} ${shape}`
-                const label = ev.isStart ? ev.title : ' '
+                const label = ev.isStart ? ev.title : 'Â '
 
                 if (ev.kind === 'event') {
                   return (
@@ -253,7 +252,6 @@ export default function CalendarioPage() {
         })}
       </div>
 
-      {/* Modal de detalhe para calendar items */}
       {selectedItem && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6"

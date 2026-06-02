@@ -1,4 +1,4 @@
-import Link from 'next/link'
+﻿import Link from 'next/link'
 
 export type ProfileActivityItem = {
   id: string
@@ -16,7 +16,7 @@ export type ProfileActivityItem = {
 const typeLabels: Record<ProfileActivityItem['type'], string> = {
   project: 'Projeto',
   article: 'Artigo',
-  topic: 'Tópico',
+  topic: 'TÃ³pico',
 }
 
 export default function ProfileActivityFeed({ items }: { items: ProfileActivityItem[] }) {
@@ -24,13 +24,13 @@ export default function ProfileActivityFeed({ items }: { items: ProfileActivityI
     <section className="border-t border-zinc-100 py-6">
       <div className="mb-4 flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-sm font-semibold text-zinc-900">Publicações</h2>
+          <h2 className="text-sm font-semibold text-zinc-900">PublicaÃ§Ãµes</h2>
         </div>
       </div>
 
       {items.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-200 p-8 text-center">
-          <p className="text-sm text-zinc-400">Nenhuma publicação ainda.</p>
+          <p className="text-sm text-zinc-400">Nenhuma publicaÃ§Ã£o ainda.</p>
         </div>
       ) : (
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-5">
@@ -45,7 +45,6 @@ export default function ProfileActivityFeed({ items }: { items: ProfileActivityI
                   {isVideoMedia(item) ? (
                     <video src={item.imageUrl} className="h-full w-full object-cover" autoPlay muted loop playsInline preload="metadata" />
                   ) : (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img src={item.imageUrl} alt={item.title} className="h-full w-full object-cover" />
                   )}
                 </div>

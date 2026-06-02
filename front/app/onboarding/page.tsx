@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -18,13 +18,13 @@ const AREAS = [
   { value: 'dados', label: 'Dados & IA' },
   { value: 'devops', label: 'DevOps & Cloud' },
   { value: 'ux-design', label: 'UX & Design' },
-  { value: 'seguranca', label: 'Segurança' },
+  { value: 'seguranca', label: 'SeguranÃ§a' },
 ]
 
 const XP_ACTIONS = [
   { label: 'Publicar projeto', xp: 50 },
   { label: 'Publicar artigo', xp: 40 },
-  { label: 'Criar tópico no fórum', xp: 20 },
+  { label: 'Criar tÃ³pico no fÃ³rum', xp: 20 },
   { label: 'Comentar', xp: 10 },
   { label: 'Receber curtida', xp: 5 },
 ]
@@ -42,9 +42,9 @@ const STEP_LABELS = [
   'Habilidades',
   'Perfil',
   'Projetos',
-  'Experiência',
+  'ExperiÃªncia',
   'Eventos',
-  'Discussões',
+  'DiscussÃµes',
   'Artigos',
   'Sobre o Curso',
 ]
@@ -56,7 +56,6 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(0)
   const [saving, setSaving] = useState(false)
 
-  // Step 1 — skills
   const [skills, setSkills] = useState<string[]>([])
   const [areas, setAreas] = useState<string[]>([])
   const [allTags, setAllTags] = useState<string[]>(DEFAULT_PROJECT_TAGS)
@@ -65,7 +64,6 @@ export default function OnboardingPage() {
   const tagRef = useRef<HTMLDivElement>(null)
   const tagInputRef = useRef<HTMLInputElement>(null)
 
-  // Step 2 — profile
   const [avatar, setAvatar] = useState<string | null>(null)
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [bio, setBio] = useState('')
@@ -180,14 +178,13 @@ export default function OnboardingPage() {
   return (
     <div className="onboarding-page min-h-screen bg-white flex flex-col dark:bg-zinc-950">
 
-      {/* Header */}
       <header className="sticky top-0 bg-white/90 backdrop-blur border-b border-zinc-100 px-5 py-4 z-10 dark:bg-zinc-950/90 dark:border-zinc-800">
         <div className="max-w-lg mx-auto">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-bold text-[#2F9E41] tracking-tight">ADS Comunica</span>
             <span className="text-xs text-zinc-400 font-medium">
               {STEP_LABELS[step]}
-              <span className="ml-2 text-zinc-300">·</span>
+              <span className="ml-2 text-zinc-300">Â·</span>
               <span className="ml-2">{step + 1}/{TOTAL}</span>
             </span>
           </div>
@@ -200,19 +197,16 @@ export default function OnboardingPage() {
         </div>
       </header>
 
-      {/* Main */}
       <main className="flex-1 flex items-start justify-center px-5 py-10">
         <div className="w-full max-w-lg">
 
-          {/* ── Step 1: Habilidades ── */}
           {step === 0 && (
             <div className="flex flex-col gap-8">
               <div>
-                <h1 className="text-2xl font-bold text-zinc-900">Quais são suas habilidades?</h1>
-                <p className="mt-2 text-sm text-zinc-500">Selecione as tecnologias que você domina ou quer explorar.</p>
+                <h1 className="text-2xl font-bold text-zinc-900">Quais sÃ£o suas habilidades?</h1>
+                <p className="mt-2 text-sm text-zinc-500">Selecione as tecnologias que vocÃª domina ou quer explorar.</p>
               </div>
 
-              {/* Tags */}
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-semibold text-zinc-700">Tecnologias</label>
                 <div ref={tagRef} className="relative">
@@ -231,7 +225,7 @@ export default function OnboardingPage() {
                           onMouseDown={(e) => e.preventDefault()}
                           onClick={() => removeSkill(tag)}
                           className="text-[#2F9E41]/60 hover:text-[#2F9E41] leading-none transition"
-                        >×</button>
+                        >Ã—</button>
                       </span>
                     ))}
                     <input
@@ -268,9 +262,8 @@ export default function OnboardingPage() {
                 </div>
               </div>
 
-              {/* Área preferida */}
               <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-zinc-700">{isProfessor ? 'Áreas de interesse' : 'Área de interesse'}</label>
+                <label className="text-sm font-semibold text-zinc-700">{isProfessor ? 'Ãreas de interesse' : 'Ãrea de interesse'}</label>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {interestOptions.map((interest) => {
                     const active = areas.includes(interest)
@@ -295,15 +288,13 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* ── Step 2: Perfil ── */}
           {step === 1 && (
             <div className="flex flex-col gap-7">
               <div>
                 <h1 className="text-2xl font-bold text-zinc-900">Complete seu perfil</h1>
-                <p className="mt-2 text-sm text-zinc-500">Essas informações ficam visíveis para os outros membros da comunidade.</p>
+                <p className="mt-2 text-sm text-zinc-500">Essas informaÃ§Ãµes ficam visÃ­veis para os outros membros da comunidade.</p>
               </div>
 
-              {/* Avatar */}
               <div className="flex items-center gap-5">
                 <button
                   type="button"
@@ -324,7 +315,7 @@ export default function OnboardingPage() {
                 </button>
                 <div>
                   <p className="text-sm font-medium text-zinc-800">Foto de perfil</p>
-                  <p className="text-xs text-zinc-400 mt-0.5">JPG, PNG ou GIF. Máximo 5 MB.</p>
+                  <p className="text-xs text-zinc-400 mt-0.5">JPG, PNG ou GIF. MÃ¡ximo 5 MB.</p>
                   {avatar && (
                     <button
                       type="button"
@@ -344,14 +335,13 @@ export default function OnboardingPage() {
                 />
               </div>
 
-              {/* Bio */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-zinc-700">Bio <span className="text-zinc-400 font-normal">(opcional)</span></label>
                 <textarea
                   rows={3}
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
-                  placeholder="Fale um pouco sobre você, seus interesses e objetivos..."
+                  placeholder="Fale um pouco sobre vocÃª, seus interesses e objetivos..."
                   className={inputCls + ' resize-none'}
                 />
               </div>
@@ -381,19 +371,18 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* ── Step 3: Projetos ── */}
           {step === 2 && (
             <InfoStep
               title="Mostre seus projetos"
-              description="Publique projetos do seu portfólio, compartilhe o que você construiu e receba feedbacks da comunidade. Cada projeto publicado vale XP!"
+              description="Publique projetos do seu portfÃ³lio, compartilhe o que vocÃª construiu e receba feedbacks da comunidade. Cada projeto publicado vale XP!"
             >
               <div className="mt-6 rounded-2xl bg-zinc-50 border border-zinc-200 p-5 flex flex-col gap-4">
-                <p className="text-sm font-semibold text-zinc-700">O que você pode publicar</p>
+                <p className="text-sm font-semibold text-zinc-700">O que vocÃª pode publicar</p>
                 <div className="flex flex-col gap-2.5">
                   {[
-                    'Projetos acadêmicos e trabalhos do curso',
-                    'Projetos pessoais e portfólio',
-                    'Trabalhos em grupo e colaborações',
+                    'Projetos acadÃªmicos e trabalhos do curso',
+                    'Projetos pessoais e portfÃ³lio',
+                    'Trabalhos em grupo e colaboraÃ§Ãµes',
                   ].map((item) => (
                     <div key={item} className="flex items-start gap-2.5 text-sm text-zinc-600">
                       <span className="mt-0.5 shrink-0 w-4 h-4 rounded-full bg-[#2F9E41]/15 flex items-center justify-center">
@@ -414,11 +403,10 @@ export default function OnboardingPage() {
             </InfoStep>
           )}
 
-          {/* ── Step 4: XP ── */}
           {step === 3 && (
             <InfoStep
               title="Ganhe XP participando"
-              description="Quanto mais você participa, mais experiência acumula. Suba de nível e destaque-se na comunidade."
+              description="Quanto mais vocÃª participa, mais experiÃªncia acumula. Suba de nÃ­vel e destaque-se na comunidade."
             >
               <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="rounded-2xl bg-zinc-50 border border-zinc-200 p-4 flex flex-col gap-2.5">
@@ -431,7 +419,7 @@ export default function OnboardingPage() {
                   ))}
                 </div>
                 <div className="rounded-2xl bg-zinc-50 border border-zinc-200 p-4 flex flex-col gap-2">
-                  <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Níveis</p>
+                  <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">NÃ­veis</p>
                   {LEVELS.map((l) => (
                     <div key={l.name} className="flex items-center gap-2.5 text-sm">
                       <span
@@ -447,18 +435,17 @@ export default function OnboardingPage() {
             </InfoStep>
           )}
 
-          {/* ── Step 5: Eventos ── */}
           {step === 4 && (
             <InfoStep
               title="Participe dos eventos"
-              description="Hackathons, maratonas de programação, extensão e iniciação científica. Fique por dentro de tudo que acontece no curso."
+              description="Hackathons, maratonas de programaÃ§Ã£o, extensÃ£o e iniciaÃ§Ã£o cientÃ­fica. Fique por dentro de tudo que acontece no curso."
             >
               <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {[
-                  { label: 'Hackathon', desc: 'Competições de desenvolvimento em equipe' },
-                  { label: 'Maratona', desc: 'Desafios de programação cronometrados' },
-                  { label: 'Extensão', desc: 'Projetos e atividades extracurriculares' },
-                  { label: 'Pesquisa', desc: 'Iniciação científica e TCC' },
+                  { label: 'Hackathon', desc: 'CompetiÃ§Ãµes de desenvolvimento em equipe' },
+                  { label: 'Maratona', desc: 'Desafios de programaÃ§Ã£o cronometrados' },
+                  { label: 'ExtensÃ£o', desc: 'Projetos e atividades extracurriculares' },
+                  { label: 'Pesquisa', desc: 'IniciaÃ§Ã£o cientÃ­fica e TCC' },
                 ].map((item) => (
                   <div key={item.label} className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
                     <p className="text-sm font-semibold text-zinc-800">{item.label}</p>
@@ -469,17 +456,16 @@ export default function OnboardingPage() {
             </InfoStep>
           )}
 
-          {/* ── Step 6: Discussões ── */}
           {step === 5 && (
             <InfoStep
-              title="Troque ideias no fórum"
-              description="Tire dúvidas, ajude outros alunos e participe de debates sobre tecnologia, carreira e o curso."
+              title="Troque ideias no fÃ³rum"
+              description="Tire dÃºvidas, ajude outros alunos e participe de debates sobre tecnologia, carreira e o curso."
             >
               <div className="mt-6 flex flex-col gap-3">
                 {[
-                  { q: 'Como funciona a iniciação científica?', tags: ['Pesquisa', 'IFNMG'] },
+                  { q: 'Como funciona a iniciaÃ§Ã£o cientÃ­fica?', tags: ['Pesquisa', 'IFNMG'] },
                   { q: 'React ou Vue para o TCC?', tags: ['Front-end', 'React'] },
-                  { q: 'Melhores repositórios de exercícios de SQL', tags: ['Banco de Dados'] },
+                  { q: 'Melhores repositÃ³rios de exercÃ­cios de SQL', tags: ['Banco de Dados'] },
                 ].map((item) => (
                   <div key={item.q} className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
                     <p className="text-sm font-medium text-zinc-800">{item.q}</p>
@@ -494,20 +480,19 @@ export default function OnboardingPage() {
             </InfoStep>
           )}
 
-          {/* ── Step 7: Artigos ── */}
           {step === 6 && (
             <InfoStep
               title="Leia e publique artigos"
-              description="Compartilhe conhecimento com a comunidade. Artigos ajudam quem está aprendendo e fortalecem seu portfólio."
+              description="Compartilhe conhecimento com a comunidade. Artigos ajudam quem estÃ¡ aprendendo e fortalecem seu portfÃ³lio."
             >
               <div className="mt-6 rounded-2xl bg-zinc-50 border border-zinc-200 p-5 flex flex-col gap-4">
-                <p className="text-sm font-semibold text-zinc-700">Você pode escrever sobre</p>
+                <p className="text-sm font-semibold text-zinc-700">VocÃª pode escrever sobre</p>
                 <div className="flex flex-col gap-2.5">
                   {[
-                    'Tutoriais e guias técnicos',
-                    'Reflexões e experiências do curso',
-                    'Análises de tecnologias e ferramentas',
-                    'Revisões de livros e materiais',
+                    'Tutoriais e guias tÃ©cnicos',
+                    'ReflexÃµes e experiÃªncias do curso',
+                    'AnÃ¡lises de tecnologias e ferramentas',
+                    'RevisÃµes de livros e materiais',
                   ].map((item) => (
                     <div key={item} className="flex items-start gap-2.5 text-sm text-zinc-600">
                       <span className="mt-0.5 shrink-0 w-4 h-4 rounded-full bg-[#2F9E41]/15 flex items-center justify-center">
@@ -521,29 +506,28 @@ export default function OnboardingPage() {
             </InfoStep>
           )}
 
-          {/* ── Step 8: Sobre o curso ── */}
           {step === 7 && (
             <div className="flex flex-col gap-8">
               <div className="text-center flex flex-col items-center">
                 <h1 className="text-2xl font-bold text-zinc-900">Bem-vindo ao ADS Comunica!</h1>
                 <p className="mt-2 text-sm text-zinc-500 max-w-sm">
-                  A comunidade oficial do curso de Análise e Desenvolvimento de Sistemas.
+                  A comunidade oficial do curso de AnÃ¡lise e Desenvolvimento de Sistemas.
                 </p>
               </div>
 
               <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-6 flex flex-col gap-4">
                 <p className="text-sm font-semibold text-zinc-700">Sobre o curso de ADS</p>
                 <p className="text-sm text-zinc-600 leading-relaxed">
-                  O curso Superior de Tecnologia em Análise e Desenvolvimento de Sistemas forma
+                  O curso Superior de Tecnologia em AnÃ¡lise e Desenvolvimento de Sistemas forma
                   profissionais capazes de desenvolver, implantar e manter sistemas de software,
-                  com foco em resolução de problemas reais através da tecnologia.
+                  com foco em resoluÃ§Ã£o de problemas reais atravÃ©s da tecnologia.
                 </p>
                 <div className="grid grid-cols-2 gap-3 pt-1">
                   {[
-                    { label: 'Duração', value: '6 semestres' },
+                    { label: 'DuraÃ§Ã£o', value: '6 semestres' },
                     { label: 'Modalidade', value: 'Presencial' },
-                    { label: 'Período', value: 'Noturno' },
-                    { label: 'Formação', value: 'Tecnólogo' },
+                    { label: 'PerÃ­odo', value: 'Noturno' },
+                    { label: 'FormaÃ§Ã£o', value: 'TecnÃ³logo' },
                   ].map((item) => (
                     <div key={item.label} className="rounded-xl bg-white border border-zinc-200 px-4 py-3 dark:bg-zinc-900 dark:border-zinc-800">
                       <p className="text-xs text-zinc-400">{item.label}</p>
@@ -554,7 +538,7 @@ export default function OnboardingPage() {
               </div>
 
               <p className="text-center text-sm text-zinc-400">
-                Seu perfil está pronto. Clique em <strong className="text-zinc-600">Começar!</strong> para explorar a plataforma.
+                Seu perfil estÃ¡ pronto. Clique em <strong className="text-zinc-600">ComeÃ§ar!</strong> para explorar a plataforma.
               </p>
             </div>
           )}
@@ -562,7 +546,6 @@ export default function OnboardingPage() {
         </div>
       </main>
 
-      {/* Footer nav */}
       <footer className="sticky bottom-0 bg-white/90 backdrop-blur border-t border-zinc-100 px-5 py-4 dark:bg-zinc-950/90 dark:border-zinc-800">
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <button
@@ -578,7 +561,7 @@ export default function OnboardingPage() {
             disabled={saving}
             className="rounded-full bg-[#2F9E41] px-8 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60 transition shadow-sm"
           >
-            {saving ? 'Salvando...' : step === TOTAL - 1 ? 'Começar!' : (
+            {saving ? 'Salvando...' : step === TOTAL - 1 ? 'ComeÃ§ar!' : (
               <span className="flex items-center gap-2">
                 Continuar
                 <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
@@ -594,7 +577,6 @@ export default function OnboardingPage() {
   )
 }
 
-// ── Shared components ──
 
 function InfoStep({
   title,

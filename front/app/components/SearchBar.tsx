@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -17,9 +17,9 @@ type Result = {
 const TYPE_LABEL: Record<ResultType, string> = {
   project:     'Projeto',
   article:     'Artigo',
-  forum_topic: 'Fórum',
-  user:        'Usuário',
-  page:        'Página',
+  forum_topic: 'FÃ³rum',
+  user:        'UsuÃ¡rio',
+  page:        'PÃ¡gina',
   event:       'Evento',
 }
 
@@ -40,18 +40,18 @@ function TypeBadge({ type }: { type: ResultType }) {
 }
 
 const STATIC_PAGES: { title: string; subtitle: string; url: string; keywords: string }[] = [
-  { title: 'Sobre o curso', subtitle: 'O Curso', url: '/curso#sobre-o-curso', keywords: 'ads análise desenvolvimento sistemas tecnólogo duração modalidade' },
+  { title: 'Sobre o curso', subtitle: 'O Curso', url: '/curso#sobre-o-curso', keywords: 'ads anÃ¡lise desenvolvimento sistemas tecnÃ³logo duraÃ§Ã£o modalidade' },
   { title: 'Matriz curricular', subtitle: 'O Curso', url: '/curso#matriz-curricular', keywords: 'disciplinas semestres grade curricular' },
-  { title: 'Professores', subtitle: 'O Curso', url: '/curso#professores', keywords: 'corpo docente professores coordenação' },
-  { title: 'Infraestrutura', subtitle: 'O Curso', url: '/curso#infraestrutura', keywords: 'laboratórios salas equipamentos' },
-  { title: 'Passe escolar', subtitle: 'Orientações Acadêmicas', url: '/area-aluno#orientacoes-academicas', keywords: 'passe escolar transporte solicitação vale ônibus' },
-  { title: 'Requerimentos no SUAP', subtitle: 'Orientações Acadêmicas', url: '/area-aluno#orientacoes-academicas', keywords: 'suap requerimento solicitação acadêmica protocolo' },
-  { title: 'Estágio', subtitle: 'Orientações Acadêmicas', url: '/area-aluno#orientacoes-academicas', keywords: 'estágio empresa supervisor documentos' },
-  { title: 'Iniciação científica', subtitle: 'Orientações Acadêmicas', url: '/area-aluno#orientacoes-academicas', keywords: 'iniciação científica pesquisa edital orientador bolsa' },
-  { title: 'TCC', subtitle: 'Orientações Acadêmicas', url: '/area-aluno#orientacoes-academicas', keywords: 'tcc trabalho conclusão monografia defesa' },
-  { title: 'Processos acadêmicos', subtitle: 'Orientações Acadêmicas', url: '/area-aluno#orientacoes-academicas', keywords: 'processo matrícula trancamento frequência setor' },
-  { title: 'Materiais acadêmicos', subtitle: 'Área do Aluno', url: '/area-aluno#materiais', keywords: 'biblioteca modelos templates relatório trabalho' },
-  { title: 'Links úteis', subtitle: 'Área do Aluno', url: '/area-aluno#links-uteis', keywords: 'suap moodle portal links acesso sistema' },
+  { title: 'Professores', subtitle: 'O Curso', url: '/curso#professores', keywords: 'corpo docente professores coordenaÃ§Ã£o' },
+  { title: 'Infraestrutura', subtitle: 'O Curso', url: '/curso#infraestrutura', keywords: 'laboratÃ³rios salas equipamentos' },
+  { title: 'Passe escolar', subtitle: 'OrientaÃ§Ãµes AcadÃªmicas', url: '/area-aluno#orientacoes-academicas', keywords: 'passe escolar transporte solicitaÃ§Ã£o vale Ã´nibus' },
+  { title: 'Requerimentos no SUAP', subtitle: 'OrientaÃ§Ãµes AcadÃªmicas', url: '/area-aluno#orientacoes-academicas', keywords: 'suap requerimento solicitaÃ§Ã£o acadÃªmica protocolo' },
+  { title: 'EstÃ¡gio', subtitle: 'OrientaÃ§Ãµes AcadÃªmicas', url: '/area-aluno#orientacoes-academicas', keywords: 'estÃ¡gio empresa supervisor documentos' },
+  { title: 'IniciaÃ§Ã£o cientÃ­fica', subtitle: 'OrientaÃ§Ãµes AcadÃªmicas', url: '/area-aluno#orientacoes-academicas', keywords: 'iniciaÃ§Ã£o cientÃ­fica pesquisa edital orientador bolsa' },
+  { title: 'TCC', subtitle: 'OrientaÃ§Ãµes AcadÃªmicas', url: '/area-aluno#orientacoes-academicas', keywords: 'tcc trabalho conclusÃ£o monografia defesa' },
+  { title: 'Processos acadÃªmicos', subtitle: 'OrientaÃ§Ãµes AcadÃªmicas', url: '/area-aluno#orientacoes-academicas', keywords: 'processo matrÃ­cula trancamento frequÃªncia setor' },
+  { title: 'Materiais acadÃªmicos', subtitle: 'Ãrea do Aluno', url: '/area-aluno#materiais', keywords: 'biblioteca modelos templates relatÃ³rio trabalho' },
+  { title: 'Links Ãºteis', subtitle: 'Ãrea do Aluno', url: '/area-aluno#links-uteis', keywords: 'suap moodle portal links acesso sistema' },
 ]
 
 function matchesQuery(page: typeof STATIC_PAGES[number], q: string) {
@@ -290,7 +290,6 @@ export default function SearchBar() {
 
   return (
     <>
-      {/* Mobile: ícone de busca */}
       <button
         type="button"
         onClick={() => setMobileExpanded(true)}
@@ -300,7 +299,6 @@ export default function SearchBar() {
         <SearchIcon />
       </button>
 
-      {/* Mobile: barra expandida (overlay no topo) */}
       {mobileExpanded && (
         <div className="fixed inset-x-0 top-0 z-60 flex h-16 items-center gap-3 border-b border-zinc-100 bg-white px-4 shadow-sm md:hidden">
           <div ref={mobileRef} className="relative flex-1">
@@ -314,7 +312,7 @@ export default function SearchBar() {
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               onFocus={() => query.trim().length >= 2 && results.length > 0 && setOpen(true)}
-              placeholder="Buscar projetos, eventos, usuários..."
+              placeholder="Buscar projetos, eventos, usuÃ¡rios..."
               autoComplete="off"
               className="h-10 w-full rounded-xl border border-zinc-300 bg-white pl-10 pr-4 text-sm font-medium text-zinc-800 shadow-sm outline-none transition placeholder:text-zinc-500 focus:border-[#2F9E41] focus:ring-2 focus:ring-[#2F9E41]/15"
             />
@@ -338,7 +336,6 @@ export default function SearchBar() {
         </div>
       )}
 
-      {/* Desktop: barra sempre visível */}
       <div ref={desktopRef} className="relative hidden md:block w-[min(42vw,28rem)] max-w-md">
         <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#2F9E41]">
           <SearchIcon />
@@ -350,7 +347,7 @@ export default function SearchBar() {
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={() => query.trim().length >= 2 && results.length > 0 && setOpen(true)}
-          placeholder="Buscar projetos, eventos, usuários..."
+          placeholder="Buscar projetos, eventos, usuÃ¡rios..."
           autoComplete="off"
           className="h-10 w-full rounded-xl border border-zinc-300 bg-white pl-10 pr-4 text-sm font-medium text-zinc-800 shadow-sm outline-none transition placeholder:text-zinc-500 hover:border-zinc-400 focus:border-[#2F9E41] focus:ring-2 focus:ring-[#2F9E41]/15"
         />

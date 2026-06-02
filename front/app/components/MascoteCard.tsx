@@ -1,4 +1,4 @@
-import Image from 'next/image'
+﻿import Image from 'next/image'
 
 type UpcomingEntry = {
   title: string
@@ -7,20 +7,20 @@ type UpcomingEntry = {
 }
 
 const TIPS = [
-  'Você pode exportar o calendário acadêmico completo em Excel direto do painel admin.',
-  'Acompanhe seus pontos de XP no Perfil — complete atividades para subir de nível!',
-  'O Fórum é o lugar certo para tirar dúvidas com colegas e professores.',
-  'Veja todos os projetos de alunos na seção Projetos — inspire-se e colabore!',
-  'Na aba Curso você encontra a grade curricular completa do ADS com detalhes de cada disciplina.',
+  'VocÃª pode exportar o calendÃ¡rio acadÃªmico completo em Excel direto do painel admin.',
+  'Acompanhe seus pontos de XP no Perfil â€” complete atividades para subir de nÃ­vel!',
+  'O FÃ³rum Ã© o lugar certo para tirar dÃºvidas com colegas e professores.',
+  'Veja todos os projetos de alunos na seÃ§Ã£o Projetos â€” inspire-se e colabore!',
+  'Na aba Curso vocÃª encontra a grade curricular completa do ADS com detalhes de cada disciplina.',
   'Compartilhe artigos sobre tecnologia diretamente na plataforma e ganhe XP.',
-  'Fique de olho nos prazos de rematrícula no Calendário — nunca mais perca um prazo!',
-  'Conheça o corpo docente do ADS na aba Curso — cada professor tem áreas de interesse.',
-  'Participe de hackathons e maratonas de programação para ganhar experiência prática!',
+  'Fique de olho nos prazos de rematrÃ­cula no CalendÃ¡rio â€” nunca mais perca um prazo!',
+  'ConheÃ§a o corpo docente do ADS na aba Curso â€” cada professor tem Ã¡reas de interesse.',
+  'Participe de hackathons e maratonas de programaÃ§Ã£o para ganhar experiÃªncia prÃ¡tica!',
   'Coloque seu GitHub e LinkedIn no Perfil para ser notado por empresas parceiras.',
-  'O PPC do curso está disponível na seção Curso para consulta a qualquer momento.',
-  'Responder perguntas no Fórum ajuda colegas e ainda rende XP para você.',
+  'O PPC do curso estÃ¡ disponÃ­vel na seÃ§Ã£o Curso para consulta a qualquer momento.',
+  'Responder perguntas no FÃ³rum ajuda colegas e ainda rende XP para vocÃª.',
   'Explore os projetos aprovados para ver exemplos de trabalhos de qualidade do curso.',
-  'Sua senha pode ser alterada a qualquer momento nas configurações do Perfil.',
+  'Sua senha pode ser alterada a qualquer momento nas configuraÃ§Ãµes do Perfil.',
 ]
 
 function parseLocalDate(str: string) {
@@ -68,20 +68,18 @@ export default function MascoteCard({ entries }: { entries: UpcomingEntry[] }) {
   const countdownLabel = !next
     ? null
     : next.daysLeft <= 0
-    ? 'É hoje!'
+    ? 'Ã‰ hoje!'
     : next.daysLeft === 1
-    ? 'Amanhã!'
+    ? 'AmanhÃ£!'
     : `Faltam ${next.daysLeft} dias`
 
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white overflow-hidden">
 
-      {/* Área do mascote com fundo degradê */}
       <div
         className="relative flex items-end justify-between px-4 pt-4"
         style={{ background: 'linear-gradient(145deg, #edfaf1 0%, #ffffff 70%)' }}
       >
-        {/* Texto de apresentação */}
         <div className="pb-3 flex flex-col gap-0.5">
           <p className="text-sm font-bold text-zinc-900">ADS Bot</p>
           <p className="text-xs text-zinc-400">Assistente do ADS</p>
@@ -89,11 +87,10 @@ export default function MascoteCard({ entries }: { entries: UpcomingEntry[] }) {
             className="mt-2 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold"
             style={{ backgroundColor: '#2F9E41', color: '#fff' }}
           >
-            <span>●</span> Online
+            <span>â—</span> Online
           </div>
         </div>
 
-        {/* Mascote — completamente visível, sem clip */}
         <div className="relative w-28 h-28 shrink-0 self-end">
           <Image
             src="/mascote.png"
@@ -106,10 +103,8 @@ export default function MascoteCard({ entries }: { entries: UpcomingEntry[] }) {
         </div>
       </div>
 
-      {/* Conteúdo */}
       <div className="px-4 pb-4 pt-3 flex flex-col gap-3">
 
-        {/* Contagem regressiva */}
         {next && countdownLabel ? (
           <div
             className="rounded-xl px-3 py-2.5"
@@ -124,13 +119,12 @@ export default function MascoteCard({ entries }: { entries: UpcomingEntry[] }) {
           </div>
         ) : (
           <div className="rounded-xl border border-zinc-100 bg-zinc-50 px-3 py-2.5">
-            <p className="text-xs text-zinc-400">Nenhum evento próximo por enquanto.</p>
+            <p className="text-xs text-zinc-400">Nenhum evento prÃ³ximo por enquanto.</p>
           </div>
         )}
 
-        {/* Dica do dia */}
         <div className="flex gap-2 rounded-xl bg-zinc-50 px-3 py-2.5">
-          <span className="text-sm leading-none mt-0.5">💡</span>
+          <span className="text-sm leading-none mt-0.5">ðŸ’¡</span>
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-400">Dica do dia</p>
             <p className="mt-0.5 text-xs leading-relaxed text-zinc-600">{tip}</p>

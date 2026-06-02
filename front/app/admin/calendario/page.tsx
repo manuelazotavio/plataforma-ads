@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useMemo, useState } from 'react'
 import Select from '@/app/components/Select'
@@ -40,8 +40,8 @@ const EMPTY_FORM: FormState = {
 
 const colorOptions = CALENDAR_COLOR_OPTIONS.map((c) => ({ value: c.value, label: c.label }))
 
-const MONTH_NAMES_PT = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
-const DAYS_OF_WEEK_PT = ['DOMINGO', 'SEGUNDA-FEIRA', 'TERÇA-FEIRA', 'QUARTA-FEIRA', 'QUINTA-FEIRA', 'SEXTA-FEIRA', 'SÁBADO']
+const MONTH_NAMES_PT = ['Janeiro', 'Fevereiro', 'MarÃ§o', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+const DAYS_OF_WEEK_PT = ['DOMINGO', 'SEGUNDA-FEIRA', 'TERÃ‡A-FEIRA', 'QUARTA-FEIRA', 'QUINTA-FEIRA', 'SEXTA-FEIRA', 'SÃBADO']
 
 function parseLocalDate(str: string) {
   const [y, m, d] = str.split('-').map(Number)
@@ -69,7 +69,6 @@ function isSchoolDay(activeItems: CalendarItem[], date: Date): boolean {
   return dow !== 0 && dow !== 6
 }
 
-// [semestre 0|1][diaSemana 0-6] → total dias letivos
 function computeSchoolDayCounts(activeItems: CalendarItem[], year: number): number[][] {
   const counts = Array.from({ length: 2 }, () => Array(7).fill(0) as number[])
   const totalDays = new Date(year, 11, 31).getTime()
@@ -177,11 +176,11 @@ export default function AdminCalendarioPage() {
   async function save(formEvent: React.FormEvent) {
     formEvent.preventDefault()
     if (!form.title.trim() || !form.start_date) {
-      setError('Título e data de início são obrigatórios.')
+      setError('TÃ­tulo e data de inÃ­cio sÃ£o obrigatÃ³rios.')
       return
     }
     if (form.end_date && form.end_date < form.start_date) {
-      setError('A data de fim não pode ser anterior à data de início.')
+      setError('A data de fim nÃ£o pode ser anterior Ã  data de inÃ­cio.')
       return
     }
     setSaving(true)
@@ -242,7 +241,6 @@ export default function AdminCalendarioPage() {
 
       const activeItems = items.filter((it) => it.is_active)
 
-      // Logo IFSP + ADS embutida no cabeçalho. Carregada uma vez e reutilizada nas 12 abas.
       let headerLogoId: number | undefined
       try {
         const res = await fetch('/calendario-cabecalho-ifsp-ads.jpeg')
@@ -251,7 +249,6 @@ export default function AdminCalendarioPage() {
           headerLogoId = workbook.addImage({ buffer: buf, extension: 'jpeg' })
         }
       } catch {
-        // Sem logo: cabeçalho fica em branco do lado direito.
       }
 
       const onDate = (date: Date, gridOnly: boolean) => itemsOnDate(activeItems, date, gridOnly)
@@ -259,10 +256,8 @@ export default function AdminCalendarioPage() {
 
       for (let m = 0; m < 12; m++) {
         const ws = workbook.addWorksheet(MONTH_NAMES_PT[m])
-        // 14 colunas: cada dia da semana ocupa 2 colunas (esquerda = nº do dia, direita = contador letivo)
         ws.columns = Array.from({ length: 14 }, () => ({ width: 11 }))
 
-        // Linha 1 — barra de título
         ws.mergeCells('A1:F1')
         const titleCell = ws.getCell('A1')
         titleCell.value = `${year}   ${MONTH_NAMES_PT[m].toLowerCase()}`
@@ -276,15 +271,12 @@ export default function AdminCalendarioPage() {
         ws.getRow(1).height = 48
 
         if (headerLogoId !== undefined) {
-          // Imagem flutuante cobrindo o range G1:N1 (col 6..N=13 0-indexed).
-          // Proporção da arte ~8:1 → 500×62 cabe na linha (h=48pt ≈ 64px) com leve folga.
           ws.addImage(headerLogoId, {
             tl: { col: 6.05, row: 0.05 },
             ext: { width: 500, height: 60 },
           })
         }
 
-        // Linha 2 — cabeçalho dos dias da semana (cada um ocupa 2 colunas)
         DAYS_OF_WEEK_PT.forEach((day, i) => {
           const leftCol = 1 + i * 2
           const rightCol = 2 + i * 2
@@ -298,7 +290,6 @@ export default function AdminCalendarioPage() {
         })
         ws.getRow(2).height = 22
 
-        // Grade — calcula células
         const firstWeekday = new Date(year, m, 1).getDay()
         const daysInMonth = new Date(year, m + 1, 0).getDate()
         const cellsArr: (number | null)[] = [
@@ -308,7 +299,6 @@ export default function AdminCalendarioPage() {
         while (cellsArr.length % 7 !== 0) cellsArr.push(null)
         const weekCount = cellsArr.length / 7
 
-        // Contador progressivo por coluna (0=dom..6=sab). Incrementa em cada dia letivo encontrado em ordem.
         const counters = [0, 0, 0, 0, 0, 0, 0]
 
         for (let r = 0; r < weekCount; r++) {
@@ -322,7 +312,6 @@ export default function AdminCalendarioPage() {
             const leftCol = 1 + c * 2
             const rightCol = 2 + c * 2
 
-            // Mescla a linha de baixo para o título
             ws.mergeCells(botRow, leftCol, botRow, rightCol)
             const titleCell2 = ws.getCell(botRow, leftCol)
             const topLeft = ws.getCell(topRow, leftCol)
@@ -357,14 +346,12 @@ export default function AdminCalendarioPage() {
 
             const fill = { type: 'pattern' as const, pattern: 'solid' as const, fgColor: { argb: bgArgb } }
 
-            // Canto superior esquerdo: número do dia
             topLeft.value = String(day).padStart(2, '0')
             topLeft.font = { name: 'Calibri', bold: true, size: 11, color: { argb: textArgb } }
             topLeft.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 }
             topLeft.fill = fill
             topLeft.border = { top: thinBorder, left: thinBorder }
 
-            // Canto superior direito: contador letivo (se aplicável)
             if (letivo) {
               topRight.value = counters[c]
               topRight.font = { name: 'Calibri', bold: true, size: 11, color: { argb: textArgb } }
@@ -373,7 +360,6 @@ export default function AdminCalendarioPage() {
             topRight.fill = fill
             topRight.border = { top: thinBorder, right: thinBorder }
 
-            // Linha de baixo: itens da grade + anotações do dia (show_in_grid=false)
             if (dayItems.length > 0 || annotationDayItems.length > 0) {
               const richText: { text: string; font: Record<string, unknown> }[] = []
               dayItems.forEach((it, i) => {
@@ -390,7 +376,6 @@ export default function AdminCalendarioPage() {
           }
         }
 
-        // Anotações: items com show_in_grid=false que se sobrepõem ao mês
         const gridEndRow = 2 + weekCount * 2
         const monthStart = new Date(year, m, 1)
         const monthEnd = new Date(year, m + 1, 0)
@@ -405,7 +390,7 @@ export default function AdminCalendarioPage() {
           const headerRow = gridEndRow + 1
           ws.mergeCells(headerRow, 1, headerRow, 14)
           const header = ws.getCell(headerRow, 1)
-          header.value = 'Anotações:'
+          header.value = 'AnotaÃ§Ãµes:'
           header.font = { name: 'Calibri', bold: true, size: 11, color: { argb: 'FF000000' } }
           header.alignment = { vertical: 'middle', horizontal: 'left' }
           ws.getRow(headerRow).height = 20
@@ -448,7 +433,7 @@ export default function AdminCalendarioPage() {
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
-      setNotice(`Calendário ${year} exportado.`)
+      setNotice(`CalendÃ¡rio ${year} exportado.`)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao gerar Excel.'
       setError(message)
@@ -461,9 +446,9 @@ export default function AdminCalendarioPage() {
     <div>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-zinc-900">Calendário</h1>
+          <h1 className="text-2xl font-semibold text-zinc-900">CalendÃ¡rio</h1>
           <p className="mt-0.5 text-sm text-zinc-500">
-            Datas acadêmicas e prazos (rematrícula, feriados, entregas). Não são eventos.
+            Datas acadÃªmicas e prazos (rematrÃ­cula, feriados, entregas). NÃ£o sÃ£o eventos.
           </p>
         </div>
         {!showForm && (
@@ -490,7 +475,7 @@ export default function AdminCalendarioPage() {
                 <polyline points="7 10 12 15 17 10" />
                 <line x1={12} y1={15} x2={12} y2={3} />
               </svg>
-              {exporting ? 'Gerando…' : 'Exportar Excel'}
+              {exporting ? 'Gerandoâ€¦' : 'Exportar Excel'}
             </button>
             <button
               type="button"
@@ -516,18 +501,18 @@ export default function AdminCalendarioPage() {
         <form onSubmit={save} className="mb-6 grid gap-4 rounded-xl border border-zinc-200 bg-white p-5">
           <h2 className="text-sm font-semibold text-zinc-900">{editingId ? 'Editar data' : 'Nova data'}</h2>
           <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500">
-            Título
+            TÃ­tulo
             <input
               autoFocus
               type="text"
               value={form.title}
               onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
-              placeholder="Ex: Rematrícula"
+              placeholder="Ex: RematrÃ­cula"
               className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
             />
           </label>
           <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500">
-            Descrição <span className="font-normal text-zinc-400">(opcional)</span>
+            DescriÃ§Ã£o <span className="font-normal text-zinc-400">(opcional)</span>
             <textarea
               value={form.description}
               onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
@@ -538,7 +523,7 @@ export default function AdminCalendarioPage() {
           </label>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500">
-              Data de início
+              Data de inÃ­cio
               <input
                 type="date"
                 value={form.start_date}
@@ -583,7 +568,7 @@ export default function AdminCalendarioPage() {
                 checked={form.is_active}
                 onChange={(e) => setForm((p) => ({ ...p, is_active: e.target.checked }))}
               />
-              Ativo no calendário
+              Ativo no calendÃ¡rio
             </label>
             <label className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer">
               <input
@@ -591,8 +576,8 @@ export default function AdminCalendarioPage() {
                 checked={form.visible_to_students}
                 onChange={(e) => setForm((p) => ({ ...p, visible_to_students: e.target.checked }))}
               />
-              Visível para alunos
-              <span className="text-xs font-normal text-zinc-400">(quando desmarcado, só professores e admins veem)</span>
+              VisÃ­vel para alunos
+              <span className="text-xs font-normal text-zinc-400">(quando desmarcado, sÃ³ professores e admins veem)</span>
             </label>
             <label className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer">
               <input
@@ -601,7 +586,7 @@ export default function AdminCalendarioPage() {
                 onChange={(e) => setForm((p) => ({ ...p, show_in_grid: e.target.checked }))}
               />
               Exibir como bloco no Excel
-              <span className="text-xs font-normal text-zinc-400">(quando desmarcado, vai pra seção &quot;Anotações:&quot; do rodapé)</span>
+              <span className="text-xs font-normal text-zinc-400">(quando desmarcado, vai pra seÃ§Ã£o &quot;AnotaÃ§Ãµes:&quot; do rodapÃ©)</span>
             </label>
             <label className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer">
               <input
@@ -609,8 +594,8 @@ export default function AdminCalendarioPage() {
                 checked={form.adds_school_day}
                 onChange={(e) => setForm((p) => ({ ...p, adds_school_day: e.target.checked }))}
               />
-              Reposição: contar como dia letivo
-              <span className="text-xs font-normal text-zinc-400">(força sábado/domingo ou data cancelada a entrar no totalizador)</span>
+              ReposiÃ§Ã£o: contar como dia letivo
+              <span className="text-xs font-normal text-zinc-400">(forÃ§a sÃ¡bado/domingo ou data cancelada a entrar no totalizador)</span>
             </label>
           </div>
           <div className="flex justify-end gap-2 pt-1">
@@ -626,14 +611,14 @@ export default function AdminCalendarioPage() {
               disabled={saving || !form.title.trim() || !form.start_date}
               className="cursor-pointer rounded-lg bg-[#2F9E41] px-5 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
             >
-              {saving ? 'Salvando…' : editingId ? 'Salvar' : 'Criar'}
+              {saving ? 'Salvandoâ€¦' : editingId ? 'Salvar' : 'Criar'}
             </button>
           </div>
         </form>
       )}
 
       {loading ? (
-        <LoadingState message="Carregando calendário" />
+        <LoadingState message="Carregando calendÃ¡rio" />
       ) : (
         <div className="flex flex-col gap-8">
           {items.length === 0 ? (
@@ -643,7 +628,7 @@ export default function AdminCalendarioPage() {
           ) : (
             <>
               {upcoming.length > 0 && (
-                <CalendarItemSection title="Próximas" items={upcoming} onEdit={openEdit} onToggle={toggleActive} onDelete={remove} saving={saving} />
+                <CalendarItemSection title="PrÃ³ximas" items={upcoming} onEdit={openEdit} onToggle={toggleActive} onDelete={remove} saving={saving} />
               )}
               {past.length > 0 && (
                 <CalendarItemSection title="Anteriores" items={past} onEdit={openEdit} onToggle={toggleActive} onDelete={remove} saving={saving} dim />
@@ -669,7 +654,7 @@ export default function AdminCalendarioPage() {
                         <p className="truncate text-sm font-medium text-zinc-900">{ev.title}</p>
                         <p className="text-xs text-zinc-400">
                           {formatRange(ev.start_date ?? '', ev.end_date)}
-                          {ev.category && <span className="ml-2 text-zinc-300">· {ev.category}</span>}
+                          {ev.category && <span className="ml-2 text-zinc-300">Â· {ev.category}</span>}
                         </p>
                       </div>
                       {!ev.is_active && (
@@ -689,11 +674,9 @@ export default function AdminCalendarioPage() {
   )
 }
 
-// seg=1, ter=2, qua=3, qui=4, sex=5 — omite dom e sáb se zero em ambos semestres
-const DOW_LABELS: Record<number, string> = { 0: 'Dom', 1: 'Seg', 2: 'Ter', 3: 'Qua', 4: 'Qui', 5: 'Sex', 6: 'Sáb' }
+const DOW_LABELS: Record<number, string> = { 0: 'Dom', 1: 'Seg', 2: 'Ter', 3: 'Qua', 4: 'Qui', 5: 'Sex', 6: 'SÃ¡b' }
 
 function SchoolDayCard({ counts, year }: { counts: number[][]; year: number }) {
-  // Determina quais dias da semana aparecem (remove dom/sáb se ambos semestres = 0)
   const visibleDows = [0, 1, 2, 3, 4, 5, 6].filter(
     (dow) => counts[0][dow] > 0 || counts[1][dow] > 0
   )
@@ -708,7 +691,7 @@ function SchoolDayCard({ counts, year }: { counts: number[][]; year: number }) {
     <div className="mb-6 rounded-xl border border-zinc-200 bg-white p-4">
       <div className="mb-3 flex items-center justify-between">
         <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
-          Dias letivos — {year}
+          Dias letivos â€” {year}
         </p>
         <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-semibold text-zinc-600">
           {grandTotal} total
@@ -733,7 +716,7 @@ function SchoolDayCard({ counts, year }: { counts: number[][]; year: number }) {
             {[0, 1].map((s) => (
               <tr key={s} className="border-t border-zinc-100">
                 <td className="py-2 pr-4 text-xs font-semibold text-zinc-500">
-                  {s === 0 ? '1º Semestre' : '2º Semestre'}
+                  {s === 0 ? '1Âº Semestre' : '2Âº Semestre'}
                 </td>
                 {visibleDows.map((dow) => (
                   <td key={dow} className="py-2 px-2 text-center">
@@ -742,7 +725,7 @@ function SchoolDayCard({ counts, year }: { counts: number[][]; year: number }) {
                         {counts[s][dow]}
                       </span>
                     ) : (
-                      <span className="text-xs text-zinc-200">—</span>
+                      <span className="text-xs text-zinc-200">â€”</span>
                     )}
                   </td>
                 ))}
@@ -814,13 +797,13 @@ function CalendarItemSection({ title, items, onEdit, onToggle, onDelete, saving,
                       <line x1={9} y1={13} x2={15} y2={13} />
                       <line x1={9} y1={17} x2={15} y2={17} />
                     </svg>
-                    Anotações no Excel
+                    AnotaÃ§Ãµes no Excel
                   </span>
                 )}
               </div>
               <p className="text-xs text-zinc-400">
                 {formatRange(item.start_date, item.end_date)}
-                {item.url && <span className="ml-2 text-zinc-300">· {item.url}</span>}
+                {item.url && <span className="ml-2 text-zinc-300">Â· {item.url}</span>}
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-1">
@@ -865,5 +848,5 @@ function formatRange(start: string, end: string | null) {
     return new Date(y, m - 1, d).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })
   }
   if (!end || end === start) return fmt(start)
-  return `${fmt(start)} — ${fmt(end)}`
+  return `${fmt(start)} â€” ${fmt(end)}`
 }
