@@ -159,7 +159,7 @@ export function PublicWelcomeCard() {
   return (
     <div className="dashboard-welcome-card rounded-2xl border border-zinc-100 px-6 py-7 sm:px-10 sm:py-8">
       <h1 className="mb-3 text-3xl font-bold tracking-tight text-zinc-900">
-        {loggedIn ? `Bem-vindo(a) de volta, ${data.firstName}!` : 'Bem-vindo(a) ao ADS Comunica!'}
+        {loggedIn ? `Bem-vindo(a) de volta, ${data.firstName}!` : 'Bem-vindo(a) ao ADS Conecta!'}
       </h1>
       <p className="mb-8 max-w-xl text-base text-zinc-500">
         {loggedIn

@@ -102,7 +102,7 @@ export default function AppSidebar({ open = true, onClose }: AppSidebarProps) {
           onClick={onClose}
           className="font-bold text-sm text-zinc-900 transition hover:text-[#2F9E41]"
         >
-          ADS Comunica
+          ADS Conecta
         </Link>
       </div>
 

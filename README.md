@@ -1,4 +1,4 @@
-# ADS Comunica
+# ADS Conecta
 
 Plataforma comunitária para alunos do curso de Análise e Desenvolvimento de Sistemas (ADS). Centraliza publicação de projetos acadêmicos, artigos, fórum de discussão, eventos, oportunidades de carreira, perfis do corpo docente, egressos e a matriz curricular do curso.
 

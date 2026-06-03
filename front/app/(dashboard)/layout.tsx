@@ -277,11 +277,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
             <footer className="border-t border-zinc-100 py-6 mt-8 px-4 md:pl-10 md:pr-28">
               <div className="flex flex-col items-center gap-y-2 text-center text-xs text-zinc-400 md:flex-row md:flex-wrap md:text-left md:gap-x-5">
-                <Link href="/regras" className="hover:text-zinc-700 transition">Regras do ADS Comunica</Link>
+                <Link href="/regras" className="hover:text-zinc-700 transition">Regras do ADS Conecta</Link>
                 <Link href="/privacidade" className="hover:text-zinc-700 transition">Política de Privacidade</Link>
                 <Link href="/contrato" className="hover:text-zinc-700 transition">Contrato de Usuário</Link>
                 <Link href="/acessibilidade" className="hover:text-zinc-700 transition">Acessibilidade</Link>
-                <span className="md:ml-auto">ADS Comunica, Inc. © 2026. Todos os direitos reservados.</span>
+                <span className="md:ml-auto">ADS Conecta, Inc. © 2026. Todos os direitos reservados.</span>
               </div>
             </footer>
           </div>

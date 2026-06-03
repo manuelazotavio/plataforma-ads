@@ -2,7 +2,7 @@ type LoadingScreenProps = {
   message?: string
 }
 
-export default function LoadingScreen({ message = 'Carregando o ADS Comunica' }: LoadingScreenProps) {
+export default function LoadingScreen({ message = 'Carregando o ADS Conecta' }: LoadingScreenProps) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-white px-6 dark:bg-zinc-950">
       <LoadingState message={message} />

@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "ADS Comunica",
+  title: "ADS Conecta",
   description: "A plataforma dos alunos de ADS",
 };
 

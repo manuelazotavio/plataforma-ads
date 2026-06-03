@@ -1,5 +1,5 @@
 param(
-  [string]$TaskName = 'ADS Comunica - Backup Supabase',
+  [string]$TaskName = 'ADS Conecta - Backup Supabase',
   [string]$At = '03:00',
   [int]$KeepDays = 14
 )
@@ -30,7 +30,7 @@ Register-ScheduledTask `
   -Action $action `
   -Trigger $trigger `
   -Principal $principal `
-  -Description 'Backup diario do banco Supabase do ADS Comunica.' `
+  -Description 'Backup diario do banco Supabase do ADS Conecta.' `
   -Force | Out-Null
 
 Write-Host "Tarefa criada: $TaskName, diariamente as $At."

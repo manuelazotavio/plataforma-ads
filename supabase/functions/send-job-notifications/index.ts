@@ -143,7 +143,7 @@ function emailHtml(job: Job, appUrl: string | null) {
       <p style="font-size: 15px; color: #52525b; margin: 0 0 20px;">${escapeHtml(details)}</p>
       ${targetUrl ? `<a href="${escapeHtml(targetUrl)}" style="display: inline-block; background: #2F9E41; color: white; padding: 10px 16px; border-radius: 8px; text-decoration: none; font-weight: 700;">Ver oportunidade</a>` : ''}
       <p style="font-size: 12px; color: #71717a; margin-top: 24px;">
-        Você recebeu este e-mail porque ativou notificações de novas oportunidades no ADS Comunica.
+        Você recebeu este e-mail porque ativou notificações de novas oportunidades no ADS Conecta.
       </p>
     </div>
   `

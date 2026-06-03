@@ -1,12 +1,12 @@
 export default function RegrasPage() {
   return (
     <div className="mx-auto w-full max-w-4xl px-6 py-8 md:px-12 md:py-12 lg:px-16">
-      <h1 className="text-2xl font-black text-zinc-900 mb-2">Regras do ADS Comunica</h1>
+      <h1 className="text-2xl font-black text-zinc-900 mb-2">Regras do ADS Conecta</h1>
       <p className="text-sm text-zinc-400 mb-10">Última atualização: abril de 2026</p>
 
       <div className="flex flex-col gap-8 text-sm text-zinc-700 leading-relaxed">
         <Section title="1. Propósito da plataforma">
-          O ADS Comunica é um espaço exclusivo para a comunidade do curso de Análise e Desenvolvimento de Sistemas. Seu objetivo é conectar alunos, egressos e professores por meio de projetos, fórum de discussão, oportunidades e conteúdo acadêmico.
+          O ADS Conecta é um espaço exclusivo para a comunidade do curso de Análise e Desenvolvimento de Sistemas. Seu objetivo é conectar alunos, egressos e professores por meio de projetos, fórum de discussão, oportunidades e conteúdo acadêmico.
         </Section>
 
         <Section title="2. Conduta esperada">

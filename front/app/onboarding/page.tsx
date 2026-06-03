@@ -181,7 +181,7 @@ export default function OnboardingPage() {
       <header className="sticky top-0 bg-white/90 backdrop-blur border-b border-zinc-100 px-5 py-4 z-10 dark:bg-zinc-950/90 dark:border-zinc-800">
         <div className="max-w-lg mx-auto">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-bold text-[#2F9E41] tracking-tight">ADS Comunica</span>
+            <span className="text-sm font-bold text-[#2F9E41] tracking-tight">ADS Conecta</span>
             <span className="text-xs text-zinc-400 font-medium">
               {STEP_LABELS[step]}
               <span className="ml-2 text-zinc-300">Â·</span>
@@ -509,7 +509,7 @@ export default function OnboardingPage() {
           {step === 7 && (
             <div className="flex flex-col gap-8">
               <div className="text-center flex flex-col items-center">
-                <h1 className="text-2xl font-bold text-zinc-900">Bem-vindo ao ADS Comunica!</h1>
+                <h1 className="text-2xl font-bold text-zinc-900">Bem-vindo ao ADS Conecta!</h1>
                 <p className="mt-2 text-sm text-zinc-500 max-w-sm">
                   A comunidade oficial do curso de AnÃ¡lise e Desenvolvimento de Sistemas.
                 </p>

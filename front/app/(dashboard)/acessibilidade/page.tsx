@@ -6,7 +6,7 @@ export default function AcessibilidadePage() {
 
       <div className="flex flex-col gap-8 text-sm text-zinc-700 leading-relaxed">
         <Section title="Nosso compromisso">
-          O ADS Comunica está comprometido em garantir que a plataforma seja acessível ao maior número possível de pessoas, independentemente de habilidades ou tecnologias utilizadas. Seguimos as diretrizes WCAG 2.1 como referência de boas práticas.
+          O ADS Conecta está comprometido em garantir que a plataforma seja acessível ao maior número possível de pessoas, independentemente de habilidades ou tecnologias utilizadas. Seguimos as diretrizes WCAG 2.1 como referência de boas práticas.
         </Section>
 
         <Section title="O que estamos fazendo">
@@ -22,7 +22,7 @@ export default function AcessibilidadePage() {
         </Section>
 
         <Section title="Feedback">
-          Se você encontrar barreiras de acessibilidade ao usar o ADS Comunica, queremos saber. Entre em contato pela página de Contato descrevendo o problema e, se possível, o navegador e tecnologia assistiva utilizados. Sua contribuição é fundamental para melhorarmos a plataforma.
+          Se você encontrar barreiras de acessibilidade ao usar o ADS Conecta, queremos saber. Entre em contato pela página de Contato descrevendo o problema e, se possível, o navegador e tecnologia assistiva utilizados. Sua contribuição é fundamental para melhorarmos a plataforma.
         </Section>
       </div>
     </div>

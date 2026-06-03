@@ -6,7 +6,7 @@ export default function ContratoPage() {
 
       <div className="flex flex-col gap-8 text-sm text-zinc-700 leading-relaxed">
         <Section title="1. Aceitação dos termos">
-          Ao criar uma conta ou utilizar o ADS Comunica, você declara ter lido, compreendido e concordado com este Contrato de Usuário, com as Regras da plataforma e com a Política de Privacidade. Caso não concorde, não utilize a plataforma.
+          Ao criar uma conta ou utilizar o ADS Conecta, você declara ter lido, compreendido e concordado com este Contrato de Usuário, com as Regras da plataforma e com a Política de Privacidade. Caso não concorde, não utilize a plataforma.
         </Section>
 
         <Section title="2. Elegibilidade">
@@ -18,15 +18,15 @@ export default function ContratoPage() {
         </Section>
 
         <Section title="4. Propriedade intelectual">
-          O conteúdo publicado por você na plataforma (textos, projetos, imagens) permanece de sua propriedade. Ao publicá-lo, você concede ao ADS Comunica uma licença não exclusiva para exibi-lo dentro da plataforma.
+          O conteúdo publicado por você na plataforma (textos, projetos, imagens) permanece de sua propriedade. Ao publicá-lo, você concede ao ADS Conecta uma licença não exclusiva para exibi-lo dentro da plataforma.
         </Section>
 
         <Section title="5. Conteúdo de terceiros">
-          A plataforma pode conter links ou referências a recursos externos. O ADS Comunica não se responsabiliza pelo conteúdo, disponibilidade ou práticas de privacidade de sites de terceiros.
+          A plataforma pode conter links ou referências a recursos externos. O ADS Conecta não se responsabiliza pelo conteúdo, disponibilidade ou práticas de privacidade de sites de terceiros.
         </Section>
 
         <Section title="6. Limitação de responsabilidade">
-          O ADS Comunica é fornecido "no estado em que se encontra", sem garantias de disponibilidade contínua. Não nos responsabilizamos por eventuais perdas de dados, interrupções ou danos decorrentes do uso da plataforma.
+          O ADS Conecta é fornecido "no estado em que se encontra", sem garantias de disponibilidade contínua. Não nos responsabilizamos por eventuais perdas de dados, interrupções ou danos decorrentes do uso da plataforma.
         </Section>
 
         <Section title="7. Rescisão">
