@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getAuthRedirectUrl } from '@/app/lib/authRedirect'
 import { supabase } from '@/app/lib/supabase'
+import BrandLogo from '@/app/components/BrandLogo'
 import ThemeToggle from '@/app/components/ThemeToggle'
 import PasswordInput from '@/app/components/PasswordInput'
 
@@ -112,17 +113,15 @@ export default function CadastroPage() {
   }
 
   return (
-    <div className="flex min-h-dvh items-start justify-center bg-zinc-50 px-4 py-8 sm:items-center sm:px-6">
+    <div className="flex min-h-dvh items-start justify-center bg-zinc-50 px-4 py-8 dark:bg-zinc-950 sm:items-center sm:px-6">
       <div className="absolute right-4 top-4">
         <ThemeToggle />
       </div>
-      <div className="w-full max-w-[440px] rounded-2xl border border-zinc-200 bg-white p-6 shadow-lg shadow-zinc-200/70 sm:p-8">
+      <div className="w-full max-w-[440px] rounded-2xl border border-zinc-200 bg-white p-6 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none sm:p-8">
         <div className="mb-6">
-          <p className="mb-2 text-xs font-semibold text-[#2F9E41]">
-            Plataforma ADS
-          </p>
-          <h1 className="text-2xl font-semibold text-zinc-950">Criar conta</h1>
-          <p className="mt-1 text-sm text-zinc-500">Entre na comunidade de ADS.</p>
+          <BrandLogo className="mb-4 h-12 w-48" priority />
+          <h1 className="text-2xl font-semibold text-zinc-950 dark:text-zinc-100">Criar conta</h1>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Entre na comunidade de ADS.</p>
         </div>
 
         <button

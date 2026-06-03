@@ -6,6 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
+import BrandLogo from '@/app/components/BrandLogo'
 import { DEFAULT_PROJECT_TAGS, PROJECT_TAG_OPTIONS_TABLE, uniqueTagNames } from '@/app/lib/projectTags'
 
 const TOTAL = 8
@@ -181,7 +182,7 @@ export default function OnboardingPage() {
       <header className="sticky top-0 bg-white/90 backdrop-blur border-b border-zinc-100 px-5 py-4 z-10 dark:bg-zinc-950/90 dark:border-zinc-800">
         <div className="max-w-lg mx-auto">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-bold text-[#2F9E41] tracking-tight">ADS Conecta</span>
+            <BrandLogo className="h-9 w-36" priority />
             <span className="text-xs text-zinc-400 font-medium">
               {STEP_LABELS[step]}
               <span className="ml-2 text-zinc-300">Â·</span>

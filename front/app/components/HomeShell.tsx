@@ -22,7 +22,7 @@ export default function HomeShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    <div className="flex h-screen overflow-hidden bg-white">
+    <div className="flex h-screen overflow-hidden bg-white dark:bg-zinc-950">
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/40 z-20 md:hidden"
@@ -33,13 +33,13 @@ export default function HomeShell({ children }: { children: React.ReactNode }) {
       <AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="flex min-w-0 flex-1 flex-col ml-0 md:ml-56">
-        <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-end gap-2 border-b border-zinc-100 bg-white px-3 sm:gap-4 sm:px-4 md:px-6">
+        <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-end gap-2 border-b border-zinc-100 bg-white px-3 dark:border-zinc-800 dark:bg-zinc-950 sm:gap-4 sm:px-4 md:px-6">
           <div className="mr-auto flex shrink-0 items-center gap-1 md:hidden">
             <button
               type="button"
               aria-label="Abrir menu"
               onClick={() => setSidebarOpen(true)}
-              className="rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-100"
+              className="rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
             >
               <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                 <line x1={3} y1={6} x2={21} y2={6} />
@@ -50,7 +50,7 @@ export default function HomeShell({ children }: { children: React.ReactNode }) {
             <Link
               href="/"
               aria-label="Ir para inicio"
-              className="rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-100"
+              className="rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
             >
               <HomeIcon />
             </Link>
@@ -66,7 +66,7 @@ export default function HomeShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto bg-white">
+        <main className="flex-1 overflow-y-auto bg-white dark:bg-zinc-950">
           {children}
         </main>
 

@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
+import BrandLogo from '@/app/components/BrandLogo'
 import ThemeToggle from '@/app/components/ThemeToggle'
 import UserAvatar from '@/app/components/UserAvatar'
 
@@ -105,13 +106,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <Link
           href="/admin"
           onClick={() => setSidebarOpen(false)}
-          className="h-16 flex items-center px-5 border-b border-white/5 gap-2.5 transition hover:bg-white/5"
+          className="h-16 flex items-center px-4 border-b border-white/5 transition hover:bg-white/5"
+          aria-label="ADS Conecta Admin"
         >
-          <div className="w-7 h-3 rounded-sm bg-white shrink-0" />
-          <div className="leading-tight">
-            <span className="block font-bold text-sm text-white">ADS</span>
-            <span className="block font-bold text-sm text-zinc-500">Admin</span>
-          </div>
+          <BrandLogo mode="dark" className="h-10 w-40" priority />
         </Link>
         <div className="absolute right-5 top-5 md:hidden">
           <button

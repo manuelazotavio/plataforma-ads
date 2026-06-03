@@ -12,6 +12,7 @@ import {
   parseMascotPhrases,
 } from '@/app/lib/mascotSettings'
 import { supabase } from '@/app/lib/supabase'
+import BrandLogo from './BrandLogo'
 import ThemeToggle from './ThemeToggle'
 
 
@@ -95,14 +96,15 @@ export default function AppSidebar({ open = true, onClose }: AppSidebarProps) {
   }, [])
 
   return (
-    <aside className={`w-56 shrink-0 bg-white flex flex-col fixed h-full z-30 transition-transform duration-300 ${open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
-      <div className="h-16 flex items-center px-5 border-b border-zinc-100">
+    <aside className={`w-56 shrink-0 bg-white flex flex-col fixed h-full z-30 transition-transform duration-300 dark:bg-zinc-950 ${open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+      <div className="h-16 flex items-center px-4 border-b border-zinc-100 dark:border-zinc-800">
         <Link
           href="/"
           onClick={onClose}
-          className="font-bold text-sm text-zinc-900 transition hover:text-[#2F9E41]"
+          className="block transition hover:opacity-80"
+          aria-label="ADS Conecta"
         >
-          ADS Conecta
+          <BrandLogo className="h-10 w-40" priority />
         </Link>
       </div>
 
@@ -132,14 +134,14 @@ export default function AppSidebar({ open = true, onClose }: AppSidebarProps) {
 
           return (
             <div key={item.href} ref={(el) => { itemRefs.current[item.href] = el }}>
-              {dividerBefore && <div className="my-2 border-t border-zinc-100" />}
+              {dividerBefore && <div className="my-2 border-t border-zinc-100 dark:border-zinc-800" />}
               {hasChildren ? (
                 <button
                   type="button"
                   aria-expanded={expanded}
                   onClick={handleToggle}
                   className={`flex w-full min-w-0 items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-colors ${
-                    active ? 'text-white' : 'text-zinc-900 hover:bg-zinc-100'
+                    active ? 'text-white' : 'text-zinc-900 hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-900'
                   }`}
                   style={active ? { backgroundColor: '#2F9E41' } : undefined}
                 >
@@ -159,7 +161,7 @@ export default function AppSidebar({ open = true, onClose }: AppSidebarProps) {
                   href={item.href}
                   onClick={onClose}
                   className={`flex min-w-0 items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-colors ${
-                    active ? 'text-white' : 'text-zinc-900 hover:bg-zinc-100'
+                    active ? 'text-white' : 'text-zinc-900 hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-900'
                   }`}
                   style={active ? { backgroundColor: '#2F9E41' } : undefined}
                 >
@@ -168,7 +170,7 @@ export default function AppSidebar({ open = true, onClose }: AppSidebarProps) {
                 </Link>
               )}
               {hasChildren && expanded && (
-                <div className="ml-8 mt-1 flex flex-col gap-1 border-l border-zinc-100 pl-3">
+                <div className="ml-8 mt-1 flex flex-col gap-1 border-l border-zinc-100 pl-3 dark:border-zinc-800">
                   {item.children!.map((child) => {
                     const [childPath, childAnchor] = child.href.split('#')
                     const childHash = childAnchor ? `#${childAnchor}` : ''
@@ -191,7 +193,7 @@ export default function AppSidebar({ open = true, onClose }: AppSidebarProps) {
                         className={`w-full text-left rounded-lg px-3 py-2 text-sm font-medium transition ${
                           childActive
                             ? 'text-white'
-                            : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900'
+                            : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100'
                         }`}
                         style={childActive ? { backgroundColor: '#2F9E41' } : undefined}
                       >
@@ -207,9 +209,9 @@ export default function AppSidebar({ open = true, onClose }: AppSidebarProps) {
 
       </nav>
 
-      <div className="shrink-0 border-t border-zinc-100 px-3 pb-4 pt-3">
+      <div className="shrink-0 border-t border-zinc-100 px-3 pb-4 pt-3 dark:border-zinc-800">
         <div className="mb-3 flex items-center justify-between rounded-xl px-2 py-2 md:hidden">
-          <span className="text-sm font-semibold text-zinc-700">Tema</span>
+          <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">Tema</span>
           <ThemeToggle />
         </div>
         <div className="flex items-center gap-2">
@@ -222,8 +224,8 @@ export default function AppSidebar({ open = true, onClose }: AppSidebarProps) {
               sizes="48px"
             />
           </div>
-          <div className="relative min-w-0 rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-medium leading-snug text-zinc-600">
-            <span className="absolute -left-1.5 top-1/2 h-3 w-3 -translate-y-1/2 rotate-45 border-b border-l border-zinc-200 bg-zinc-50" />
+          <div className="relative min-w-0 rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-medium leading-snug text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
+            <span className="absolute -left-1.5 top-1/2 h-3 w-3 -translate-y-1/2 rotate-45 border-b border-l border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900" />
             <span className="line-clamp-3 block">{mascotPhrase}</span>
           </div>
         </div>
