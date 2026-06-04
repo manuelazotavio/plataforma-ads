@@ -258,9 +258,8 @@ export default function PerfilPage() {
     load()
   }, [router])
 
-  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file || !userId) return
+  async function uploadAvatarFile(file: File) {
+    if (!userId) return
     setUploadingAvatar(true)
     setError(null)
     const ext = file.name.split('.').pop()
@@ -270,6 +269,25 @@ export default function PerfilPage() {
     const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
     setProfile((prev) => ({ ...prev, avatar_url: publicUrl }))
     setUploadingAvatar(false)
+  }
+
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    await uploadAvatarFile(file)
+  }
+
+  function handleAvatarDrop(e: React.DragEvent) {
+    e.preventDefault()
+    const file = Array.from(e.dataTransfer.files).find((f) => f.type.startsWith('image/'))
+    if (file) void uploadAvatarFile(file)
+  }
+
+  function handleAvatarPaste(e: React.ClipboardEvent) {
+    const file = Array.from(e.clipboardData.files).find((f) => f.type.startsWith('image/'))
+    if (!file) return
+    e.preventDefault()
+    void uploadAvatarFile(file)
   }
 
   function handleChange(field: keyof Profile, value: string) {
@@ -627,7 +645,12 @@ export default function PerfilPage() {
             <div className="flex flex-col gap-4">
 
               <Field label="Avatar">
-                <div className="flex items-center gap-4">
+                <div
+                  className="flex items-center gap-4"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={handleAvatarDrop}
+                  onPaste={handleAvatarPaste}
+                >
                   <UserAvatar src={profile.avatar_url} name={profile.name} className="h-14 w-14 border border-zinc-200" sizes="56px" />
                   <button
                     type="button"

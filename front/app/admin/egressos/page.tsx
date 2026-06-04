@@ -84,10 +84,7 @@ export default function AdminEgressosPage() {
     setError(null)
   }
 
-  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-
+  async function uploadAvatarFile(file: File) {
     setUploadingAvatar(true)
     setError(null)
 
@@ -104,7 +101,26 @@ export default function AdminEgressosPage() {
     const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
     setForm((prev) => ({ ...prev, avatar_url: publicUrl }))
     setUploadingAvatar(false)
+  }
+
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    await uploadAvatarFile(file)
     e.target.value = ''
+  }
+
+  function handleAvatarDrop(e: React.DragEvent) {
+    e.preventDefault()
+    const file = Array.from(e.dataTransfer.files).find((f) => f.type.startsWith('image/'))
+    if (file) void uploadAvatarFile(file)
+  }
+
+  function handleAvatarPaste(e: React.ClipboardEvent) {
+    const file = Array.from(e.clipboardData.files).find((f) => f.type.startsWith('image/'))
+    if (!file) return
+    e.preventDefault()
+    void uploadAvatarFile(file)
   }
 
   async function save() {
@@ -238,7 +254,12 @@ export default function AdminEgressosPage() {
               </Field>
 
               <Field label="Foto">
-                <div className="flex items-center gap-4">
+                <div
+                  className="flex items-center gap-4"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={handleAvatarDrop}
+                  onPaste={handleAvatarPaste}
+                >
                   <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full border border-zinc-200 bg-zinc-100">
                     {form.avatar_url ? (
                       <Image src={form.avatar_url} alt={form.name || 'Foto do egresso'} fill className="object-cover" />

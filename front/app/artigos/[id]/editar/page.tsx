@@ -63,10 +63,7 @@ export default function EditarArtigoPage() {
     load()
   }, [id, router])
 
-  async function handleCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-
+  async function uploadCoverFile(file: File) {
     setUploadingCover(true)
     setError(null)
 
@@ -88,6 +85,26 @@ export default function EditarArtigoPage() {
     const { data: { publicUrl } } = supabase.storage.from('covers').getPublicUrl(path)
     setCoverUrl(publicUrl)
     setUploadingCover(false)
+  }
+
+  async function handleCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    await uploadCoverFile(file)
+    e.target.value = ''
+  }
+
+  function handleCoverDrop(e: React.DragEvent) {
+    e.preventDefault()
+    const file = Array.from(e.dataTransfer.files).find((f) => f.type.startsWith('image/'))
+    if (file) void uploadCoverFile(file)
+  }
+
+  function handleCoverPaste(e: React.ClipboardEvent) {
+    const file = Array.from(e.clipboardData.files).find((f) => f.type.startsWith('image/'))
+    if (!file) return
+    e.preventDefault()
+    void uploadCoverFile(file)
   }
 
   async function save(newStatus: 'rascunho' | 'pendente') {
@@ -155,7 +172,11 @@ export default function EditarArtigoPage() {
             <label className="text-sm font-medium text-zinc-700">Capa</label>
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="relative w-full h-48 rounded-xl border-2 border-dashed border-zinc-300 bg-white overflow-hidden cursor-pointer hover:border-zinc-400 transition flex items-center justify-center"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={handleCoverDrop}
+              onPaste={handleCoverPaste}
+              tabIndex={0}
+              className="relative w-full h-48 rounded-xl border-2 border-dashed border-zinc-300 bg-white overflow-hidden cursor-pointer hover:border-zinc-400 transition flex items-center justify-center outline-none"
             >
               {coverUrl ? (
                 <Image src={coverUrl} alt="Capa" fill className="object-cover" />
@@ -163,7 +184,7 @@ export default function EditarArtigoPage() {
                 <div className="flex flex-col items-center gap-2 text-zinc-400 select-none">
                   <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
                   <span className="text-sm">
-                    {uploadingCover ? 'Enviando...' : 'Clique para adicionar uma capa'}
+                    {uploadingCover ? 'Enviando...' : 'Clique, arraste ou cole uma capa'}
                   </span>
                 </div>
               )}

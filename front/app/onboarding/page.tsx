@@ -122,9 +122,8 @@ export default function OnboardingPage() {
     return () => document.removeEventListener('mousedown', handle)
   }, [])
 
-  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file || !userId) return
+  async function uploadAvatarFile(file: File) {
+    if (!userId) return
     setAvatarUploading(true)
     const ext = file.name.split('.').pop()
     const path = `${userId}/${Date.now()}.${ext}`
@@ -134,7 +133,26 @@ export default function OnboardingPage() {
       setAvatar(publicUrl)
     }
     setAvatarUploading(false)
+  }
+
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    await uploadAvatarFile(file)
     e.target.value = ''
+  }
+
+  function handleAvatarDrop(e: React.DragEvent) {
+    e.preventDefault()
+    const file = Array.from(e.dataTransfer.files).find((f) => f.type.startsWith('image/'))
+    if (file) void uploadAvatarFile(file)
+  }
+
+  function handleAvatarPaste(e: React.ClipboardEvent) {
+    const file = Array.from(e.clipboardData.files).find((f) => f.type.startsWith('image/'))
+    if (!file) return
+    e.preventDefault()
+    void uploadAvatarFile(file)
   }
 
   function addSkill(tag: string) {
@@ -330,6 +348,9 @@ export default function OnboardingPage() {
                 <button
                   type="button"
                   onClick={() => avatarInputRef.current?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={handleAvatarDrop}
+                  onPaste={handleAvatarPaste}
                   disabled={avatarUploading}
                   className="relative shrink-0 w-20 h-20 rounded-full bg-zinc-100 border-2 border-dashed border-zinc-300 overflow-hidden hover:border-[#2F9E41] transition group"
                 >

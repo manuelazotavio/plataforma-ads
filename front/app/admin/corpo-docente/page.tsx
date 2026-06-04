@@ -193,11 +193,7 @@ export default function AdminCorpoDocentePage() {
     setSaving(false)
   }
 
-  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    const profId = targetProfId.current
-    if (!file || !profId) return
-
+  async function uploadProfAvatar(file: File, profId: string) {
     setUploadingId(profId)
     setAvatarError(null)
     const ext = file.name.split('.').pop()
@@ -207,7 +203,6 @@ export default function AdminCorpoDocentePage() {
     if (error) {
       setAvatarError(`Erro ao enviar foto: ${error.message}`)
       setUploadingId(null)
-      e.target.value = ''
       return
     }
 
@@ -221,6 +216,13 @@ export default function AdminCorpoDocentePage() {
     }
 
     setUploadingId(null)
+  }
+
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    const profId = targetProfId.current
+    if (!file || !profId) return
+    await uploadProfAvatar(file, profId)
     e.target.value = ''
   }
 
@@ -444,7 +446,12 @@ export default function AdminCorpoDocentePage() {
                 <div className="flex flex-col gap-4 sm:flex-row">
 
                  
-                  <div className="flex shrink-0 flex-col items-start gap-1 sm:items-center">
+                  <div
+                    className="flex shrink-0 flex-col items-start gap-1 sm:items-center"
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => { e.preventDefault(); const f = Array.from(e.dataTransfer.files).find((x) => x.type.startsWith('image/')); if (f) void uploadProfAvatar(f, prof.id) }}
+                    onPaste={(e) => { const f = Array.from(e.clipboardData.files).find((x) => x.type.startsWith('image/')); if (!f) return; e.preventDefault(); void uploadProfAvatar(f, prof.id) }}
+                  >
                     <div className="relative w-16 h-16 rounded-full overflow-hidden bg-zinc-100 border border-zinc-200">
                       {prof.avatar_url ? (
                         <Image src={prof.avatar_url} alt={prof.name} fill className="object-cover" />
