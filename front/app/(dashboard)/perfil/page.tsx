@@ -96,6 +96,8 @@ export default function PerfilPage() {
     topicsCount: 0,
   })
   const [feedItems, setFeedItems] = useState<ProfileActivityItem[]>([])
+  const [xpBreakdown, setXpBreakdown] = useState<{ label: string; detail?: string; xp: number }[]>([])
+  const [showXpBreakdown, setShowXpBreakdown] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [role, setRole] = useState<string | null>(null)
@@ -205,6 +207,19 @@ export default function PerfilPage() {
         articlesCount: articlesCount ?? 0,
         topicsCount: topicsCount ?? 0,
       })
+
+      const n = (v: number, s: string, p: string) => `${v} ${v === 1 ? s : p}`
+      const breakdown: { label: string; detail?: string; xp: number }[] = [
+        { label: n(xpProjectsCount ?? 0, 'projeto publicado', 'projetos publicados'), detail: `${xpProjectsCount ?? 0} × 50`, xp: (xpProjectsCount ?? 0) * 50 },
+        { label: n(xpArticlesCount ?? 0, 'artigo publicado', 'artigos publicados'), detail: `${xpArticlesCount ?? 0} × 40`, xp: (xpArticlesCount ?? 0) * 40 },
+        { label: n(xpTopicsCount ?? 0, 'tópico criado', 'tópicos criados'), detail: `${xpTopicsCount ?? 0} × 20`, xp: (xpTopicsCount ?? 0) * 20 },
+        { label: n(commentsCount, 'comentário feito', 'comentários feitos'), detail: `${commentsCount} × 10`, xp: commentsCount * 10 },
+        { label: n(likesReceived, 'curtida recebida', 'curtidas recebidas'), detail: `${likesReceived} × 5`, xp: likesReceived * 5 },
+        { label: 'Foto de perfil', xp: hasNonEmpty(profileData?.avatar_url) ? 15 : 0 },
+        { label: 'Bio preenchida', xp: hasNonEmpty(profileData?.bio) ? 15 : 0 },
+        { label: n(countProfileLinks(profileData ?? {}), 'link de perfil', 'links de perfil'), detail: `${countProfileLinks(profileData ?? {})} × 10`, xp: countProfileLinks(profileData ?? {}) * 10 },
+      ].filter((item) => item.xp > 0)
+      setXpBreakdown(breakdown)
       setFeedItems([
         ...(projects ?? []).map((project) => ({
           id: project.id,
@@ -398,6 +413,7 @@ export default function PerfilPage() {
     ].filter(Boolean) as { label: string; url: string }[]
 
     return (
+      <>
       <div className="px-4 md:px-6 py-8 w-full">
         <div className="mb-8 flex items-center justify-between gap-4">
           <Link href="/" className="text-sm text-zinc-400 hover:text-zinc-700 transition inline-flex items-center gap-1.5">
@@ -454,7 +470,22 @@ export default function PerfilPage() {
         </section>
 
         <section className="grid grid-cols-2 gap-3 py-6 border-b border-zinc-100 sm:grid-cols-4">
-          <ProfileStat label="XP" value={stats.xp.toLocaleString('pt-BR')} detail={stats.levelName} />
+          <div>
+            {xpBreakdown.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => setShowXpBreakdown(true)}
+                className="text-xl font-bold text-zinc-900 underline decoration-dotted decoration-zinc-300 underline-offset-4 hover:decoration-zinc-500 transition cursor-pointer"
+                aria-label="Como você ganhou XP"
+              >
+                {stats.xp.toLocaleString('pt-BR')}
+              </button>
+            ) : (
+              <p className="text-xl font-bold text-zinc-900">{stats.xp.toLocaleString('pt-BR')}</p>
+            )}
+            <p className="text-xs text-zinc-400">XP</p>
+            {stats.levelName && <p className="mt-1 text-xs font-semibold text-[#2F9E41]">{stats.levelName}</p>}
+          </div>
           <ProfileStat label="Projetos" value={stats.projectsCount} />
           <ProfileStat label="Artigos" value={stats.articlesCount} />
           <ProfileStat label="Topicos" value={stats.topicsCount} />
@@ -514,6 +545,35 @@ export default function PerfilPage() {
 
         <ProfileActivityFeed items={feedItems} />
       </div>
+
+      {showXpBreakdown && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 px-4 pb-6 sm:items-center" onClick={() => setShowXpBreakdown(false)}>
+          <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100">
+              <h3 className="text-sm font-semibold text-zinc-900">Como você ganhou XP</h3>
+              <button type="button" onClick={() => setShowXpBreakdown(false)} className="text-zinc-400 hover:text-zinc-700 transition">
+                <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              </button>
+            </div>
+            <div className="flex flex-col divide-y divide-zinc-100">
+              {xpBreakdown.map((item) => (
+                <div key={item.label} className="flex items-center justify-between gap-4 px-5 py-3">
+                  <div className="flex items-baseline gap-2 min-w-0">
+                    <span className="text-sm text-zinc-700">{item.label}</span>
+                    {item.detail && <span className="text-xs text-zinc-400">{item.detail}</span>}
+                  </div>
+                  <span className="shrink-0 text-sm font-bold text-[#2F9E41]">+{item.xp}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center justify-between px-5 py-3 bg-zinc-50 border-t border-zinc-100">
+              <span className="text-sm font-semibold text-zinc-900">Total</span>
+              <span className="text-sm font-black text-[#2F9E41]">{stats.xp.toLocaleString('pt-BR')} XP</span>
+            </div>
+          </div>
+        </div>
+      )}
+      </>
     )
   }
 
