@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import RichTextEditor from '@/app/components/RichTextEditor'
@@ -38,16 +37,13 @@ export default function NovoArtigoPage() {
   const [slugEdited, setSlugEdited] = useState(false)
   const [summary, setSummary] = useState('')
   const [content, setContent] = useState('')
-  const [coverUrl, setCoverUrl] = useState('')
   const [attachments, setAttachments] = useState<ArticleAttachment[]>([])
   const [tags, setTags] = useState<string[]>([])
 
-  const [uploadingCover, setUploadingCover] = useState(false)
   const [uploadingAttachments, setUploadingAttachments] = useState(false)
   const [savingAs, setSavingAs] = useState<'rascunho' | 'pendente' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const attachmentInputRef = useRef<HTMLInputElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
 
@@ -66,47 +62,6 @@ export default function NovoArtigoPage() {
   function handleSlugChange(value: string) {
     setSlug(toSlug(value))
     setSlugEdited(true)
-  }
-
-  async function uploadCoverFile(file: File | undefined) {
-    if (!file || !userId) return
-
-    setUploadingCover(true)
-    setError(null)
-
-    const ext = getFileExtension(file)
-    const path = `${userId}/${Date.now()}.${ext}`
-
-    const { error: uploadError } = await supabase.storage
-      .from('covers')
-      .upload(path, file, { upsert: true })
-
-    if (uploadError) {
-      setError('Erro ao enviar capa: ' + uploadError.message)
-      setUploadingCover(false)
-      return
-    }
-
-    const { data: { publicUrl } } = supabase.storage.from('covers').getPublicUrl(path)
-    setCoverUrl(publicUrl)
-    setUploadingCover(false)
-  }
-
-  async function handleCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
-    await uploadCoverFile(e.target.files?.[0])
-    e.target.value = ''
-  }
-
-  async function handleCoverDrop(e: React.DragEvent<HTMLDivElement>) {
-    e.preventDefault()
-    await uploadCoverFile(Array.from(e.dataTransfer.files ?? []).find((file) => file.type.startsWith('image/')))
-  }
-
-  async function handleCoverPaste(e: React.ClipboardEvent<HTMLDivElement>) {
-    const image = Array.from(e.clipboardData.files ?? []).find((file) => file.type.startsWith('image/'))
-    if (!image) return
-    e.preventDefault()
-    await uploadCoverFile(image)
   }
 
   async function uploadArticleFiles(files: File[]) {
@@ -187,7 +142,7 @@ export default function NovoArtigoPage() {
         slug,
         summary,
         content: contentWithAttachments(),
-        cover_image_url: coverUrl || null,
+        cover_image_url: null,
         status,
         published_at: null,
       })
@@ -221,42 +176,6 @@ export default function NovoArtigoPage() {
         <p className="text-sm text-zinc-500 mb-8">Escreva e publique seu conteúdo</p>
 
         <form ref={formRef} className="flex flex-col gap-6">
-
-       
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-zinc-700">Capa</label>
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={handleCoverDrop}
-              onPaste={handleCoverPaste}
-              tabIndex={0}
-              className="relative w-full h-48 rounded-xl border-2 border-dashed border-zinc-300 bg-white overflow-hidden cursor-pointer hover:border-zinc-400 transition flex items-center justify-center"
-            >
-              {coverUrl ? (
-                <Image src={coverUrl} alt="Capa" fill className="object-cover" />
-              ) : (
-                <div className="flex flex-col items-center gap-2 text-zinc-400 select-none">
-                  <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                  <span className="text-sm">
-                    {uploadingCover ? 'Enviando...' : 'Clique, arraste ou cole uma capa'}
-                  </span>
-                </div>
-              )}
-              {coverUrl && (
-                <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition flex items-center justify-center opacity-0 hover:opacity-100">
-                  <span className="text-white text-sm font-medium">Trocar imagem</span>
-                </div>
-              )}
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleCoverChange}
-            />
-          </div>
 
           <Field label="Título" required>
             <input
@@ -351,7 +270,7 @@ export default function NovoArtigoPage() {
           <div className="flex gap-3 pt-2">
             <button
               type="button"
-              disabled={!!savingAs || uploadingCover}
+              disabled={!!savingAs}
               onClick={() => save('rascunho')}
               className="rounded-lg border border-zinc-300 px-5 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 transition"
             >
@@ -359,7 +278,7 @@ export default function NovoArtigoPage() {
             </button>
             <button
               type="button"
-              disabled={!!savingAs || uploadingCover}
+              disabled={!!savingAs}
               onClick={() => save('pendente')}
               className="rounded-lg bg-[#2F9E41] px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 transition"
             >
