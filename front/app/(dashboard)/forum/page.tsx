@@ -15,7 +15,7 @@ export default async function ForumPage({
     supabase.from('forum_categories').select('id, name').order('display_order'),
     supabase
       .from('forum_topics')
-      .select('id, title, created_at, replies_count, views_count, user_id, users(id, name), forum_categories(id, name)')
+      .select('id, title, created_at, replies_count, views_count, user_id, is_closed, users(id, name), forum_categories(id, name)')
       .order('created_at', { ascending: false }),
   ])
 
@@ -61,15 +61,27 @@ export default async function ForumPage({
           {filtered.map((topic) => {
             const author = topic.users as unknown as { id: string; name: string } | null
             const cat = topic.forum_categories as unknown as { id: string; name: string } | null
+            const isClosed = (topic as unknown as { is_closed: boolean }).is_closed
             return (
               <div
                 key={topic.id}
                 className="flex items-start justify-between gap-8 py-5"
               >
                 <div className="flex flex-col gap-1.5 min-w-0">
-                  {cat && (
-                    <span className="text-xs font-semibold text-[#2F9E41]">{cat.name}</span>
-                  )}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {cat && (
+                      <span className="text-xs font-semibold text-[#2F9E41]">{cat.name}</span>
+                    )}
+                    {isClosed && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-600">
+                        <svg width={9} height={9} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                        </svg>
+                        Encerrado
+                      </span>
+                    )}
+                  </div>
                   <Link href={`/forum/${topic.id}`} className="text-base font-black text-zinc-900 leading-tight hover:opacity-70 transition">
                     {topic.title}
                   </Link>

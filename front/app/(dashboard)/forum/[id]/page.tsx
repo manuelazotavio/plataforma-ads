@@ -21,6 +21,7 @@ type Topic = {
   replies_count: number
   views_count: number
   user_id: string
+  is_closed: boolean
   attachments: Attachment[] | null
   users: Author | null
   forum_categories: Category | null
@@ -145,11 +146,12 @@ function ReplyForm({ onSubmit, onCancel, placeholder = 'Escreva sua resposta...'
   )
 }
 
-function ReplyItem({ reply, depth, currentUserId, canModerate, voteMap, onVote, onReply, onDelete, replyingToId }: {
+function ReplyItem({ reply, depth, currentUserId, canModerate, isClosed, voteMap, onVote, onReply, onDelete, replyingToId }: {
   reply: Reply
   depth: number
   currentUserId: string | null
   canModerate: boolean
+  isClosed: boolean
   voteMap: VoteMap
   onVote: (id: string) => void
   onReply: (id: string | null) => void
@@ -181,7 +183,7 @@ function ReplyItem({ reply, depth, currentUserId, canModerate, voteMap, onVote, 
           {!removed && (
             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
               <UpvoteButton count={votes.length} voted={voted} onToggle={() => onVote(reply.id)} disabled={!currentUserId} />
-              {currentUserId && (
+              {currentUserId && !isClosed && (
                 <button
                   onClick={() => onReply(isReplying ? null : reply.id)}
                   className="text-xs font-semibold text-zinc-400 hover:text-zinc-700 transition cursor-pointer"
@@ -225,12 +227,13 @@ export default function ForumTopicPage() {
   const [pendingTopicDelete, setPendingTopicDelete] = useState(false)
   const [deletingTopic, setDeletingTopic] = useState(false)
   const [topicDeleteError, setTopicDeleteError] = useState<string | null>(null)
+  const [closingTopic, setClosingTopic] = useState(false)
 
   const load = useCallback(async () => {
     const [{ data: topicData }, user] = await Promise.all([
       supabase
         .from('forum_topics')
-        .select('id, title, content, created_at, replies_count, views_count, user_id, attachments, users(name, avatar_url), forum_categories(id, name)')
+        .select('id, title, content, created_at, replies_count, views_count, user_id, is_closed, attachments, users(name, avatar_url), forum_categories(id, name)')
         .eq('id', id)
         .single(),
       getAuthUser(),
@@ -332,6 +335,15 @@ export default function ForumTopicPage() {
     }
   }
 
+  async function handleToggleClose() {
+    if (!topic || !currentUserId) return
+    setClosingTopic(true)
+    const newValue = !topic.is_closed
+    const { error } = await supabase.from('forum_topics').update({ is_closed: newValue }).eq('id', topic.id)
+    if (!error) setTopic((prev) => prev ? { ...prev, is_closed: newValue } : prev)
+    setClosingTopic(false)
+  }
+
   async function handleDelete(replyId: string) {
     const reply = replies.find(r => r.id === replyId)
     if (!reply || !currentUserId) return
@@ -403,6 +415,7 @@ export default function ForumTopicPage() {
             depth={depth}
             currentUserId={currentUserId}
             canModerate={currentUserRole === 'admin' || currentUserRole === 'moderador'}
+            isClosed={topic?.is_closed ?? false}
             voteMap={voteMap}
             onVote={handleReplyVote}
             onReply={setReplyingToId}
@@ -449,6 +462,7 @@ export default function ForumTopicPage() {
   const canModerate = currentUserRole === 'admin' || currentUserRole === 'moderador'
   const canDeleteTopic = !!currentUserId && (topic.user_id === currentUserId || canModerate)
   const isOwnTopic = currentUserId === topic.user_id
+  const canCloseTopic = !!currentUserId && (topic.user_id === currentUserId || canModerate)
 
   return (
     <div className="px-4 md:px-6 py-8 w-full">
@@ -486,6 +500,16 @@ export default function ForumTopicPage() {
           </div>
           <div className="flex shrink-0 flex-col items-start gap-1.5 self-start sm:pt-1">
             <UpvoteButton count={topicVoters.length} voted={topicVoted} onToggle={handleTopicVote} disabled={!currentUserId} />
+            {canCloseTopic && (
+              <button
+                type="button"
+                onClick={handleToggleClose}
+                disabled={closingTopic}
+                className="px-3 text-xs font-semibold text-zinc-400 hover:text-amber-600 transition cursor-pointer disabled:opacity-50"
+              >
+                {closingTopic ? '...' : topic.is_closed ? 'Reabrir tópico' : 'Encerrar tópico'}
+              </button>
+            )}
             {canDeleteTopic && (
               <button
                 type="button"
@@ -538,7 +562,17 @@ export default function ForumTopicPage() {
         )}
       </div>
 
-   
+      {topic.is_closed && (
+        <div className="mt-6 flex items-center gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+          <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          <span>Este tópico foi encerrado. Nenhuma nova contribuição é permitida.</span>
+        </div>
+      )}
+
+
       <div className="border-t border-zinc-100 pt-8 mt-10">
         <h2 className="text-xs font-semibold text-zinc-400 mb-4">
           {topLevelCount} {topLevelCount === 1 ? 'Resposta' : 'Respostas'}
@@ -550,9 +584,11 @@ export default function ForumTopicPage() {
           </div>
         )}
 
-        
+
         <div className="mt-8 pt-8 border-t border-zinc-100">
-          {currentUserId ? (
+          {topic.is_closed ? (
+            <p className="text-sm text-zinc-400 italic">Este tópico está encerrado.</p>
+          ) : currentUserId ? (
             <div className="flex flex-col gap-3">
               <label className="text-sm font-semibold text-zinc-700">Sua resposta</label>
               <ReplyForm
