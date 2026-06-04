@@ -3,11 +3,11 @@
 import { useEffect, useRef, useState } from 'react'
 
 const MONTHS_PT = [
-  'Janeiro', 'Fevereiro', 'MarÃ§o', 'Abril', 'Maio', 'Junho',
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ]
 
-const WEEK_PT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'SÃ¡b']
+const WEEK_PT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
 const today = new Date()
 today.setHours(0, 0, 0, 0)
@@ -210,7 +210,7 @@ export default function DatePicker({
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => !disabled && setOpen((o) => !o)}
           className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 disabled:cursor-not-allowed disabled:opacity-50"
-          aria-label="Abrir calendÃ¡rio"
+          aria-label="Abrir calendário"
         >
           <svg
             width={15}

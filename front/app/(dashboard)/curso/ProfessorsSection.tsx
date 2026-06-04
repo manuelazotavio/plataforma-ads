@@ -37,7 +37,7 @@ const AREAS = [
   { value: 'dados', label: 'Dados & IA' },
   { value: 'devops', label: 'DevOps & Cloud' },
   { value: 'ux-design', label: 'UX & Design' },
-  { value: 'seguranca', label: 'SeguranÃ§a' },
+  { value: 'seguranca', label: 'Segurança' },
 ]
 
 function socialLinks(prof: Professor): SocialLink[] {
@@ -264,7 +264,7 @@ function ProfessorDetailsModal({
 
             {areas.length > 0 && (
               <div className="mt-4">
-                <p className="text-xs font-semibold text-zinc-400">Ãreas de interesse</p>
+                <p className="text-xs font-semibold text-zinc-400">Áreas de interesse</p>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {areas.map((area) => (
                     <span
@@ -286,16 +286,16 @@ function ProfessorDetailsModal({
         </div>
 
         <div className="mt-5">
-          <p className="text-xs font-semibold text-zinc-400">DescriÃ§Ã£o</p>
+          <p className="text-xs font-semibold text-zinc-400">Descrição</p>
           {professor.bio ? (
             <p className="mt-2 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">{professor.bio}</p>
           ) : (
-            <p className="mt-2 text-sm text-zinc-400">DescriÃ§Ã£o ainda nÃ£o cadastrada.</p>
+            <p className="mt-2 text-sm text-zinc-400">Descrição ainda não cadastrada.</p>
           )}
         </div>
 
         <div className="mt-5">
-          <p className="text-xs font-semibold text-zinc-400">Disciplinas jÃ¡ ministradas</p>
+          <p className="text-xs font-semibold text-zinc-400">Disciplinas já ministradas</p>
           {disciplinesLoading ? (
             <p className="mt-2 text-sm text-zinc-400">Buscando disciplinas...</p>
           ) : disciplines.length === 0 ? (
@@ -307,7 +307,7 @@ function ProfessorDetailsModal({
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-zinc-800 dark:text-zinc-200">{d.subject_name}</p>
                     {d.subject_semester != null && (
-                      <p className="text-xs text-zinc-400">{d.subject_semester}Âº semestre</p>
+                      <p className="text-xs text-zinc-400">{d.subject_semester}º semestre</p>
                     )}
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-0.5">
@@ -409,7 +409,7 @@ export default function ProfessorsSection({ professors }: { professors: Professo
           <button
             type="button"
             onClick={() => scrollBy(1)}
-            aria-label="PrÃ³ximo"
+            aria-label="Próximo"
             className="absolute right-1 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 shadow-md transition hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:text-zinc-900 md:grid"
           >
             <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">

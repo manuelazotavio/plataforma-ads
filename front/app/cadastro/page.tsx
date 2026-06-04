@@ -117,7 +117,7 @@ export default function CadastroPage() {
       <div className="absolute right-4 top-4">
         <ThemeToggle />
       </div>
-      <div className="w-full max-w-[440px] rounded-2xl border border-zinc-200 bg-white p-6 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none sm:p-8">
+      <div className="w-full max-w-110 rounded-2xl border border-zinc-200 bg-white p-6 shadow-lg shadow-zinc-200/70 dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-none sm:p-8">
         <div className="mb-6">
           <BrandLogo className="mb-4 h-12 w-48" priority />
           <h1 className="text-2xl font-semibold text-zinc-950 dark:text-zinc-100">Criar conta</h1>
@@ -212,7 +212,7 @@ export default function CadastroPage() {
             <button
               type="button"
               onClick={() => setIsEgresso(false)}
-              className={`flex-1 py-2 transition-colors ${!isEgresso ? 'bg-[#2F9E41] text-white' : 'text-zinc-500 hover:text-zinc-900'}`}
+              className={`flex-1 rounded-l-lg py-2 transition-colors ${!isEgresso ? 'bg-[#2F9E41] text-white' : 'text-zinc-500 hover:text-zinc-900'}`}
             >
               Sou aluno
             </button>
@@ -240,15 +240,18 @@ export default function CadastroPage() {
                 id="semester"
                 type="number"
                 min={1}
-                max={8}
+                max={6}
                 value={semester}
                 onChange={(e) => setSemester(e.target.value)}
                 className={normalInputClass}
-                placeholder="Ex: 3"
+                placeholder="1 a 6"
               />
             </div>
           ) : (
             <div className="flex flex-col gap-3">
+              <p className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs leading-5 text-zinc-500 sm:hidden">
+                Egresso é quem já concluiu o curso e quer aparecer na página de egressos.
+              </p>
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-medium text-zinc-700">
                   Ano de formatura <span className="text-red-500">*</span>
@@ -291,6 +294,18 @@ export default function CadastroPage() {
               {error}
             </p>
           )}
+
+          <p className="text-center text-xs leading-relaxed text-zinc-400">
+            Ao continuar, você confirma que entende e aceita os{' '}
+            <Link href="/contrato" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-zinc-700 transition">
+              Termos e Condições
+            </Link>
+            {' '}e a{' '}
+            <Link href="/privacidade" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-zinc-700 transition">
+              Política de Privacidade
+            </Link>
+            .
+          </p>
 
           <button
             type="submit"

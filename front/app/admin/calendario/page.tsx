@@ -41,8 +41,8 @@ const EMPTY_FORM: FormState = {
 
 const colorOptions = CALENDAR_COLOR_OPTIONS.map((c) => ({ value: c.value, label: c.label }))
 
-const MONTH_NAMES_PT = ['Janeiro', 'Fevereiro', 'MarÃ§o', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
-const DAYS_OF_WEEK_PT = ['DOMINGO', 'SEGUNDA-FEIRA', 'TERÃ‡A-FEIRA', 'QUARTA-FEIRA', 'QUINTA-FEIRA', 'SEXTA-FEIRA', 'SÃBADO']
+const MONTH_NAMES_PT = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+const DAYS_OF_WEEK_PT = ['DOMINGO', 'SEGUNDA-FEIRA', 'TERÇA-FEIRA', 'QUARTA-FEIRA', 'QUINTA-FEIRA', 'SEXTA-FEIRA', 'SÁBADO']
 
 function parseLocalDate(str: string) {
   const [y, m, d] = str.split('-').map(Number)
@@ -178,11 +178,11 @@ export default function AdminCalendarioPage() {
   async function save(formEvent: React.FormEvent) {
     formEvent.preventDefault()
     if (!form.title.trim() || !form.start_date) {
-      setError('TÃ­tulo e data de inÃ­cio sÃ£o obrigatÃ³rios.')
+      setError('Título e data de início são obrigatórios.')
       return
     }
     if (form.end_date && form.end_date < form.start_date) {
-      setError('A data de fim nÃ£o pode ser anterior Ã  data de inÃ­cio.')
+      setError('A data de fim não pode ser anterior à data de início.')
       return
     }
     setSaving(true)
@@ -392,7 +392,7 @@ export default function AdminCalendarioPage() {
           const headerRow = gridEndRow + 1
           ws.mergeCells(headerRow, 1, headerRow, 14)
           const header = ws.getCell(headerRow, 1)
-          header.value = 'AnotaÃ§Ãµes:'
+          header.value = 'Anotações:'
           header.font = { name: 'Calibri', bold: true, size: 11, color: { argb: 'FF000000' } }
           header.alignment = { vertical: 'middle', horizontal: 'left' }
           ws.getRow(headerRow).height = 20
@@ -435,7 +435,7 @@ export default function AdminCalendarioPage() {
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
-      setNotice(`CalendÃ¡rio ${year} exportado.`)
+      setNotice(`Calendário ${year} exportado.`)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao gerar Excel.'
       setError(message)
@@ -449,9 +449,9 @@ export default function AdminCalendarioPage() {
       {dialogNode}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-zinc-900">CalendÃ¡rio</h1>
+          <h1 className="text-2xl font-semibold text-zinc-900">Calendário</h1>
           <p className="mt-0.5 text-sm text-zinc-500">
-            Datas acadÃªmicas e prazos (rematrÃ­cula, feriados, entregas). NÃ£o sÃ£o eventos.
+            Datas acadêmicas e prazos (rematrícula, feriados, entregas). Não são eventos.
           </p>
         </div>
         {!showForm && (
@@ -478,7 +478,7 @@ export default function AdminCalendarioPage() {
                 <polyline points="7 10 12 15 17 10" />
                 <line x1={12} y1={15} x2={12} y2={3} />
               </svg>
-              {exporting ? 'Gerandoâ€¦' : 'Exportar Excel'}
+              {exporting ? 'Gerando…' : 'Exportar Excel'}
             </button>
             <button
               type="button"
@@ -504,18 +504,18 @@ export default function AdminCalendarioPage() {
         <form onSubmit={save} className="mb-6 grid gap-4 rounded-xl border border-zinc-200 bg-white p-5">
           <h2 className="text-sm font-semibold text-zinc-900">{editingId ? 'Editar data' : 'Nova data'}</h2>
           <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500">
-            TÃ­tulo
+            Título
             <input
               autoFocus
               type="text"
               value={form.title}
               onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
-              placeholder="Ex: RematrÃ­cula"
+              placeholder="Ex: Rematrícula"
               className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
             />
           </label>
           <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500">
-            DescriÃ§Ã£o <span className="font-normal text-zinc-400">(opcional)</span>
+            Descrição <span className="font-normal text-zinc-400">(opcional)</span>
             <textarea
               value={form.description}
               onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
@@ -526,7 +526,7 @@ export default function AdminCalendarioPage() {
           </label>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500">
-              Data de inÃ­cio
+              Data de início
               <input
                 type="date"
                 value={form.start_date}
@@ -571,7 +571,7 @@ export default function AdminCalendarioPage() {
                 checked={form.is_active}
                 onChange={(e) => setForm((p) => ({ ...p, is_active: e.target.checked }))}
               />
-              Ativo no calendÃ¡rio
+              Ativo no calendário
             </label>
             <label className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer">
               <input
@@ -579,8 +579,8 @@ export default function AdminCalendarioPage() {
                 checked={form.visible_to_students}
                 onChange={(e) => setForm((p) => ({ ...p, visible_to_students: e.target.checked }))}
               />
-              VisÃ­vel para alunos
-              <span className="text-xs font-normal text-zinc-400">(quando desmarcado, sÃ³ professores e admins veem)</span>
+              Visível para alunos
+              <span className="text-xs font-normal text-zinc-400">(quando desmarcado, só professores e admins veem)</span>
             </label>
             <label className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer">
               <input
@@ -589,7 +589,7 @@ export default function AdminCalendarioPage() {
                 onChange={(e) => setForm((p) => ({ ...p, show_in_grid: e.target.checked }))}
               />
               Exibir como bloco no Excel
-              <span className="text-xs font-normal text-zinc-400">(quando desmarcado, vai pra seÃ§Ã£o &quot;AnotaÃ§Ãµes:&quot; do rodapÃ©)</span>
+              <span className="text-xs font-normal text-zinc-400">(quando desmarcado, vai pra seção &quot;Anotações:&quot; do rodapé)</span>
             </label>
             <label className="flex items-center gap-2 text-sm text-zinc-700 cursor-pointer">
               <input
@@ -597,8 +597,8 @@ export default function AdminCalendarioPage() {
                 checked={form.adds_school_day}
                 onChange={(e) => setForm((p) => ({ ...p, adds_school_day: e.target.checked }))}
               />
-              ReposiÃ§Ã£o: contar como dia letivo
-              <span className="text-xs font-normal text-zinc-400">(forÃ§a sÃ¡bado/domingo ou data cancelada a entrar no totalizador)</span>
+              Reposição: contar como dia letivo
+              <span className="text-xs font-normal text-zinc-400">(força sábado/domingo ou data cancelada a entrar no totalizador)</span>
             </label>
           </div>
           <div className="flex justify-end gap-2 pt-1">
@@ -614,14 +614,14 @@ export default function AdminCalendarioPage() {
               disabled={saving || !form.title.trim() || !form.start_date}
               className="cursor-pointer rounded-lg bg-[#2F9E41] px-5 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
             >
-              {saving ? 'Salvandoâ€¦' : editingId ? 'Salvar' : 'Criar'}
+              {saving ? 'Salvando…' : editingId ? 'Salvar' : 'Criar'}
             </button>
           </div>
         </form>
       )}
 
       {loading ? (
-        <LoadingState message="Carregando calendÃ¡rio" />
+        <LoadingState message="Carregando calendário" />
       ) : (
         <div className="flex flex-col gap-8">
           {items.length === 0 ? (
@@ -631,7 +631,7 @@ export default function AdminCalendarioPage() {
           ) : (
             <>
               {upcoming.length > 0 && (
-                <CalendarItemSection title="PrÃ³ximas" items={upcoming} onEdit={openEdit} onToggle={toggleActive} onDelete={remove} saving={saving} />
+                <CalendarItemSection title="Próximas" items={upcoming} onEdit={openEdit} onToggle={toggleActive} onDelete={remove} saving={saving} />
               )}
               {past.length > 0 && (
                 <CalendarItemSection title="Anteriores" items={past} onEdit={openEdit} onToggle={toggleActive} onDelete={remove} saving={saving} dim />
@@ -657,7 +657,7 @@ export default function AdminCalendarioPage() {
                         <p className="truncate text-sm font-medium text-zinc-900">{ev.title}</p>
                         <p className="text-xs text-zinc-400">
                           {formatRange(ev.start_date ?? '', ev.end_date)}
-                          {ev.category && <span className="ml-2 text-zinc-300">Â· {ev.category}</span>}
+                          {ev.category && <span className="ml-2 text-zinc-300">· {ev.category}</span>}
                         </p>
                       </div>
                       {!ev.is_active && (
@@ -677,7 +677,7 @@ export default function AdminCalendarioPage() {
   )
 }
 
-const DOW_LABELS: Record<number, string> = { 0: 'Dom', 1: 'Seg', 2: 'Ter', 3: 'Qua', 4: 'Qui', 5: 'Sex', 6: 'SÃ¡b' }
+const DOW_LABELS: Record<number, string> = { 0: 'Dom', 1: 'Seg', 2: 'Ter', 3: 'Qua', 4: 'Qui', 5: 'Sex', 6: 'Sáb' }
 
 function SchoolDayCard({ counts, year }: { counts: number[][]; year: number }) {
   const visibleDows = [0, 1, 2, 3, 4, 5, 6].filter(
@@ -694,7 +694,7 @@ function SchoolDayCard({ counts, year }: { counts: number[][]; year: number }) {
     <div className="mb-6 rounded-xl border border-zinc-200 bg-white p-4">
       <div className="mb-3 flex items-center justify-between">
         <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
-          Dias letivos â€” {year}
+          Dias letivos — {year}
         </p>
         <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-semibold text-zinc-600">
           {grandTotal} total
@@ -719,7 +719,7 @@ function SchoolDayCard({ counts, year }: { counts: number[][]; year: number }) {
             {[0, 1].map((s) => (
               <tr key={s} className="border-t border-zinc-100">
                 <td className="py-2 pr-4 text-xs font-semibold text-zinc-500">
-                  {s === 0 ? '1Âº Semestre' : '2Âº Semestre'}
+                  {s === 0 ? '1º Semestre' : '2º Semestre'}
                 </td>
                 {visibleDows.map((dow) => (
                   <td key={dow} className="py-2 px-2 text-center">
@@ -728,7 +728,7 @@ function SchoolDayCard({ counts, year }: { counts: number[][]; year: number }) {
                         {counts[s][dow]}
                       </span>
                     ) : (
-                      <span className="text-xs text-zinc-200">â€”</span>
+                      <span className="text-xs text-zinc-200">—</span>
                     )}
                   </td>
                 ))}
@@ -800,13 +800,13 @@ function CalendarItemSection({ title, items, onEdit, onToggle, onDelete, saving,
                       <line x1={9} y1={13} x2={15} y2={13} />
                       <line x1={9} y1={17} x2={15} y2={17} />
                     </svg>
-                    AnotaÃ§Ãµes no Excel
+                    Anotações no Excel
                   </span>
                 )}
               </div>
               <p className="text-xs text-zinc-400">
                 {formatRange(item.start_date, item.end_date)}
-                {item.url && <span className="ml-2 text-zinc-300">Â· {item.url}</span>}
+                {item.url && <span className="ml-2 text-zinc-300">· {item.url}</span>}
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-1">
@@ -851,5 +851,5 @@ function formatRange(start: string, end: string | null) {
     return new Date(y, m - 1, d).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })
   }
   if (!end || end === start) return fmt(start)
-  return `${fmt(start)} â€” ${fmt(end)}`
+  return `${fmt(start)} — ${fmt(end)}`
 }

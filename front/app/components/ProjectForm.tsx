@@ -219,7 +219,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
     setReadmeError(null)
     const repo = parseGithubRepoUrl(repoUrl)
     if (!repo) {
-      setReadmeError('Informe um link vÃ¡lido do GitHub para importar o README.')
+      setReadmeError('Informe um link válido do GitHub para importar o README.')
       return
     }
 
@@ -231,12 +231,12 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
     try {
       const preview = await fetchReadmePreview(repo.owner, repo.name)
       if (!preview.title && !preview.description && preview.images.length === 0) {
-        setReadmeError('README encontrado, mas nÃ£o consegui identificar dados para importar.')
+        setReadmeError('README encontrado, mas não consegui identificar dados para importar.')
         return
       }
       setReadmePreview(preview)
     } catch (error) {
-      setReadmeError(error instanceof Error ? error.message : 'NÃ£o foi possÃ­vel importar o README.')
+      setReadmeError(error instanceof Error ? error.message : 'Não foi possível importar o README.')
     } finally {
       if (readmeImportInFlightRef.current === importKey) {
         readmeImportInFlightRef.current = null
@@ -259,7 +259,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
 
       setReadmePreview(null)
     } catch {
-      setReadmeError('Os dados foram encontrados, mas nÃ£o foi possÃ­vel importar as imagens do README.')
+      setReadmeError('Os dados foram encontrados, mas não foi possível importar as imagens do README.')
     } finally {
       setApplyingReadme(false)
     }
@@ -290,7 +290,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
     <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-6">
 
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-zinc-700">Imagens, vÃ­deos e arquivos</label>
+        <label className="text-sm font-medium text-zinc-700">Imagens, vídeos e arquivos</label>
         <div
           className="grid grid-cols-3 gap-2 rounded-xl"
           onDragOver={(e) => e.preventDefault()}
@@ -319,10 +319,10 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
                 onClick={() => removeMedia(i)}
                 className="absolute top-1 right-1 rounded-full bg-black/60 text-white text-xs w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
               >
-                Ã—
+                ×
               </button>
               <span className="absolute bottom-1 left-1 rounded-full bg-black/60 text-white text-xs px-1.5 py-0.5">
-                {i === 0 ? 'Capa' : media.type === 'video' ? 'â–¶ VÃ­deo' : media.type === 'file' ? 'Arquivo' : ''}
+                {i === 0 ? 'Capa' : media.type === 'video' ? 'â–¶ Vídeo' : media.type === 'file' ? 'Arquivo' : ''}
               </span>
             </div>
           ))}
@@ -336,7 +336,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
             <span>{uploading ? 'Enviando...' : 'Adicionar'}</span>
           </button>
         </div>
-        <p className="text-xs text-zinc-400">Arraste, cole ou faÃ§a upload de imagens e vÃ­deos</p>
+        <p className="text-xs text-zinc-400">Arraste, cole ou faça upload de imagens e vídeos</p>
         <input
           ref={fileInputRef}
           type="file"
@@ -346,7 +346,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
         />
       </div>
 
-      <Field label="TÃ­tulo" required>
+      <Field label="Título" required>
         <input
           type="text"
           required
@@ -357,7 +357,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
         />
       </Field>
 
-      <Field label="DescriÃ§Ã£o" required>
+      <Field label="Descrição" required>
         <textarea
           required
           rows={4}
@@ -369,7 +369,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
       </Field>
 
       <div className="grid grid-cols-2 gap-4">
-        <Field label="RepositÃ³rio (GitHub)">
+        <Field label="Repositório (GitHub)">
           <div className="flex gap-2">
             <input
               type="url"
@@ -520,7 +520,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
                     onClick={() => removeCollaborator(i)}
                     className="text-zinc-400 hover:text-zinc-700 transition text-base leading-none"
                   >
-                    Ã—
+                    ×
                   </button>
                 </div>
               ))}
@@ -528,7 +528,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
           )}
         </div>
         <p className="text-xs text-zinc-400 mt-1">
-          Busque usuÃ¡rios da plataforma para vincular, ou adicione colaboradores externos pelo nome.
+          Busque usuários da plataforma para vincular, ou adicione colaboradores externos pelo nome.
         </p>
       </Field>
 
@@ -550,7 +550,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
                   onClick={() => removeTag(tag)}
                   className="text-[#2F9E41]/60 hover:text-[#2F9E41] leading-none transition"
                 >
-                  Ã—
+                  ×
                 </button>
               </span>
             ))}
@@ -623,7 +623,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
           <div className="max-h-[86vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl">
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-[#2F9E41]">PrÃ©via do README</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-[#2F9E41]">Prévia do README</p>
                 <h2 className="mt-1 text-lg font-semibold text-zinc-900">{readmePreview.repoName}</h2>
               </div>
               <button
@@ -631,7 +631,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
                 onClick={() => setReadmePreview(null)}
                 disabled={applyingReadme}
                 className="grid h-8 w-8 place-items-center rounded-lg text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 disabled:opacity-50"
-                aria-label="Fechar prÃ©via"
+                aria-label="Fechar prévia"
               >
                 <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18 6 6 18" />
@@ -643,13 +643,13 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
             <div className="space-y-4">
               {readmePreview.title && (
                 <div>
-                  <p className="text-xs font-semibold text-zinc-400">TÃ­tulo</p>
+                  <p className="text-xs font-semibold text-zinc-400">Título</p>
                   <p className="mt-1 text-sm font-medium text-zinc-900">{readmePreview.title}</p>
                 </div>
               )}
               {readmePreview.description && (
                 <div>
-                  <p className="text-xs font-semibold text-zinc-400">DescriÃ§Ã£o</p>
+                  <p className="text-xs font-semibold text-zinc-400">Descrição</p>
                   <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-zinc-600">{readmePreview.description}</p>
                 </div>
               )}
@@ -682,7 +682,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
                 disabled={applyingReadme}
                 className="rounded-lg bg-[#2F9E41] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
               >
-                {applyingReadme ? 'Importando imagens...' : 'Usar dados no formulÃ¡rio'}
+                {applyingReadme ? 'Importando imagens...' : 'Usar dados no formulário'}
               </button>
             </div>
           </div>
@@ -764,12 +764,12 @@ async function fetchReadmePreview(owner: string, repo: string): Promise<ReadmePr
   ])
 
   if (!readmeResponse.ok) {
-    throw new Error('NÃ£o encontrei um README pÃºblico nesse repositÃ³rio.')
+    throw new Error('Não encontrei um README público nesse repositório.')
   }
 
   const readmeData = await readmeResponse.json() as GithubReadmeResponse
   if (!readmeData.download_url) {
-    throw new Error('O README foi encontrado, mas nÃ£o estÃ¡ disponÃ­vel para importaÃ§Ã£o.')
+    throw new Error('O README foi encontrado, mas não está disponível para importação.')
   }
 
   const repoData = repoResponse.ok
@@ -778,7 +778,7 @@ async function fetchReadmePreview(owner: string, repo: string): Promise<ReadmePr
 
   const markdownResponse = await fetch(readmeData.download_url)
   if (!markdownResponse.ok) {
-    throw new Error('NÃ£o foi possÃ­vel baixar o conteÃºdo do README.')
+    throw new Error('Não foi possível baixar o conteúdo do README.')
   }
 
   const markdown = await markdownResponse.text()

@@ -25,9 +25,9 @@ type Evento = {
   category: string | null
 }
 
-const MONTHS = ['Janeiro', 'Fevereiro', 'MarÃ§o', 'Abril', 'Maio', 'Junho',
+const MONTHS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
-const DAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'SÃ¡b']
+const DAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
 const CATEGORY_COLORS: Record<string, string> = {
   'Hackathon': 'bg-blue-100 text-blue-700',
@@ -49,7 +49,7 @@ function formatRange(start: string, end: string | null) {
   const fmt = (s: string) =>
     parseLocal(s).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
   if (!end || end === start) return fmt(start)
-  return `${fmt(start)} â€” ${fmt(end)}`
+  return `${fmt(start)} — ${fmt(end)}`
 }
 
 export default function CalendarioPage() {
@@ -222,7 +222,7 @@ export default function CalendarioPage() {
                   : calendarItemChip(ev.color ?? null)
                 const shape = ev.isStart && ev.isEnd ? 'rounded' : ev.isStart ? 'rounded-l' : ev.isEnd ? 'rounded-r' : ''
                 const cls = `text-xs font-medium px-1.5 py-0.5 truncate transition hover:opacity-80 ${colorClass} ${shape}`
-                const label = ev.isStart ? ev.title : 'Â '
+                const label = ev.isStart ? ev.title : ' '
 
                 if (ev.kind === 'event') {
                   return (

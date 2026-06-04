@@ -19,7 +19,7 @@ export const CALENDAR_COLOR_OPTIONS = [
   { value: 'zinc', label: 'Cinza', dot: 'bg-zinc-400', chip: 'bg-zinc-100 text-zinc-700' },
   { value: 'green', label: 'Verde', dot: 'bg-[#2F9E41]', chip: 'bg-[#2F9E41]/10 text-[#2F9E41]' },
   { value: 'blue', label: 'Azul', dot: 'bg-blue-500', chip: 'bg-blue-100 text-blue-700' },
-  { value: 'amber', label: 'Ã‚mbar', dot: 'bg-amber-500', chip: 'bg-amber-100 text-amber-700' },
+  { value: 'amber', label: 'Âmbar', dot: 'bg-amber-500', chip: 'bg-amber-100 text-amber-700' },
   { value: 'rose', label: 'Rosa', dot: 'bg-rose-500', chip: 'bg-rose-100 text-rose-700' },
   { value: 'purple', label: 'Roxo', dot: 'bg-purple-500', chip: 'bg-purple-100 text-purple-700' },
   { value: 'red', label: 'Vermelho', dot: 'bg-red-500', chip: 'bg-red-100 text-red-700' },
