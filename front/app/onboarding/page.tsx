@@ -77,12 +77,25 @@ export default function OnboardingPage() {
     getAuthUser().then(async (user) => {
       if (!user) { router.replace('/login'); return }
       setUserId(user.id)
-      const [{ data: profile }, { data: professorProfile }] = await Promise.all([
-        supabase.from('users').select('role, preferred_area').eq('id', user.id).single(),
+
+      const [{ data: profile }, { data: professorProfile }, { data: skillsData }] = await Promise.all([
+        supabase
+          .from('users')
+          .select('role, preferred_area, bio, linkedin_url, github_url, avatar_url, onboarding_step')
+          .eq('id', user.id)
+          .single(),
         supabase.from('professors').select('id').eq('user_id', user.id).maybeSingle(),
+        supabase.from('user_skills').select('skill_name').eq('user_id', user.id),
       ])
+
       setIsProfessor(profile?.role === 'professor' || Boolean(professorProfile))
       setAreas(splitPreferredAreas(profile?.preferred_area))
+      if (profile?.bio) setBio(profile.bio)
+      if (profile?.linkedin_url) setLinkedin(profile.linkedin_url)
+      if (profile?.github_url) setGithub(profile.github_url)
+      if (profile?.avatar_url) setAvatar(profile.avatar_url)
+      if (skillsData?.length) setSkills(skillsData.map((s) => s.skill_name))
+      if (profile?.onboarding_step) setStep(profile.onboarding_step)
     })
   }, [router])
 
@@ -149,37 +162,43 @@ export default function OnboardingPage() {
   async function handleNext() {
     if (!userId) return
 
+    setSaving(true)
+
     if (step === 0) {
-      setSaving(true)
       await supabase.from('user_skills').delete().eq('user_id', userId)
       if (skills.length > 0) {
         await supabase.from('user_skills').insert(
           skills.map((skill_name) => ({ user_id: userId, skill_name }))
         )
       }
-      await supabase.from('users').update({ preferred_area: areas.length > 0 ? areas.join(',') : null }).eq('id', userId)
-      setSaving(false)
+      await supabase.from('users').update({
+        preferred_area: areas.length > 0 ? areas.join(',') : null,
+        onboarding_step: 1,
+      }).eq('id', userId)
     }
 
     if (step === 1) {
-      setSaving(true)
       await supabase.from('users').update({
         bio: bio || null,
         linkedin_url: linkedin || null,
         github_url: github || null,
         avatar_url: avatar || null,
+        onboarding_step: 2,
       }).eq('id', userId)
-      setSaving(false)
+    }
+
+    if (step > 1 && step < TOTAL - 1) {
+      await supabase.from('users').update({ onboarding_step: step + 1 }).eq('id', userId)
     }
 
     if (step === TOTAL - 1) {
-      setSaving(true)
-      await supabase.from('users').update({ onboarding_completed: true }).eq('id', userId)
+      await supabase.from('users').update({ onboarding_completed: true, onboarding_step: TOTAL - 1 }).eq('id', userId)
       setSaving(false)
       router.push('/')
       return
     }
 
+    setSaving(false)
     setStep((s) => s + 1)
   }
 
