@@ -99,9 +99,14 @@ export default function LoginPage() {
           </div>
 
           <div className="flex flex-col gap-1">
-            <label htmlFor="password" className="text-sm font-medium text-zinc-700">
-              Senha <span className="text-red-500">*</span>
-            </label>
+            <div className="flex items-center justify-between">
+              <label htmlFor="password" className="text-sm font-medium text-zinc-700">
+                Senha <span className="text-red-500">*</span>
+              </label>
+              <Link href="/esqueci-senha" className="text-xs text-zinc-400 hover:text-zinc-700 transition">
+                Esqueci minha senha
+              </Link>
+            </div>
             <PasswordInput
               id="password"
               autoComplete="current-password"
