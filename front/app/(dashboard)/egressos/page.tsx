@@ -16,14 +16,14 @@ export default async function EgressosPage() {
     <div className="px-4 md:px-6 py-8 w-full">
       <div className="flex flex-wrap items-end justify-between gap-3 mb-8 md:mb-10">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900">Egressos</h1>
+          <h1 className="text-2xl font-bold text-zinc-900">Ex-alunos</h1>
           <p className="text-sm text-zinc-500 mt-1">
             Alunos formados pelo curso de ADS.
           </p>
         </div>
         {(egressos?.length ?? 0) > 0 && (
           <p className="text-sm text-zinc-400">
-            {egressos!.length} egresso{egressos!.length !== 1 ? 's' : ''}
+            {egressos!.length} ex-aluno{egressos!.length !== 1 ? 's' : ''}
             {years.length > 0 && (
               <span className="hidden sm:inline"> · turmas de {years[years.length - 1]} a {years[0]}</span>
             )}
@@ -33,7 +33,7 @@ export default async function EgressosPage() {
 
       {!egressos || egressos.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-200 p-16 text-center">
-          <p className="text-sm text-zinc-400">Nenhum egresso cadastrado ainda.</p>
+          <p className="text-sm text-zinc-400">Nenhum ex-aluno cadastrado ainda.</p>
         </div>
       ) : (
         <EgressosList egressos={egressos} />

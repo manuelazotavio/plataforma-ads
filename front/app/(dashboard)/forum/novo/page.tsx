@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import Select from '@/app/components/Select'
+import MentionTextarea from '@/app/components/MentionTextarea'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import { fileKind, formatFileSize, getFileExtension } from '@/app/lib/files'
@@ -156,10 +157,9 @@ export default function NovoTopicoPage() {
 
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium text-zinc-700">Conteúdo <span className="text-red-500">*</span></label>
-          <textarea
+          <MentionTextarea
             value={content}
-            onChange={(e) => setContent(e.target.value)}
-            required
+            onChange={setContent}
             rows={8}
             className={`${submitted && !content.trim() ? inputErrorClass : inputClass} resize-none`}
             placeholder="Descreva o assunto em detalhes..."

@@ -8,6 +8,7 @@ import UserAvatar from '@/app/components/UserAvatar'
 
 export const dynamic = 'force-dynamic'
 import Comments from '@/app/components/Comments'
+import { injectMentionsIntoHtml } from '@/app/lib/mentions'
 
 export default async function ArtigoDetalhe({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -83,7 +84,7 @@ export default async function ArtigoDetalhe({ params }: { params: Promise<{ id: 
 
         <div
           className="prose prose-zinc prose-sm max-w-none"
-          dangerouslySetInnerHTML={{ __html: article.content }}
+          dangerouslySetInnerHTML={{ __html: injectMentionsIntoHtml(article.content) }}
         />
 
         <div className="mb-6 mt-8 flex flex-col gap-3 border-t border-zinc-100 pt-8 sm:flex-row sm:flex-wrap sm:items-center sm:gap-8">

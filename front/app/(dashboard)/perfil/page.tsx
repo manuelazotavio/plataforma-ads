@@ -9,6 +9,7 @@ import ProfileActivityFeed, { type ProfileActivityItem } from '@/app/components/
 import ProfileEventReminders from '@/app/components/ProfileEventReminders'
 import UserAvatar from '@/app/components/UserAvatar'
 import { computeXp, countProfileLinks, hasNonEmpty } from '@/app/lib/xp'
+import ProfileProgressRing from '@/app/components/ProfileProgressRing'
 import { LoadingState } from '@/app/components/LoadingScreen'
 
 type Profile = {
@@ -33,6 +34,7 @@ type ProfessorData = {
 type ProfileStats = {
   xp: number
   levelName: string | null
+  levelProgress: number
   projectsCount: number
   articlesCount: number
   topicsCount: number
@@ -199,10 +201,17 @@ export default function PerfilPage() {
         hasBio: hasNonEmpty(profileData?.bio),
         linksCount: countProfileLinks(profileData ?? {}),
       })
-      const level = currentLevel((levels ?? []) as Level[], xp)
+      const sorted = ((levels ?? []) as Level[]).sort((a, b) => a.min_xp - b.min_xp)
+      const level = currentLevel(sorted, xp)
+      const idx = sorted.findIndex((l) => l.id === level?.id)
+      const nextLevel = sorted[idx + 1]
+      const levelProgress = nextLevel && level
+        ? Math.min(100, Math.round(((xp - level.min_xp) / (nextLevel.min_xp - level.min_xp)) * 100))
+        : 100
       setStats({
         xp,
         levelName: level?.name ?? null,
+        levelProgress,
         projectsCount: projectsCount ?? 0,
         articlesCount: articlesCount ?? 0,
         topicsCount: topicsCount ?? 0,
@@ -424,7 +433,9 @@ export default function PerfilPage() {
 
         <section className="border-b border-zinc-100 pb-8">
           <div className="flex items-start gap-5">
-            <UserAvatar src={profile.avatar_url} name={profile.name} className="h-20 w-20" sizes="80px" />
+            <ProfileProgressRing progress={(stats?.levelProgress ?? 0) / 100} avatarSize={80}>
+              <UserAvatar src={profile.avatar_url} name={profile.name} className="h-20 w-20" sizes="80px" />
+            </ProfileProgressRing>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <div className="flex flex-wrap items-center gap-2">
@@ -457,7 +468,7 @@ export default function PerfilPage() {
               )}
               {isEgresso && (
                 <p className="mt-1 text-sm text-zinc-400">
-                  Egresso{egressoForm.graduation_year ? ` ${egressoForm.graduation_year}` : ''}
+                  Ex-aluno{egressoForm.graduation_year ? ` ${egressoForm.graduation_year}` : ''}
                   {egressoForm.role ? ` - ${egressoForm.role}` : ''}
                   {egressoForm.company ? ` @ ${egressoForm.company}` : ''}
                 </p>
@@ -610,7 +621,9 @@ export default function PerfilPage() {
 
             <div className="px-6 pb-6">
               <div className="relative -mt-10 mb-4">
-                <UserAvatar src={profile.avatar_url} name={profile.name} className="h-20 w-20 border-4 border-white shadow-sm" sizes="80px" />
+                <ProfileProgressRing progress={(stats?.levelProgress ?? 0) / 100} avatarSize={80}>
+                  <UserAvatar src={profile.avatar_url} name={profile.name} className="h-20 w-20 border-4 border-white shadow-sm" sizes="80px" />
+                </ProfileProgressRing>
               </div>
 
               <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -886,7 +899,7 @@ export default function PerfilPage() {
 
           <div className="bg-white rounded-2xl border border-zinc-200 p-6">
             <div className="flex items-center justify-between mb-1">
-              <h3 className="text-sm font-semibold text-zinc-900">Sou egresso</h3>
+              <h3 className="text-sm font-semibold text-zinc-900">Sou ex-aluno</h3>
               <div
                 onClick={() => setIsEgresso((v) => !v)}
                 className={`w-10 h-5 rounded-full transition-colors relative cursor-pointer ${isEgresso ? 'bg-[#2F9E41]' : 'bg-zinc-200'}`}
@@ -894,7 +907,7 @@ export default function PerfilPage() {
                 <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${isEgresso ? 'translate-x-5' : 'translate-x-0.5'}`} />
               </div>
             </div>
-            <p className="text-xs text-zinc-400 mb-4">Apareça na página de egressos do curso.</p>
+            <p className="text-xs text-zinc-400 mb-4">Apareça na página de ex-alunos do curso.</p>
 
             {isEgresso && (
               <div className="flex flex-col gap-4">

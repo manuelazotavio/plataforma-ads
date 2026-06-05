@@ -11,7 +11,7 @@ const ROLE_OPTIONS = [
   { value: '',          label: 'Todos' },
   { value: 'aluno',     label: 'Alunos' },
   { value: 'professor', label: 'Professores' },
-  { value: 'egresso',   label: 'Egressos' },
+  { value: 'egresso',   label: 'Ex-alunos' },
 ]
 
 export default function RankingFilters() {

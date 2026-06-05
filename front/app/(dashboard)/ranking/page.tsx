@@ -27,7 +27,7 @@ const ROLE_LABELS: Record<string, string> = {
   professor: 'Professor',
   moderador: 'Moderador',
   admin:     'Admin',
-  egresso:   'Egresso',
+  egresso:   'Ex-aluno',
 }
 
 const PODIUM: Record<number, { barBg: string; barHeight: string; avatarRing: string; labelColor: string }> = {

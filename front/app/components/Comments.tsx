@@ -8,6 +8,8 @@ import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import UserAvatar from '@/app/components/UserAvatar'
 import { REACTIONS, ReactionPicker, type ReactionType } from './LikeButton'
+import MentionTextarea, { type MentionHandle } from './MentionTextarea'
+import { parseMentions } from '@/app/lib/mentions'
 
 type Comment = {
   id: string
@@ -69,7 +71,7 @@ function CommentText({ content }: { content: string }) {
   const displayed = isLong && !expanded ? content.slice(0, COMMENT_LIMIT).trimEnd() + '…' : content
   return (
     <p className="whitespace-pre-wrap break-words text-base leading-7 text-zinc-700">
-      {displayed}
+      {parseMentions(displayed)}
       {isLong && (
         <button
           type="button"
@@ -184,8 +186,8 @@ export default function Comments({ type, targetId }: Props) {
   const [replyingTo, setReplyingTo] = useState<{ id: string; name: string } | null>(null)
   const [replyText, setReplyText]   = useState('')
   const [replySubmitting, setReplySubmitting] = useState(false)
-  const mainRef  = useRef<HTMLTextAreaElement>(null)
-  const replyRef = useRef<HTMLTextAreaElement>(null)
+  const mainRef  = useRef<MentionHandle>(null)
+  const replyRef = useRef<MentionHandle>(null)
 
   const load = useCallback(async () => {
     const { data } = await supabase
@@ -363,12 +365,12 @@ export default function Comments({ type, targetId }: Props) {
                     <form onSubmit={handleReply} className="flex gap-3 items-start">
                       <div className="shrink-0 w-7" />
                       <div className="flex-1 flex flex-col gap-2">
-                        <textarea
+                        <MentionTextarea
                           ref={replyRef}
                           rows={2}
                           value={replyText}
-                          onChange={(e) => setReplyText(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleReply(e) }}
+                          onChange={setReplyText}
+                          onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); void handleReply(e as unknown as React.FormEvent) } }}
                           placeholder={`Responder ${replyingTo.name}...`}
                           className="w-full resize-none rounded-xl border border-zinc-200 px-3 py-2 text-base text-zinc-900 outline-none transition focus:border-zinc-400"
                         />
@@ -392,12 +394,12 @@ export default function Comments({ type, targetId }: Props) {
 
       {userId ? (
         <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-          <textarea
+          <MentionTextarea
             ref={mainRef}
             rows={3}
             value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleSubmit(e) }}
+            onChange={setText}
+            onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); void handleSubmit(e as unknown as React.FormEvent) } }}
             placeholder="Escreva um comentário..."
             className="w-full resize-none rounded-xl border border-zinc-200 px-4 py-3 text-base text-zinc-900 outline-none transition focus:border-zinc-400 focus:ring-2 focus:ring-zinc-100"
           />

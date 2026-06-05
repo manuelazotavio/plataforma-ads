@@ -11,6 +11,7 @@ import AppSidebar from '@/app/components/AppSidebar'
 import BottomNav from '@/app/components/BottomNav'
 import ThemeToggle from '@/app/components/ThemeToggle'
 import UserAvatar from '@/app/components/UserAvatar'
+import ProfileProgressRing from '@/app/components/ProfileProgressRing'
 
 type UserProfile = {
   name: string
@@ -33,6 +34,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter()
   const [user, setUser] = useState<UserProfile | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
+  const [levelProgress, setLevelProgress] = useState(0)
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
@@ -81,6 +83,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       setUser(normalizedProfile)
       setSemesterPromptOpen(shouldAskSemesterConfirmation(normalizedProfile))
       setLoading(false)
+
+      // load level progress in background (non-blocking)
+      void loadLevelProgress(authUser.id).then(setLevelProgress)
     }
     loadUser()
   }, [pathname, router])
@@ -198,7 +203,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     {profileLabel(user)}
                   </p>
                 </div>
-                <UserAvatar src={user.avatar_url} name={user.name} className="h-9 w-9 ring-2 ring-zinc-100" />
+                <ProfileProgressRing progress={levelProgress / 100} avatarSize={36}>
+                  <UserAvatar src={user.avatar_url} name={user.name} className="h-9 w-9" />
+                </ProfileProgressRing>
               </button>
 
               {userMenuOpen && (
@@ -318,9 +325,52 @@ function shouldAskSemesterConfirmation(profile: UserProfile | null | undefined) 
 function profileLabel(profile: Pick<UserProfile, 'role' | 'semester' | 'isProfessor'>) {
   if (profile.role === 'professor' || profile.isProfessor) return 'Professor'
   if (profile.role === 'admin') return 'Administrador'
-  if (profile.role === 'egresso') return 'Egresso'
+  if (profile.role === 'egresso') return 'Ex-aluno'
   if (profile.semester) return `${profile.semester}º Semestre`
   return 'Aluno'
+}
+
+async function loadLevelProgress(uid: string): Promise<number> {
+  const [
+    { data: prof },
+    { count: projCount },
+    { count: artCount },
+    { count: topicCount },
+    { count: projComCount },
+    { count: artComCount },
+    { data: ownProj },
+    { data: ownArt },
+    { data: levels },
+  ] = await Promise.all([
+    supabase.from('users').select('avatar_url, bio, github_url, linkedin_url, portfolio_url').eq('id', uid).single(),
+    supabase.from('projects').select('*', { count: 'exact', head: true }).eq('user_id', uid),
+    supabase.from('articles').select('*', { count: 'exact', head: true }).eq('user_id', uid).eq('status', 'publicado'),
+    supabase.from('forum_topics').select('*', { count: 'exact', head: true }).eq('user_id', uid),
+    supabase.from('project_comments').select('*', { count: 'exact', head: true }).eq('user_id', uid),
+    supabase.from('article_comments').select('*', { count: 'exact', head: true }).eq('user_id', uid),
+    supabase.from('projects').select('like_count').eq('user_id', uid),
+    supabase.from('articles').select('like_count').eq('user_id', uid),
+    supabase.from('levels').select('id, min_xp').order('min_xp', { ascending: true }),
+  ])
+  if (!prof || !levels?.length) return 0
+  const { computeXp, countProfileLinks, hasNonEmpty } = await import('@/app/lib/xp')
+  const likes = [...(ownProj ?? []), ...(ownArt ?? [])].reduce((s, r) => s + ((r as { like_count?: number | null }).like_count ?? 0), 0)
+  const xp = computeXp({
+    projectsCount: projCount ?? 0,
+    articlesCount: artCount ?? 0,
+    topicsCount: topicCount ?? 0,
+    commentsCount: (projComCount ?? 0) + (artComCount ?? 0),
+    likesReceived: likes,
+    hasAvatar: hasNonEmpty(prof.avatar_url),
+    hasBio: hasNonEmpty(prof.bio),
+    linksCount: countProfileLinks(prof),
+  })
+  const sorted = [...levels].sort((a, b) => a.min_xp - b.min_xp)
+  const level = [...sorted].reverse().find((l) => xp >= l.min_xp) ?? sorted[0]
+  const idx = sorted.findIndex((l) => l.id === level?.id)
+  const next = sorted[idx + 1]
+  if (!next || !level) return 100
+  return Math.min(100, Math.round(((xp - level.min_xp) / (next.min_xp - level.min_xp)) * 100))
 }
 
 function addDays(date: Date, days: number) {

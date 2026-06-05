@@ -51,7 +51,7 @@ export default function AdminEgressosPage() {
       .select('*')
       .order('display_order', { ascending: true })
     if (error) {
-      setError('Erro ao carregar egressos: ' + error.message)
+      setError('Erro ao carregar ex-alunos: ' + error.message)
     } else {
       setEgressos((data as Egresso[]) ?? [])
     }
@@ -142,14 +142,14 @@ export default function AdminEgressosPage() {
     if (editing) {
       const { error: updateError } = await supabase.from('egressos').update(payload).eq('id', editing.id)
       if (updateError) {
-        setError('Erro ao salvar egresso: ' + updateError.message)
+        setError('Erro ao salvar ex-aluno: ' + updateError.message)
         setSaving(false)
         return
       }
     } else {
       const { error: insertError } = await supabase.from('egressos').insert(payload)
       if (insertError) {
-        setError('Erro ao salvar egresso: ' + insertError.message)
+        setError('Erro ao salvar ex-aluno: ' + insertError.message)
         setSaving(false)
         return
       }
@@ -163,19 +163,19 @@ export default function AdminEgressosPage() {
     setError(null)
     const { error } = await supabase.from('egressos').update({ is_active: value }).eq('id', id)
     if (error) {
-      setError('Erro ao atualizar egresso: ' + error.message)
+      setError('Erro ao atualizar ex-aluno: ' + error.message)
       return
     }
     setEgressos((prev) => prev.map((e) => e.id === id ? { ...e, is_active: value } : e))
   }
 
   async function deleteEgresso(id: string) {
-    if (!(await confirm({ message: 'Remover este egresso?', confirmLabel: 'Remover' }))) return
+    if (!(await confirm({ message: 'Remover este ex-aluno?', confirmLabel: 'Remover' }))) return
     setDeletingId(id)
     setError(null)
     const { error } = await supabase.from('egressos').delete().eq('id', id)
     if (error) {
-      setError('Erro ao remover egresso: ' + error.message)
+      setError('Erro ao remover ex-aluno: ' + error.message)
       setDeletingId(null)
       return
     }
@@ -183,14 +183,14 @@ export default function AdminEgressosPage() {
     setDeletingId(null)
   }
 
-  if (loading) return <LoadingState message="Carregando egressos" />
+  if (loading) return <LoadingState message="Carregando ex-alunos" />
 
   return (
     <div>
       {dialogNode}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-zinc-900">Egressos</h1>
+          <h1 className="text-2xl font-semibold text-zinc-900">Ex-alunos</h1>
           <p className="text-sm text-zinc-500 mt-0.5">{egressos.length} cadastrado{egressos.length !== 1 ? 's' : ''}</p>
         </div>
         <button
@@ -199,7 +199,7 @@ export default function AdminEgressosPage() {
           style={{ backgroundColor: '#2F9E41' }}
         >
           <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-          Novo egresso
+          Novo ex-aluno
         </button>
       </div>
 
@@ -210,7 +210,7 @@ export default function AdminEgressosPage() {
           <div className="flex max-h-[90vh] w-full max-w-lg flex-col gap-5 overflow-y-auto rounded-2xl bg-white p-4 shadow-xl sm:p-7">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-zinc-900">
-                {editing ? 'Editar egresso' : 'Novo egresso'}
+                {editing ? 'Editar ex-aluno' : 'Novo ex-aluno'}
               </h2>
               <button onClick={closeForm} className="text-zinc-400 hover:text-zinc-700 text-xl leading-none">×</button>
             </div>
@@ -262,7 +262,7 @@ export default function AdminEgressosPage() {
                 >
                   <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full border border-zinc-200 bg-zinc-100">
                     {form.avatar_url ? (
-                      <Image src={form.avatar_url} alt={form.name || 'Foto do egresso'} fill className="object-cover" />
+                      <Image src={form.avatar_url} alt={form.name || 'Foto do ex-aluno'} fill className="object-cover" />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center text-xl font-semibold text-zinc-300">
                         {form.name ? form.name.charAt(0).toUpperCase() : '?'}
@@ -318,7 +318,7 @@ export default function AdminEgressosPage() {
       )}
 
       {egressos.length === 0 ? (
-        <div className="text-center py-16 text-zinc-400">Nenhum egresso cadastrado.</div>
+        <div className="text-center py-16 text-zinc-400">Nenhum ex-aluno cadastrado.</div>
       ) : (
         <div className="flex flex-col gap-3">
           {egressos.map((egresso) => (

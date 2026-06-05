@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -8,6 +8,8 @@ import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import UserAvatar from '@/app/components/UserAvatar'
 import { formatFileSize } from '@/app/lib/files'
+import MentionTextarea from '@/app/components/MentionTextarea'
+import { parseMentions } from '@/app/lib/mentions'
 
 type Author = { name: string; avatar_url: string | null }
 type Category = { id: string; name: string }
@@ -33,6 +35,7 @@ type Reply = {
   created_at: string
   parent_id: string | null
   user_id: string
+  attachments: Attachment[] | null
   users: Author | null
 }
 
@@ -100,46 +103,105 @@ function UpvoteButton({ count, voted, onToggle, disabled }: { count: number; vot
 }
 
 function ReplyForm({ onSubmit, onCancel, placeholder = 'Escreva sua resposta...' }: {
-  onSubmit: (content: string) => Promise<void>
+  onSubmit: (content: string, attachments: Attachment[]) => Promise<void>
   onCancel?: () => void
   placeholder?: string
 }) {
   const [content, setContent] = useState('')
+  const [attachments, setAttachments] = useState<Attachment[]>([])
+  const [uploading, setUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  async function uploadFiles(files: File[]) {
+    if (!files.length) return
+    setUploading(true)
+    const user = await getAuthUser()
+    if (!user) { setUploading(false); return }
+    for (const file of files) {
+      const ext = file.name.split('.').pop()
+      const path = `forum/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      const { error } = await supabase.storage.from('forum-media').upload(path, file)
+      if (!error) {
+        const { data: { publicUrl } } = supabase.storage.from('forum-media').getPublicUrl(path)
+        setAttachments(prev => [...prev, { type: 'image', url: publicUrl, name: file.name, size: file.size }])
+      }
+    }
+    setUploading(false)
+  }
 
   async function handle(e: React.FormEvent) {
     e.preventDefault()
-    if (!content.trim()) return
+    if (!content.trim() && attachments.length === 0) return
     setSubmitting(true)
-    await onSubmit(content.trim())
+    await onSubmit(content.trim(), attachments)
     setContent('')
+    setAttachments([])
     setSubmitting(false)
   }
 
   return (
     <form onSubmit={handle} className="flex flex-col gap-2 mt-3">
-      <textarea
+      <MentionTextarea
         value={content}
-        onChange={(e) => setContent(e.target.value)}
+        onChange={setContent}
         rows={3}
-        required
         className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-400 transition w-full resize-none"
         placeholder={placeholder}
       />
-      <div className="flex gap-2">
+
+      {attachments.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {attachments.map((att, i) => (
+            <div key={i} className="relative group h-20 w-20 rounded-lg overflow-hidden border border-zinc-200 bg-zinc-50">
+              <Image src={att.url} alt="" fill className="object-cover" />
+              <button
+                type="button"
+                onClick={() => setAttachments(prev => prev.filter((_, idx) => idx !== i))}
+                className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition text-white text-lg"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="flex items-center gap-2">
         <button
-          type="submit"
-          disabled={submitting || !content.trim()}
-          className="rounded-xl px-5 py-2 text-sm font-semibold text-white disabled:opacity-50 transition hover:opacity-90"
-          style={{ backgroundColor: '#2F9E41' }}
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          className="flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs text-zinc-500 hover:bg-zinc-50 disabled:opacity-50 transition"
         >
-          {submitting ? 'Enviando...' : 'Responder'}
+          <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <rect x={3} y={3} width={18} height={18} rx={2}/><circle cx={8.5} cy={8.5} r={1.5}/><polyline points="21 15 16 10 5 21"/>
+          </svg>
+          {uploading ? 'Enviando...' : 'Foto'}
         </button>
-        {onCancel && (
-          <button type="button" onClick={onCancel} className="px-4 py-2 text-sm text-zinc-400 hover:text-zinc-700 transition">
-            Cancelar
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          onChange={(e) => { void uploadFiles(Array.from(e.target.files ?? [])); e.target.value = '' }}
+        />
+        <div className="flex gap-2 ml-auto">
+          {onCancel && (
+            <button type="button" onClick={onCancel} className="px-4 py-2 text-sm text-zinc-400 hover:text-zinc-700 transition">
+              Cancelar
+            </button>
+          )}
+          <button
+            type="submit"
+            disabled={submitting || uploading || (!content.trim() && attachments.length === 0)}
+            className="rounded-xl px-5 py-2 text-sm font-semibold text-white disabled:opacity-50 transition hover:opacity-90"
+            style={{ backgroundColor: '#2F9E41' }}
+          >
+            {submitting ? 'Enviando...' : 'Responder'}
           </button>
-        )}
+        </div>
       </div>
     </form>
   )
@@ -179,7 +241,18 @@ function ReplyItem({ reply, depth, currentUserId, canModerate, isClosed, voteMap
             </Link>
             <span className="text-xs text-zinc-400">{date}</span>
           </div>
-          <p className={`text-sm leading-relaxed whitespace-pre-wrap wrap-break-word ${removed ? 'italic text-zinc-400' : 'text-zinc-700'}`}>{reply.content}</p>
+          <p className={`text-sm leading-relaxed whitespace-pre-wrap wrap-break-word ${removed ? 'italic text-zinc-400' : 'text-zinc-700'}`}>{parseMentions(reply.content)}</p>
+          {!removed && (reply.attachments ?? []).length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {(reply.attachments ?? []).map((att, i) => (
+                <a key={i} href={att.url} target="_blank" rel="noopener noreferrer" className="block">
+                  <div className="relative h-32 w-32 rounded-lg overflow-hidden border border-zinc-100 bg-zinc-50 hover:opacity-90 transition">
+                    <Image src={att.url} alt="" fill className="object-cover" />
+                  </div>
+                </a>
+              ))}
+            </div>
+          )}
           {!removed && (
             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
               <UpvoteButton count={votes.length} voted={voted} onToggle={() => onVote(reply.id)} disabled={!currentUserId} />
@@ -259,7 +332,7 @@ export default function ForumTopicPage() {
 
     const { data: repliesData } = await supabase
       .from('forum_replies')
-      .select('id, content, created_at, parent_id, user_id, users(name, avatar_url)')
+      .select('id, content, attachments, created_at, parent_id, user_id, users(name, avatar_url)')
       .eq('topic_id', id)
       .order('created_at', { ascending: true })
 
@@ -294,12 +367,11 @@ export default function ForumTopicPage() {
   async function handleTopicVote() {
     if (!currentUserId) return
     const voted = topicVoters.includes(currentUserId)
+    setTopicVoters(prev => voted ? prev.filter(uid => uid !== currentUserId) : [...prev, currentUserId])
     if (voted) {
       await supabase.from('forum_topic_votes').delete().eq('topic_id', id).eq('user_id', currentUserId)
-      setTopicVoters(prev => prev.filter(uid => uid !== currentUserId))
     } else {
       await supabase.from('forum_topic_votes').insert({ topic_id: id, user_id: currentUserId })
-      setTopicVoters(prev => [...prev, currentUserId])
     }
   }
 
@@ -308,22 +380,26 @@ export default function ForumTopicPage() {
     const reply = replies.find(r => r.id === replyId)
     if (!reply || isRemovedReply(reply.content)) return
     const voted = (voteMap[replyId] ?? []).includes(currentUserId)
+    setVoteMap(prev => ({
+      ...prev,
+      [replyId]: voted
+        ? (prev[replyId] ?? []).filter(uid => uid !== currentUserId)
+        : [...(prev[replyId] ?? []), currentUserId],
+    }))
     if (voted) {
       await supabase.from('forum_reply_votes').delete().eq('reply_id', replyId).eq('user_id', currentUserId)
-      setVoteMap(prev => ({ ...prev, [replyId]: (prev[replyId] ?? []).filter(uid => uid !== currentUserId) }))
     } else {
       await supabase.from('forum_reply_votes').insert({ reply_id: replyId, user_id: currentUserId })
-      setVoteMap(prev => ({ ...prev, [replyId]: [...(prev[replyId] ?? []), currentUserId] }))
     }
   }
 
-  async function handleReply(content: string, parentId: string | null) {
+  async function handleReply(content: string, parentId: string | null, attachments: Attachment[] = []) {
     if (!currentUserId) return
     if (parentId && replies.some(r => r.id === parentId && isRemovedReply(r.content))) return
     const { data } = await supabase
       .from('forum_replies')
-      .insert({ topic_id: id, user_id: currentUserId, content, parent_id: parentId })
-      .select('id, content, created_at, parent_id, user_id, users(name, avatar_url)')
+      .insert({ topic_id: id, user_id: currentUserId, content, parent_id: parentId, attachments })
+      .select('id, content, attachments, created_at, parent_id, user_id, users(name, avatar_url)')
       .single()
 
     if (data) {
@@ -436,7 +512,7 @@ export default function ForumTopicPage() {
           {replyingToId === node.reply.id && !isRemovedReply(node.reply.content) && (
             <div className="pl-6 sm:pl-10 pb-2">
               <ReplyForm
-                onSubmit={(content) => handleReply(content, node.reply.id)}
+                onSubmit={(content, atts) => handleReply(content, node.reply.id, atts)}
                 onCancel={() => setReplyingToId(null)}
                 placeholder={`Respondendo a ${node.reply.users?.name ?? 'Anonimo'}...`}
               />
@@ -517,7 +593,7 @@ export default function ForumTopicPage() {
       </div>
 
       <div className="border-t border-zinc-100 pt-8">
-        <p className="text-base text-zinc-800 leading-relaxed whitespace-pre-wrap wrap-break-word">{topic.content}</p>
+        <p className="text-base text-zinc-800 leading-relaxed whitespace-pre-wrap wrap-break-word">{parseMentions(topic.content)}</p>
 
       
         {attachments.length > 0 && (
@@ -622,7 +698,7 @@ export default function ForumTopicPage() {
             <div className="flex flex-col gap-3">
               <label className="text-sm font-semibold text-zinc-700">Sua resposta</label>
               <ReplyForm
-                onSubmit={(content) => handleReply(content, null)}
+                onSubmit={(content, atts) => handleReply(content, null, atts)}
                 placeholder="Escreva sua resposta..."
               />
             </div>

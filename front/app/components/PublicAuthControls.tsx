@@ -7,6 +7,7 @@ import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import UserAvatar from '@/app/components/UserAvatar'
 import { computeXp, countProfileLinks, hasNonEmpty } from '@/app/lib/xp'
+import ProfileProgressRing from '@/app/components/ProfileProgressRing'
 
 type Level = { id: number; name: string; min_xp: number; description: string | null }
 
@@ -100,9 +101,10 @@ export function PublicHeaderAuth() {
       <button
         type="button"
         onClick={() => setMenuOpen((v) => !v)}
-        className="rounded-full ring-2 ring-zinc-100"
       >
-        <UserAvatar src={data.avatar_url} name={data.name} className="h-9 w-9" />
+        <ProfileProgressRing progress={data.levelProgress / 100} avatarSize={36}>
+          <UserAvatar src={data.avatar_url} name={data.name} className="h-9 w-9" />
+        </ProfileProgressRing>
       </button>
 
       {menuOpen && (
@@ -381,7 +383,7 @@ async function loadHomeData(): Promise<PublicHomeData | null> {
 function profileLabel(profile: Pick<PublicHomeData, 'role' | 'semester' | 'isProfessor'>) {
   if (profile.role === 'professor' || profile.isProfessor) return 'Professor'
   if (profile.role === 'admin') return 'Administrador'
-  if (profile.role === 'egresso') return 'Egresso'
+  if (profile.role === 'egresso') return 'Ex-aluno'
   if (profile.semester) return `${profile.semester}º Semestre`
   return 'Aluno'
 }

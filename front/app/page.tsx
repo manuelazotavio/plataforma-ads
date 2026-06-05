@@ -16,6 +16,7 @@ type Project = {
   updated_at: string
   like_count: number | null
   project_tags: { tag_name: string }[]
+  project_images: { image_url: string; display_order: number; media_type: string }[]
   users: { id: string; name: string; avatar_url: string | null; semester: number | null } | { id: string; name: string; avatar_url: string | null; semester: number | null }[] | null
 }
 
@@ -75,7 +76,7 @@ export default async function HomePage() {
   ] = await Promise.all([
     supabase
       .from('projects')
-      .select('id, title, description, updated_at, like_count, project_tags(tag_name), users(id, name, avatar_url, semester)')
+      .select('id, title, description, updated_at, like_count, project_tags(tag_name), project_images(image_url, display_order, media_type), users(id, name, avatar_url, semester)')
       .order('like_count', { ascending: false })
       .limit(2),
     supabase
@@ -165,26 +166,36 @@ function ProjectsSection({ projects }: { projects: Project[] }) {
           {projects.map((project) => {
             const tags = project.project_tags as { tag_name: string }[]
             const author = firstRelation(project.users)
+            const cover = [...(project.project_images ?? [])]
+              .sort((a, b) => a.display_order - b.display_order)
+              .find((img) => img.media_type === 'image' || !img.media_type)
             return (
-              <Link key={project.id} href={`/projetos/${project.id}`} className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-7 transition-shadow hover:shadow-md">
-                <div className="flex flex-col gap-1.5">
-                  <h3 className="text-lg font-bold leading-snug text-zinc-900">{project.title}</h3>
-                  {author && (
-                    <p className="text-sm text-zinc-400">
-                      Por {author.name} &bull; Atualizado {relativeTime(project.updated_at)}
-                    </p>
-                  )}
-                </div>
-                <p className="line-clamp-4 flex-1 text-sm leading-relaxed text-zinc-500">{project.description}</p>
-                {tags.length > 0 && (
-                  <div className="mt-auto flex flex-wrap gap-2">
-                    {tags.slice(0, 3).map((tag) => (
-                      <span key={tag.tag_name} className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-sm capitalize text-zinc-600">
-                        {tag.tag_name}
-                      </span>
-                    ))}
+              <Link key={project.id} href={`/projetos/${project.id}`} className="flex flex-col rounded-2xl border border-zinc-200 bg-white overflow-hidden transition-shadow hover:shadow-md">
+                {cover && (
+                  <div className="relative w-full h-40 bg-zinc-100">
+                    <Image src={cover.image_url} alt={project.title} fill className="object-cover" />
                   </div>
                 )}
+                <div className="flex flex-col gap-4 p-7 flex-1">
+                  <div className="flex flex-col gap-1.5">
+                    <h3 className="text-lg font-bold leading-snug text-zinc-900">{project.title}</h3>
+                    {author && (
+                      <p className="text-sm text-zinc-400">
+                        Por {author.name} &bull; Atualizado {relativeTime(project.updated_at)}
+                      </p>
+                    )}
+                  </div>
+                  <p className="line-clamp-4 flex-1 text-sm leading-relaxed text-zinc-500">{project.description}</p>
+                  {tags.length > 0 && (
+                    <div className="mt-auto flex flex-wrap gap-2">
+                      {tags.slice(0, 3).map((tag) => (
+                        <span key={tag.tag_name} className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-sm capitalize text-zinc-600">
+                          {tag.tag_name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </Link>
             )
           })}
@@ -388,7 +399,7 @@ function contributorLabel(contributor: Pick<Contributor, 'role' | 'semester'>) {
   if (contributor.role === 'admin') return 'Administrador'
   if (contributor.role === 'moderador') return 'Moderador'
   if (contributor.role === 'professor') return 'Professor'
-  if (contributor.role === 'egresso') return 'Egresso'
+  if (contributor.role === 'egresso') return 'Ex-aluno'
   if (contributor.semester) return `${contributor.semester}º semestre`
   return 'Aluno'
 }

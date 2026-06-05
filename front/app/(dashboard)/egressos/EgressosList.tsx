@@ -150,7 +150,7 @@ export default function EgressosList({ egressos }: { egressos: Egresso[] }) {
             {selectedYear ? `Turma ${selectedYear}` : 'Sem turma'}
           </h2>
           <p className="text-sm text-zinc-400">
-            {filtered.length} egresso{filtered.length !== 1 ? 's' : ''}
+            {filtered.length} ex-aluno{filtered.length !== 1 ? 's' : ''}
           </p>
         </div>
 

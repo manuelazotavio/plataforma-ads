@@ -49,3 +49,4 @@ export function countProfileLinks(profile: {
 export function hasNonEmpty(value: string | null | undefined): boolean {
   return !!value && value.trim().length > 0
 }
+

@@ -43,7 +43,7 @@ const sidebarItems: SidebarItem[] = [
   { href: '/eventos', label: 'Eventos', icon: <IconCalendar /> },
   { href: '/calendario', label: 'Calendário', icon: <IconCalendarGrid />, hideOnMobile: true },
   { href: '/vagas', label: 'Oportunidades', icon: <IconBriefcase /> },
-  { href: '/egressos', label: 'Egressos', icon: <IconUsers /> },
+  { href: '/egressos', label: 'Ex-alunos', icon: <IconUsers /> },
   { href: '/ranking', label: 'Ranking', icon: <IconTrophy /> },
   {
     href: '/area-aluno',

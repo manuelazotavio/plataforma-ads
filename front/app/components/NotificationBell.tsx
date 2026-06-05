@@ -8,7 +8,7 @@ import UserAvatar from '@/app/components/UserAvatar'
 
 type Notification = {
   id: string
-  type: 'comment' | 'reply' | 'comment_reply' | 'reaction' | 'comment_reaction' | 'event_reminder'
+  type: 'comment' | 'reply' | 'comment_reply' | 'reaction' | 'comment_reaction' | 'event_reminder' | 'mention'
   target_type: 'article' | 'project' | 'forum_topic' | 'event'
   target_id: string
   target_title: string | null
@@ -45,6 +45,11 @@ function notifText(n: Notification): string {
   if (n.target_type === 'forum_topic') {
     if (n.type === 'comment_reply') return `${actor} respondeu ao seu comentário no tópico ${title}`
     return `${actor} respondeu ao seu tópico ${title}`
+  }
+
+  if (n.type === 'mention') {
+    const where = n.target_type === 'article' ? 'artigo' : n.target_type === 'forum_topic' ? 'tópico' : 'projeto'
+    return `${actor} mencionou você em um ${where} ${title}`
   }
 
   const kind = n.target_type === 'article' ? 'artigo' : 'projeto'

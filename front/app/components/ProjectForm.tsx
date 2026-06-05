@@ -6,6 +6,7 @@ import { supabase } from '@/app/lib/supabase'
 import { DEFAULT_PROJECT_TAGS, PROJECT_TAG_OPTIONS_TABLE, uniqueTagNames } from '@/app/lib/projectTags'
 import DatePicker from '@/app/components/DatePicker'
 import { fileKind, formatFileSize, getFileExtension } from '@/app/lib/files'
+import MentionTextarea from '@/app/components/MentionTextarea'
 
 export type Collaborator = {
   user_id: string | null
@@ -367,11 +368,10 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
       </Field>
 
       <Field label="Descrição" required>
-        <textarea
-          required
+        <MentionTextarea
           rows={4}
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          onChange={setDescription}
           className={(submitted && !description.trim() ? inputErrorClass : inputClass) + ' resize-none'}
           placeholder="Descreva o projeto, tecnologias usadas, desafios..."
         />

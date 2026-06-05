@@ -195,7 +195,7 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-bold text-zinc-900">{user.name}</h1>
               <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-500">
-                {egresso ? 'Egresso' : roleLabel(user.role)}
+                {egresso ? 'Ex-aluno' : roleLabel(user.role)}
               </span>
             </div>
             {user.semester && user.role !== 'professor' && (
@@ -203,7 +203,7 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
             )}
             {egresso && (
               <p className="mt-1 text-sm text-zinc-400">
-                Egresso{egresso.graduation_year ? ` ${egresso.graduation_year}` : ''}
+                Ex-aluno{egresso.graduation_year ? ` ${egresso.graduation_year}` : ''}
                 {egresso.role ? ` - ${egresso.role}` : ''}
                 {egresso.company ? ` @ ${egresso.company}` : ''}
               </p>
