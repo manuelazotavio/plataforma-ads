@@ -162,7 +162,8 @@ function ReplyItem({ reply, depth, currentUserId, canModerate, isClosed, voteMap
   const isOwn = currentUserId === reply.user_id
   const removed = isRemovedReply(reply.content)
   const isReplying = replyingToId === reply.id
-  const date = new Date(reply.created_at).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })
+  const replyDateObj = new Date(reply.created_at)
+  const date = replyDateObj.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', ...(replyDateObj.getFullYear() !== new Date().getFullYear() ? { year: 'numeric' } : {}) })
   const avatarSize = depth === 0 ? 32 : 26
 
   return (
@@ -468,7 +469,8 @@ export default function ForumTopicPage() {
   const topLevelCount = replies.filter(r => !r.parent_id && !isRemovedReply(r.content)).length
   const cat = topic.forum_categories
   const attachments = topic.attachments ?? []
-  const topicDate = new Date(topic.created_at).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
+  const topicDateObj = new Date(topic.created_at)
+  const topicDate = topicDateObj.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', ...(topicDateObj.getFullYear() !== new Date().getFullYear() ? { year: 'numeric' } : {}) })
   const canModerate = currentUserRole === 'admin' || currentUserRole === 'moderador'
   const canDeleteTopic = !!currentUserId && (topic.user_id === currentUserId || canModerate)
   const isOwnTopic = currentUserId === topic.user_id

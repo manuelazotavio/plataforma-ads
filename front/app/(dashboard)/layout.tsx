@@ -145,10 +145,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return () => document.removeEventListener('mousedown', close)
   }, [])
 
-  if (loading) {
-    return <div className="min-h-screen bg-white" />
-  }
-
   return (
     <div className="flex h-screen overflow-hidden">
 
