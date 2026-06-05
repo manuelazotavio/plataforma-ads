@@ -20,11 +20,12 @@ type SidebarItem = {
   href: string
   label: string
   icon: React.ReactNode
+  hideOnMobile?: boolean
   children?: { href: string; label: string }[]
 }
 
 const sidebarItems: SidebarItem[] = [
-  { href: '/', label: 'Início', icon: <IconHome /> },
+  { href: '/', label: 'Início', icon: <IconHome />, hideOnMobile: true },
   {
     href: '/curso',
     label: 'O curso',
@@ -36,13 +37,14 @@ const sidebarItems: SidebarItem[] = [
       { href: '/curso#infraestrutura', label: 'Infraestrutura' },
     ],
   },
-  { href: '/projetos', label: 'Projetos', icon: <IconGrid /> },
-  { href: '/forum', label: 'Fórum', icon: <IconMessage /> },
+  { href: '/projetos', label: 'Projetos', icon: <IconGrid />, hideOnMobile: true },
+  { href: '/forum', label: 'Fórum', icon: <IconMessage />, hideOnMobile: true },
   { href: '/artigos', label: 'Artigos', icon: <IconBook /> },
   { href: '/eventos', label: 'Eventos', icon: <IconCalendar /> },
-  { href: '/calendario', label: 'Calendário', icon: <IconCalendarGrid /> },
+  { href: '/calendario', label: 'Calendário', icon: <IconCalendarGrid />, hideOnMobile: true },
   { href: '/vagas', label: 'Oportunidades', icon: <IconBriefcase /> },
   { href: '/egressos', label: 'Egressos', icon: <IconUsers /> },
+  { href: '/ranking', label: 'Ranking', icon: <IconTrophy /> },
   {
     href: '/area-aluno',
     label: 'Área do Aluno',
@@ -96,7 +98,7 @@ export default function AppSidebar({ open = true, onClose }: AppSidebarProps) {
   }, [])
 
   return (
-    <aside className={`w-56 shrink-0 bg-white flex flex-col fixed h-full z-30 transition-transform duration-300 dark:bg-zinc-950 ${open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+    <aside className={`w-56 shrink-0 bg-white flex flex-col fixed h-full z-40 transition-transform duration-300 dark:bg-zinc-950 ${open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
       <div className="h-16 flex items-center px-4 border-b border-zinc-100 dark:border-zinc-800">
         <Link
           href="/"
@@ -133,7 +135,7 @@ export default function AppSidebar({ open = true, onClose }: AppSidebarProps) {
           }
 
           return (
-            <div key={item.href} ref={(el) => { itemRefs.current[item.href] = el }}>
+            <div key={item.href} ref={(el) => { itemRefs.current[item.href] = el }} className={item.hideOnMobile ? 'md:block hidden' : ''}>
               {dividerBefore && <div className="my-2 border-t border-zinc-100 dark:border-zinc-800" />}
               {hasChildren ? (
                 <button
@@ -291,6 +293,19 @@ function IconUsers({ size = 18 }: { size?: number }) {
       <circle cx={9} cy={7} r={4} />
       <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
       <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  )
+}
+
+function IconTrophy({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+      <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+      <path d="M4 22h16" />
+      <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+      <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+      <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
     </svg>
   )
 }

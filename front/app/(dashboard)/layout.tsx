@@ -8,6 +8,7 @@ import { getAuthUser } from '@/app/lib/auth'
 import NotificationBell from '@/app/components/NotificationBell'
 import SearchBar from '@/app/components/SearchBar'
 import AppSidebar from '@/app/components/AppSidebar'
+import BottomNav from '@/app/components/BottomNav'
 import ThemeToggle from '@/app/components/ThemeToggle'
 import UserAvatar from '@/app/components/UserAvatar'
 
@@ -153,7 +154,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/40 z-20 md:hidden"
+          className="fixed inset-0 bg-black/40 z-40 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -176,16 +177,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <line x1={3} y1={18} x2={21} y2={18} />
               </svg>
             </button>
-            <Link
-              href="/"
-              aria-label="Ir para inicio"
-              className="rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-100"
-            >
-              <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                <path d="M9 22V12h6v10" />
-              </svg>
-            </Link>
           </div>
 
           <div className="flex min-w-0 flex-1 items-center justify-end gap-3 md:gap-4">
@@ -270,7 +261,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           />
         )}
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-white">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-white pb-16 md:pb-0">
           <div className="flex flex-col min-h-full">
             <div className="flex-1">
               {children}
@@ -287,6 +278,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </main>
         <QuickCreateMenu />
+        <BottomNav />
       </div>
     </div>
   )
@@ -397,7 +389,7 @@ function QuickCreateMenu() {
   const [open, setOpen] = useState(false)
 
   return (
-    <div className="fixed bottom-6 right-6 z-30 flex flex-col items-end gap-3">
+    <div className="fixed bottom-20 right-4 z-30 flex flex-col items-end gap-3 md:bottom-6 md:right-6">
       {open && (
         <div className="w-56 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg">
           {quickCreateItems.map((item) => (

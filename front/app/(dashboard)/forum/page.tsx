@@ -3,7 +3,7 @@ import { supabase } from '@/app/lib/supabase'
 import ForumCategorySelect from './ForumCategorySelect'
 import ForumSortToggle from './ForumSortToggle'
 import ForumSearchInput from './ForumSearchInput'
-import ForumAuthorInput from './ForumAuthorInput'
+import ForumAuthorSelect from './ForumAuthorSelect'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,6 +30,16 @@ export default async function ForumPage({
     supabase.from('forum_topic_votes').select('topic_id').gte('created_at', weekAgo),
   ])
 
+  // Autores únicos com tópicos (para o select)
+  const authorsMap = new Map<string, string>()
+  for (const t of topics ?? []) {
+    const u = t.users as unknown as { id: string; name: string } | null
+    if (u && !authorsMap.has(u.id)) authorsMap.set(u.id, u.name)
+  }
+  const authors = [...authorsMap.entries()]
+    .map(([id, name]) => ({ id, name }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+
   // Votos desta semana (badge + ordenação "mais votados")
   const weeklyVoteMap = new Map<string, number>()
   for (const v of weeklyVotes ?? []) {
@@ -38,14 +48,12 @@ export default async function ForumPage({
   const maxWeeklyVotes = Math.max(0, ...weeklyVoteMap.values())
 
   const search = q?.trim().toLowerCase() ?? ''
-  const authorSearch = author?.trim().toLowerCase() ?? ''
 
   const base = (topics ?? []).filter((t) => {
     const cat = t.forum_categories as unknown as { id: string } | null
-    const authorName = (t.users as unknown as { name: string } | null)?.name ?? ''
     if (category && cat?.id !== category) return false
     if (search && !t.title.toLowerCase().includes(search)) return false
-    if (authorSearch && !authorName.toLowerCase().includes(authorSearch)) return false
+    if (author && t.user_id !== author) return false
     return true
   })
 
@@ -78,7 +86,9 @@ export default async function ForumPage({
       
       <div className="mb-8 flex flex-wrap items-center gap-3">
         <ForumSearchInput value={q} category={category} sort={sort} author={author} />
-        <ForumAuthorInput value={author} category={category} sort={sort} q={q} />
+        {authors.length > 0 && (
+          <ForumAuthorSelect value={author} authors={authors} category={category} sort={sort} q={q} />
+        )}
         {(categories?.length ?? 0) > 0 && (
           <ForumCategorySelect value={category} sort={sort} q={q} author={author} categories={categories!} />
         )}
