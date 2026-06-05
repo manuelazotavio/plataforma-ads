@@ -118,7 +118,10 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
             className="inline-flex items-center gap-2 rounded-full px-6 py-2 text-sm font-bold text-white transition hover:opacity-90"
             style={{ backgroundColor: '#2F9E41' }}
           >
-            Inscrever-se ↗
+            Inscrever-se
+            <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
+            </svg>
           </a>
         )}
         <LikeButton type="event" targetId={event.id} initialCount={0} label="Curtir evento" variant="action" />
