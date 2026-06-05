@@ -488,7 +488,7 @@ export default function PerfilPage() {
           </div>
           <ProfileStat label="Projetos" value={stats.projectsCount} />
           <ProfileStat label="Artigos" value={stats.articlesCount} />
-          <ProfileStat label="Topicos" value={stats.topicsCount} />
+          <ProfileStat label="Tópicos" value={stats.topicsCount} />
         </section>
 
         {(skills.length > 0 || preferredAreas.length > 0 || socials.length > 0) && (

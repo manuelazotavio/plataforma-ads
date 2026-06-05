@@ -406,8 +406,17 @@ export default function ForumTopicPage() {
     setDeletingReplyId(null)
   }
 
+  function sortNodes(nodes: ReplyNode[]): ReplyNode[] {
+    return [...nodes].sort((a, b) => {
+      const votesA = (voteMap[a.reply.id] ?? []).length
+      const votesB = (voteMap[b.reply.id] ?? []).length
+      if (votesB !== votesA) return votesB - votesA
+      return new Date(a.reply.created_at).getTime() - new Date(b.reply.created_at).getTime()
+    })
+  }
+
   function renderTree(nodes: ReplyNode[], depth = 0): React.ReactNode {
-    return nodes.map(node => {
+    return sortNodes(nodes).map(node => {
       const visualDepth = Math.min(depth, 5)
       return (
         <div key={node.reply.id} className={depth > 0 ? `pl-2 sm:pl-4 ${visualDepth > 0 ? 'border-l border-zinc-100' : ''}` : ''}>
