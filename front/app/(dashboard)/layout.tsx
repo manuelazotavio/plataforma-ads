@@ -71,7 +71,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         setLoading(false)
         return
       }
-      if (profile && !profile.onboarding_completed) {
+      if (profile && !profile.onboarding_completed && !isOnboardingAllowedPath(pathname)) {
         router.replace('/onboarding')
         return
       }
@@ -304,6 +304,12 @@ const protectedPathPrefixes = [
 
 function isProtectedPath(pathname: string) {
   return protectedPathPrefixes.some((path) => pathname === path || pathname.startsWith(`${path}/`))
+}
+
+const ONBOARDING_ALLOWED = ['/projetos/novo', '/artigos/novo']
+
+function isOnboardingAllowedPath(pathname: string) {
+  return ONBOARDING_ALLOWED.some((p) => pathname === p || pathname.startsWith(`${p}/`))
 }
 
 function shouldAskSemesterConfirmation(profile: UserProfile | null | undefined) {

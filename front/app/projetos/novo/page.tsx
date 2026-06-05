@@ -1,13 +1,16 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import ProjectForm, { type ProjectFormData } from '@/app/components/ProjectForm'
 
 export default function NovoProjetoPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const returnTo = searchParams.get('returnTo')
+  const nextStep = searchParams.get('nextStep')
   const [userId, setUserId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -74,7 +77,10 @@ export default function NovoProjetoPage() {
       )
     }
 
-    router.push(isAdmin ? '/meus-projetos' : '/meus-projetos?enviado=1')
+    if (nextStep) {
+      await supabase.from('users').update({ onboarding_step: parseInt(nextStep) }).eq('id', userId)
+    }
+    router.push(returnTo ?? (isAdmin ? '/meus-projetos' : '/meus-projetos?enviado=1'))
   }
 
   if (!userId) return null
@@ -93,7 +99,7 @@ export default function NovoProjetoPage() {
           userId={userId}
           saving={saving}
           onSave={handleSave}
-          onCancel={() => router.push('/meus-projetos')}
+          onCancel={() => router.push(returnTo ?? '/meus-projetos')}
         />
       </div>
     </div>

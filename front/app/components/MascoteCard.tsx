@@ -110,7 +110,7 @@ export default function MascoteCard({ entries }: { entries: UpcomingEntry[] }) {
             className="rounded-xl px-3 py-2.5"
             style={{ backgroundColor: `${accentColor}12`, border: `1px solid ${accentColor}30` }}
           >
-            <p className="text-[11px] font-bold uppercase tracking-wide" style={{ color: accentColor }}>
+            <p className="text-[11px] font-bold" style={{ color: accentColor }}>
               {countdownLabel}
             </p>
             <p className="mt-0.5 text-sm font-semibold text-zinc-800 leading-snug line-clamp-2">

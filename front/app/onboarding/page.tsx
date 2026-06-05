@@ -9,7 +9,7 @@ import { getAuthUser } from '@/app/lib/auth'
 import BrandLogo from '@/app/components/BrandLogo'
 import { DEFAULT_PROJECT_TAGS, PROJECT_TAG_OPTIONS_TABLE, uniqueTagNames } from '@/app/lib/projectTags'
 
-const TOTAL = 8
+const TOTAL = 10
 
 const AREAS = [
   { value: 'front-end', label: 'Front-end' },
@@ -45,6 +45,8 @@ const STEP_LABELS = [
   'Perfil',
   'Projetos',
   'Experiência',
+  'Missões',
+  'Mascote',
   'Eventos',
   'Discussões',
   'Artigos',
@@ -57,6 +59,9 @@ export default function OnboardingPage() {
   const [isProfessor, setIsProfessor] = useState(false)
   const [step, setStep] = useState(0)
   const [saving, setSaving] = useState(false)
+
+  const [weeklyMissions, setWeeklyMissions] = useState<{ id: string; title: string; xp_reward: number; target_count: number }[]>([])
+  const [weeklyBonusXp, setWeeklyBonusXp] = useState(0)
 
   const [skills, setSkills] = useState<string[]>([])
   const [areas, setAreas] = useState<string[]>([])
@@ -111,6 +116,27 @@ export default function OnboardingPage() {
     }
     loadTags()
   }, [])
+
+  useEffect(() => {
+    if (step !== 4) return
+    async function loadWeeklyMissions() {
+      const d = new Date()
+      const day = d.getDay()
+      d.setDate(d.getDate() - day + (day === 0 ? -6 : 1))
+      const weekStart = d.toISOString().split('T')[0]
+      const { data } = await supabase
+        .from('weekly_mission_sets')
+        .select('bonus_xp, weekly_set_missions(missions(id, title, xp_reward, target_count))')
+        .eq('week_start', weekStart)
+        .eq('is_active', true)
+        .single()
+      if (data) {
+        setWeeklyMissions((data.weekly_set_missions as any[]).map((w: any) => w.missions).filter(Boolean))
+        setWeeklyBonusXp(data.bonus_xp ?? 0)
+      }
+    }
+    void loadWeeklyMissions()
+  }, [step])
 
   useEffect(() => {
     function handle(e: MouseEvent) {
@@ -206,7 +232,20 @@ export default function OnboardingPage() {
     }
 
     if (step > 1 && step < TOTAL - 1) {
-      await supabase.from('users').update({ onboarding_step: step + 1 }).eq('id', userId)
+      const updates: Record<string, unknown> = { onboarding_step: step + 1 }
+      // assign default mascot when entering the mascot step
+      if (step === 4) {
+        const { data: defaultMascot } = await supabase
+          .from('mascots')
+          .select('id')
+          .eq('min_xp', 0)
+          .eq('is_active', true)
+          .order('display_order')
+          .limit(1)
+          .single()
+        if (defaultMascot) updates.selected_mascot_id = defaultMascot.id
+      }
+      await supabase.from('users').update(updates).eq('id', userId)
     }
 
     if (step === TOTAL - 1) {
@@ -445,7 +484,7 @@ export default function OnboardingPage() {
                   ))}
                 </div>
                 <Link
-                  href="/projetos/novo"
+                  href="/projetos/novo?returnTo=/onboarding&nextStep=3"
                   className="mt-1 inline-flex items-center gap-2 rounded-xl bg-[#2F9E41] px-4 py-2.5 text-sm font-medium text-white hover:opacity-90 transition w-fit"
                 >
                   <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
@@ -462,7 +501,7 @@ export default function OnboardingPage() {
             >
               <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="rounded-2xl bg-zinc-50 border border-zinc-200 p-4 flex flex-col gap-2.5">
-                  <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Como ganhar XP</p>
+                  <p className="text-xs font-semibold text-zinc-500">Como ganhar XP</p>
                   {XP_ACTIONS.map((a) => (
                     <div key={a.label} className="flex items-center justify-between text-sm">
                       <span className="text-zinc-700">{a.label}</span>
@@ -471,7 +510,7 @@ export default function OnboardingPage() {
                   ))}
                 </div>
                 <div className="rounded-2xl bg-zinc-50 border border-zinc-200 p-4 flex flex-col gap-2">
-                  <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Níveis</p>
+                  <p className="text-xs font-semibold text-zinc-500">Níveis</p>
                   {LEVELS.map((l) => (
                     <div key={l.name} className="flex items-center gap-2.5 text-sm">
                       <span
@@ -488,6 +527,71 @@ export default function OnboardingPage() {
           )}
 
           {step === 4 && (
+            <InfoStep
+              title="Missões semanais"
+              description="Toda semana aparecem novas missões. Complete todas e ganhe um bônus de XP maior do que se fizesse cada uma separado."
+            >
+              <div className="mt-6 flex flex-col gap-3">
+                {weeklyMissions.length > 0 ? (
+                  <>
+                    <div className="rounded-2xl bg-zinc-50 border border-zinc-200 p-4 flex flex-col gap-3">
+                      <p className="text-xs font-semibold text-zinc-500">Missões desta semana</p>
+                      {weeklyMissions.map((m) => (
+                        <div key={m.id} className="flex items-center justify-between gap-3">
+                          <span className="text-sm text-zinc-700">{m.title}</span>
+                          <span className="text-xs font-semibold shrink-0" style={{ color: '#2F9E41' }}>+{m.xp_reward} XP</span>
+                        </div>
+                      ))}
+                    </div>
+                    {weeklyBonusXp > 0 && (
+                      <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 flex items-center gap-3">
+                        <span className="text-2xl">🎯</span>
+                        <div>
+                          <p className="text-sm font-semibold text-zinc-800">+{weeklyBonusXp} XP bônus ao completar tudo</p>
+                          <p className="text-xs text-zinc-500">Finalize todas as missões da semana e ganhe XP extra</p>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="rounded-2xl bg-zinc-50 border border-zinc-200 p-5 text-center">
+                    <p className="text-sm text-zinc-400">Nenhuma missão cadastrada para esta semana ainda.</p>
+                    <p className="text-xs text-zinc-400 mt-1">O admin configura novas missões toda semana.</p>
+                  </div>
+                )}
+              </div>
+            </InfoStep>
+          )}
+
+          {step === 5 && (
+            <div className="onboarding-light flex flex-col items-center gap-5 text-center" style={{ colorScheme: 'light' }}>
+
+              <div className="w-full flex justify-center">
+                <video
+                  src="/mascote.mp4"
+                  autoPlay loop muted playsInline
+                  className="h-62 w-62 object-contain"
+                  style={{ mixBlendMode: 'multiply' }}
+                />
+              </div>
+
+              <div className="flex flex-col items-center gap-1">
+              
+                <h1 className="text-xl font-black text-zinc-900">ADS Bot</h1>
+                <p className="text-sm text-zinc-400">Mascote padrão desbloqueado</p>
+              </div>
+
+              <div className="w-full rounded-2xl  px-5 py-4 text-left" style={{ borderColor: '#2F9E41' }}>
+                <p className="text-sm font-semibold text-zinc-900 mb-1">Você recebeu um mascote!</p>
+                <p className="text-sm text-zinc-600">O assistente oficial da comunidade ADS. Aparece na página inicial com dicas diárias e lembretes de eventos. Acumule XP e ganhe acesso a novos mascotes exclusivos.</p>
+              </div>
+
+              
+
+            </div>
+          )}
+
+          {step === 6 && (
             <InfoStep
               title="Participe dos eventos"
               description="Hackathons, maratonas de programação, extensão e iniciação científica. Fique por dentro de tudo que acontece no curso."
@@ -508,14 +612,14 @@ export default function OnboardingPage() {
             </InfoStep>
           )}
 
-          {step === 5 && (
+          {step === 7 && (
             <InfoStep
               title="Troque ideias no fórum"
               description="Tire dúvidas, ajude outros alunos e participe de debates sobre tecnologia, carreira e o curso."
             >
               <div className="mt-6 flex flex-col gap-3">
                 {[
-                  { q: 'Como funciona a iniciação científica?', tags: ['Pesquisa', 'IFNMG'] },
+                  { q: 'Como funciona a iniciação científica?', tags: ['Pesquisa', 'SICLN'] },
                   { q: 'React ou Vue para o TCC?', tags: ['Front-end', 'React'] },
                   { q: 'Melhores repositórios de exercícios de SQL', tags: ['Banco de Dados'] },
                 ].map((item) => (
@@ -532,7 +636,7 @@ export default function OnboardingPage() {
             </InfoStep>
           )}
 
-          {step === 6 && (
+          {step === 8 && (
             <InfoStep
               title="Leia e publique artigos"
               description="Compartilhe conhecimento com a comunidade. Artigos ajudam quem está aprendendo e fortalecem seu portfólio."
@@ -558,7 +662,7 @@ export default function OnboardingPage() {
             </InfoStep>
           )}
 
-          {step === 7 && (
+          {step === 9 && (
             <div className="flex flex-col gap-8">
               <div className="text-center flex flex-col items-center">
                 <h1 className="text-2xl font-bold text-zinc-900">Bem-vindo ao ADS Conecta!</h1>

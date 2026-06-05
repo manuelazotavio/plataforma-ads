@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
@@ -105,6 +106,10 @@ export default function PerfilPage() {
   const [role, setRole] = useState<string | null>(null)
   const [professorData, setProfessorData] = useState<ProfessorData>(EMPTY_PROFESSOR)
 
+  const [mascots, setMascots] = useState<{ id: string; name: string; description: string | null; image_url: string; min_xp: number }[]>([])
+  const [selectedMascotId, setSelectedMascotId] = useState<string | null>(null)
+  const [savingMascot, setSavingMascot] = useState(false)
+
   const [isEgresso, setIsEgresso] = useState(false)
   const [egressoId, setEgressoId] = useState<string | null>(null)
   const [egressoForm, setEgressoForm] = useState({ graduation_year: '', role: '', company: '' })
@@ -115,11 +120,16 @@ export default function PerfilPage() {
       if (!user) { router.push('/login'); return }
       setUserId(user.id)
 
-      const { data: profileData } = await supabase
-        .from('users')
-        .select('name, bio, semester, github_url, linkedin_url, portfolio_url, avatar_url, role, preferred_area')
-        .eq('id', user.id)
-        .single()
+      const [{ data: profileData }, { data: allMascots }] = await Promise.all([
+        supabase
+          .from('users')
+          .select('name, bio, semester, github_url, linkedin_url, portfolio_url, avatar_url, role, preferred_area, selected_mascot_id')
+          .eq('id', user.id)
+          .single(),
+        supabase.from('mascots').select('id, name, description, image_url, min_xp').eq('is_active', true).order('min_xp'),
+      ])
+      setMascots((allMascots ?? []) as typeof mascots)
+      if (profileData?.selected_mascot_id) setSelectedMascotId(profileData.selected_mascot_id)
 
       if (profileData) {
         const { data: pd } = await supabase
@@ -335,6 +345,14 @@ export default function PerfilPage() {
     ))
   }
 
+  async function selectMascot(id: string) {
+    if (!userId || savingMascot) return
+    setSavingMascot(true)
+    await supabase.from('users').update({ selected_mascot_id: id }).eq('id', userId)
+    setSelectedMascotId(id)
+    setSavingMascot(false)
+  }
+
   async function handleSave(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setSubmitted(true)
@@ -501,6 +519,40 @@ export default function PerfilPage() {
           <ProfileStat label="Artigos" value={stats.articlesCount} />
           <ProfileStat label="Tópicos" value={stats.topicsCount} />
         </section>
+
+        {mascots.length > 0 && (
+          <section className="py-6 border-t border-zinc-100">
+            <h2 className="text-sm font-semibold text-zinc-900 mb-3">Meus mascotes</h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {mascots.map((m) => {
+                const unlocked = stats.xp >= m.min_xp
+                const selected = selectedMascotId === m.id
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    disabled={!unlocked || savingMascot}
+                    onClick={() => unlocked && selectMascot(m.id)}
+                    className={`relative rounded-2xl border-2 p-3 flex flex-col items-center gap-2 transition ${
+                      selected ? 'border-[#2F9E41] bg-green-50/40' : unlocked ? 'border-zinc-200 hover:border-zinc-300 bg-white' : 'border-zinc-100 bg-zinc-50 opacity-50 cursor-not-allowed'
+                    }`}
+                  >
+                    {selected && (
+                      <span className="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full text-white text-[9px]" style={{ backgroundColor: '#2F9E41' }}>✓</span>
+                    )}
+                    <div className="relative h-16 w-16">
+                      <Image src={m.image_url} alt={m.name} fill className={`object-contain drop-shadow-sm ${!unlocked ? 'grayscale' : ''}`} sizes="64px" />
+                    </div>
+                    <span className="text-xs font-semibold text-zinc-700 text-center leading-tight">{m.name}</span>
+                    {!unlocked && (
+                      <span className="text-[10px] text-zinc-400">{m.min_xp} XP</span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </section>
+        )}
 
         {(skills.length > 0 || preferredAreas.length > 0 || socials.length > 0) && (
           <section className="py-6 flex flex-col gap-6">

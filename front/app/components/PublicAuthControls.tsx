@@ -320,6 +320,7 @@ async function loadHomeData(): Promise<PublicHomeData | null> {
     { data: ownArticles },
     { data: levelsData },
     { data: professorProfile },
+    { data: missionCompletions },
   ] = await Promise.all([
     supabase.from('users').select('name, avatar_url, semester, role, bio, github_url, linkedin_url, portfolio_url').eq('id', user.id).single(),
     supabase.from('forum_topics').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
@@ -331,6 +332,7 @@ async function loadHomeData(): Promise<PublicHomeData | null> {
     supabase.from('articles').select('like_count').eq('user_id', user.id),
     supabase.from('levels').select('id, name, min_xp, description').order('min_xp', { ascending: true }),
     supabase.from('professors').select('id').eq('user_id', user.id).maybeSingle(),
+    supabase.from('mission_completions').select('xp').eq('user_id', user.id),
   ])
 
   if (!profile) return null
@@ -340,6 +342,7 @@ async function loadHomeData(): Promise<PublicHomeData | null> {
     (ownArticles ?? []).reduce((sum, article) => sum + (article.like_count ?? 0), 0)
 
   const commentsCount = (projCommentsCount ?? 0) + (artCommentsCount ?? 0)
+  const missionXp = (missionCompletions ?? []).reduce((sum, c) => sum + ((c as { xp: number }).xp ?? 0), 0)
   const xp = computeXp({
     projectsCount: projectsCount ?? 0,
     articlesCount: articlesCount ?? 0,
@@ -349,7 +352,7 @@ async function loadHomeData(): Promise<PublicHomeData | null> {
     hasAvatar: hasNonEmpty(profile.avatar_url),
     hasBio: hasNonEmpty(profile.bio),
     linksCount: countProfileLinks(profile),
-  })
+  }) + missionXp
 
   const levels = (levelsData ?? []) as Level[]
   const level = [...levels].reverse().find((item) => xp >= item.min_xp) ?? levels[0] ?? null
@@ -507,7 +510,7 @@ function LevelUpModal({ level, xp, onClose }: { level: Level; xp: number; onClos
               <path d="M12 2 15 8l6 .9-4.5 4.4 1.1 6.2L12 16.6 6.4 19.5l1.1-6.2L3 8.9 9 8l3-6Z" />
             </svg>
           </div>
-          <p className="text-xs font-bold uppercase tracking-wide text-[#2F9E41]">Novo nível alcançado</p>
+          <p className="text-xs font-bold text-[#2F9E41]">Novo nível alcançado</p>
           <h2 id="level-up-title" className="mt-2 text-2xl font-black text-zinc-900">{level.name}</h2>
           <p className="mt-2 text-sm leading-relaxed text-zinc-500">
             Você chegou a {xp.toLocaleString('pt-BR')} XP. Continue participando para desbloquear os próximos níveis.

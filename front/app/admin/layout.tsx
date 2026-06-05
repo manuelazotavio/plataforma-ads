@@ -33,6 +33,7 @@ const nav = [
   { href: '/admin/mascote', label: 'Mascote', icon: <IconChat /> },
   { href: '/admin/auditoria', label: 'Auditoria', icon: <IconShield /> },
   { href: '/admin/niveis', label: 'Níveis', icon: <IconStar /> },
+  { href: '/admin/missoes', label: 'Missões', icon: <IconStar /> },
   { href: '/admin/permissoes', label: 'Permissões', icon: <IconShield /> },
 ]
 

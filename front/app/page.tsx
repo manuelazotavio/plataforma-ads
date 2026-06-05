@@ -8,6 +8,7 @@ import HomeShell from '@/app/components/HomeShell'
 import { PublicProfileCard, PublicWelcomeCard } from '@/app/components/PublicAuthControls'
 import HomeCalendarCard from '@/app/components/HomeCalendarCard'
 import UserAvatar from '@/app/components/UserAvatar'
+import MissionsCard from '@/app/components/MissionsCard'
 
 type Project = {
   id: string
@@ -133,6 +134,7 @@ export default async function HomePage() {
 
         <div className="flex flex-col gap-4">
           <PublicProfileCard />
+          <MissionsCard />
           {topContributors.length > 0 && <TopContributorsCard contributors={topContributors} />}
           {popularTags.length > 0 && <TagsCard tags={popularTags} />}
         </div>

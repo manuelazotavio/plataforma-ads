@@ -651,7 +651,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
           <div className="max-h-[86vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl">
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-[#2F9E41]">Prévia do README</p>
+                <p className="text-xs font-semibold text-[#2F9E41]">Prévia do README</p>
                 <h2 className="mt-1 text-lg font-semibold text-zinc-900">{readmePreview.repoName}</h2>
               </div>
               <button

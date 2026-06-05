@@ -16,9 +16,9 @@ const CATEGORIES = [
 export default async function ProjetosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tag?: string | string[]; semester?: string; aluno?: string; category?: string }>
+  searchParams: Promise<{ tag?: string | string[]; semester?: string; aluno?: string; category?: string; q?: string }>
 }) {
-  const { tag, semester, aluno, category } = await searchParams
+  const { tag, semester, aluno, category, q } = await searchParams
   const selectedTags = Array.isArray(tag) ? tag : tag ? [tag] : []
 
  
@@ -59,6 +59,7 @@ export default async function ProjetosPage({
       : query.in('id', ['00000000-0000-0000-0000-000000000000'])
   }
   if (category) query = query.eq('category', category)
+  if (q?.trim()) query = query.ilike('title', `%${q.trim()}%`)
 
   const [
     { data: projects },
@@ -112,31 +113,7 @@ export default async function ProjetosPage({
         </div>
 
         
-        <div className="no-scrollbar mb-6 flex max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-2 sm:flex-wrap sm:overflow-visible">
-          <Link
-            href="/projetos"
-            className={`shrink-0 whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-semibold transition-colors cursor-pointer ${
-              !category ? 'text-white' : 'text-zinc-400 hover:text-zinc-700'
-            }`}
-            style={!category ? { backgroundColor: '#2F9E41' } : undefined}
-          >
-            Todos
-          </Link>
-          {CATEGORIES.map((cat) => (
-            <Link
-              key={cat.value}
-              href={`/projetos?category=${cat.value}`}
-              className={`shrink-0 whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-semibold transition-colors cursor-pointer ${
-                category === cat.value ? 'text-white' : 'text-zinc-400 hover:text-zinc-700'
-              }`}
-              style={category === cat.value ? { backgroundColor: '#2F9E41' } : undefined}
-            >
-              {cat.label}
-            </Link>
-          ))}
-        </div>
-
-        <ProjectFilters tags={allTags} semesters={allSemesters} students={allStudents} />
+        <ProjectFilters tags={allTags} semesters={allSemesters} students={allStudents} categories={CATEGORIES} />
 
         {!projects || projects.length === 0 ? (
           <div className="text-center py-20 text-zinc-400">
