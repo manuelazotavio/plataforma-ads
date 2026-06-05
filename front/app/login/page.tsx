@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { getAuthRedirectUrl } from '@/app/lib/authRedirect'
 import { supabase } from '@/app/lib/supabase'
@@ -10,7 +10,13 @@ import ThemeToggle from '@/app/components/ThemeToggle'
 import PasswordInput from '@/app/components/PasswordInput'
 
 export default function LoginPage() {
+  return <Suspense><LoginForm /></Suspense>
+}
+
+function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectTo = searchParams.get('redirect') || '/'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -33,7 +39,7 @@ export default function LoginPage() {
       return
     }
 
-    router.push('/')
+    router.push(redirectTo)
   }
 
   async function handleGoogleLogin() {

@@ -32,7 +32,7 @@ export default async function EventosPage({
 
   if (categoria) query = query.eq('category', categoria)
   if (search) query = query.ilike('title', `%${search}%`)
-  query = query.order('start_date', { ascending: false })
+  query = query.order('start_date', { ascending: true })
 
   const [{ data: events }, { data: categoriesData }] = await Promise.all([
     query,
@@ -44,9 +44,11 @@ export default async function EventosPage({
     categories.map((c) => [c.value, c.label])
   )
 
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
   const allEvents = events ?? []
-  const upcoming = allEvents.filter((event) => event.start_date && new Date(event.start_date) >= new Date())
-  const past = allEvents.filter((event) => !event.start_date || new Date(event.start_date) < new Date())
+  const upcoming = allEvents.filter((event) => event.start_date && new Date(event.start_date) >= today)
+  const past = allEvents.filter((event) => !event.start_date || new Date(event.start_date) < today).reverse()
   const openRegistration = allEvents.filter((event) => event.registration_open === true)
 
   const showUpcoming = !status || status === 'proximos'

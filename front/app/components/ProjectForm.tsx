@@ -21,10 +21,17 @@ export type ProjectFormData = {
   start_date: string
   end_date: string
   is_featured: boolean
+  category: string
   tags: string[]
   images: { url: string; type: 'image' | 'video' | 'file'; name?: string; size?: number }[]
   collaborators: Collaborator[]
 }
+
+const CATEGORIES = [
+  { value: 'hackathon',           label: 'Hackathon' },
+  { value: 'extensao',            label: 'Extensão' },
+  { value: 'iniciacao_cientifica', label: 'Iniciação Científica' },
+]
 
 type UserResult = {
   id: string
@@ -56,6 +63,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
   const [startDate, setStartDate] = useState(initial?.start_date ?? '')
   const [endDate, setEndDate] = useState(initial?.end_date ?? '')
   const [isFeatured, setIsFeatured] = useState(initial?.is_featured ?? false)
+  const [category, setCategory] = useState(initial?.category ?? '')
   const [technologyTags, setTechnologyTags] = useState(DEFAULT_PROJECT_TAGS)
   const [tags, setTags] = useState<string[]>(uniqueTagNames(initial?.tags ?? []))
   const [images, setImages] = useState<{ url: string; type: 'image' | 'video' | 'file'; name?: string; size?: number }[]>(initial?.images ?? [])
@@ -280,6 +288,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
       start_date: startDate,
       end_date: endDate,
       is_featured: isFeatured,
+      category,
       tags: validTags,
       images,
       collaborators,
@@ -346,7 +355,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
         />
       </div>
 
-      <Field label="Título" required>
+      <Field label="Título" required hint="Nome do seu projeto">
         <input
           type="text"
           required
@@ -368,9 +377,28 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
         />
       </Field>
 
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Repositório (GitHub)">
-          <div className="flex gap-2">
+      <Field label="Categoria" hint="Contexto em que o projeto foi desenvolvido (opcional)">
+        <div className="flex flex-wrap gap-2">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat.value}
+              type="button"
+              onClick={() => setCategory(category === cat.value ? '' : cat.value)}
+              className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                category === cat.value
+                  ? 'border-[#2F9E41] bg-[#2F9E41]/10 text-[#2F9E41]'
+                  : 'border-zinc-200 text-zinc-500 hover:border-zinc-300 hover:text-zinc-700'
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+      </Field>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Field label="Repositório (GitHub)" hint="Link do código fonte no GitHub">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <input
               type="url"
               value={repoUrl}
@@ -397,7 +425,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
           </div>
           {readmeError && <p className="mt-1 text-xs text-red-500">{readmeError}</p>}
         </Field>
-        <Field label="Deploy / Link">
+        <Field label="Deploy / Link" hint="URL do projeto em produção ou demonstração">
           <input
             type="url"
             value={deployUrl}
@@ -409,7 +437,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Field label="Data inicial">
+        <Field label="Data inicial" hint="Quando o projeto começou">
           <DatePicker
             value={startDate}
             onChange={setStartDate}
@@ -417,7 +445,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
             className={inputClass}
           />
         </Field>
-        <Field label="Data final">
+        <Field label="Data final" hint="Deixe vazio se ainda em andamento">
           <DatePicker
             value={endDate}
             onChange={setEndDate}
@@ -428,7 +456,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
             <p className="mt-1 text-xs text-red-500">A data final deve ser depois da inicial.</p>
           )}
         </Field>
-        <Field label="Semestre">
+        <Field label="Semestre" hint="Semestre em que foi desenvolvido">
           <input
             type="number"
             min={1}
@@ -441,7 +469,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
         </Field>
       </div>
 
-      <Field label="Colaboradores">
+      <Field label="Colaboradores" hint="Quem trabalhou no projeto com você">
         <div ref={collabRef} className="relative flex flex-col gap-2">
           <div className="flex gap-2">
             <input
@@ -532,7 +560,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
         </p>
       </Field>
 
-      <Field label="Tecnologias">
+      <Field label="Tecnologias" hint="Linguagens, frameworks e ferramentas utilizadas">
         <div ref={tagRef} className="relative">
           <div
             className="flex flex-wrap items-center gap-1.5 rounded-lg border border-zinc-300 px-3 py-2 min-h-[42px] focus-within:border-zinc-500 focus-within:ring-2 focus-within:ring-zinc-200 transition cursor-text"
@@ -699,12 +727,13 @@ const inputClass =
 const inputErrorClass =
   'rounded-lg border border-red-400 bg-red-50/30 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 transition w-full'
 
-function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+function Field({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
       <label className="text-sm font-medium text-zinc-700">
         {label}{required && <span className="text-red-500 ml-0.5">*</span>}
       </label>
+      {hint && <p className="text-xs text-zinc-400 -mt-0.5">{hint}</p>}
       {children}
     </div>
   )

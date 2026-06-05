@@ -9,7 +9,6 @@ import { DEFAULT_PROJECT_TAGS, PROJECT_TAG_OPTIONS_TABLE, uniqueTagNames } from 
 
 const CATEGORIES = [
   { value: 'hackathon', label: 'Hackathon' },
-  { value: 'maratona', label: 'Maratona' },
   { value: 'extensao', label: 'Extensão' },
   { value: 'iniciacao_cientifica', label: 'Iniciação Científica' },
 ]
@@ -37,6 +36,7 @@ export default async function ProjetosPage({
     .from('projects')
     .select('id, title, description, repo_url, deploy_url, semester, is_featured, like_count, created_at, users(id, name, avatar_url), project_tags(tag_name), project_images(image_url, display_order, media_type)')
     .eq('approved', true)
+    .eq('is_active', true)
     .order('created_at', { ascending: false })
 
   if (tagProjectIds !== null) {

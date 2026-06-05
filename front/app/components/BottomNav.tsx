@@ -7,8 +7,8 @@ const ITEMS = [
   {
     href: '/',
     label: 'Início',
-    icon: (active: boolean) => (
-      <svg width={22} height={22} viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    icon: () => (
+      <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5Z" />
         <path d="M9 21V12h6v9" />
       </svg>
@@ -17,8 +17,8 @@ const ITEMS = [
   {
     href: '/projetos',
     label: 'Projetos',
-    icon: (active: boolean) => (
-      <svg width={22} height={22} viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    icon: () => (
+      <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
         <rect x={3} y={3} width={7} height={7} rx={1} />
         <rect x={14} y={3} width={7} height={7} rx={1} />
         <rect x={14} y={14} width={7} height={7} rx={1} />
@@ -29,8 +29,8 @@ const ITEMS = [
   {
     href: '/forum',
     label: 'Fórum',
-    icon: (active: boolean) => (
-      <svg width={22} height={22} viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    icon: () => (
+      <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
       </svg>
     ),
@@ -38,8 +38,8 @@ const ITEMS = [
   {
     href: '/calendario',
     label: 'Calendário',
-    icon: (active: boolean) => (
-      <svg width={22} height={22} viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    icon: () => (
+      <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
         <rect x={3} y={4} width={18} height={18} rx={2} />
         <line x1={16} y1={2} x2={16} y2={6} />
         <line x1={8} y1={2} x2={8} y2={6} />
@@ -67,8 +67,8 @@ export default function BottomNav() {
                 active ? 'text-[#2F9E41]' : 'text-zinc-400 hover:text-zinc-700'
               }`}
             >
-              {item.icon(active)}
-              <span className="text-[10px] font-medium">{item.label}</span>
+              {item.icon()}
+              <span className={`text-[10px] ${active ? 'font-bold' : 'font-medium'}`}>{item.label}</span>
             </Link>
           )
         })}

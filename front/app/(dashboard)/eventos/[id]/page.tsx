@@ -19,7 +19,7 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
   const { id } = await params
 
   const [{ data: event }, { data: categoriesData }] = await Promise.all([
-    supabase.from('events').select('*').eq('id', id).single(),
+    supabase.from('events').select('*, speaker:speaker_user_id(id, name, avatar_url)').eq('id', id).single(),
     supabase.from('event_categories').select('value, label'),
   ])
 
@@ -107,8 +107,31 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
         </div>
       </div>
 
-     
-     
+      {event.speaker_name && (() => {
+        const linkedUser = event.speaker as { id: string; name: string; avatar_url: string | null } | null
+        return (
+          <div className="flex items-center gap-3 rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3 mb-6 w-fit">
+            {linkedUser?.avatar_url ? (
+              <Image src={linkedUser.avatar_url} alt={linkedUser.name} width={36} height={36} className="h-9 w-9 rounded-full object-cover shrink-0" />
+            ) : (
+              <div className="h-9 w-9 rounded-full bg-zinc-200 flex items-center justify-center text-sm font-semibold text-zinc-600 shrink-0">
+                {event.speaker_name.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div>
+              <p className="text-[11px] font-medium text-zinc-400">Responsável / Palestrante</p>
+              {linkedUser ? (
+                <Link href={`/usuarios/${linkedUser.id}`} className="text-sm font-semibold text-zinc-900 hover:text-[#2F9E41] transition">
+                  {event.speaker_name}
+                </Link>
+              ) : (
+                <p className="text-sm font-semibold text-zinc-900">{event.speaker_name}</p>
+              )}
+            </div>
+          </div>
+        )
+      })()}
+
       <div className="flex flex-wrap items-center gap-3 mb-12">
         {event.registration_open && event.registration_url && (
           <a

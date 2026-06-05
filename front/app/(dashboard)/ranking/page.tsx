@@ -6,6 +6,7 @@ import { supabase } from '@/app/lib/supabase'
 import { computeXp, hasNonEmpty, countProfileLinks } from '@/app/lib/xp'
 import UserAvatar from '@/app/components/UserAvatar'
 import RankingFilters from './RankingFilters'
+import XpInfoModal from './XpInfoModal'
 
 type UserRow = {
   id: string
@@ -122,9 +123,15 @@ export default async function RankingPage({
 
   return (
     <div className="px-4 md:px-6 py-8 w-full max-w-2xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-zinc-900">Ranking</h1>
-        <p className="text-sm text-zinc-500 mt-1">{sorted.length} participante{sorted.length !== 1 ? 's' : ''}</p>
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-zinc-900">Ranking</h1>
+          <p className="text-sm text-zinc-500 mt-1">{sorted.length} participante{sorted.length !== 1 ? 's' : ''}</p>
+        </div>
+        <div className="flex items-center gap-1.5 mt-1 text-xs text-zinc-400">
+          <span>Como funciona o XP?</span>
+          <XpInfoModal />
+        </div>
       </div>
 
       <RankingFilters />

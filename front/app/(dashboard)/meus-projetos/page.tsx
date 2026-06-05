@@ -20,6 +20,7 @@ type Project = {
   end_date: string | null
   is_featured: boolean
   approved: boolean
+  is_active: boolean
   rejection_message: string | null
   created_at: string
   project_tags: { tag_name: string }[]
@@ -47,7 +48,7 @@ export default function MeusProjetosPage() {
 
       const { data } = await supabase
         .from('projects')
-        .select('id, title, description, repo_url, deploy_url, semester, start_date, end_date, is_featured, approved, rejection_message, created_at, project_tags(tag_name), project_images(image_url, display_order)')
+        .select('id, title, description, repo_url, deploy_url, semester, start_date, end_date, is_featured, approved, is_active, rejection_message, created_at, project_tags(tag_name), project_images(image_url, display_order)')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
@@ -56,6 +57,11 @@ export default function MeusProjetosPage() {
     }
     load()
   }, [router])
+
+  async function handleToggleActive(id: string, current: boolean) {
+    await supabase.from('projects').update({ is_active: !current }).eq('id', id)
+    setProjects((prev) => prev.map((p) => p.id === id ? { ...p, is_active: !current } : p))
+  }
 
   async function handleDelete(id: string, title: string) {
     if (!(await confirm({ message: `Excluir "${title}"?`, confirmLabel: 'Excluir' }))) return
@@ -81,7 +87,7 @@ export default function MeusProjetosPage() {
     <div className="min-h-screen bg-white px-4 py-12 md:px-6">
       {dialogNode}
       <div className="w-full">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col gap-4 mb-8 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-zinc-900">Meus projetos</h1>
             <p className="text-sm text-zinc-500 mt-0.5">{projects.length} projeto{projects.length !== 1 ? 's' : ''}</p>
@@ -160,7 +166,12 @@ export default function MeusProjetosPage() {
                           <div className="flex flex-wrap items-center gap-2">
                             <h2 className="text-sm font-semibold text-zinc-900">{project.title}</h2>
                             {!project.rejection_message && (
-                              project.approved ? (
+                              !project.is_active ? (
+                                <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-zinc-400">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-zinc-300" />
+                                  Inativo
+                                </span>
+                              ) : project.approved ? (
                                 <span className="inline-flex items-center gap-1.5 rounded-full border border-green-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-green-700">
                                   <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
                                   Publicado
@@ -219,6 +230,16 @@ export default function MeusProjetosPage() {
                           >
                             Editar
                           </Link>
+                          <button
+                            onClick={() => handleToggleActive(project.id, project.is_active)}
+                            className={`rounded-lg border px-3 py-1 text-xs font-medium transition ${
+                              project.is_active
+                                ? 'border-zinc-200 text-zinc-500 hover:border-amber-300 hover:text-amber-700'
+                                : 'border-green-200 text-green-700 hover:bg-green-50'
+                            }`}
+                          >
+                            {project.is_active ? 'Inativar' : 'Reativar'}
+                          </button>
                           <button
                             onClick={() => handleDelete(project.id, project.title)}
                             disabled={deletingId === project.id}

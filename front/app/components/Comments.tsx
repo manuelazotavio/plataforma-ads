@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import UserAvatar from '@/app/components/UserAvatar'
@@ -60,8 +61,36 @@ function UserName({ user }: { user: Comment['users'] }) {
   )
 }
 
+const COMMENT_LIMIT = 280
+
+function CommentText({ content }: { content: string }) {
+  const [expanded, setExpanded] = useState(false)
+  const isLong = content.length > COMMENT_LIMIT
+  const displayed = isLong && !expanded ? content.slice(0, COMMENT_LIMIT).trimEnd() + '…' : content
+  return (
+    <p className="whitespace-pre-wrap break-words text-base leading-7 text-zinc-700">
+      {displayed}
+      {isLong && (
+        <button
+          type="button"
+          onClick={() => setExpanded(v => !v)}
+          className="ml-1 text-sm font-medium text-[#2F9E41] hover:opacity-70 transition"
+        >
+          {expanded ? 'Ler menos' : 'Ler mais'}
+        </button>
+      )}
+    </p>
+  )
+}
+
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })
+  const date = new Date(iso)
+  const isCurrentYear = date.getFullYear() === new Date().getFullYear()
+  return date.toLocaleDateString('pt-BR', {
+    day: 'numeric',
+    month: 'short',
+    ...(isCurrentYear ? {} : { year: 'numeric' }),
+  })
 }
 
 function ReactionIcon({ type, size = 16 }: { type: ReactionType; size?: number }) {
@@ -84,6 +113,8 @@ function CommentReactionBar({
   reactions: Reaction[]
   onReact: (commentId: string, type: ReactionType) => void
 }) {
+  const router = useRouter()
+  const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -116,7 +147,10 @@ function CommentReactionBar({
       )}
 
       <button
-        onClick={() => userId ? setOpen(o => !o) : undefined}
+        onClick={() => {
+          if (!userId) { router.push(`/login?redirect=${encodeURIComponent(pathname)}`); return }
+          setOpen(o => !o)
+        }}
         className={`flex items-center gap-1.5 text-xs rounded-full px-2 py-0.5 border transition select-none ${
           myReaction
             ? `border-transparent bg-zinc-50 ${reactionData?.color}`
@@ -274,7 +308,7 @@ export default function Comments({ type, targetId }: Props) {
                     <UserName user={comment.users} />
                     <span className="text-sm text-zinc-400">{formatDate(comment.created_at)}</span>
                   </div>
-                  <p className="whitespace-pre-wrap text-base leading-7 text-zinc-700">{comment.content}</p>
+                  <CommentText content={comment.content} />
                   <div className="flex items-center gap-3 mt-2">
                     <CommentReactionBar commentId={comment.id} userId={userId} reactions={reactions} onReact={handleReact} />
                     {userId && (
@@ -308,7 +342,7 @@ export default function Comments({ type, targetId }: Props) {
                           <UserName user={reply.users} />
                           <span className="text-sm text-zinc-400">{formatDate(reply.created_at)}</span>
                         </div>
-                        <p className="whitespace-pre-wrap text-base leading-7 text-zinc-700">{reply.content}</p>
+                        <CommentText content={reply.content} />
                         <div className="flex items-center gap-3 mt-2">
                           <CommentReactionBar commentId={reply.id} userId={userId} reactions={reactions} onReact={handleReact} />
                           {userId === reply.users?.id && (

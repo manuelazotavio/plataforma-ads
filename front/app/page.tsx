@@ -230,10 +230,13 @@ function TopicsSection({ topics }: { topics: Topic[] }) {
 function TopContributorsCard({ contributors }: { contributors: Contributor[] }) {
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white p-5">
-      <h3 className="mb-4 flex items-center gap-2 text-base font-semibold text-zinc-900">
-        <MedalIcon />
-        Top contribuidores
-      </h3>
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <h3 className="flex items-center gap-2 text-base font-semibold text-zinc-900">
+          <MedalIcon />
+          Top contribuidores
+        </h3>
+        <Link href="/ranking" className="text-xs font-medium text-green-600 hover:text-green-700 transition">Ver ranking</Link>
+      </div>
       <div className="flex flex-col gap-3">
         {contributors.map((contributor, i) => (
           <Link

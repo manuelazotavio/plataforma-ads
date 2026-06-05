@@ -23,7 +23,7 @@ export default function EditarProjetoPage() {
 
       const { data, error } = await supabase
         .from('projects')
-        .select('title, description, repo_url, deploy_url, semester, start_date, end_date, is_featured, project_tags(tag_name), project_images(image_url, display_order, media_type), project_collaborators(user_id, name)')
+        .select('title, description, repo_url, deploy_url, semester, start_date, end_date, is_featured, category, project_tags(tag_name), project_images(image_url, display_order, media_type), project_collaborators(user_id, name)')
         .eq('id', id)
         .eq('user_id', user.id)
         .single()
@@ -39,6 +39,7 @@ export default function EditarProjetoPage() {
         start_date: data.start_date ?? '',
         end_date: data.end_date ?? '',
         is_featured: data.is_featured,
+        category: data.category ?? '',
         tags: data.project_tags.map((t: { tag_name: string }) => t.tag_name),
         images: data.project_images
           .sort((a: { display_order: number }, b: { display_order: number }) => a.display_order - b.display_order)
@@ -65,6 +66,7 @@ export default function EditarProjetoPage() {
         start_date: data.start_date || null,
         end_date: data.end_date || null,
         is_featured: data.is_featured,
+        category: data.category || null,
         approved: false,
         rejection_message: null,
         updated_at: new Date().toISOString(),

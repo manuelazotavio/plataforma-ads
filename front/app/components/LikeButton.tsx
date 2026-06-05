@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 
@@ -113,6 +114,8 @@ type Props = {
 }
 
 export default function LikeButton({ type, targetId, initialCount, label, variant = 'default', className = '' }: Props) {
+  const router = useRouter()
+  const pathname = usePathname()
   const table = type === 'project' ? 'project_likes' : type === 'article' ? 'article_likes' : 'event_likes'
   const field = type === 'project' ? 'project_id' : type === 'article' ? 'article_id' : 'event_id'
 
@@ -191,7 +194,10 @@ export default function LikeButton({ type, targetId, initialCount, label, varian
       )}
 
       <button
-        onClick={() => userId ? setOpen(o => !o) : undefined}
+        onClick={() => {
+          if (!userId) { router.push(`/login?redirect=${encodeURIComponent(pathname)}`); return }
+          setOpen(o => !o)
+        }}
         disabled={loading}
         title={!userId ? 'Faça login para reagir' : 'Reagir'}
         className={`flex items-center gap-2 rounded-full border font-medium transition select-none disabled:opacity-60 ${
@@ -201,7 +207,7 @@ export default function LikeButton({ type, targetId, initialCount, label, varian
             ? `border-zinc-200 bg-zinc-50 ${reactionData?.color}`
             : userId
             ? 'text-zinc-400 border-zinc-200 hover:bg-zinc-50 hover:text-zinc-600'
-            : 'text-zinc-300 border-zinc-100 cursor-default'
+            : 'text-zinc-300 border-zinc-100 hover:text-zinc-500 hover:border-zinc-300'
         }`}
       >
         {label && <span className="font-semibold text-zinc-900">{label}</span>}

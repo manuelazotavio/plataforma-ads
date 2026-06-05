@@ -28,7 +28,11 @@ type Event = {
   registration_open: boolean | null
   banner_url: string | null
   is_active: boolean
+  speaker_name: string | null
+  speaker_user_id: string | null
 }
+
+type UserResult = { id: string; name: string; avatar_url: string | null }
 
 const empty = (): Omit<Event, 'id'> => ({
   title: '',
@@ -42,6 +46,8 @@ const empty = (): Omit<Event, 'id'> => ({
   registration_open: null,
   banner_url: '',
   is_active: true,
+  speaker_name: null,
+  speaker_user_id: null,
 })
 
 export default function AdminEventosPage() {
@@ -54,10 +60,33 @@ export default function AdminEventosPage() {
   const [form, setForm] = useState(empty())
   const [saving, setSaving] = useState(false)
   const [uploadingBanner, setUploadingBanner] = useState(false)
+  const [speakerQuery, setSpeakerQuery] = useState('')
+  const [speakerResults, setSpeakerResults] = useState<UserResult[]>([])
+  const [showSpeakerDrop, setShowSpeakerDrop] = useState(false)
+  const speakerRef = useRef<HTMLDivElement>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const [draggingBanner, setDraggingBanner] = useState(false)
   const bannerInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    function close(e: MouseEvent) {
+      if (speakerRef.current && !speakerRef.current.contains(e.target as Node)) setShowSpeakerDrop(false)
+    }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [])
+
+  useEffect(() => {
+    const q = speakerQuery.trim()
+    if (q.length < 2) { setSpeakerResults([]); return }
+    const timeout = setTimeout(async () => {
+      const { data } = await supabase.from('users').select('id, name, avatar_url').ilike('name', `%${q}%`).limit(5)
+      setSpeakerResults((data as UserResult[]) ?? [])
+      setShowSpeakerDrop(true)
+    }, 300)
+    return () => clearTimeout(timeout)
+  }, [speakerQuery])
 
   async function load() {
     const [{ data: eventsData }, { data: catsData }] = await Promise.all([
@@ -106,6 +135,8 @@ export default function AdminEventosPage() {
       registration_open: form.registration_open,
       banner_url: form.banner_url || null,
       is_active: form.is_active,
+      speaker_name: form.speaker_name || null,
+      speaker_user_id: form.speaker_user_id || null,
     }
     if (editing) {
       await supabase.from('events').update(payload).eq('id', editing.id)
@@ -350,6 +381,71 @@ export default function AdminEventosPage() {
                   className="hidden"
                   onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void uploadBannerFile(f) }}
                 />
+              </Field>
+
+              <Field label="Responsável / Palestrante">
+                {form.speaker_name || form.speaker_user_id ? (
+                  <div className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2">
+                    <span className="flex-1 text-sm text-zinc-800">
+                      {form.speaker_name}
+                      {form.speaker_user_id && <span className="ml-1.5 text-xs text-[#2F9E41] font-medium">• na plataforma</span>}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => { setForm({ ...form, speaker_name: null, speaker_user_id: null }); setSpeakerQuery('') }}
+                      className="text-zinc-400 hover:text-zinc-700 transition text-base leading-none"
+                    >×</button>
+                  </div>
+                ) : (
+                  <div ref={speakerRef} className="relative">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={speakerQuery}
+                        onChange={(e) => setSpeakerQuery(e.target.value)}
+                        onFocus={() => { if (speakerResults.length > 0) setShowSpeakerDrop(true) }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && speakerQuery.trim()) {
+                            e.preventDefault()
+                            setForm({ ...form, speaker_name: speakerQuery.trim(), speaker_user_id: null })
+                            setSpeakerQuery('')
+                            setShowSpeakerDrop(false)
+                          }
+                        }}
+                        className="flex-1 rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 transition"
+                        placeholder="Buscar usuário ou digitar nome externo..."
+                      />
+                      <button
+                        type="button"
+                        disabled={!speakerQuery.trim()}
+                        onClick={() => { setForm({ ...form, speaker_name: speakerQuery.trim(), speaker_user_id: null }); setSpeakerQuery(''); setShowSpeakerDrop(false) }}
+                        className="shrink-0 rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-600 hover:bg-zinc-50 disabled:opacity-40 transition"
+                      >Adicionar</button>
+                    </div>
+                    {showSpeakerDrop && speakerResults.length > 0 && (
+                      <div className="absolute top-full mt-1 left-0 right-0 z-20 rounded-xl border border-zinc-200 bg-white shadow-lg overflow-hidden">
+                        {speakerResults.map((u) => (
+                          <button
+                            key={u.id}
+                            type="button"
+                            onClick={() => { setForm({ ...form, speaker_name: u.name, speaker_user_id: u.id }); setSpeakerQuery(''); setShowSpeakerDrop(false) }}
+                            className="flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-zinc-50 transition"
+                          >
+                            <span className="shrink-0 w-7 h-7 rounded-full bg-zinc-200 overflow-hidden flex items-center justify-center text-xs font-medium text-zinc-600">
+                              {u.avatar_url
+                                ? <img src={u.avatar_url} alt={u.name} className="w-full h-full object-cover" />
+                                : u.name.charAt(0).toUpperCase()
+                              }
+                            </span>
+                            <span className="flex-1 text-sm text-zinc-800">{u.name}</span>
+                            <span className="text-xs text-[#2F9E41] font-medium">Vincular</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+                <p className="text-xs text-zinc-400">Busque um usuário da plataforma ou digite o nome de um palestrante externo.</p>
               </Field>
 
               <div className="flex flex-col gap-4">

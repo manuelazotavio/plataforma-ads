@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import AppSidebar from './AppSidebar'
+import BottomNav from './BottomNav'
 import PublicQuickCreateMenu from './PublicQuickCreateMenu'
 import { PublicHeaderAuth } from './PublicAuthControls'
 import SearchBar from './SearchBar'
@@ -25,7 +26,7 @@ export default function HomeShell({ children }: { children: React.ReactNode }) {
     <div className="flex h-screen overflow-hidden bg-white dark:bg-zinc-950">
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/40 z-20 md:hidden"
+          className="fixed inset-0 bg-black/40 z-40 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -47,13 +48,6 @@ export default function HomeShell({ children }: { children: React.ReactNode }) {
                 <line x1={3} y1={18} x2={21} y2={18} />
               </svg>
             </button>
-            <Link
-              href="/"
-              aria-label="Ir para inicio"
-              className="rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
-            >
-              <HomeIcon />
-            </Link>
           </div>
 
           <div className="flex min-w-0 flex-1 items-center justify-end gap-2 md:gap-4">
@@ -66,12 +60,13 @@ export default function HomeShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto bg-white dark:bg-zinc-950">
+        <main className="flex-1 overflow-y-auto bg-white pb-16 md:pb-0 dark:bg-zinc-950">
           {children}
         </main>
 
         <PublicQuickCreateMenu />
       </div>
+      <BottomNav />
     </div>
   )
 }

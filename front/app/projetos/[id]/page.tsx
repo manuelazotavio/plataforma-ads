@@ -9,13 +9,14 @@ import UserAvatar from '@/app/components/UserAvatar'
 
 export const dynamic = 'force-dynamic'
 import Comments from '@/app/components/Comments'
+import ProjectAuthorActions from '@/app/components/ProjectAuthorActions'
 
 export default async function ProjetoDetalhe({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
   const { data: project } = await supabase
     .from('projects')
-    .select('id, title, description, repo_url, deploy_url, semester, start_date, end_date, is_featured, like_count, created_at, users(id, name, avatar_url), project_tags(tag_name), project_images(image_url, display_order, media_type), project_collaborators(id, user_id, name, users(id, name, avatar_url))')
+    .select('id, title, description, repo_url, deploy_url, semester, start_date, end_date, is_featured, is_active, like_count, created_at, user_id, users(id, name, avatar_url), project_tags(tag_name), project_images(image_url, display_order, media_type), project_collaborators(id, user_id, name, users(id, name, avatar_url))')
     .eq('id', id)
     .single()
 
@@ -122,7 +123,13 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
             </div>
           )}
 
-          <div className="mb-6 flex flex-col gap-3 border-t border-zinc-100 pt-8 sm:flex-row sm:flex-wrap sm:items-center sm:gap-8">
+          <ProjectAuthorActions
+            projectId={project.id}
+            projectUserId={project.user_id as string}
+            isActive={(project as unknown as { is_active: boolean }).is_active ?? true}
+          />
+
+          <div className="mb-6 flex flex-col gap-3 pt-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-8">
             <div className="flex w-full sm:w-auto">
               <LikeButton
                 type="project"

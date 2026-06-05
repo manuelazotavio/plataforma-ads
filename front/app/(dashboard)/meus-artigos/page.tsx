@@ -75,7 +75,7 @@ export default function MeusArtigosPage() {
     <div className="min-h-screen bg-white px-4 py-12 md:px-6">
       {dialogNode}
       <div className="w-full">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col gap-4 mb-8 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-zinc-900">Meus artigos</h1>
             <p className="text-sm text-zinc-500 mt-0.5">{articles.length} artigo{articles.length !== 1 ? 's' : ''}</p>

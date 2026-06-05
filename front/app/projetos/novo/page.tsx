@@ -44,6 +44,7 @@ export default function NovoProjetoPage() {
         start_date: data.start_date || null,
         end_date: data.end_date || null,
         is_featured: data.is_featured,
+        category: data.category || null,
         approved: isAdmin,
       })
       .select('id')
