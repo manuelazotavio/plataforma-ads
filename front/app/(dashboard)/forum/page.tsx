@@ -1,30 +1,55 @@
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 import ForumCategorySelect from './ForumCategorySelect'
+import ForumSortToggle from './ForumSortToggle'
 
 export const dynamic = 'force-dynamic'
 
 export default async function ForumPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string }>
+  searchParams: Promise<{ category?: string; sort?: string }>
 }) {
-  const { category } = await searchParams
+  const { category, sort: sortParam } = await searchParams
+  const sort = sortParam === 'votados' ? 'votados' : 'recentes'
 
-  const [{ data: categories }, { data: topics }] = await Promise.all([
+  const now = new Date()
+  const startOfWeek = new Date(now)
+  startOfWeek.setUTCHours(0, 0, 0, 0)
+  startOfWeek.setUTCDate(now.getUTCDate() - ((now.getUTCDay() + 6) % 7)) // segunda-feira
+  const weekAgo = startOfWeek.toISOString()
+
+  const [{ data: categories }, { data: topics }, { data: weeklyVotes }] = await Promise.all([
     supabase.from('forum_categories').select('id, name').order('display_order'),
     supabase
       .from('forum_topics')
       .select('id, title, created_at, replies_count, views_count, user_id, is_closed, users(id, name), forum_categories(id, name)')
       .order('created_at', { ascending: false }),
+    supabase.from('forum_topic_votes').select('topic_id').gte('created_at', weekAgo),
   ])
 
-  const filtered = category
+  // Votos desta semana (badge + ordenação "mais votados")
+  const weeklyVoteMap = new Map<string, number>()
+  for (const v of weeklyVotes ?? []) {
+    weeklyVoteMap.set(v.topic_id, (weeklyVoteMap.get(v.topic_id) ?? 0) + 1)
+  }
+  const maxWeeklyVotes = Math.max(0, ...weeklyVoteMap.values())
+
+  const base = category
     ? (topics ?? []).filter((t) => {
         const cat = t.forum_categories as unknown as { id: string } | null
         return cat?.id === category
       })
     : (topics ?? [])
+
+  const filtered = [...base].sort((a, b) => {
+    if (sort === 'votados') {
+      const va = weeklyVoteMap.get(a.id) ?? 0
+      const vb = weeklyVoteMap.get(b.id) ?? 0
+      if (vb !== va) return vb - va
+    }
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  })
 
   return (
     <div className="px-4 md:px-6 py-8 w-full">
@@ -44,9 +69,12 @@ export default async function ForumPage({
       </div>
 
       
-      {(categories?.length ?? 0) > 0 && (
-        <ForumCategorySelect value={category} categories={categories!} />
-      )}
+      <div className="mb-8 flex flex-wrap items-center gap-3">
+        {(categories?.length ?? 0) > 0 && (
+          <ForumCategorySelect value={category} sort={sort} categories={categories!} />
+        )}
+        <ForumSortToggle sort={sort} category={category} />
+      </div>
 
       {filtered.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-200 p-16 text-center">
@@ -62,6 +90,8 @@ export default async function ForumPage({
             const author = topic.users as unknown as { id: string; name: string } | null
             const cat = topic.forum_categories as unknown as { id: string; name: string } | null
             const isClosed = (topic as unknown as { is_closed: boolean }).is_closed
+            const weekVotes = weeklyVoteMap.get(topic.id) ?? 0
+            const isTopOfWeek = weekVotes > 0 && weekVotes === maxWeeklyVotes
             return (
               <div
                 key={topic.id}
@@ -71,6 +101,12 @@ export default async function ForumPage({
                   <div className="flex items-center gap-2 flex-wrap">
                     {cat && (
                       <span className="text-xs font-semibold text-[#2F9E41]">{cat.name}</span>
+                    )}
+                    {isTopOfWeek && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-600">
+                        <svg width={9} height={9} viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>
+                        Mais votado da semana
+                      </span>
                     )}
                     {isClosed && (
                       <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-600">

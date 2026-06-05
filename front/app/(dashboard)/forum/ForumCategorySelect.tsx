@@ -10,14 +10,19 @@ type CategoryOption = {
 
 type Props = {
   value?: string
+  sort?: string
   categories: CategoryOption[]
 }
 
-export default function ForumCategorySelect({ value, categories }: Props) {
+export default function ForumCategorySelect({ value, sort, categories }: Props) {
   const router = useRouter()
 
   function onChange(next: string) {
-    router.push(next ? `/forum?category=${next}` : '/forum')
+    const params = new URLSearchParams()
+    if (next) params.set('category', next)
+    if (sort && sort !== 'recentes') params.set('sort', sort)
+    const qs = params.toString()
+    router.push(qs ? `/forum?${qs}` : '/forum')
   }
 
   return (
