@@ -5,15 +5,19 @@ import { useRouter } from 'next/navigation'
 type Props = {
   sort: string
   category?: string
+  q?: string
+  author?: string
 }
 
-export default function ForumSortToggle({ sort, category }: Props) {
+export default function ForumSortToggle({ sort, category, q, author }: Props) {
   const router = useRouter()
 
   function navigate(newSort: string) {
     const params = new URLSearchParams()
     if (category) params.set('category', category)
     if (newSort !== 'recentes') params.set('sort', newSort)
+    if (q?.trim()) params.set('q', q.trim())
+    if (author?.trim()) params.set('author', author.trim())
     const qs = params.toString()
     router.push(qs ? `/forum?${qs}` : '/forum')
   }

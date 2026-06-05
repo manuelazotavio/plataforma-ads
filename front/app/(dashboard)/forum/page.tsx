@@ -2,15 +2,17 @@ import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 import ForumCategorySelect from './ForumCategorySelect'
 import ForumSortToggle from './ForumSortToggle'
+import ForumSearchInput from './ForumSearchInput'
+import ForumAuthorInput from './ForumAuthorInput'
 
 export const dynamic = 'force-dynamic'
 
 export default async function ForumPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; sort?: string }>
+  searchParams: Promise<{ category?: string; sort?: string; q?: string; author?: string }>
 }) {
-  const { category, sort: sortParam } = await searchParams
+  const { category, sort: sortParam, q, author } = await searchParams
   const sort = sortParam === 'votados' ? 'votados' : 'recentes'
 
   const now = new Date()
@@ -35,12 +37,17 @@ export default async function ForumPage({
   }
   const maxWeeklyVotes = Math.max(0, ...weeklyVoteMap.values())
 
-  const base = category
-    ? (topics ?? []).filter((t) => {
-        const cat = t.forum_categories as unknown as { id: string } | null
-        return cat?.id === category
-      })
-    : (topics ?? [])
+  const search = q?.trim().toLowerCase() ?? ''
+  const authorSearch = author?.trim().toLowerCase() ?? ''
+
+  const base = (topics ?? []).filter((t) => {
+    const cat = t.forum_categories as unknown as { id: string } | null
+    const authorName = (t.users as unknown as { name: string } | null)?.name ?? ''
+    if (category && cat?.id !== category) return false
+    if (search && !t.title.toLowerCase().includes(search)) return false
+    if (authorSearch && !authorName.toLowerCase().includes(authorSearch)) return false
+    return true
+  })
 
   const filtered = [...base].sort((a, b) => {
     if (sort === 'votados') {
@@ -70,10 +77,12 @@ export default async function ForumPage({
 
       
       <div className="mb-8 flex flex-wrap items-center gap-3">
+        <ForumSearchInput value={q} category={category} sort={sort} author={author} />
+        <ForumAuthorInput value={author} category={category} sort={sort} q={q} />
         {(categories?.length ?? 0) > 0 && (
-          <ForumCategorySelect value={category} sort={sort} categories={categories!} />
+          <ForumCategorySelect value={category} sort={sort} q={q} author={author} categories={categories!} />
         )}
-        <ForumSortToggle sort={sort} category={category} />
+        <ForumSortToggle sort={sort} category={category} q={q} author={author} />
       </div>
 
       {filtered.length === 0 ? (
