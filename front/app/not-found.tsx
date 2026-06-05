@@ -22,8 +22,8 @@ export default function NotFound() {
 
         {/* Cat image with float animation */}
         <div
-          className="w-64 h-64 md:w-80 md:h-80 relative"
-          style={{ animation: 'float 4s ease-in-out infinite' }}
+          className="w-84 h-84 md:w-85 md:h-85 relative"
+         
         >
           <Image
             src="/notfound.png"
@@ -36,14 +36,12 @@ export default function NotFound() {
 
         {/* Heading */}
         <div className="mt-2 space-y-1">
-          <p className="text-xs font-semibold tracking-[0.25em] uppercase text-[#4ade80] dark:text-[#4ade80]">
-            Erro 404
-          </p>
+        
           <h1 className="text-3xl md:text-4xl font-black text-zinc-900 dark:text-zinc-50 tracking-tight">
             Página não encontrada
           </h1>
           <p className="text-zinc-500 dark:text-zinc-400 text-sm md:text-base max-w-xs mx-auto leading-relaxed">
-            O gatinho também ficou confuso.<br />Essa página não existe ou foi movida.
+            A Ifigênia também ficou confusa.<br />Essa página não existe ou foi movida.
           </p>
         </div>
 
