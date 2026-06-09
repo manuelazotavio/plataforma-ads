@@ -186,7 +186,7 @@ export default function CurriculumTabs({ curriculum, versions, equivalencies = [
         </div>
       )}
       <SemesterView curriculum={activeVersion.semesters} />
-      {equivalenciesOpen && <EquivalencyModal equivalencies={equivalencies} onClose={() => setEquivalenciesOpen(false)} />}
+      {equivalenciesOpen && <EquivalencyModal equivalencies={equivalencies} versions={versions} onClose={() => setEquivalenciesOpen(false)} />}
     </div>
   )
 }
@@ -207,7 +207,7 @@ function EquivalencyButton({ equivalencies, onClick }: { equivalencies: Equivale
   )
 }
 
-function EquivalencyModal({ equivalencies, onClose }: { equivalencies: Equivalency[]; onClose: () => void }) {
+function EquivalencyModal({ equivalencies, versions, onClose }: { equivalencies: Equivalency[]; versions?: VersionGroup[]; onClose: () => void }) {
   const pairs = buildEquivalencyPairs(equivalencies)
   const matrixNames = Array.from(new Set(pairs.flatMap((pair) => [pair.from.versionName, pair.to.versionName]))).sort((a, b) => a.localeCompare(b, 'pt-BR'))
   const matrixOptions = matrixNames.map((name) => ({ value: name, label: name }))
@@ -231,6 +231,21 @@ function EquivalencyModal({ equivalencies, onClose }: { equivalencies: Equivalen
       pair.from.semester === effectiveSemester
     ))
   )
+
+  const subjectIdsWithEquivalency = new Set(rows.map((r) => r.subjectId))
+  const baseVersionGroup = versions?.find((v) => v.name === baseMatrix)
+  const allBaseSubjects = effectiveSemester != null
+    ? (baseVersionGroup?.semesters.find((s) => s.semester === effectiveSemester)?.subjects ?? [])
+    : []
+  const rowsWithoutEquivalency = allBaseSubjects
+    .filter((s) => s.id && !subjectIdsWithEquivalency.has(s.id))
+    .map((s) => ({
+      subjectId: s.id!,
+      name: s.name,
+      semester: effectiveSemester!,
+      equivalents: [] as { subjectId: string; name: string; semester: number; note: string | null }[],
+    }))
+  const allRows = [...rows, ...rowsWithoutEquivalency].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 px-4 py-6" role="dialog" aria-modal="true">
@@ -319,31 +334,31 @@ function EquivalencyModal({ equivalencies, onClose }: { equivalencies: Equivalen
                 </div>
 
                 <div className="divide-y divide-zinc-100">
-                  {rows.map((row) => (
+                  {allRows.map((row) => (
                     <div key={row.subjectId} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                       <div className="border-r border-zinc-100 px-4 py-4">
                         <p className="text-sm font-semibold text-zinc-900">{row.name}</p>
                         <p className="mt-1 text-xs text-zinc-400">{row.semester}º semestre</p>
                       </div>
                       <div className="px-4 py-4">
-                        <div className="flex flex-col gap-2">
-                          {row.equivalents.map((equivalent) => (
-                            <div key={equivalent.subjectId} className="rounded-lg bg-green-50 px-3 py-2">
-                              <p className="text-sm font-semibold text-[#2F9E41]">{equivalent.name}</p>
-                              <p className="mt-0.5 text-xs text-green-700/70">{equivalent.semester}º semestre</p>
-                              {equivalent.note && <p className="mt-1 text-xs text-green-700/70">{equivalent.note}</p>}
-                            </div>
-                          ))}
-                        </div>
+                        {row.equivalents.length === 0 ? (
+                          <p className="text-sm text-zinc-400 italic">Não há matéria equivalente</p>
+                        ) : (
+                          <div className="flex flex-col gap-2">
+                            {row.equivalents.map((equivalent) => (
+                              <div key={equivalent.subjectId} className="rounded-lg bg-green-50 px-3 py-2">
+                                <p className="text-sm font-semibold text-[#2F9E41]">{equivalent.name}</p>
+                                <p className="mt-0.5 text-xs text-green-700/70">{equivalent.semester}º semestre</p>
+                                {equivalent.note && <p className="mt-1 text-xs text-green-700/70">{equivalent.note}</p>}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
-
-              <p className="mt-4 text-xs text-zinc-400">
-                Mostrando apenas disciplinas com equivalência cadastrada entre as matrizes selecionadas.
-              </p>
             </>
           ) : (
             <div className="mt-5 rounded-xl border border-dashed border-zinc-200 px-4 py-10 text-center">
