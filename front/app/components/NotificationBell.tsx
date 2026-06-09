@@ -48,7 +48,7 @@ function notifText(n: Notification): string {
   }
 
   if (n.type === 'mention') {
-    const where = n.target_type === 'article' ? 'artigo' : n.target_type === 'forum_topic' ? 'tópico' : 'projeto'
+    const where = n.target_type === 'article' ? 'artigo' : n.target_type === 'event' ? 'evento' : 'projeto'
     return `${actor} mencionou você em um ${where} ${title}`
   }
 
