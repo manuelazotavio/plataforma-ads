@@ -137,7 +137,7 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
                 initialCount={project.like_count}
                 label="Curtir projeto"
                 variant="action"
-                className="w-full justify-center sm:w-auto"
+                className="justify-center"
               />
             </div>
             <ShareProjectButton title={project.title} className="w-full justify-center sm:w-auto" />

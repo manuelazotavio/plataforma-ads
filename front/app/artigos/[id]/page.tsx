@@ -95,7 +95,7 @@ export default async function ArtigoDetalhe({ params }: { params: Promise<{ id: 
               initialCount={article.like_count}
               label="Curtir artigo"
               variant="action"
-              className="w-full justify-center sm:w-auto"
+              className="justify-center"
             />
           </div>
           <ShareProjectButton
