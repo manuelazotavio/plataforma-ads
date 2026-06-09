@@ -46,7 +46,7 @@ const STEP_LABELS = [
   'Projetos',
   'Experiência',
   'Missões',
-  'Mascote',
+  'Personagem',
   'Eventos',
   'Discussões',
   'Artigos',
@@ -578,12 +578,12 @@ export default function OnboardingPage() {
               <div className="flex flex-col items-center gap-1">
               
                 <h1 className="text-xl font-black text-zinc-900">ADS Bot</h1>
-                <p className="text-sm text-zinc-400">Mascote padrão desbloqueado</p>
+                <p className="text-sm text-zinc-400">Personagem padrão desbloqueado</p>
               </div>
 
               <div className="w-full rounded-2xl  px-5 py-4 text-left" style={{ borderColor: '#2F9E41' }}>
-                <p className="text-sm font-semibold text-zinc-900 mb-1">Você recebeu um mascote!</p>
-                <p className="text-sm text-zinc-600">O assistente oficial da comunidade ADS. Aparece na página inicial com dicas diárias e lembretes de eventos. Acumule XP e ganhe acesso a novos mascotes exclusivos.</p>
+                <p className="text-sm font-semibold text-zinc-900 mb-1">Você recebeu um personagem!</p>
+                <p className="text-sm text-zinc-600">O assistente oficial da comunidade ADS. Aparece na página inicial com dicas diárias e lembretes de eventos. Acumule XP e ganhe acesso a novos personagens exclusivos.</p>
               </div>
 
               

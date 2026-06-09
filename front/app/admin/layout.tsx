@@ -30,7 +30,7 @@ const nav = [
   { href: '/admin/corpo-docente', label: 'Corpo Docente', icon: <IconPerson /> },
   { href: '/admin/forum', label: 'Fórum', icon: <IconChat /> },
   { href: '/admin/mensagens', label: 'Mensagens', icon: <IconMail /> },
-  { href: '/admin/mascote', label: 'Mascote', icon: <IconChat /> },
+  { href: '/admin/mascote', label: 'Personagem', icon: <IconChat /> },
   { href: '/admin/auditoria', label: 'Auditoria', icon: <IconShield /> },
   { href: '/admin/niveis', label: 'Níveis', icon: <IconStar /> },
   { href: '/admin/missoes', label: 'Missões', icon: <IconStar /> },

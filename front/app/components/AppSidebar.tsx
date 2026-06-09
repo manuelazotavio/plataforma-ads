@@ -220,7 +220,7 @@ export default function AppSidebar({ open = true, onClose }: AppSidebarProps) {
           <div className="relative h-12 w-12 shrink-0">
             <Image
               src="/mascote.png"
-              alt="Mascote"
+              alt="Personagem"
               fill
               className="object-contain drop-shadow-sm"
               sizes="48px"

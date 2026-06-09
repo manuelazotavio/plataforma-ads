@@ -94,7 +94,7 @@ export default function MascoteCard({ entries }: { entries: UpcomingEntry[] }) {
         <div className="relative w-28 h-28 shrink-0 self-end">
           <Image
             src="/mascote.png"
-            alt="Mascote ADS"
+            alt="Personagem ADS"
             fill
             className="object-contain object-bottom drop-shadow-md"
             sizes="112px"

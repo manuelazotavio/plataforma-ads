@@ -122,8 +122,8 @@ export default function AdminMascotePage() {
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-zinc-900">Mascote</h1>
-        <p className="text-sm text-zinc-500 mt-0.5">Gerencie a coleção de mascotes e as frases do balão.</p>
+        <h1 className="text-2xl font-semibold text-zinc-900">Personagem</h1>
+        <p className="text-sm text-zinc-500 mt-0.5">Gerencie a coleção de personagens e as frases do balão.</p>
       </div>
 
       <div className="flex gap-1 mb-6 border-b border-zinc-200">
@@ -139,7 +139,7 @@ export default function AdminMascotePage() {
         <div className="flex flex-col gap-8">
           {/* Form */}
           <div className="rounded-2xl border border-zinc-200 bg-white p-6">
-            <h2 className="text-base font-semibold text-zinc-900 mb-5">Adicionar mascote</h2>
+            <h2 className="text-base font-semibold text-zinc-900 mb-5">Adicionar personagem</h2>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
@@ -198,7 +198,7 @@ export default function AdminMascotePage() {
 
               <div className="sm:col-span-2">
                 <label className="text-xs font-medium text-zinc-500 mb-1.5 block">Descrição (opcional)</label>
-                <input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className={inputCls} placeholder="Breve descrição do mascote..." />
+                <input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className={inputCls} placeholder="Breve descrição do personagem..." />
               </div>
             </div>
 
@@ -207,13 +207,13 @@ export default function AdminMascotePage() {
             <button onClick={saveMascot} disabled={saving || uploading}
               className="mt-5 rounded-lg px-5 py-2 text-sm font-medium text-white disabled:opacity-50 transition"
               style={{ backgroundColor: '#2F9E41' }}>
-              {saving ? 'Salvando...' : 'Adicionar mascote'}
+              {saving ? 'Salvando...' : 'Adicionar personagem'}
             </button>
           </div>
 
           {/* List */}
           <div className="flex flex-col gap-3">
-            {mascots.length === 0 && <p className="text-sm text-zinc-400 text-center py-8">Nenhum mascote cadastrado.</p>}
+            {mascots.length === 0 && <p className="text-sm text-zinc-400 text-center py-8">Nenhum personagem cadastrado.</p>}
             {mascots.map(m => {
               const rarity = rarityFromXp(m.min_xp)
               return (

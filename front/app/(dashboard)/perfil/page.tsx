@@ -523,7 +523,7 @@ export default function PerfilPage() {
 
         {mascots.length > 0 && (
           <section className="py-6 border-t border-zinc-100">
-            <h2 className="text-sm font-semibold text-zinc-900 mb-3">Meus mascotes</h2>
+            <h2 className="text-sm font-semibold text-zinc-900 mb-3">Meus personagens</h2>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {mascots.map((m) => {
                 const unlocked = stats.xp >= m.min_xp
