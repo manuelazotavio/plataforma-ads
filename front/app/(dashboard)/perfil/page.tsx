@@ -94,6 +94,7 @@ export default function PerfilPage() {
   const [stats, setStats] = useState<ProfileStats>({
     xp: 0,
     levelName: null,
+    levelProgress: 0,
     projectsCount: 0,
     articlesCount: 0,
     topicsCount: 0,
