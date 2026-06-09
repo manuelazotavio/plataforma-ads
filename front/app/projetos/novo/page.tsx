@@ -1,12 +1,20 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import ProjectForm, { type ProjectFormData } from '@/app/components/ProjectForm'
 
 export default function NovoProjetoPage() {
+  return (
+    <Suspense>
+      <NovoProjetoContent />
+    </Suspense>
+  )
+}
+
+function NovoProjetoContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const returnTo = searchParams.get('returnTo')
