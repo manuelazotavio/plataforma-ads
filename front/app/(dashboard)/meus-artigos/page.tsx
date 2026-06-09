@@ -23,7 +23,7 @@ type Article = {
 
 export default function MeusArtigosPage() {
   const router = useRouter()
-  const { confirm, dialogNode } = useAppDialog()
+  const { confirm, alert, dialogNode } = useAppDialog()
   const [articles, setArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -58,7 +58,19 @@ export default function MeusArtigosPage() {
       confirmLabel: 'Excluir',
     }))) return
     setDeletingId(id)
-    await supabase.from('articles').delete().eq('id', id)
+    const { error } = await supabase.rpc('delete_own_article', { p_article_id: id })
+
+    if (error) {
+      await alert({
+        title: 'Não foi possível excluir',
+        message: error.message.includes('delete_own_article')
+          ? 'A função de exclusão ainda precisa ser configurada no Supabase.'
+          : error.message,
+      })
+      setDeletingId(null)
+      return
+    }
+
     setArticles((prev) => prev.filter((a) => a.id !== id))
     setDeletingId(null)
   }
