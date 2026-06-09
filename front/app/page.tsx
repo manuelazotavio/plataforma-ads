@@ -144,7 +144,7 @@ export default async function HomePage() {
         </div>
       </div>
 
-      <footer className="mt-8 border-t border-zinc-100 px-4 py-6 md:pl-10 md:pr-28">
+      <footer data-floating-actions-boundary className="mt-8 border-t border-zinc-100 px-4 py-6 md:pl-10 md:pr-28">
         <div className="flex flex-col items-center gap-y-2 text-center text-xs text-zinc-400 md:flex-row md:flex-wrap md:text-left md:gap-x-5">
           <Link href="/regras" className="transition hover:text-zinc-700">Regras do ADS Conecta</Link>
           <Link href="/privacidade" className="transition hover:text-zinc-700">Política de Privacidade</Link>

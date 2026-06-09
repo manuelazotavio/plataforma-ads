@@ -551,7 +551,7 @@ export default function AreaAlunoPage() {
                       {item.sections.map((section) => (
                         <details key={section.title} className="group/section rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
                           <summary className="flex cursor-pointer list-none items-start justify-between gap-3 px-4 py-3 transition hover:bg-zinc-50 dark:hover:bg-zinc-900">
-                            <span>
+                            <span className="min-w-0">
                               <span className="block text-sm font-semibold text-zinc-900 dark:text-zinc-100">{section.title}</span>
                               {'subtitle' in section && section.subtitle && (
                                 <span className="mt-0.5 block text-xs leading-5 text-zinc-500 dark:text-zinc-400">{section.subtitle}</span>
@@ -560,9 +560,21 @@ export default function AreaAlunoPage() {
                             <svg className="mt-0.5 h-4 w-4 shrink-0 text-zinc-300 transition group-open/section:rotate-45 dark:text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
                           </summary>
 
-                          <div className="px-4 pb-4 text-sm leading-6 text-zinc-600 dark:text-zinc-300">
+                          <div className="min-w-0 px-4 pb-4 text-sm leading-6 text-zinc-600 dark:text-zinc-300">
                             {section.content.map((paragraph) => (
-                              <p key={paragraph} className="mt-2 first:mt-0">{paragraph}</p>
+                              paragraph.startsWith('http') ? (
+                                <a
+                                  key={paragraph}
+                                  href={paragraph}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="mt-2 block max-w-full text-[#2F9E41] underline decoration-[#2F9E41]/30 underline-offset-2 [overflow-wrap:anywhere] first:mt-0 hover:decoration-[#2F9E41]"
+                                >
+                                  {paragraph}
+                                </a>
+                              ) : (
+                                <p key={paragraph} className="mt-2 min-w-0 [overflow-wrap:anywhere] first:mt-0">{paragraph}</p>
+                              )
                             ))}
 
                             {'note' in section && section.note && (

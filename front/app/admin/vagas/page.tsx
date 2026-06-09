@@ -50,7 +50,7 @@ const EMPTY_FORM = {
 }
 
 export default function AdminVagasPage() {
-  const { confirm, dialogNode } = useAppDialog()
+  const { confirm, alert, dialogNode } = useAppDialog()
   const [jobs, setJobs]           = useState<Job[]>([])
   const [loading, setLoading]     = useState(true)
   const [filter, setFilter]       = useState<Filter>('pendentes')
@@ -76,9 +76,14 @@ export default function AdminVagasPage() {
 
   async function toggle(id: string, value: boolean) {
     setUpdatingId(id)
-    await supabase.from('jobs').update({ is_active: value }).eq('id', id)
+    const { error: updateError } = await supabase.from('jobs').update({ is_active: value }).eq('id', id)
+    if (updateError) {
+      setError('Erro ao atualizar oportunidade: ' + updateError.message)
+      setUpdatingId(null)
+      return
+    }
     setJobs((prev) => prev.map((j) => j.id === id ? { ...j, is_active: value } : j))
-    if (value) void sendJobNotificationEmails(id)
+    if (value) await sendJobNotificationEmails(id)
     setUpdatingId(null)
   }
 
@@ -204,7 +209,7 @@ export default function AdminVagasPage() {
     }
 
     setJobs((prev) => [{ ...newJob, job_tags: rawTags.map((tag_name) => ({ tag_name })) } as Job, ...prev])
-    if (newJob.is_active) void sendJobNotificationEmails(newJob.id)
+    if (newJob.is_active) await sendJobNotificationEmails(newJob.id)
     closeForm()
     setSaving(false)
   }
@@ -218,12 +223,33 @@ export default function AdminVagasPage() {
   const pendingCount = jobs.filter((j) => !j.is_active).length
 
   async function sendJobNotificationEmails(jobId: string) {
-    const { error: notifyError } = await supabase.functions.invoke('send-job-notifications', {
+    const { data, error: notifyError } = await supabase.functions.invoke('send-job-notifications', {
       body: { job_id: jobId },
     })
     if (notifyError) {
-      console.error('Erro ao enviar notificações de oportunidade:', notifyError.message)
+      const functionError = await getFunctionErrorMessage(notifyError)
+      await alert({
+        title: 'Oportunidade publicada, mas o e-mail falhou',
+        message: data?.error ?? functionError,
+      })
+      return
     }
+
+    if (data?.error) {
+      await alert({
+        title: 'Oportunidade publicada, mas o e-mail falhou',
+        message: data.error,
+      })
+      return
+    }
+
+    await alert({
+      title: data?.skipped ? 'Notificação já enviada' : 'Notificações processadas',
+      message: data?.skipped
+        ? 'Os e-mails desta oportunidade já haviam sido processados anteriormente.'
+        : `${data?.sent ?? 0} e-mail(s) enviado(s).`,
+      confirmLabel: 'Entendi',
+    })
   }
 
   if (loading) return <LoadingState message="Carregando oportunidades" />
@@ -482,4 +508,20 @@ export default function AdminVagasPage() {
       )}
     </div>
   )
+}
+
+async function getFunctionErrorMessage(error: unknown) {
+  if (typeof error === 'object' && error && 'context' in error) {
+    const context = (error as { context?: unknown }).context
+    if (context instanceof Response) {
+      try {
+        const body = await context.clone().json() as { error?: string }
+        if (body.error) return body.error
+      } catch {}
+    }
+  }
+
+  return error instanceof Error
+    ? error.message
+    : 'Erro desconhecido ao enviar as notificações.'
 }

@@ -80,6 +80,7 @@ Deno.serve(async (req: Request) => {
       .filter((user): user is { email: string; name: string | null } => !!user?.email)
 
     if (recipients.length === 0) {
+      console.info('No subscribers found for job notification', { jobId: job.id })
       await markSent(adminClient, job.id, 0)
       return json({ sent: 0 }, 200)
     }
@@ -89,6 +90,10 @@ Deno.serve(async (req: Request) => {
     const siteUrl = Deno.env.get('PUBLIC_SITE_URL') ?? Deno.env.get('SITE_URL') ?? ''
 
     if (!resendApiKey || !fromEmail) {
+      console.error('Missing job notification email secrets', {
+        hasResendApiKey: Boolean(resendApiKey),
+        hasFromEmail: Boolean(fromEmail),
+      })
       return json({ error: 'Configure RESEND_API_KEY e JOB_NOTIFICATION_FROM_EMAIL na Edge Function.' }, 500)
     }
 
@@ -113,6 +118,13 @@ Deno.serve(async (req: Request) => {
 
       if (!response.ok) {
         const message = await response.text()
+        console.error('Resend rejected job notification email', {
+          jobId: job.id,
+          status: response.status,
+          message,
+          fromEmail,
+          recipientCount: group.length,
+        })
         return json({ error: `Erro ao enviar e-mail: ${message}` }, 502)
       }
 
@@ -120,8 +132,10 @@ Deno.serve(async (req: Request) => {
     }
 
     await markSent(adminClient, job.id, sent)
+    console.info('Job notification emails sent', { jobId: job.id, sent })
     return json({ sent }, 200)
   } catch (e) {
+    console.error('Unexpected job notification error', e)
     return json({ error: String(e) }, 500)
   }
 })

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { getAuthUser } from '@/app/lib/auth'
+import { useMobileFooterOffset } from '@/app/hooks/useMobileFooterOffset'
 
 const quickCreateItems = [
   { href: '/cadastro', label: 'Novo projeto' },
@@ -13,6 +14,7 @@ const quickCreateItems = [
 export default function PublicQuickCreateMenu() {
   const [open, setOpen] = useState(false)
   const [loggedIn, setLoggedIn] = useState(false)
+  const bottomOffset = useMobileFooterOffset()
 
   useEffect(() => {
     getAuthUser().then((user) => setLoggedIn(Boolean(user)))
@@ -27,7 +29,10 @@ export default function PublicQuickCreateMenu() {
     : quickCreateItems
 
   return (
-    <div className="fixed bottom-20 right-4 z-30 flex flex-col items-end gap-3 md:bottom-6 md:right-6">
+    <div
+      className="fixed right-4 z-30 flex flex-col items-end gap-3 transition-[bottom] duration-200 md:right-6"
+      style={{ bottom: bottomOffset }}
+    >
       {open && (
         <div className="w-56 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg">
           {items.map((item) => (

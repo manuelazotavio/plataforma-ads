@@ -12,6 +12,7 @@ import BottomNav from '@/app/components/BottomNav'
 import ThemeToggle from '@/app/components/ThemeToggle'
 import UserAvatar from '@/app/components/UserAvatar'
 import ProfileProgressRing from '@/app/components/ProfileProgressRing'
+import { useMobileFooterOffset } from '@/app/hooks/useMobileFooterOffset'
 
 type UserProfile = {
   name: string
@@ -269,7 +270,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="flex-1">
               {children}
             </div>
-            <footer className="border-t border-zinc-100 py-6 mt-8 px-4 md:pl-10 md:pr-28">
+            <footer data-floating-actions-boundary className="border-t border-zinc-100 py-6 mt-8 px-4 md:pl-10 md:pr-28">
               <div className="flex flex-col items-center gap-y-2 text-center text-xs text-zinc-400 md:flex-row md:flex-wrap md:text-left md:gap-x-5">
                 <Link href="/regras" className="hover:text-zinc-700 transition">Regras do ADS Conecta</Link>
                 <Link href="/privacidade" className="hover:text-zinc-700 transition">Política de Privacidade</Link>
@@ -439,9 +440,13 @@ function SemesterConfirmationModal({
 
 function QuickCreateMenu() {
   const [open, setOpen] = useState(false)
+  const bottomOffset = useMobileFooterOffset()
 
   return (
-    <div className="fixed bottom-20 right-4 z-30 flex flex-col items-end gap-3 md:bottom-6 md:right-6">
+    <div
+      className="fixed right-4 z-30 flex flex-col items-end gap-3 transition-[bottom] duration-200 md:right-6"
+      style={{ bottom: bottomOffset }}
+    >
       {open && (
         <div className="w-56 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg">
           {quickCreateItems.map((item) => (
