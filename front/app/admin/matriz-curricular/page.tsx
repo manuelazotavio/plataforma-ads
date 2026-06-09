@@ -1026,49 +1026,68 @@ export default function AdminMatrizCurricularPage() {
                     </div>
                   )}
                   {(() => {
-                    const usedIds = new Set<string>([
-                      ...planProfessors.map((p) => p.professor_id).filter(Boolean) as string[],
-                      ...newProfessors.map((p) => p.professor_id),
-                    ])
                     const availableOptions = professorOptions
-                      .filter((p) => !usedIds.has(p.id))
                       .map((p) => ({ value: p.id, label: p.name }))
                     const selectedProf = professorOptions.find((p) => p.id === planNewProfInput.professor_id)
+                    const normalizedPeriod = planNewProfInput.period.trim().toLocaleLowerCase('pt-BR')
+                    const selectedProfessorEntries = selectedProf
+                      ? [
+                          ...planProfessors
+                            .filter((p) => p.professor_id === selectedProf.id)
+                            .map((p) => p.period?.trim().toLocaleLowerCase('pt-BR') ?? ''),
+                          ...newProfessors
+                            .filter((p) => p.professor_id === selectedProf.id)
+                            .map((p) => p.period.trim().toLocaleLowerCase('pt-BR')),
+                        ]
+                      : []
+                    const professorAlreadyAdded = selectedProfessorEntries.length > 0
+                    const duplicateEntry = selectedProfessorEntries.includes(normalizedPeriod)
+                    const periodRequired = professorAlreadyAdded && !normalizedPeriod
+                    const cannotAdd = !selectedProf || duplicateEntry || periodRequired
                     return (
-                      <div className="flex gap-2">
-                        <div className="flex-1">
-                          <Select
-                            value={planNewProfInput.professor_id}
-                            onChange={(v) => setPlanNewProfInput((p) => ({ ...p, professor_id: v }))}
-                            options={availableOptions}
-                            placeholder={availableOptions.length === 0 ? 'Todos os professores já foram adicionados' : 'Selecionar professor...'}
-                            disabled={availableOptions.length === 0}
+                      <>
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                          <div className="flex-1">
+                            <Select
+                              value={planNewProfInput.professor_id}
+                              onChange={(v) => setPlanNewProfInput((p) => ({ ...p, professor_id: v }))}
+                              options={availableOptions}
+                              placeholder="Selecionar professor..."
+                              disabled={availableOptions.length === 0}
+                            />
+                          </div>
+                          <input
+                            type="text"
+                            value={planNewProfInput.period}
+                            onChange={(e) => setPlanNewProfInput((p) => ({ ...p, period: e.target.value }))}
+                            placeholder="Ano/período (ex: 2023.1)"
+                            className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 sm:w-44"
                           />
+                          <button
+                            type="button"
+                            disabled={cannotAdd}
+                            onClick={() => {
+                              if (!selectedProf || cannotAdd) return
+                              setNewProfessors((prev) => [...prev, {
+                                professor_id: selectedProf.id,
+                                name: selectedProf.name,
+                                period: planNewProfInput.period.trim(),
+                              }])
+                              setPlanNewProfInput({ professor_id: '', period: '' })
+                            }}
+                            className="cursor-pointer rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            + Adicionar
+                          </button>
                         </div>
-                        <input
-                          type="text"
-                          value={planNewProfInput.period}
-                          onChange={(e) => setPlanNewProfInput((p) => ({ ...p, period: e.target.value }))}
-                          placeholder="Período (ex: 2023.1)"
-                          className="w-36 rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
-                        />
-                        <button
-                          type="button"
-                          disabled={!selectedProf}
-                          onClick={() => {
-                            if (!selectedProf) return
-                            setNewProfessors((prev) => [...prev, {
-                              professor_id: selectedProf.id,
-                              name: selectedProf.name,
-                              period: planNewProfInput.period.trim(),
-                            }])
-                            setPlanNewProfInput({ professor_id: '', period: '' })
-                          }}
-                          className="cursor-pointer rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:opacity-50"
-                        >
-                          + Adicionar
-                        </button>
-                      </div>
+                        {(periodRequired || duplicateEntry) && (
+                          <p className="mt-2 text-xs text-amber-600">
+                            {duplicateEntry
+                              ? 'Este professor já está cadastrado nesse ano/período.'
+                              : 'Informe um ano/período diferente para adicionar novamente este professor.'}
+                          </p>
+                        )}
+                      </>
                     )
                   })()}
                   {professorOptions.length === 0 && (

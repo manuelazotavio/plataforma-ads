@@ -1,13 +1,12 @@
--- 1. Add 'mention' to the type constraint
+
 ALTER TABLE public.notifications DROP CONSTRAINT IF EXISTS notifications_type_check;
 ALTER TABLE public.notifications ADD CONSTRAINT notifications_type_check
-  CHECK (type IN ('comment','reply','reaction','comment_reaction','mention'));
+  CHECK (type IN ('comment','reply','comment_reply','reaction','comment_reaction','mention','event_reminder'));
 
 CREATE UNIQUE INDEX IF NOT EXISTS notifications_mention_dedup_idx
   ON public.notifications (actor_id, user_id, type, target_type, target_id)
   WHERE type = 'mention';
 
--- 3. Helper: parse @[Name](uuid) from content and insert mention notifications
 CREATE OR REPLACE FUNCTION create_mention_notifications(
   p_content    text,
   p_actor_id   uuid,

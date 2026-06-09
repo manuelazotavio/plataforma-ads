@@ -619,7 +619,7 @@ export default function OnboardingPage() {
             >
               <div className="mt-6 flex flex-col gap-3">
                 {[
-                  { q: 'Como funciona a iniciação científica?', tags: ['Pesquisa', 'SICLN'] },
+                  { q: 'Como funciona a iniciação científica?', tags: ['Pesquisa', 'SI'] },
                   { q: 'React ou Vue para o TCC?', tags: ['Front-end', 'React'] },
                   { q: 'Melhores repositórios de exercícios de SQL', tags: ['Banco de Dados'] },
                 ].map((item) => (
