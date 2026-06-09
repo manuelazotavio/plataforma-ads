@@ -59,7 +59,7 @@ export default function EventReminderButton({ eventId, startDate }: Props) {
       type="button"
       onClick={toggle}
       disabled={busy}
-      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition disabled:opacity-50 ${
+      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-base font-semibold transition disabled:opacity-50 ${
         active
           ? 'border-[#2F9E41] bg-[#2F9E41]/10 text-[#2F9E41] hover:bg-[#2F9E41]/15'
           : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'
