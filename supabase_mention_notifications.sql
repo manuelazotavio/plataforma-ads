@@ -20,7 +20,6 @@ BEGIN
   FOR v_uid IN
     SELECT DISTINCT (regexp_matches(p_content, '@\[[^\]]+\]\(([a-f0-9-]{36})\)', 'g'))[1]::uuid
   LOOP
-    -- skip self-mentions
     IF v_uid IS DISTINCT FROM p_actor_id THEN
       INSERT INTO notifications (user_id, actor_id, type, target_type, target_id, target_title)
       VALUES (v_uid, p_actor_id, 'mention', p_target_type, p_target_id, p_target_title)

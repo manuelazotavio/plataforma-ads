@@ -12,6 +12,7 @@ import MentionTextarea from '@/app/components/MentionTextarea'
 import { parseMentions } from '@/app/lib/mentions'
 
 type Author = { name: string; avatar_url: string | null }
+type Voter = Author & { id: string }
 type Category = { id: string; name: string }
 type Attachment = { type: 'image' | 'video' | 'file'; url: string; name?: string; size?: number }
 
@@ -40,7 +41,7 @@ type Reply = {
 }
 
 type ReplyNode = { reply: Reply; children: ReplyNode[] }
-type VoteMap = Record<string, string[]>
+type VoteMap = Record<string, Voter[]>
 
 const MODERATOR_REMOVED_REPLY = 'Esta resposta foi removida por um moderador.'
 const AUTHOR_REMOVED_REPLY = 'Esta resposta foi removida pelo autor.'
@@ -82,23 +83,86 @@ function Avatar({ author, size = 32 }: { author: Author | null; size?: number })
   )
 }
 
-function UpvoteButton({ count, voted, onToggle, disabled }: { count: number; voted: boolean; onToggle: () => void; disabled: boolean }) {
+function UpvoteButton({ voters, voted, onToggle, disabled, onShowVoters }: {
+  voters: Voter[]
+  voted: boolean
+  onToggle: () => void
+  disabled: boolean
+  onShowVoters: () => void
+}) {
   return (
-    <button
-      onClick={onToggle}
-      disabled={disabled}
-      title={disabled ? 'Faça login para votar' : voted ? 'Remover voto' : 'Votar'}
-      className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 transition-all disabled:opacity-40 cursor-pointer ${
-        voted
-          ? 'border-[#2F9E41] bg-[#2F9E41]/10 text-[#2F9E41]'
-          : 'border-zinc-200 bg-zinc-50 text-zinc-500 hover:border-[#2F9E41] hover:text-[#2F9E41]'
-      }`}
+    <div className="flex flex-wrap items-center gap-2">
+      <button
+        onClick={onToggle}
+        disabled={disabled}
+        title={disabled ? 'Faça login para votar' : voted ? 'Remover voto' : 'Votar'}
+        className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 transition-all disabled:opacity-40 cursor-pointer ${
+          voted
+            ? 'border-[#2F9E41] bg-[#2F9E41]/10 text-[#2F9E41]'
+            : 'border-zinc-200 bg-zinc-50 text-zinc-500 hover:border-[#2F9E41] hover:text-[#2F9E41]'
+        }`}
+      >
+        <svg width={18} height={18} viewBox="0 0 24 24" fill={voted ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 19V5M5 12l7-7 7 7" />
+        </svg>
+        <span className="text-sm font-bold leading-none">{voters.length} votos</span>
+      </button>
+      {voters.length > 0 && (
+        <button
+          type="button"
+          onClick={onShowVoters}
+          className="text-xs font-semibold text-zinc-400 transition hover:text-[#2F9E41]"
+        >
+          Ver quem votou
+        </button>
+      )}
+    </div>
+  )
+}
+
+function VotersModal({ title, voters, onClose }: { title: string; voters: Voter[]; onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="voters-title"
+      onClick={onClose}
     >
-      <svg width={18} height={18} viewBox="0 0 24 24" fill={voted ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 19V5M5 12l7-7 7 7" />
-      </svg>
-      <span className="text-sm font-bold leading-none">{count} votos</span>
-    </button>
+      <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl" onClick={(event) => event.stopPropagation()}>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 id="voters-title" className="text-base font-semibold text-zinc-900">{title}</h2>
+            <p className="mt-1 text-xs text-zinc-400">
+              {voters.length} {voters.length === 1 ? 'pessoa votou' : 'pessoas votaram'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Fechar"
+            className="rounded-lg p-1.5 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700"
+          >
+            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="mt-4 max-h-80 space-y-1 overflow-y-auto">
+          {voters.map((voter) => (
+            <Link
+              key={voter.id}
+              href={`/usuarios/${voter.id}`}
+              onClick={onClose}
+              className="flex items-center gap-3 rounded-xl px-2 py-2 transition hover:bg-zinc-50"
+            >
+              <Avatar author={voter} size={36} />
+              <span className="min-w-0 truncate text-sm font-medium text-zinc-700">{voter.name}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -207,7 +271,7 @@ function ReplyForm({ onSubmit, onCancel, placeholder = 'Escreva sua resposta...'
   )
 }
 
-function ReplyItem({ reply, depth, currentUserId, canModerate, isClosed, voteMap, onVote, onReply, onDelete, replyingToId }: {
+function ReplyItem({ reply, depth, currentUserId, canModerate, isClosed, voteMap, onVote, onShowVoters, onReply, onDelete, replyingToId }: {
   reply: Reply
   depth: number
   currentUserId: string | null
@@ -215,12 +279,13 @@ function ReplyItem({ reply, depth, currentUserId, canModerate, isClosed, voteMap
   isClosed: boolean
   voteMap: VoteMap
   onVote: (id: string) => void
+  onShowVoters: (title: string, voters: Voter[]) => void
   onReply: (id: string | null) => void
   onDelete: (id: string) => void
   replyingToId: string | null
 }) {
   const votes = voteMap[reply.id] ?? []
-  const voted = !!currentUserId && votes.includes(currentUserId)
+  const voted = !!currentUserId && votes.some(voter => voter.id === currentUserId)
   const isOwn = currentUserId === reply.user_id
   const removed = isRemovedReply(reply.content)
   const isReplying = replyingToId === reply.id
@@ -255,7 +320,13 @@ function ReplyItem({ reply, depth, currentUserId, canModerate, isClosed, voteMap
           )}
           {!removed && (
             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
-              <UpvoteButton count={votes.length} voted={voted} onToggle={() => onVote(reply.id)} disabled={!currentUserId} />
+              <UpvoteButton
+                voters={votes}
+                voted={voted}
+                onToggle={() => onVote(reply.id)}
+                disabled={!currentUserId}
+                onShowVoters={() => onShowVoters('Votos na resposta', votes)}
+              />
               {currentUserId && !isClosed && (
                 <button
                   onClick={() => onReply(isReplying ? null : reply.id)}
@@ -289,8 +360,9 @@ export default function ForumTopicPage() {
   const [topic, setTopic] = useState<Topic | null>(null)
   const [replies, setReplies] = useState<Reply[]>([])
   const [voteMap, setVoteMap] = useState<VoteMap>({})
-  const [topicVoters, setTopicVoters] = useState<string[]>([])
+  const [topicVoters, setTopicVoters] = useState<Voter[]>([])
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [currentUserProfile, setCurrentUserProfile] = useState<Voter | null>(null)
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [replyingToId, setReplyingToId] = useState<string | null>(null)
@@ -302,6 +374,7 @@ export default function ForumTopicPage() {
   const [topicDeleteError, setTopicDeleteError] = useState<string | null>(null)
   const [closingTopic, setClosingTopic] = useState(false)
   const [pendingClose, setPendingClose] = useState(false)
+  const [votersModal, setVotersModal] = useState<{ title: string; voters: Voter[] } | null>(null)
 
   const load = useCallback(async () => {
     const [{ data: topicData }, user] = await Promise.all([
@@ -320,12 +393,14 @@ export default function ForumTopicPage() {
     if (user?.id) {
       const { data: profile } = await supabase
         .from('users')
-        .select('role')
+        .select('name, avatar_url, role')
         .eq('id', user.id)
         .single()
       setCurrentUserRole(profile?.role ?? null)
+      setCurrentUserProfile(profile ? { id: user.id, name: profile.name, avatar_url: profile.avatar_url } : null)
     } else {
       setCurrentUserRole(null)
+      setCurrentUserProfile(null)
     }
 
     await supabase.from('forum_topics').update({ views_count: (topicData.views_count ?? 0) + 1 }).eq('id', id)
@@ -339,26 +414,41 @@ export default function ForumTopicPage() {
     const loadedReplies = (repliesData as unknown as Reply[]) ?? []
     setReplies(loadedReplies)
 
-    if (loadedReplies.length > 0) {
-      const { data: replyVotes } = await supabase
-        .from('forum_reply_votes')
-        .select('reply_id, user_id')
-        .in('reply_id', loadedReplies.map(r => r.id))
+    const [{ data: replyVotes }, { data: topicVotes }] = await Promise.all([
+      loadedReplies.length > 0
+        ? supabase
+            .from('forum_reply_votes')
+            .select('reply_id, user_id')
+            .in('reply_id', loadedReplies.map(r => r.id))
+        : Promise.resolve({ data: [] as { reply_id: string; user_id: string }[] }),
+      supabase
+        .from('forum_topic_votes')
+        .select('user_id')
+        .eq('topic_id', id),
+    ])
 
-      const map: VoteMap = {}
-      for (const v of replyVotes ?? []) {
-        if (!map[v.reply_id]) map[v.reply_id] = []
-        map[v.reply_id].push(v.user_id)
-      }
-      setVoteMap(map)
+    const voterIds = [...new Set([
+      ...(replyVotes ?? []).map(vote => vote.user_id),
+      ...(topicVotes ?? []).map(vote => vote.user_id),
+    ])]
+    const { data: voterProfiles } = voterIds.length > 0
+      ? await supabase.from('users').select('id, name, avatar_url').in('id', voterIds)
+      : { data: [] as Voter[] }
+    const votersById = new Map(
+      (voterProfiles ?? []).map(profile => [profile.id, profile as Voter])
+    )
+
+    const map: VoteMap = {}
+    for (const vote of replyVotes ?? []) {
+      const voter = votersById.get(vote.user_id) ?? { id: vote.user_id, name: 'Usuário', avatar_url: null }
+      if (!map[vote.reply_id]) map[vote.reply_id] = []
+      map[vote.reply_id].push(voter)
     }
-
-    const { data: topicVotes } = await supabase
-      .from('forum_topic_votes')
-      .select('user_id')
-      .eq('topic_id', id)
-
-    setTopicVoters((topicVotes ?? []).map(v => v.user_id))
+    setVoteMap(map)
+    setTopicVoters((topicVotes ?? []).flatMap(vote => {
+      const voter = votersById.get(vote.user_id) ?? { id: vote.user_id, name: 'Usuário', avatar_url: null }
+      return [voter]
+    }))
     setLoading(false)
   }, [id, router])
 
@@ -366,8 +456,9 @@ export default function ForumTopicPage() {
 
   async function handleTopicVote() {
     if (!currentUserId) return
-    const voted = topicVoters.includes(currentUserId)
-    setTopicVoters(prev => voted ? prev.filter(uid => uid !== currentUserId) : [...prev, currentUserId])
+    const voted = topicVoters.some(voter => voter.id === currentUserId)
+    const voter = currentUserProfile ?? { id: currentUserId, name: 'Você', avatar_url: null }
+    setTopicVoters(prev => voted ? prev.filter(item => item.id !== currentUserId) : [...prev, voter])
     if (voted) {
       await supabase.from('forum_topic_votes').delete().eq('topic_id', id).eq('user_id', currentUserId)
     } else {
@@ -379,12 +470,13 @@ export default function ForumTopicPage() {
     if (!currentUserId) return
     const reply = replies.find(r => r.id === replyId)
     if (!reply || isRemovedReply(reply.content)) return
-    const voted = (voteMap[replyId] ?? []).includes(currentUserId)
+    const voted = (voteMap[replyId] ?? []).some(voter => voter.id === currentUserId)
+    const voter = currentUserProfile ?? { id: currentUserId, name: 'Você', avatar_url: null }
     setVoteMap(prev => ({
       ...prev,
       [replyId]: voted
-        ? (prev[replyId] ?? []).filter(uid => uid !== currentUserId)
-        : [...(prev[replyId] ?? []), currentUserId],
+        ? (prev[replyId] ?? []).filter(item => item.id !== currentUserId)
+        : [...(prev[replyId] ?? []), voter],
     }))
     if (voted) {
       await supabase.from('forum_reply_votes').delete().eq('reply_id', replyId).eq('user_id', currentUserId)
@@ -505,6 +597,7 @@ export default function ForumTopicPage() {
             isClosed={topic?.is_closed ?? false}
             voteMap={voteMap}
             onVote={handleReplyVote}
+            onShowVoters={(title, voters) => setVotersModal({ title, voters })}
             onReply={setReplyingToId}
             onDelete={handleDelete}
             replyingToId={replyingToId}
@@ -540,7 +633,7 @@ export default function ForumTopicPage() {
 
   if (!topic) return null
 
-  const topicVoted = !!currentUserId && topicVoters.includes(currentUserId)
+  const topicVoted = !!currentUserId && topicVoters.some(voter => voter.id === currentUserId)
   const tree = buildTree(replies)
   const topLevelCount = replies.filter(r => !r.parent_id && !isRemovedReply(r.content)).length
   const cat = topic.forum_categories
@@ -587,7 +680,13 @@ export default function ForumTopicPage() {
             </div>
           </div>
           <div className="shrink-0 self-start sm:pt-1">
-            <UpvoteButton count={topicVoters.length} voted={topicVoted} onToggle={handleTopicVote} disabled={!currentUserId} />
+            <UpvoteButton
+              voters={topicVoters}
+              voted={topicVoted}
+              onToggle={handleTopicVote}
+              disabled={!currentUserId}
+              onShowVoters={() => setVotersModal({ title: 'Votos no tópico', voters: topicVoters })}
+            />
           </div>
         </div>
       </div>
@@ -709,6 +808,14 @@ export default function ForumTopicPage() {
           )}
         </div>
       </div>
+
+      {votersModal && (
+        <VotersModal
+          title={votersModal.title}
+          voters={votersModal.voters}
+          onClose={() => setVotersModal(null)}
+        />
+      )}
 
       {pendingClose && topic && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
