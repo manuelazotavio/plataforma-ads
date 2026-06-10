@@ -74,7 +74,7 @@ export default async function SubjectDetailPage({ params }: { params: Promise<{ 
       .from('curriculum_subject_professors')
       .select('id, professor_name, period, professor_id, professors(avatar_url, user_id)')
       .eq('subject_id', id)
-      .order('display_order', { ascending: true }),
+      .order('period', { ascending: false, nullsFirst: false }),
   ])
 
   if (!subject) notFound()
