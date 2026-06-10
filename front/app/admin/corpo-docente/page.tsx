@@ -207,11 +207,21 @@ export default function AdminCorpoDocentePage() {
     }
 
     const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
-    const urlWithBust = `${publicUrl}?v=${Date.now()}`
+    const urlWithBust = `${publicUrl}?v=${file.lastModified}-${file.size}`
     const { error: updateError } = await supabase.from('professors').update({ avatar_url: urlWithBust }).eq('id', profId)
     if (updateError) {
       setAvatarError(`Foto enviada, mas não foi possível salvar no professor: ${updateError.message}`)
     } else {
+      const linkedUserId = professors.find((professor) => professor.id === profId)?.user_id
+      if (linkedUserId) {
+        const { error: userAvatarError } = await supabase
+          .from('users')
+          .update({ avatar_url: urlWithBust, updated_at: new Date().toISOString() })
+          .eq('id', linkedUserId)
+        if (userAvatarError) {
+          setAvatarError(`Foto salva no professor, mas não foi possível atualizar o perfil: ${userAvatarError.message}`)
+        }
+      }
       setProfessors((prev) => prev.map((p) => p.id === profId ? { ...p, avatar_url: urlWithBust } : p))
     }
 
@@ -295,6 +305,17 @@ export default function AdminCorpoDocentePage() {
       setLinkError('Erro ao vincular usuário: ' + error.message)
       setLinkSaving(false)
       return
+    }
+
+    const professorAvatar = professors.find((professor) => professor.id === profId)?.avatar_url
+    if (professorAvatar) {
+      const { error: avatarError } = await supabase
+        .from('users')
+        .update({ avatar_url: professorAvatar, updated_at: new Date().toISOString() })
+        .eq('id', selectedUserId)
+      if (avatarError) {
+        setLinkError('Professor vinculado, mas não foi possível sincronizar a foto: ' + avatarError.message)
+      }
     }
 
     setProfessors((prev) => prev.map((p) => p.id === profId ? { ...p, user_id: selectedUserId } : p))

@@ -96,6 +96,7 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
     { data: articles },
     { data: topics },
     { data: levels },
+    { data: linkedProfessor },
   ] = await Promise.all([
     supabase
       .from('users')
@@ -118,11 +119,13 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
     supabase.from('articles').select('id, title, summary, cover_image_url, published_at, like_count').eq('user_id', id).eq('status', 'publicado'),
     supabase.from('forum_topics').select('id, title, created_at, replies_count').eq('user_id', id),
     supabase.from('levels').select('id, name, min_xp').order('min_xp', { ascending: true }),
+    supabase.from('professors').select('avatar_url').eq('user_id', id).maybeSingle(),
   ])
 
   if (!profile) notFound()
 
   const user = profile as Profile
+  const displayAvatarUrl = linkedProfessor?.avatar_url ?? user.avatar_url
   const skillNames = (skills ?? []).map((skill) => skill.skill_name)
   const preferredAreas = splitPreferredAreas(user.preferred_area)
   const likesReceived =
@@ -135,7 +138,7 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
     topicsCount: xpTopicsCount ?? 0,
     commentsCount,
     likesReceived,
-    hasAvatar: hasNonEmpty(user.avatar_url),
+    hasAvatar: hasNonEmpty(displayAvatarUrl),
     hasBio: hasNonEmpty(user.bio),
     linksCount: countProfileLinks(user),
   })
@@ -190,7 +193,7 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
 
       <section className="border-b border-zinc-100 pb-8">
         <div className="flex items-start gap-5">
-          <UserAvatar src={user.avatar_url} name={user.name} className="h-20 w-20" sizes="80px" />
+          <UserAvatar src={displayAvatarUrl} name={user.name} className="h-20 w-20" sizes="80px" />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-bold text-zinc-900">{user.name}</h1>
