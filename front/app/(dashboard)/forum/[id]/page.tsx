@@ -111,7 +111,7 @@ function UpvoteButton({ voters, voted, onToggle, disabled, onShowVoters }: {
         <button
           type="button"
           onClick={onShowVoters}
-          className="text-xs font-semibold text-zinc-400 transition hover:text-[#2F9E41]"
+          className="text-xs font-semibold text-zinc-400 opacity-0 transition hover:text-[#2F9E41] group-hover:opacity-100 focus-visible:opacity-100"
         >
           Ver quem votou
         </button>
@@ -659,7 +659,7 @@ export default function ForumTopicPage() {
             {cat.name}
           </span>
         )}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+        <div className="group flex flex-col gap-4 sm:flex-row sm:items-start">
           <div className="min-w-0 flex-1">
             <h1 className="mb-4 text-2xl sm:text-3xl font-black text-zinc-900 leading-tight wrap-break-word">{topic.title}</h1>
             <div className="flex items-start gap-3">

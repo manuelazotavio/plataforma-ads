@@ -209,18 +209,24 @@ function EquivalencyButton({ equivalencies, onClick }: { equivalencies: Equivale
 
 function EquivalencyModal({ equivalencies, versions, onClose }: { equivalencies: Equivalency[]; versions?: VersionGroup[]; onClose: () => void }) {
   const pairs = buildEquivalencyPairs(equivalencies)
-  const matrixNames = Array.from(new Set(pairs.flatMap((pair) => [pair.from.versionName, pair.to.versionName]))).sort((a, b) => a.localeCompare(b, 'pt-BR'))
+  const matrixNames = versions
+    ? versions.map(versionGroupLabel)
+    : Array.from(new Set(pairs.flatMap((pair) => [pair.from.versionName, pair.to.versionName])))
+  matrixNames.sort((a, b) => a.localeCompare(b, 'pt-BR'))
   const matrixOptions = matrixNames.map((name) => ({ value: name, label: name }))
   const [baseMatrix, setBaseMatrix] = useState(matrixNames[0] ?? '')
   const targetOptions = matrixNames.filter((name) => name !== baseMatrix)
   const targetSelectOptions = targetOptions.map((name) => ({ value: name, label: name }))
   const [targetMatrix, setTargetMatrix] = useState(targetOptions[0] ?? '')
   const effectiveTargetMatrix = targetOptions.includes(targetMatrix) ? targetMatrix : targetOptions[0] ?? ''
-  const availableSemesters = Array.from(new Set(
-    pairs
-      .filter((pair) => pair.from.versionName === baseMatrix && pair.to.versionName === effectiveTargetMatrix)
-      .map((pair) => pair.from.semester)
-  )).sort((a, b) => a - b)
+  const baseVersionGroup = versions?.find((version) => versionGroupLabel(version) === baseMatrix)
+  const availableSemesters = baseVersionGroup
+    ? baseVersionGroup.semesters.map((semester) => semester.semester).sort((a, b) => a - b)
+    : Array.from(new Set(
+        pairs
+          .filter((pair) => pair.from.versionName === baseMatrix && pair.to.versionName === effectiveTargetMatrix)
+          .map((pair) => pair.from.semester)
+      )).sort((a, b) => a - b)
   const [activeSemester, setActiveSemester] = useState<number | null>(availableSemesters[0] ?? null)
   const effectiveSemester = activeSemester && availableSemesters.includes(activeSemester) ? activeSemester : availableSemesters[0] ?? null
 
@@ -233,7 +239,6 @@ function EquivalencyModal({ equivalencies, versions, onClose }: { equivalencies:
   )
 
   const subjectIdsWithEquivalency = new Set(rows.map((r) => r.subjectId))
-  const baseVersionGroup = versions?.find((v) => v.name === baseMatrix)
   const allBaseSubjects = effectiveSemester != null
     ? (baseVersionGroup?.semesters.find((s) => s.semester === effectiveSemester)?.subjects ?? [])
     : []
@@ -370,6 +375,10 @@ function EquivalencyModal({ equivalencies, versions, onClose }: { equivalencies:
       </div>
     </div>
   )
+}
+
+function versionGroupLabel(version: VersionGroup) {
+  return version.year != null ? `${version.name} (${version.year})` : version.name
 }
 
 type EquivalencyPair = {
