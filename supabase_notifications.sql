@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS public.notifications (
   id          uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id     uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   actor_id    uuid          REFERENCES public.users(id) ON DELETE SET NULL,
-  type        text NOT NULL CHECK (type IN ('comment','reply','comment_reply','reaction','comment_reaction','mention','event_reminder')),
+  type        text NOT NULL CHECK (type IN ('comment','reply','comment_reply','reaction','comment_reaction','mention','event_reminder','review_request','content_approved','content_rejected')),
   target_type text NOT NULL CHECK (target_type IN ('article','project','forum_topic','event')),
   target_id   uuid NOT NULL,
   target_title text,

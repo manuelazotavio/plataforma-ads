@@ -8,7 +8,7 @@ import UserAvatar from '@/app/components/UserAvatar'
 
 type Notification = {
   id: string
-  type: 'comment' | 'reply' | 'comment_reply' | 'reaction' | 'comment_reaction' | 'event_reminder' | 'mention'
+  type: 'comment' | 'reply' | 'comment_reply' | 'reaction' | 'comment_reaction' | 'event_reminder' | 'mention' | 'review_request' | 'content_approved' | 'content_rejected'
   target_type: 'article' | 'project' | 'forum_topic' | 'event'
   target_id: string
   target_title: string | null
@@ -41,6 +41,17 @@ function notifText(n: Notification): string {
   }
 
   const actor = n.actor?.name ?? 'Alguém'
+  const kind = n.target_type === 'article' ? 'artigo' : 'projeto'
+
+  if (n.type === 'review_request') {
+    return `${actor} enviou o ${kind} ${title} para aprovação`
+  }
+  if (n.type === 'content_approved') {
+    return `Seu ${kind} ${title} foi aprovado`
+  }
+  if (n.type === 'content_rejected') {
+    return `Seu ${kind} ${title} precisa de ajustes`
+  }
 
   if (n.target_type === 'forum_topic') {
     if (n.type === 'comment_reply') return `${actor} respondeu ao seu comentário no tópico ${title}`
@@ -52,7 +63,6 @@ function notifText(n: Notification): string {
     return `${actor} mencionou você em um ${where} ${title}`
   }
 
-  const kind = n.target_type === 'article' ? 'artigo' : 'projeto'
   switch (n.type) {
     case 'comment':          return `${actor} comentou no seu ${kind} ${title}`
     case 'reply':            return `${actor} respondeu seu comentário em ${title}`
@@ -63,6 +73,14 @@ function notifText(n: Notification): string {
 }
 
 function notifUrl(n: Notification): string {
+  if (n.type === 'review_request') {
+    return n.target_type === 'article' ? '/admin/artigos' : '/admin/projetos'
+  }
+  if (n.type === 'content_rejected') {
+    return n.target_type === 'article'
+      ? `/artigos/${n.target_id}/editar`
+      : `/projetos/${n.target_id}/editar`
+  }
   if (n.target_type === 'event')       return `/eventos/${n.target_id}`
   if (n.target_type === 'forum_topic') return `/forum/${n.target_id}`
   if (n.target_type === 'article')     return `/artigos/${n.target_id}`

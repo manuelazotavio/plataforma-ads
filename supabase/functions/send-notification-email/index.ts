@@ -14,7 +14,7 @@ type NotificationRecord = {
   id: string
   user_id: string
   actor_id: string | null
-  type: 'comment' | 'reply' | 'reaction' | 'comment_reaction' | 'event_reminder'
+  type: 'comment' | 'reply' | 'reaction' | 'comment_reaction' | 'event_reminder' | 'review_request' | 'content_approved' | 'content_rejected'
   target_type: 'article' | 'project' | 'forum_topic' | 'event'
   target_id: string
   target_title: string | null
@@ -44,9 +44,9 @@ Deno.serve(async (req: Request) => {
     const payload: WebhookPayload = await req.json()
     const notification = payload.record
 
-    // Lembretes de evento têm email próprio via send-event-reminders
-    if (notification.type === 'event_reminder') {
-      return json({ skipped: 'event_reminder handled separately' }, 200)
+    // Estes tipos têm fluxos de e-mail próprios.
+    if (['event_reminder', 'review_request', 'content_approved', 'content_rejected'].includes(notification.type)) {
+      return json({ skipped: 'handled separately' }, 200)
     }
 
     const admin = createClient(
