@@ -63,6 +63,14 @@ export default function AdminProjetosPage() {
     }
 
     setProjects((prev) => prev.map((p) => p.id === id ? { ...p, approved: data.approved, rejection_message: data.rejection_message } : p))
+
+    const { data: emailData, error: emailError } = await supabase.functions.invoke('send-project-rejection', {
+      body: { project_id: id },
+    })
+    if (emailError || emailData?.error) {
+      setActionError('O projeto foi aprovado, mas não foi possível enviar o e-mail ao aluno.')
+    }
+
     setUpdatingId(null)
   }
 
@@ -107,6 +115,14 @@ export default function AdminProjetosPage() {
     setProjects((prev) => prev.map((p) => p.id === id ? { ...p, approved: data.approved, rejection_message: data.rejection_message } : p))
     setRejectingId(null)
     setRejectMessage('')
+
+    const { data: emailData, error: emailError } = await supabase.functions.invoke('send-project-rejection', {
+      body: { project_id: id },
+    })
+    if (emailError || emailData?.error) {
+      setActionError('O projeto foi reprovado, mas não foi possível enviar o e-mail ao aluno.')
+    }
+
     setUpdatingId(null)
   }
 

@@ -98,6 +98,12 @@ export default function EditarArtigoPage() {
       }
     }
 
+    if (newStatus === 'pendente') {
+      await supabase.functions.invoke('send-content-review-request', {
+        body: { content_type: 'article', content_id: id },
+      })
+    }
+
     router.push('/meus-artigos')
   }
 

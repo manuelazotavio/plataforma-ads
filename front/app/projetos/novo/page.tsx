@@ -85,6 +85,12 @@ function NovoProjetoContent() {
       )
     }
 
+    if (!isAdmin) {
+      await supabase.functions.invoke('send-content-review-request', {
+        body: { content_type: 'project', content_id: project.id },
+      })
+    }
+
     if (nextStep) {
       await supabase.from('users').update({ onboarding_step: parseInt(nextStep) }).eq('id', userId)
     }

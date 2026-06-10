@@ -100,6 +100,10 @@ export default function EditarProjetoPage() {
       )
     }
 
+    await supabase.functions.invoke('send-content-review-request', {
+      body: { content_type: 'project', content_id: id },
+    })
+
     router.push('/meus-projetos')
   }
 

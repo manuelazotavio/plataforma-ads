@@ -166,6 +166,12 @@ export default function NovoArtigoPage() {
       }
     }
 
+    if (status === 'pendente') {
+      await supabase.functions.invoke('send-content-review-request', {
+        body: { content_type: 'article', content_id: article.id },
+      })
+    }
+
     router.push(status === 'pendente' ? '/meus-artigos?enviado=1' : '/meus-artigos')
   }
 

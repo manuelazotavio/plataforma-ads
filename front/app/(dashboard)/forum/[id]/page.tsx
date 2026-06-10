@@ -319,7 +319,7 @@ function ReplyItem({ reply, depth, currentUserId, canModerate, isClosed, voteMap
             </div>
           )}
           {!removed && (
-            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+            <div className="mt-2 flex flex-wrap items-center gap-2">
               <UpvoteButton
                 voters={votes}
                 voted={voted}
@@ -330,7 +330,7 @@ function ReplyItem({ reply, depth, currentUserId, canModerate, isClosed, voteMap
               {currentUserId && !isClosed && (
                 <button
                   onClick={() => onReply(isReplying ? null : reply.id)}
-                  className="text-xs font-semibold text-zinc-400 hover:text-zinc-700 transition cursor-pointer"
+                  className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-xs font-semibold text-zinc-500 transition hover:border-zinc-300 hover:text-zinc-700 cursor-pointer"
                 >
                   {isReplying ? 'Cancelar' : 'Responder'}
                 </button>
