@@ -15,6 +15,7 @@ type User = {
   avatar_url: string | null
   created_at: string
   suspended: boolean
+  last_sign_in_at: string | null
 }
 
 const roleOptions = [
@@ -37,15 +38,25 @@ export default function AdminUsuariosPage() {
       const user = await getAuthUser()
       if (user) setCurrentUserId(user.id)
 
-      const { data, error } = await supabase
-        .from('users')
-        .select('id, name, email, role, avatar_url, created_at, suspended')
-        .order('created_at', { ascending: false })
+      const [{ data, error }, { data: accessData, error: accessError }] = await Promise.all([
+        supabase
+          .from('users')
+          .select('id, name, email, role, avatar_url, created_at, suspended')
+          .order('created_at', { ascending: false }),
+        supabase.functions.invoke('list-user-accesses'),
+      ])
 
       if (error) {
         setError('Erro ao carregar usuários: ' + error.message)
       } else {
-        setUsers(data ?? [])
+        const accesses = (accessData?.accesses ?? {}) as Record<string, string | null>
+        setUsers((data ?? []).map((profile) => ({
+          ...profile,
+          last_sign_in_at: accesses[profile.id] ?? null,
+        })))
+        if (accessError || accessData?.error) {
+          setError('Usuários carregados, mas não foi possível consultar o último acesso.')
+        }
       }
       setLoading(false)
     }
@@ -123,12 +134,13 @@ export default function AdminUsuariosPage() {
       )}
 
       <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white">
-        <table className="min-w-[760px] w-full text-sm">
+        <table className="min-w-[880px] w-full text-sm">
           <thead className="border-b border-zinc-100 bg-zinc-50">
             <tr>
               <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500">Usuário</th>
               <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500">E-mail</th>
               <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500">Cadastro</th>
+              <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500">Último acesso</th>
               <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500">Papel</th>
               <th className="px-4 py-3" />
             </tr>
@@ -167,6 +179,17 @@ export default function AdminUsuariosPage() {
                   <td className="px-4 py-3 text-zinc-500 text-xs">{user.email ?? '-'}</td>
                   <td className="px-4 py-3 text-zinc-400 text-xs">
                     {new Date(user.created_at).toLocaleDateString('pt-BR')}
+                  </td>
+                  <td className="px-4 py-3 text-zinc-400 text-xs">
+                    {user.last_sign_in_at
+                      ? new Date(user.last_sign_in_at).toLocaleString('pt-BR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                      : 'Nunca acessou'}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">

@@ -14,7 +14,7 @@ type NotificationRecord = {
   id: string
   user_id: string
   actor_id: string | null
-  type: 'comment' | 'reply' | 'reaction' | 'comment_reaction' | 'event_reminder' | 'review_request' | 'content_approved' | 'content_rejected'
+  type: 'comment' | 'reply' | 'reaction' | 'comment_reaction' | 'mention' | 'event_reminder' | 'review_request' | 'content_approved' | 'content_rejected'
   target_type: 'article' | 'project' | 'forum_topic' | 'event'
   target_id: string
   target_title: string | null
@@ -98,7 +98,7 @@ function buildEmail(
   siteUrl: string
 ): { subject: string; body: string } {
   const targetLabel = TARGET_LABELS[n.target_type] ?? 'conteúdo'
-  const title = n.target_title ? `"${n.target_title}"` : `seu ${targetLabel}`
+  const title = n.target_title ? `“${n.target_title}”` : `seu ${targetLabel}`
   const targetUrl = buildTargetUrl(siteUrl, n.target_type, n.target_id)
 
   let subject = ''
@@ -109,36 +109,105 @@ function buildEmail(
     case 'comment':
       subject = `${actorName} comentou no seu ${targetLabel}`
       headline = `Novo comentário`
-      detail = `<strong>${escapeHtml(actorName)}</strong> comentou no seu ${targetLabel} ${escapeHtml(title)}.`
+      detail = `<strong style="color:#18181b;">${escapeHtml(actorName)}</strong> comentou no seu ${targetLabel} ${escapeHtml(title)}`
       break
     case 'reply':
       subject = `${actorName} respondeu seu comentário`
       headline = `Nova resposta`
-      detail = `<strong>${escapeHtml(actorName)}</strong> respondeu seu comentário em ${escapeHtml(title)}.`
+      detail = `<strong style="color:#18181b;">${escapeHtml(actorName)}</strong> respondeu seu comentário em ${escapeHtml(title)}`
       break
     case 'reaction':
       subject = `${actorName} curtiu seu ${targetLabel}`
       headline = `Nova curtida`
-      detail = `<strong>${escapeHtml(actorName)}</strong> curtiu seu ${targetLabel} ${escapeHtml(title)}.`
+      detail = `<strong style="color:#18181b;">${escapeHtml(actorName)}</strong> curtiu seu ${targetLabel} ${escapeHtml(title)}`
       break
     case 'comment_reaction':
       subject = `${actorName} curtiu seu comentário`
       headline = `Nova curtida`
-      detail = `<strong>${escapeHtml(actorName)}</strong> curtiu seu comentário em ${escapeHtml(title)}.`
+      detail = `<strong style="color:#18181b;">${escapeHtml(actorName)}</strong> curtiu seu comentário em ${escapeHtml(title)}`
+      break
+    case 'mention':
+      subject = `${actorName} mencionou você`
+      headline = `Nova menção`
+      detail = `<strong style="color:#18181b;">${escapeHtml(actorName)}</strong> mencionou você no ${targetLabel} ${escapeHtml(title)}`
       break
   }
 
   return {
     subject,
     body: `
-      <div style="font-family: Arial, sans-serif; color: #18181b; line-height: 1.6; max-width: 480px;">
-        <p style="font-size: 13px; font-weight: 700; color: #2F9E41; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.05em;">${escapeHtml(headline)}</p>
-        <p style="font-size: 16px; margin: 0 0 20px;">${detail}</p>
-        ${targetUrl ? `<p style="margin: 0;"><a href="${targetUrl}" style="display: inline-block; background: #2F9E41; color: white; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px;">Ver no ADS Conecta</a></p>` : ''}
-        <p style="font-size: 12px; color: #71717a; margin-top: 28px; border-top: 1px solid #e4e4e7; padding-top: 16px;">
-          Você recebeu este e-mail porque tem uma conta no ADS Conecta.
-        </p>
-      </div>
+      <!doctype html>
+      <html lang="pt-BR">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>${escapeHtml(subject)}</title>
+        </head>
+        <body style="margin:0; padding:0; background-color:#f4f4f5;">
+          <div style="display:none; max-height:0; overflow:hidden; opacity:0;">
+            ${escapeHtml(subject)}
+          </div>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5;">
+            <tr>
+              <td align="center" style="padding:32px 16px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
+                  <tr>
+                    <td style="padding:0 4px 16px;">
+                      <table role="presentation" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td style="width:36px; height:36px; border-radius:10px; background-color:#2F9E41; color:#ffffff; font-family:Arial,sans-serif; font-size:16px; font-weight:700; text-align:center; vertical-align:middle;">
+                            ADS
+                          </td>
+                          <td style="padding-left:10px; font-family:Arial,sans-serif; font-size:15px; font-weight:700; color:#18181b;">
+                            ADS Conecta
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="overflow:hidden; border:1px solid #e4e4e7; border-radius:16px; background-color:#ffffff;">
+                      <div style="height:5px; background-color:#2F9E41;"></div>
+                      <div style="padding:30px 32px 32px;">
+                        <p style="margin:0 0 10px; font-family:Arial,sans-serif; font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#2F9E41;">
+                          ${escapeHtml(headline)}
+                        </p>
+                        <h1 style="margin:0 0 14px; font-family:Arial,sans-serif; font-size:24px; line-height:1.25; color:#18181b;">
+                          Você tem uma nova interação
+                        </h1>
+                        <p style="margin:0; font-family:Arial,sans-serif; font-size:16px; line-height:1.65; color:#52525b;">
+                          ${detail}
+                        </p>
+                        ${targetUrl ? `
+                          <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:26px;">
+                            <tr>
+                              <td style="border-radius:10px; background-color:#2F9E41;">
+                                <a href="${escapeHtml(targetUrl)}" style="display:inline-block; padding:12px 20px; font-family:Arial,sans-serif; font-size:14px; font-weight:700; color:#ffffff; text-decoration:none;">
+                                  Ver no ADS Conecta&nbsp;&nbsp;→
+                                </a>
+                              </td>
+                            </tr>
+                          </table>
+                        ` : ''}
+                      </div>
+                      <div style="border-top:1px solid #f1f1f2; background-color:#fafafa; padding:17px 32px;">
+                        <p style="margin:0; font-family:Arial,sans-serif; font-size:12px; line-height:1.5; color:#71717a;">
+                          Esta é uma notificação automática da sua conta no ADS Conecta.
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td align="center" style="padding:18px 16px 0; font-family:Arial,sans-serif; font-size:11px; color:#a1a1aa;">
+                      ADS Conecta · Instituto Federal de São Paulo
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+      </html>
     `,
   }
 }
