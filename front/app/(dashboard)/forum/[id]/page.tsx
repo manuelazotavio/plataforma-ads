@@ -83,40 +83,28 @@ function Avatar({ author, size = 32 }: { author: Author | null; size?: number })
   )
 }
 
-function UpvoteButton({ voters, voted, onToggle, disabled, onShowVoters }: {
+function UpvoteButton({ voters, voted, onToggle, disabled }: {
   voters: Voter[]
   voted: boolean
   onToggle: () => void
   disabled: boolean
-  onShowVoters: () => void
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <button
-        onClick={onToggle}
-        disabled={disabled}
-        title={disabled ? 'Faça login para votar' : voted ? 'Remover voto' : 'Votar'}
-        className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 transition-all disabled:opacity-40 cursor-pointer ${
-          voted
-            ? 'border-[#2F9E41] bg-[#2F9E41]/10 text-[#2F9E41]'
-            : 'border-zinc-200 bg-zinc-50 text-zinc-500 hover:border-[#2F9E41] hover:text-[#2F9E41]'
-        }`}
-      >
-        <svg width={18} height={18} viewBox="0 0 24 24" fill={voted ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 19V5M5 12l7-7 7 7" />
-        </svg>
-        <span className="text-sm font-bold leading-none">{voters.length} votos</span>
-      </button>
-      {voters.length > 0 && (
-        <button
-          type="button"
-          onClick={onShowVoters}
-          className="text-xs font-semibold text-zinc-400 opacity-0 transition hover:text-[#2F9E41] group-hover:opacity-100 focus-visible:opacity-100"
-        >
-          Ver quem votou
-        </button>
-      )}
-    </div>
+    <button
+      onClick={onToggle}
+      disabled={disabled}
+      title={disabled ? 'Faça login para votar' : voted ? 'Remover voto' : 'Votar'}
+      className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 transition-all disabled:opacity-40 cursor-pointer ${
+        voted
+          ? 'border-[#2F9E41] bg-[#2F9E41]/10 text-[#2F9E41]'
+          : 'border-zinc-200 bg-zinc-50 text-zinc-500 hover:border-[#2F9E41] hover:text-[#2F9E41]'
+      }`}
+    >
+      <svg width={18} height={18} viewBox="0 0 24 24" fill={voted ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 19V5M5 12l7-7 7 7" />
+      </svg>
+      <span className="text-sm font-bold leading-none">{voters.length} votos</span>
+    </button>
   )
 }
 
@@ -319,20 +307,28 @@ function ReplyItem({ reply, depth, currentUserId, canModerate, isClosed, voteMap
             </div>
           )}
           {!removed && (
-            <div className="mt-2 flex flex-wrap items-center gap-2">
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
               <UpvoteButton
                 voters={votes}
                 voted={voted}
                 onToggle={() => onVote(reply.id)}
                 disabled={!currentUserId}
-                onShowVoters={() => onShowVoters('Votos na resposta', votes)}
               />
               {currentUserId && !isClosed && (
                 <button
                   onClick={() => onReply(isReplying ? null : reply.id)}
-                  className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-xs font-semibold text-zinc-500 transition hover:border-zinc-300 hover:text-zinc-700 cursor-pointer"
+                  className="text-xs font-semibold text-zinc-400 hover:text-zinc-700 transition cursor-pointer"
                 >
                   {isReplying ? 'Cancelar' : 'Responder'}
+                </button>
+              )}
+              {votes.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => onShowVoters('Votos na resposta', votes)}
+                  className="text-xs font-semibold text-zinc-400 opacity-0 transition hover:text-[#2F9E41] group-hover:opacity-100 focus-visible:opacity-100"
+                >
+                  Ver quem votou
                 </button>
               )}
               {(isOwn || canModerate) && (
@@ -680,13 +676,23 @@ export default function ForumTopicPage() {
             </div>
           </div>
           <div className="shrink-0 self-start sm:pt-1">
-            <UpvoteButton
-              voters={topicVoters}
-              voted={topicVoted}
-              onToggle={handleTopicVote}
-              disabled={!currentUserId}
-              onShowVoters={() => setVotersModal({ title: 'Votos no tópico', voters: topicVoters })}
-            />
+            <div className="flex flex-wrap items-center gap-2">
+              <UpvoteButton
+                voters={topicVoters}
+                voted={topicVoted}
+                onToggle={handleTopicVote}
+                disabled={!currentUserId}
+              />
+              {topicVoters.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setVotersModal({ title: 'Votos no tópico', voters: topicVoters })}
+                  className="text-xs font-semibold text-zinc-400 opacity-0 transition hover:text-[#2F9E41] group-hover:opacity-100 focus-visible:opacity-100"
+                >
+                  Ver quem votou
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
