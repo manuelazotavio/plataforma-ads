@@ -211,7 +211,7 @@ export default function AppSidebar({ open = true, onClose }: AppSidebarProps) {
 
       </nav>
 
-      <div className="shrink-0 border-t border-zinc-100 px-3 pb-4 pt-3 dark:border-zinc-800">
+      <div className="shrink-0 border-t border-zinc-100 px-3 pb-4 pt-3 dark:border-zinc-800 md:py-2">
         <div className="mb-3 flex items-center justify-between rounded-xl px-2 py-2 md:hidden">
           <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">Tema</span>
           <ThemeToggle />
