@@ -100,7 +100,13 @@ export default function HomeCalendarCard({ events }: { events: HomeCalendarEvent
       <div className="rounded-2xl border border-zinc-200 bg-white p-5">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-base font-semibold text-zinc-900">Calendário</h3>
-          <Link href="/calendario" className="text-xs font-medium text-green-600 hover:text-green-700 transition">Ver mais →</Link>
+          <Link href="/calendario" className="inline-flex items-center gap-1 text-xs font-medium text-green-600 transition hover:text-green-700">
+            Ver mais
+            <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M5 12h14" />
+              <path d="m13 6 6 6-6 6" />
+            </svg>
+          </Link>
         </div>
         <p className="mb-3 text-sm font-semibold text-zinc-500">{MONTH_NAMES[month]} {year}</p>
         <div className="mb-1 grid grid-cols-7">
