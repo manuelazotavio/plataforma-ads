@@ -315,9 +315,10 @@ const infrastructure = [
     tags: ['Hardware atualizado', 'IDEs instaladas', 'Acesso remoto', 'Suporte técnico'],
   },
   {
-    title: 'Rede e Conectividade',
-    description: 'Wi-Fi de alta velocidade em todo o campus, servidores dedicados para projetos e ambientes de desenvolvimento em nuvem.',
-    tags: ['Wi-Fi 6', 'Alta disponibilidade'],
+    title: 'Impressora 3D',
+    description: 'Equipamento para criar protótipos, peças e modelos tridimensionais utilizados em projetos acadêmicos e atividades práticas.',
+    tags: ['Modelagem 3D', 'Prototipagem', 'Projetos práticos'],
+    image: '/impressora.jpeg',
   },
   {
     title: 'Biblioteca e Acervo Digital',
@@ -328,5 +329,6 @@ const infrastructure = [
     title: 'LabTech',
     description: 'Laboratório de prototipagem com impressoras 3D, Arduino, Raspberry Pi e equipamentos de IoT para projetos práticos.',
     tags: ['Impressão 3D', 'Arduino & RPi', 'IoT', 'Prototipagem rápida'],
+    image: '/labtech.jpeg',
   },
 ]
