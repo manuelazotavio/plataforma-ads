@@ -478,3 +478,36 @@ input[type="checkbox"] {
     transform: scale(1.08);
   }
 }
+.sidebar-nav {
+  scrollbar-width: thin;
+  scrollbar-color: #d4d4d8 transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+  width: 5px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #d4d4d8;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: #a1a1aa;
+}
+
+.dark .sidebar-nav {
+  scrollbar-color: #3f3f46 transparent;
+}
+
+.dark .sidebar-nav::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+}
+
+.dark .sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: #52525b;
+}

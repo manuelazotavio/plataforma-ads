@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 import ProjectFilters from '@/app/components/ProjectFilters'
 import UserAvatar from '@/app/components/UserAvatar'
+import Pagination from '@/app/components/Pagination'
 
 export const dynamic = 'force-dynamic'
 import { DEFAULT_PROJECT_TAGS, PROJECT_TAG_OPTIONS_TABLE, uniqueTagNames } from '@/app/lib/projectTags'
@@ -13,12 +14,17 @@ const CATEGORIES = [
   { value: 'iniciacao_cientifica', label: 'Iniciação Científica' },
 ]
 
+const PAGE_SIZE = 12
+
 export default async function ProjetosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tag?: string | string[]; semester?: string; aluno?: string; category?: string; q?: string }>
+  searchParams: Promise<{ tag?: string | string[]; semester?: string; aluno?: string; category?: string; q?: string; page?: string }>
 }) {
-  const { tag, semester, aluno, category, q } = await searchParams
+  const { tag, semester, aluno, category, q, page: pageParam } = await searchParams
+  const page = Math.max(1, parseInt(pageParam ?? '1') || 1)
+  const from = (page - 1) * PAGE_SIZE
+  const to = from + PAGE_SIZE - 1
   const selectedTags = Array.isArray(tag) ? tag : tag ? [tag] : []
 
  
@@ -34,7 +40,7 @@ export default async function ProjetosPage({
   
   let query = supabase
     .from('projects')
-    .select('id, title, description, repo_url, deploy_url, semester, is_featured, like_count, created_at, users(id, name, avatar_url), project_tags(tag_name), project_images(image_url, display_order, media_type)')
+    .select('id, title, description, repo_url, deploy_url, semester, is_featured, like_count, created_at, users(id, name, avatar_url), project_tags(tag_name), project_images(image_url, display_order, media_type)', { count: 'exact' })
     .eq('approved', true)
     .eq('is_active', true)
     .order('created_at', { ascending: false })
@@ -60,9 +66,10 @@ export default async function ProjetosPage({
   }
   if (category) query = query.eq('category', category)
   if (q?.trim()) query = query.ilike('title', `%${q.trim()}%`)
+  query = query.range(from, to)
 
   const [
-    { data: projects },
+    { data: projects, count: totalCount },
     { data: tagRows },
     { data: configuredTagRows, error: configuredTagError },
     { data: semesterRows },
@@ -101,7 +108,7 @@ export default async function ProjetosPage({
           <div>
             <h1 className="text-2xl font-semibold text-zinc-900">Projetos</h1>
             <p className="text-sm text-zinc-500 mt-0.5">
-              {projects?.length ?? 0} projeto{(projects?.length ?? 0) !== 1 ? 's' : ''}
+              {totalCount ?? 0} projeto{(totalCount ?? 0) !== 1 ? 's' : ''}
             </p>
           </div>
           <Link
@@ -191,6 +198,12 @@ export default async function ProjetosPage({
             })}
           </div>
         )}
+        <Pagination
+          page={page}
+          totalCount={totalCount ?? 0}
+          pageSize={PAGE_SIZE}
+          searchParams={{ tag, semester, aluno, category, q }}
+        />
       </div>
     </div>
   )

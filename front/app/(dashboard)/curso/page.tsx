@@ -220,6 +220,7 @@ function buildEquivalencyViewData(
             id: member.id,
             subjectId: subject.id,
             name: subject.name,
+            abbreviation: subject.abbreviation,
             semester: subject.semester,
             versionId: subject.version_id,
             versionName: versionLabel(subject.version_id, versionMap),
@@ -229,6 +230,7 @@ function buildEquivalencyViewData(
           id: string
           subjectId: string
           name: string
+          abbreviation: string | null
           semester: number
           versionId: string | null
           versionName: string
@@ -242,6 +244,7 @@ function buildEquivalencyViewData(
         from: {
           subjectId: source.id,
           name: source.name,
+          abbreviation: source.abbreviation,
           semester: source.semester,
           versionId: source.version_id,
           versionName: versionLabel(source.version_id, versionMap),
@@ -255,6 +258,7 @@ function buildEquivalencyViewData(
       from: {
         subjectId: string
         name: string
+        abbreviation: string | null
         semester: number
         versionId: string | null
         versionName: string
@@ -263,6 +267,7 @@ function buildEquivalencyViewData(
         id: string
         subjectId: string
         name: string
+        abbreviation: string | null
         semester: number
         versionId: string | null
         versionName: string

@@ -4,15 +4,19 @@ import ForumCategorySelect from './ForumCategorySelect'
 import ForumSortToggle from './ForumSortToggle'
 import ForumSearchInput from './ForumSearchInput'
 import ForumAuthorSelect from './ForumAuthorSelect'
+import Pagination from '@/app/components/Pagination'
 
 export const dynamic = 'force-dynamic'
+
+const PAGE_SIZE = 20
 
 export default async function ForumPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; sort?: string; q?: string; author?: string }>
+  searchParams: Promise<{ category?: string; sort?: string; q?: string; author?: string; page?: string }>
 }) {
-  const { category, sort: sortParam, q, author } = await searchParams
+  const { category, sort: sortParam, q, author, page: pageParam } = await searchParams
+  const page = Math.max(1, parseInt(pageParam ?? '1') || 1)
   const sort = sortParam === 'votados' ? 'votados' : 'recentes'
 
   const now = new Date()
@@ -66,12 +70,15 @@ export default async function ForumPage({
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   })
 
+  const totalCount = filtered.length
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
   return (
     <div className="px-4 md:px-6 py-8 w-full">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900">Fórum</h1>
-          <p className="text-sm text-zinc-500 mt-1">{filtered.length} tópico{filtered.length !== 1 ? 's' : ''}</p>
+          <p className="text-sm text-zinc-500 mt-1">{totalCount} tópico{totalCount !== 1 ? 's' : ''}</p>
         </div>
         <Link
           href="/forum/novo"
@@ -95,7 +102,7 @@ export default async function ForumPage({
         <ForumSortToggle sort={sort} category={category} q={q} author={author} />
       </div>
 
-      {filtered.length === 0 ? (
+      {totalCount === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-200 p-16 text-center">
           <p className="text-sm text-zinc-400">Nenhum tópico ainda.</p>
           <Link href="/forum/novo" className="mt-3 inline-flex items-center gap-1 text-sm text-[#2F9E41] font-medium hover:opacity-70">
@@ -105,7 +112,7 @@ export default async function ForumPage({
         </div>
       ) : (
         <div className="divide-y divide-zinc-100">
-          {filtered.map((topic) => {
+          {paginated.map((topic) => {
             const author = topic.users as unknown as { id: string; name: string } | null
             const cat = topic.forum_categories as unknown as { id: string; name: string } | null
             const isClosed = (topic as unknown as { is_closed: boolean }).is_closed
@@ -157,6 +164,12 @@ export default async function ForumPage({
           })}
         </div>
       )}
+      <Pagination
+        page={page}
+        totalCount={totalCount}
+        pageSize={PAGE_SIZE}
+        searchParams={{ category, sort: sortParam, q, author }}
+      />
     </div>
   )
 }

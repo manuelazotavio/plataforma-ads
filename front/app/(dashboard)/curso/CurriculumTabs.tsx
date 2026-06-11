@@ -31,6 +31,7 @@ type Equivalency = {
   from: {
     subjectId: string
     name: string
+    abbreviation: string | null
     semester: number
     versionId: string | null
     versionName: string
@@ -39,6 +40,7 @@ type Equivalency = {
     id: string
     subjectId: string
     name: string
+    abbreviation: string | null
     semester: number
     versionId: string | null
     versionName: string
@@ -247,8 +249,9 @@ function EquivalencyModal({ equivalencies, versions, onClose }: { equivalencies:
     .map((s) => ({
       subjectId: s.id!,
       name: s.name,
+      abbreviation: s.abbreviation ?? null,
       semester: effectiveSemester!,
-      equivalents: [] as { subjectId: string; name: string; semester: number; note: string | null }[],
+      equivalents: [] as { subjectId: string; name: string; abbreviation: string | null; semester: number; note: string | null }[],
     }))
   const allRows = [...rows, ...rowsWithoutEquivalency].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
 
@@ -342,7 +345,10 @@ function EquivalencyModal({ equivalencies, versions, onClose }: { equivalencies:
                   {allRows.map((row) => (
                     <div key={row.subjectId} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                       <div className="border-r border-zinc-100 px-4 py-4">
-                        <p className="text-sm font-semibold text-zinc-900">{row.name}</p>
+                        <p className="text-sm font-semibold text-zinc-900">
+                          {row.name}
+                          {row.abbreviation && <span className="ml-1 font-medium text-zinc-400">({row.abbreviation})</span>}
+                        </p>
                         <p className="mt-1 text-xs text-zinc-400">{row.semester}º semestre</p>
                       </div>
                       <div className="px-4 py-4">
@@ -352,7 +358,10 @@ function EquivalencyModal({ equivalencies, versions, onClose }: { equivalencies:
                           <div className="flex flex-col gap-2">
                             {row.equivalents.map((equivalent) => (
                               <div key={equivalent.subjectId} className="rounded-lg bg-green-50 px-3 py-2">
-                                <p className="text-sm font-semibold text-[#2F9E41]">{equivalent.name}</p>
+                                <p className="text-sm font-semibold text-[#2F9E41]">
+                                  {equivalent.name}
+                                  {equivalent.abbreviation && <span className="ml-1 font-medium text-green-700/60">({equivalent.abbreviation})</span>}
+                                </p>
                                 <p className="mt-0.5 text-xs text-green-700/70">{equivalent.semester}º semestre</p>
                                 {equivalent.note && <p className="mt-1 text-xs text-green-700/70">{equivalent.note}</p>}
                               </div>
@@ -387,12 +396,14 @@ type EquivalencyPair = {
   from: {
     subjectId: string
     name: string
+    abbreviation: string | null
     semester: number
     versionName: string
   }
   to: {
     subjectId: string
     name: string
+    abbreviation: string | null
     semester: number
     versionName: string
   }
@@ -406,12 +417,14 @@ function buildEquivalencyPairs(equivalencies: Equivalency[]) {
       from: {
         subjectId: equivalency.from.subjectId,
         name: equivalency.from.name,
+        abbreviation: equivalency.from.abbreviation,
         semester: equivalency.from.semester,
         versionName: equivalency.from.versionName,
       },
       to: {
         subjectId: member.subjectId,
         name: member.name,
+        abbreviation: member.abbreviation,
         semester: member.semester,
         versionName: member.versionName,
       },
@@ -430,10 +443,12 @@ function groupPairsBySubject(pairs: EquivalencyPair[]) {
   const rowMap = new Map<string, {
     subjectId: string
     name: string
+    abbreviation: string | null
     semester: number
     equivalents: {
       subjectId: string
       name: string
+      abbreviation: string | null
       semester: number
       note: string | null
     }[]
@@ -444,6 +459,7 @@ function groupPairsBySubject(pairs: EquivalencyPair[]) {
       rowMap.set(pair.from.subjectId, {
         subjectId: pair.from.subjectId,
         name: pair.from.name,
+        abbreviation: pair.from.abbreviation,
         semester: pair.from.semester,
         equivalents: [],
       })
@@ -453,6 +469,7 @@ function groupPairsBySubject(pairs: EquivalencyPair[]) {
       row.equivalents.push({
         subjectId: pair.to.subjectId,
         name: pair.to.name,
+        abbreviation: pair.to.abbreviation,
         semester: pair.to.semester,
         note: pair.note,
       })

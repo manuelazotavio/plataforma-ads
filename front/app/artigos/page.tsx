@@ -3,15 +3,21 @@ import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 import ArticleFilters from '@/app/components/ArticleFilters'
 import UserAvatar from '@/app/components/UserAvatar'
+import Pagination from '@/app/components/Pagination'
 
 export const dynamic = 'force-dynamic'
+
+const PAGE_SIZE = 15
 
 export default async function ArtigosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tag?: string; autor?: string }>
+  searchParams: Promise<{ tag?: string; autor?: string; page?: string }>
 }) {
-  const { tag, autor } = await searchParams
+  const { tag, autor, page: pageParam } = await searchParams
+  const page = Math.max(1, parseInt(pageParam ?? '1') || 1)
+  const from = (page - 1) * PAGE_SIZE
+  const to = from + PAGE_SIZE - 1
 
   
   let tagArticleIds: string[] | null = null
@@ -26,7 +32,7 @@ export default async function ArtigosPage({
   
   let query = supabase
     .from('articles')
-    .select('id, title, slug, summary, cover_image_url, published_at, like_count, users(id, name, avatar_url), article_tags(tag_name)')
+    .select('id, title, slug, summary, cover_image_url, published_at, like_count, users(id, name, avatar_url), article_tags(tag_name)', { count: 'exact' })
     .eq('status', 'publicado')
     .order('published_at', { ascending: false })
 
@@ -36,9 +42,9 @@ export default async function ArtigosPage({
       : query.in('id', ['00000000-0000-0000-0000-000000000000'])
   }
   if (autor) query = query.eq('user_id', autor)
+  query = query.range(from, to)
 
-  
-  const [{ data: articles }, { data: tagRows }, { data: authorRows }] = await Promise.all([
+  const [{ data: articles, count: totalCount }, { data: tagRows }, { data: authorRows }] = await Promise.all([
     query,
     supabase.from('article_tags').select('article_id, tag_name, articles!inner(status)').eq('articles.status', 'publicado'),
     supabase.from('articles').select('user_id, users(id, name)').eq('status', 'publicado').not('user_id', 'is', null),
@@ -60,7 +66,7 @@ export default async function ArtigosPage({
           <div>
             <h1 className="text-2xl font-semibold text-zinc-900">Artigos</h1>
             <p className="text-sm text-zinc-500 mt-0.5">
-              {articles?.length ?? 0} artigo{(articles?.length ?? 0) !== 1 ? 's' : ''} publicado{(articles?.length ?? 0) !== 1 ? 's' : ''}
+              {totalCount ?? 0} artigo{(totalCount ?? 0) !== 1 ? 's' : ''} publicado{(totalCount ?? 0) !== 1 ? 's' : ''}
             </p>
           </div>
           <Link
@@ -138,6 +144,12 @@ export default async function ArtigosPage({
             })}
           </div>
         )}
+        <Pagination
+          page={page}
+          totalCount={totalCount ?? 0}
+          pageSize={PAGE_SIZE}
+          searchParams={{ tag, autor }}
+        />
       </div>
     </div>
   )
