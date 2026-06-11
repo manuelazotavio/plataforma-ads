@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { supabase } from '@/app/lib/supabase'
@@ -18,12 +19,20 @@ type Profile = {
   avatar_url: string | null
   role: string | null
   preferred_area: string | null
+  selected_mascot_id: string | null
 }
 
 type Level = {
   id: number
   name: string
   min_xp: number
+}
+
+type Mascot = {
+  id: string
+  name: string
+  description: string | null
+  image_url: string
 }
 
 const AREAS = [
@@ -100,7 +109,7 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
   ] = await Promise.all([
     supabase
       .from('users')
-      .select('id, name, bio, semester, github_url, linkedin_url, portfolio_url, avatar_url, role, preferred_area')
+      .select('id, name, bio, semester, github_url, linkedin_url, portfolio_url, avatar_url, role, preferred_area, selected_mascot_id')
       .eq('id', id)
       .single(),
     supabase.from('user_skills').select('skill_name').eq('user_id', id).order('skill_name'),
@@ -125,6 +134,15 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
   if (!profile) notFound()
 
   const user = profile as Profile
+  const { data: selectedMascot } = user.selected_mascot_id
+    ? await supabase
+        .from('mascots')
+        .select('id, name, description, image_url')
+        .eq('id', user.selected_mascot_id)
+        .eq('is_active', true)
+        .maybeSingle()
+    : { data: null }
+  const mascot = selectedMascot as Mascot | null
   const displayAvatarUrl = linkedProfessor?.avatar_url ?? user.avatar_url
   const skillNames = (skills ?? []).map((skill) => skill.skill_name)
   const preferredAreas = splitPreferredAreas(user.preferred_area)
@@ -237,6 +255,31 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
           <p className="text-xs text-zinc-400">Tópicos</p>
         </div>
       </section>
+
+      {mascot && (
+        <section className="border-b border-zinc-100 py-6">
+          <h2 className="mb-3 text-sm font-semibold text-zinc-900">Personagem escolhido</h2>
+          <div className="flex items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-4">
+            <div className="relative h-20 w-20 shrink-0">
+              <Image
+                src={mascot.image_url}
+                alt={mascot.name}
+                fill
+                className="object-contain drop-shadow-sm"
+                sizes="80px"
+              />
+            </div>
+            <div className="min-w-0">
+              <p className="font-semibold text-zinc-900">{mascot.name}</p>
+              {mascot.description && (
+                <p className="mt-1 text-sm leading-relaxed text-zinc-500">
+                  {mascot.description}
+                </p>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       {(preferredAreas.length > 0 || skillNames.length > 0 || socials.length > 0) && (
         <section className="py-6 flex flex-col gap-6">
