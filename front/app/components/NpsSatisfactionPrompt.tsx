@@ -19,15 +19,16 @@ export default function NpsSatisfactionPrompt({ userId }: { userId: string | nul
       return
     }
 
+    const uid = userId
     let cancelled = false
     async function load() {
-      const dismissedUntil = localStorage.getItem(npsDismissKey(userId))
+      const dismissedUntil = localStorage.getItem(npsDismissKey(uid))
       if (dismissedUntil && new Date(dismissedUntil) > new Date()) return
 
       const { data } = await supabase
         .from('nps_responses')
         .select('score, comment')
-        .eq('user_id', userId)
+        .eq('user_id', uid)
         .maybeSingle()
 
       if (cancelled) return
