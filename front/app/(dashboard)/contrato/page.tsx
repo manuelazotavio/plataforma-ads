@@ -10,7 +10,7 @@ export default function ContratoPage() {
         </Section>
 
         <Section title="2. Elegibilidade">
-          O acesso é permitido a alunos matriculados, egressos e professores do curso de Análise e Desenvolvimento de Sistemas. A administração pode verificar e revogar acessos de usuários que não atendam a este critério.
+          O acesso é permitido a todos, pois o site é público.
         </Section>
 
         <Section title="3. Conta e responsabilidade">
@@ -26,7 +26,7 @@ export default function ContratoPage() {
         </Section>
 
         <Section title="6. Limitação de responsabilidade">
-          O ADS Conecta é fornecido "no estado em que se encontra", sem garantias de disponibilidade contínua. Não nos responsabilizamos por eventuais perdas de dados, interrupções ou danos decorrentes do uso da plataforma.
+          O ADS Conecta é fornecido &quot;no estado em que se encontra&quot;, sem garantias de disponibilidade contínua. Não nos responsabilizamos por eventuais perdas de dados, interrupções ou danos decorrentes do uso da plataforma.
         </Section>
 
         <Section title="7. Rescisão">
