@@ -1,6 +1,7 @@
 'use client'
 
 import { type ReactNode, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import UserAvatar from '@/app/components/UserAvatar'
 import UserMascotBadge, { type UserMascot } from '@/app/components/UserMascotBadge'
@@ -27,6 +28,8 @@ export default function UserHoverCard({
   const [open, setOpen] = useState(false)
   const [profile, setProfile] = useState<HoverProfile | null>(null)
   const [loading, setLoading] = useState(false)
+  const [position, setPosition] = useState<{ top: number; left: number } | null>(null)
+  const triggerRef = useRef<HTMLSpanElement>(null)
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   async function loadProfile() {
@@ -43,6 +46,12 @@ export default function UserHoverCard({
 
   function show() {
     if (closeTimer.current) clearTimeout(closeTimer.current)
+    const rect = triggerRef.current?.getBoundingClientRect()
+    if (rect) {
+      const width = 288
+      const left = Math.min(Math.max(12, rect.left), window.innerWidth - width - 12)
+      setPosition({ top: rect.bottom + 8, left })
+    }
     setOpen(true)
     void loadProfile()
   }
@@ -55,6 +64,7 @@ export default function UserHoverCard({
 
   return (
     <span
+      ref={triggerRef}
       className="relative inline-flex"
       onMouseEnter={show}
       onMouseLeave={hide}
@@ -63,8 +73,13 @@ export default function UserHoverCard({
     >
       {children}
 
-      {open && (
-        <span className="absolute left-0 top-full z-50 mt-2 w-72 rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-xl">
+      {open && position && createPortal(
+        <span
+          className="fixed z-[100] w-72 rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-xl"
+          style={{ top: position.top, left: position.left }}
+          onMouseEnter={show}
+          onMouseLeave={hide}
+        >
           {profile ? (
             <span className="flex flex-col gap-3">
               <span className="flex items-start gap-3">
@@ -99,7 +114,8 @@ export default function UserHoverCard({
           ) : (
             <span className="block text-xs text-zinc-400">{loading ? 'Carregando perfil...' : 'Perfil indisponível'}</span>
           )}
-        </span>
+        </span>,
+        document.body
       )}
     </span>
   )
