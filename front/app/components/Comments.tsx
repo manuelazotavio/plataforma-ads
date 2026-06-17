@@ -12,12 +12,17 @@ import UserHoverCard from '@/app/components/UserHoverCard'
 import { REACTIONS, ReactionPicker, type ReactionType } from './LikeButton'
 import MentionTextarea, { type MentionHandle } from './MentionTextarea'
 import { parseMentions } from '@/app/lib/mentions'
+import { computeXp, countProfileLinks, hasNonEmpty } from '@/app/lib/xp'
+
+type MascotInfo = { id: string; name: string; image_url: string }
 
 type Comment = {
   id: string
   content: string
   created_at: string
   parent_id: string | null
+  mascot_id: string | null
+  sticker: { name: string; image_url: string } | null
   users: { id: string; name: string; avatar_url: string | null; selected_mascot: UserMascot } | null
 }
 
@@ -184,9 +189,12 @@ function CommentReactionBar({
 export default function Comments({ type, targetId }: Props) {
   const { table, field, reactionTable } = COMMENT_CONFIG[type]
 
-  const [threads, setThreads]       = useState<CommentWithReplies[]>([])
-  const [reactions, setReactions]   = useState<Reaction[]>([])
-  const [userId, setUserId]         = useState<string | null>(null)
+  const [threads, setThreads]     = useState<CommentWithReplies[]>([])
+  const [reactions, setReactions] = useState<Reaction[]>([])
+  const [ownedMascots, setOwnedMascots]     = useState<MascotInfo[]>([])
+  const [selectedMascot, setSelectedMascot] = useState<MascotInfo | null>(null)
+  const [replyMascot, setReplyMascot]       = useState<MascotInfo | null>(null)
+  const [userId, setUserId]       = useState<string | null>(null)
   const [text, setText]             = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -199,7 +207,7 @@ export default function Comments({ type, targetId }: Props) {
   const load = useCallback(async () => {
     const { data } = await supabase
       .from(table)
-      .select('id, content, created_at, parent_id, users(id, name, avatar_url, selected_mascot:mascots(name, image_url))')
+      .select('id, content, created_at, parent_id, mascot_id, sticker:mascots(name, image_url), users(id, name, avatar_url, selected_mascot:mascots(name, image_url))')
       .eq(field, targetId)
       .order('created_at', { ascending: true })
 
@@ -220,8 +228,32 @@ export default function Comments({ type, targetId }: Props) {
 
   useEffect(() => {
     void Promise.resolve().then(load)
-    getAuthUser().then((user) => {
-      if (user) setUserId(user.id)
+    getAuthUser().then(async (user) => {
+      if (!user) return
+      setUserId(user.id)
+      const [
+        { count: projCount }, { count: artCount }, { count: topicCount },
+        { count: projComCount }, { count: artComCount },
+        { data: ownProj }, { data: ownArt }, { data: profile },
+      ] = await Promise.all([
+        supabase.from('projects').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('articles').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'publicado'),
+        supabase.from('forum_topics').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('project_comments').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('article_comments').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('projects').select('like_count').eq('user_id', user.id),
+        supabase.from('articles').select('like_count').eq('user_id', user.id),
+        supabase.from('users').select('avatar_url, bio, github_url, linkedin_url, portfolio_url').eq('id', user.id).single(),
+      ])
+      const likes = [...(ownProj ?? []), ...(ownArt ?? [])].reduce((s, r) => s + ((r as { like_count?: number | null }).like_count ?? 0), 0)
+      const xp = computeXp({
+        projectsCount: projCount ?? 0, articlesCount: artCount ?? 0, topicsCount: topicCount ?? 0,
+        commentsCount: (projComCount ?? 0) + (artComCount ?? 0), likesReceived: likes,
+        hasAvatar: hasNonEmpty(profile?.avatar_url), hasBio: hasNonEmpty(profile?.bio),
+        linksCount: countProfileLinks(profile ?? {}),
+      })
+      supabase.from('mascots').select('id, name, image_url').eq('is_active', true).lte('min_xp', xp).order('min_xp')
+        .then(({ data: m }) => { if (m) setOwnedMascots(m as MascotInfo[]) })
     })
   }, [load])
 
@@ -251,16 +283,17 @@ export default function Comments({ type, targetId }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const trimmed = text.trim()
-    if (!trimmed || !userId) return
+    if ((!trimmed && !selectedMascot) || !userId) return
     setSubmitting(true)
     const { data, error } = await supabase
       .from(table)
-      .insert({ [field]: targetId, user_id: userId, content: trimmed, parent_id: null })
-      .select('id, content, created_at, parent_id, users(id, name, avatar_url, selected_mascot:mascots(name, image_url))')
+      .insert({ [field]: targetId, user_id: userId, content: trimmed, parent_id: null, mascot_id: selectedMascot?.id ?? null })
+      .select('id, content, created_at, parent_id, mascot_id, sticker:mascots(name, image_url), users(id, name, avatar_url, selected_mascot:mascots(name, image_url))')
       .single()
     if (!error && data) {
       setThreads(prev => [...prev, { ...(data as unknown as Comment), replies: [] }])
       setText('')
+      setSelectedMascot(null)
     }
     setSubmitting(false)
   }
@@ -268,12 +301,12 @@ export default function Comments({ type, targetId }: Props) {
   async function handleReply(e: React.FormEvent) {
     e.preventDefault()
     const trimmed = replyText.trim()
-    if (!trimmed || !userId || !replyingTo) return
+    if ((!trimmed && !replyMascot) || !userId || !replyingTo) return
     setReplySubmitting(true)
     const { data, error } = await supabase
       .from(table)
-      .insert({ [field]: targetId, user_id: userId, content: trimmed, parent_id: replyingTo.id })
-      .select('id, content, created_at, parent_id, users(id, name, avatar_url, selected_mascot:mascots(name, image_url))')
+      .insert({ [field]: targetId, user_id: userId, content: trimmed, parent_id: replyingTo.id, mascot_id: replyMascot?.id ?? null })
+      .select('id, content, created_at, parent_id, mascot_id, sticker:mascots(name, image_url), users(id, name, avatar_url, selected_mascot:mascots(name, image_url))')
       .single()
     if (!error && data) {
       setThreads(prev => prev.map(t =>
@@ -281,6 +314,7 @@ export default function Comments({ type, targetId }: Props) {
       ))
       setReplyText('')
       setReplyingTo(null)
+      setReplyMascot(null)
     }
     setReplySubmitting(false)
   }
@@ -318,7 +352,15 @@ export default function Comments({ type, targetId }: Props) {
                     <span className="text-sm text-zinc-400">{formatDate(comment.created_at)}</span>
                   </div>
                   <CommentText content={comment.content} />
-                  <div className="flex items-center gap-3 mt-2">
+                  {comment.sticker && (
+                    <div className="mt-2 inline-flex flex-col items-center gap-1">
+                      <div className="rounded-2xl border border-[#2F9E41]/20 bg-[#2F9E41]/5 p-3">
+                        <Image src={comment.sticker.image_url} alt={comment.sticker.name} width={96} height={96} className="h-24 w-24 object-contain drop-shadow-sm" />
+                      </div>
+                      <span className="text-[10px] font-semibold text-[#2F9E41]/70">{comment.sticker.name}</span>
+                    </div>
+                  )}
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
                     <CommentReactionBar commentId={comment.id} userId={userId} reactions={reactions} onReact={handleReact} />
                     {userId && (
                       <button
@@ -352,7 +394,15 @@ export default function Comments({ type, targetId }: Props) {
                           <span className="text-sm text-zinc-400">{formatDate(reply.created_at)}</span>
                         </div>
                         <CommentText content={reply.content} />
-                        <div className="flex items-center gap-3 mt-2">
+                        {reply.sticker && (
+                          <div className="mt-2 inline-flex flex-col items-center gap-1">
+                            <div className="rounded-2xl border border-[#2F9E41]/20 bg-[#2F9E41]/5 p-3">
+                              <Image src={reply.sticker.image_url} alt={reply.sticker.name} width={96} height={96} className="h-24 w-24 object-contain drop-shadow-sm" />
+                            </div>
+                            <span className="text-[10px] font-semibold text-[#2F9E41]/70">{reply.sticker.name}</span>
+                          </div>
+                        )}
+                        <div className="flex flex-wrap items-center gap-2 mt-2">
                           <CommentReactionBar commentId={reply.id} userId={userId} reactions={reactions} onReact={handleReact} />
                           {userId === reply.users?.id && (
                             <button
@@ -372,20 +422,37 @@ export default function Comments({ type, targetId }: Props) {
                     <form onSubmit={handleReply} className="flex gap-3 items-start">
                       <div className="shrink-0 w-7" />
                       <div className="flex-1 flex flex-col gap-2">
-                        <MentionTextarea
-                          ref={replyRef}
-                          rows={2}
-                          value={replyText}
-                          onChange={setReplyText}
-                          onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); void handleReply(e as unknown as React.FormEvent) } }}
-                          placeholder={`Responder ${replyingTo.name}...`}
-                          className="w-full resize-none rounded-xl border border-zinc-200 px-3 py-2 text-base text-zinc-900 outline-none transition focus:border-zinc-400"
-                        />
-                        <div className="flex gap-2 justify-end">
-                          <button type="button" onClick={() => { setReplyingTo(null); setReplyText('') }} className="px-3 py-1.5 text-sm text-zinc-500 transition hover:text-zinc-800">
+                        <div className="rounded-xl border border-zinc-200 overflow-hidden focus-within:border-zinc-400 transition">
+                          <MentionTextarea
+                            ref={replyRef}
+                            rows={2}
+                            value={replyText}
+                            onChange={setReplyText}
+                            onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); void handleReply(e as unknown as React.FormEvent) } }}
+                            placeholder={`Responder ${replyingTo.name}...`}
+                            className="w-full resize-none px-3 py-2 text-base text-zinc-900 outline-none"
+                          />
+                          {ownedMascots.length > 0 && (
+                            <div className="flex flex-wrap gap-1 border-t border-zinc-100 px-2 py-1.5">
+                              {ownedMascots.map((m) => (
+                                <button
+                                  key={m.id}
+                                  type="button"
+                                  title={m.name}
+                                  onClick={() => setReplyMascot(prev => prev?.id === m.id ? null : m)}
+                                  className={`rounded-lg p-1 transition hover:bg-zinc-100 ${replyMascot?.id === m.id ? 'bg-[#2F9E41]/10 ring-2 ring-[#2F9E41]/40' : ''}`}
+                                >
+                                  <Image src={m.image_url} alt={m.name} width={36} height={36} className="h-9 w-9 object-contain" />
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <button type="button" onClick={() => { setReplyingTo(null); setReplyText(''); setReplyMascot(null) }} className="px-3 py-1.5 text-sm text-zinc-500 transition hover:text-zinc-800">
                             Cancelar
                           </button>
-                          <button type="submit" disabled={replySubmitting || !replyText.trim()} className="rounded-lg bg-[#2F9E41] px-3 py-1.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50">
+                          <button type="submit" disabled={replySubmitting || (!replyText.trim() && !replyMascot)} className="rounded-lg bg-[#2F9E41] px-3 py-1.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50">
                             {replySubmitting ? 'Enviando...' : 'Responder'}
                           </button>
                         </div>
@@ -401,17 +468,34 @@ export default function Comments({ type, targetId }: Props) {
 
       {userId ? (
         <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-          <MentionTextarea
-            ref={mainRef}
-            rows={3}
-            value={text}
-            onChange={setText}
-            onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); void handleSubmit(e as unknown as React.FormEvent) } }}
-            placeholder="Escreva um comentário..."
-            className="w-full resize-none rounded-xl border border-zinc-200 px-4 py-3 text-base text-zinc-900 outline-none transition focus:border-zinc-400 focus:ring-2 focus:ring-zinc-100"
-          />
+          <div className="rounded-xl border border-zinc-200 overflow-hidden focus-within:border-zinc-400 focus-within:ring-2 focus-within:ring-zinc-100 transition">
+            <MentionTextarea
+              ref={mainRef}
+              rows={3}
+              value={text}
+              onChange={setText}
+              onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); void handleSubmit(e as unknown as React.FormEvent) } }}
+              placeholder="Escreva um comentário..."
+              className="w-full resize-none px-4 py-3 text-base text-zinc-900 outline-none"
+            />
+            {ownedMascots.length > 0 && (
+              <div className="flex flex-wrap gap-1 border-t border-zinc-100 px-3 py-2">
+                {ownedMascots.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    title={m.name}
+                    onClick={() => setSelectedMascot(prev => prev?.id === m.id ? null : m)}
+                    className={`rounded-lg p-1 transition hover:bg-zinc-100 ${selectedMascot?.id === m.id ? 'bg-[#2F9E41]/10 ring-2 ring-[#2F9E41]/40' : ''}`}
+                  >
+                    <Image src={m.image_url} alt={m.name} width={40} height={40} className="h-10 w-10 object-contain" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <div className="flex justify-end">
-            <button type="submit" disabled={submitting || !text.trim()} className="rounded-lg bg-[#2F9E41] px-4 py-2 text-base font-medium text-white transition hover:opacity-90 disabled:opacity-50">
+            <button type="submit" disabled={submitting || (!text.trim() && !selectedMascot)} className="rounded-lg bg-[#2F9E41] px-4 py-2 text-base font-medium text-white transition hover:opacity-90 disabled:opacity-50">
               {submitting ? 'Enviando...' : 'Comentar'}
             </button>
           </div>

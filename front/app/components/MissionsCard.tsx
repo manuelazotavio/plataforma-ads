@@ -135,7 +135,7 @@ export default function MissionsCard() {
 
     if (!setData) { setLoading(false); return }
 
-    const missions = ((setData.weekly_set_missions ?? []) as WeeklySetMissionRow[])
+    const missions = ((setData.weekly_set_missions ?? []) as unknown as WeeklySetMissionRow[])
       .map((wsm) => wsm.missions)
       .filter((mission): mission is Mission => Boolean(mission))
 

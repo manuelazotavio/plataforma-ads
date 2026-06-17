@@ -100,6 +100,8 @@ function buildEmail(
   const targetLabel = TARGET_LABELS[n.target_type] ?? 'conteúdo'
   const title = n.target_title ? `“${n.target_title}”` : `seu ${targetLabel}`
   const targetUrl = buildTargetUrl(siteUrl, n.target_type, n.target_id)
+  const logoUrl = siteUrl ? `${siteUrl}/logo-escuro.png` : ''
+  const arrowIconUrl = siteUrl ? `${siteUrl}/arrow-right-email.svg` : ''
 
   let subject = ''
   let headline = ''
@@ -153,23 +155,19 @@ function buildEmail(
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
                   <tr>
                     <td style="padding:0 4px 16px;">
-                      <table role="presentation" cellpadding="0" cellspacing="0">
-                        <tr>
-                          <td style="width:36px; height:36px; border-radius:10px; background-color:#2F9E41; color:#ffffff; font-family:Arial,sans-serif; font-size:16px; font-weight:700; text-align:center; vertical-align:middle;">
-                            ADS
-                          </td>
-                          <td style="padding-left:10px; font-family:Arial,sans-serif; font-size:15px; font-weight:700; color:#18181b;">
-                            ADS Conecta
-                          </td>
-                        </tr>
-                      </table>
+                      ${logoUrl ? `
+                        <img src="${escapeHtml(logoUrl)}" width="160" alt="ADS Conecta" style="display:block; width:160px; max-width:100%; height:auto; border:0;">
+                      ` : `
+                        <p style="margin:0; font-family:Arial,sans-serif; font-size:15px; font-weight:700; color:#18181b;">
+                          ADS Conecta
+                        </p>
+                      `}
                     </td>
                   </tr>
                   <tr>
                     <td style="overflow:hidden; border:1px solid #e4e4e7; border-radius:16px; background-color:#ffffff;">
-                      <div style="height:5px; background-color:#2F9E41;"></div>
                       <div style="padding:30px 32px 32px;">
-                        <p style="margin:0 0 10px; font-family:Arial,sans-serif; font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#2F9E41;">
+                        <p style="margin:0 0 10px; font-family:Arial,sans-serif; font-size:12px; font-weight:700; color:#2F9E41;">
                           ${escapeHtml(headline)}
                         </p>
                         <h1 style="margin:0 0 14px; font-family:Arial,sans-serif; font-size:24px; line-height:1.25; color:#18181b;">
@@ -183,7 +181,7 @@ function buildEmail(
                             <tr>
                               <td style="border-radius:10px; background-color:#2F9E41;">
                                 <a href="${escapeHtml(targetUrl)}" style="display:inline-block; padding:12px 20px; font-family:Arial,sans-serif; font-size:14px; font-weight:700; color:#ffffff; text-decoration:none;">
-                                  Ver no ADS Conecta&nbsp;&nbsp;→
+                                  <span style="vertical-align:middle;">Ver no ADS Conecta</span>${arrowIconUrl ? ` <img src="${escapeHtml(arrowIconUrl)}" width="16" height="16" alt="" style="display:inline-block; margin-left:8px; vertical-align:middle; border:0;">` : ''}
                                 </a>
                               </td>
                             </tr>
@@ -199,7 +197,7 @@ function buildEmail(
                   </tr>
                   <tr>
                     <td align="center" style="padding:18px 16px 0; font-family:Arial,sans-serif; font-size:11px; color:#a1a1aa;">
-                      ADS Conecta · Instituto Federal de São Paulo
+                      ADS Conecta
                     </td>
                   </tr>
                 </table>

@@ -12,11 +12,13 @@ import UserHoverCard from '@/app/components/UserHoverCard'
 import { formatFileSize } from '@/app/lib/files'
 import MentionTextarea from '@/app/components/MentionTextarea'
 import { parseMentions } from '@/app/lib/mentions'
+import { computeXp, countProfileLinks, hasNonEmpty } from '@/app/lib/xp'
 
 type Author = { name: string; avatar_url: string | null; selected_mascot: UserMascot }
 type Voter = Author & { id: string }
 type Category = { id: string; name: string }
 type Attachment = { type: 'image' | 'video' | 'file'; url: string; name?: string; size?: number }
+type MascotInfo = { id: string; name: string; image_url: string }
 
 type Topic = {
   id: string
@@ -38,6 +40,8 @@ type Reply = {
   created_at: string
   parent_id: string | null
   user_id: string
+  mascot_id: string | null
+  sticker: { name: string; image_url: string } | null
   attachments: Attachment[] | null
   users: Author | null
 }
@@ -160,13 +164,15 @@ function VotersModal({ title, voters, onClose }: { title: string; voters: Voter[
   )
 }
 
-function ReplyForm({ onSubmit, onCancel, placeholder = 'Escreva sua resposta...' }: {
-  onSubmit: (content: string, attachments: Attachment[]) => Promise<void>
+function ReplyForm({ onSubmit, onCancel, placeholder = 'Escreva sua resposta...', ownedMascots = [] }: {
+  onSubmit: (content: string, attachments: Attachment[], mascotId: string | null) => Promise<void>
   onCancel?: () => void
   placeholder?: string
+  ownedMascots?: MascotInfo[]
 }) {
   const [content, setContent] = useState('')
   const [attachments, setAttachments] = useState<Attachment[]>([])
+  const [selectedMascot, setSelectedMascot] = useState<MascotInfo | null>(null)
   const [uploading, setUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -190,23 +196,41 @@ function ReplyForm({ onSubmit, onCancel, placeholder = 'Escreva sua resposta...'
 
   async function handle(e: React.FormEvent) {
     e.preventDefault()
-    if (!content.trim() && attachments.length === 0) return
+    if (!content.trim() && attachments.length === 0 && !selectedMascot) return
     setSubmitting(true)
-    await onSubmit(content.trim(), attachments)
+    await onSubmit(content.trim(), attachments, selectedMascot?.id ?? null)
     setContent('')
     setAttachments([])
+    setSelectedMascot(null)
     setSubmitting(false)
   }
 
   return (
     <form onSubmit={handle} className="flex flex-col gap-2 mt-3">
-      <MentionTextarea
-        value={content}
-        onChange={setContent}
-        rows={3}
-        className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-400 transition w-full resize-none"
-        placeholder={placeholder}
-      />
+      <div className="rounded-xl border border-zinc-200 overflow-hidden focus-within:border-zinc-400 transition">
+        <MentionTextarea
+          value={content}
+          onChange={setContent}
+          rows={3}
+          className="w-full resize-none px-3 py-2 text-sm text-zinc-900 outline-none"
+          placeholder={placeholder}
+        />
+        {ownedMascots.length > 0 && (
+          <div className="flex flex-wrap gap-1 border-t border-zinc-100 px-2 py-1.5">
+            {ownedMascots.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                title={m.name}
+                onClick={() => setSelectedMascot(prev => prev?.id === m.id ? null : m)}
+                className={`rounded-lg p-1 transition hover:bg-zinc-100 ${selectedMascot?.id === m.id ? 'bg-[#2F9E41]/10 ring-2 ring-[#2F9E41]/40' : ''}`}
+              >
+                <Image src={m.image_url} alt={m.name} width={36} height={36} className="h-9 w-9 object-contain" />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       {attachments.length > 0 && (
         <div className="flex flex-wrap gap-2">
@@ -253,7 +277,7 @@ function ReplyForm({ onSubmit, onCancel, placeholder = 'Escreva sua resposta...'
           )}
           <button
             type="submit"
-            disabled={submitting || uploading || (!content.trim() && attachments.length === 0)}
+            disabled={submitting || uploading || (!content.trim() && attachments.length === 0 && !selectedMascot)}
             className="rounded-xl px-5 py-2 text-sm font-semibold text-white disabled:opacity-50 transition hover:opacity-90"
             style={{ backgroundColor: '#2F9E41' }}
           >
@@ -304,6 +328,14 @@ function ReplyItem({ reply, depth, currentUserId, canModerate, isClosed, voteMap
             <span className="text-xs text-zinc-400">{date}</span>
           </div>
           <p className={`text-sm leading-relaxed whitespace-pre-wrap wrap-break-word ${removed ? 'italic text-zinc-400' : 'text-zinc-700'}`}>{parseMentions(reply.content)}</p>
+          {!removed && reply.sticker && (
+            <div className="mt-2 inline-flex flex-col items-center gap-1">
+              <div className="rounded-2xl border border-[#2F9E41]/20 bg-[#2F9E41]/5 p-3">
+                <Image src={reply.sticker.image_url} alt={reply.sticker.name} width={96} height={96} className="h-24 w-24 object-contain drop-shadow-sm" />
+              </div>
+              <span className="text-[10px] font-semibold text-[#2F9E41]/70">{reply.sticker.name}</span>
+            </div>
+          )}
           {!removed && (reply.attachments ?? []).length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">
               {(reply.attachments ?? []).map((att, i) => (
@@ -380,6 +412,7 @@ export default function ForumTopicPage() {
   const [closingTopic, setClosingTopic] = useState(false)
   const [pendingClose, setPendingClose] = useState(false)
   const [votersModal, setVotersModal] = useState<{ title: string; voters: Voter[] } | null>(null)
+  const [ownedMascots, setOwnedMascots] = useState<MascotInfo[]>([])
 
   const load = useCallback(async () => {
     const [{ data: topicData }, user] = await Promise.all([
@@ -396,13 +429,32 @@ export default function ForumTopicPage() {
     setTopic(topicData as unknown as Topic)
     setCurrentUserId(user?.id ?? null)
     if (user?.id) {
-      const { data: profile } = await supabase
-        .from('users')
-        .select('name, avatar_url, role, selected_mascot:mascots(name, image_url)')
-        .eq('id', user.id)
-        .single()
+      const [
+        { data: profile },
+        { count: projCount }, { count: artCount }, { count: topicCount },
+        { count: projComCount }, { count: artComCount },
+        { data: ownProj }, { data: ownArt },
+      ] = await Promise.all([
+        supabase.from('users').select('name, avatar_url, bio, github_url, linkedin_url, portfolio_url, role, selected_mascot:mascots(name, image_url)').eq('id', user.id).single(),
+        supabase.from('projects').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('articles').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'publicado'),
+        supabase.from('forum_topics').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('project_comments').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('article_comments').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('projects').select('like_count').eq('user_id', user.id),
+        supabase.from('articles').select('like_count').eq('user_id', user.id),
+      ])
       setCurrentUserRole(profile?.role ?? null)
       setCurrentUserProfile(profile ? { id: user.id, name: profile.name, avatar_url: profile.avatar_url, selected_mascot: profile.selected_mascot as UserMascot } : null)
+      const likes = [...(ownProj ?? []), ...(ownArt ?? [])].reduce((s, r) => s + ((r as { like_count?: number | null }).like_count ?? 0), 0)
+      const xp = computeXp({
+        projectsCount: projCount ?? 0, articlesCount: artCount ?? 0, topicsCount: topicCount ?? 0,
+        commentsCount: (projComCount ?? 0) + (artComCount ?? 0), likesReceived: likes,
+        hasAvatar: hasNonEmpty(profile?.avatar_url), hasBio: hasNonEmpty(profile?.bio),
+        linksCount: countProfileLinks(profile ?? {}),
+      })
+      supabase.from('mascots').select('id, name, image_url').eq('is_active', true).lte('min_xp', xp).order('min_xp')
+        .then(({ data: m }) => { if (m) setOwnedMascots(m as MascotInfo[]) })
     } else {
       setCurrentUserRole(null)
       setCurrentUserProfile(null)
@@ -412,7 +464,7 @@ export default function ForumTopicPage() {
 
     const { data: repliesData } = await supabase
       .from('forum_replies')
-      .select('id, content, attachments, created_at, parent_id, user_id, users(name, avatar_url, selected_mascot:mascots(name, image_url))')
+      .select('id, content, attachments, created_at, parent_id, user_id, mascot_id, sticker:mascots(name, image_url), users(name, avatar_url, selected_mascot:mascots(name, image_url))')
       .eq('topic_id', id)
       .order('created_at', { ascending: true })
 
@@ -490,13 +542,13 @@ export default function ForumTopicPage() {
     }
   }
 
-  async function handleReply(content: string, parentId: string | null, attachments: Attachment[] = []) {
+  async function handleReply(content: string, parentId: string | null, attachments: Attachment[] = [], mascotId: string | null = null) {
     if (!currentUserId) return
     if (parentId && replies.some(r => r.id === parentId && isRemovedReply(r.content))) return
     const { data } = await supabase
       .from('forum_replies')
-      .insert({ topic_id: id, user_id: currentUserId, content, parent_id: parentId, attachments })
-      .select('id, content, attachments, created_at, parent_id, user_id, users(name, avatar_url, selected_mascot:mascots(name, image_url))')
+      .insert({ topic_id: id, user_id: currentUserId, content, parent_id: parentId, attachments, mascot_id: mascotId })
+      .select('id, content, attachments, created_at, parent_id, user_id, mascot_id, sticker:mascots(name, image_url), users(name, avatar_url, selected_mascot:mascots(name, image_url))')
       .single()
 
     if (data) {
@@ -610,9 +662,10 @@ export default function ForumTopicPage() {
           {replyingToId === node.reply.id && !isRemovedReply(node.reply.content) && (
             <div className="pl-6 sm:pl-10 pb-2">
               <ReplyForm
-                onSubmit={(content, atts) => handleReply(content, node.reply.id, atts)}
+                onSubmit={(content, atts, mascotId) => handleReply(content, node.reply.id, atts, mascotId)}
                 onCancel={() => setReplyingToId(null)}
                 placeholder={`Respondendo a ${node.reply.users?.name ?? 'Anonimo'}...`}
+                ownedMascots={ownedMascots}
               />
             </div>
           )}
@@ -815,8 +868,9 @@ export default function ForumTopicPage() {
             <div className="flex flex-col gap-3">
               <label className="text-sm font-semibold text-zinc-700">Sua resposta</label>
               <ReplyForm
-                onSubmit={(content, atts) => handleReply(content, null, atts)}
+                onSubmit={(content, atts, mascotId) => handleReply(content, null, atts, mascotId)}
                 placeholder="Escreva sua resposta..."
+                ownedMascots={ownedMascots}
               />
             </div>
           ) : (
