@@ -374,8 +374,8 @@ export default function PerfilPage() {
       linkedin_url: profile.linkedin_url || null,
       portfolio_url: profile.portfolio_url || null,
       avatar_url: profile.avatar_url || null,
+      preferred_area: preferredAreas.length > 0 ? preferredAreas.join(',') : null,
       updated_at: new Date().toISOString(),
-      ...(role === 'professor' ? { preferred_area: preferredAreas.length > 0 ? preferredAreas.join(',') : null } : {}),
     }
 
     const { error: updateError } = await supabase.from('users').update(userUpdate).eq('id', userId)
@@ -882,31 +882,29 @@ export default function PerfilPage() {
             </div>
           )}
 
-          {role === 'professor' && (
-            <div className="bg-white rounded-2xl border border-zinc-200 p-6">
-              <h3 className="text-sm font-semibold text-zinc-900 mb-2">Áreas de interesse</h3>
-              <p className="mb-4 text-xs text-zinc-400">Selecione as áreas relacionadas à sua atuação.</p>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {AREAS.map((area) => {
-                  const active = preferredAreas.includes(area.value)
-                  return (
-                    <button
-                      key={area.value}
-                      type="button"
-                      onClick={() => togglePreferredArea(area.value)}
-                      className={`rounded-xl border px-3 py-2.5 text-left text-sm font-medium transition ${
-                        active
-                          ? 'border-[#2F9E41] bg-[#2F9E41]/5 text-[#2F9E41]'
-                          : 'border-zinc-200 text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50'
-                      }`}
-                    >
-                      {area.label}
-                    </button>
-                  )
-                })}
-              </div>
+          <div className="bg-white rounded-2xl border border-zinc-200 p-6">
+            <h3 className="text-sm font-semibold text-zinc-900 mb-2">Áreas de interesse</h3>
+            <p className="mb-4 text-xs text-zinc-400">Selecione as áreas que combinam com seus estudos, projetos ou atuação.</p>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {AREAS.map((area) => {
+                const active = preferredAreas.includes(area.value)
+                return (
+                  <button
+                    key={area.value}
+                    type="button"
+                    onClick={() => togglePreferredArea(area.value)}
+                    className={`rounded-xl border px-3 py-2.5 text-left text-sm font-medium transition ${
+                      active
+                        ? 'border-[#2F9E41] bg-[#2F9E41]/5 text-[#2F9E41]'
+                        : 'border-zinc-200 text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50'
+                    }`}
+                  >
+                    {area.label}
+                  </button>
+                )
+              })}
             </div>
-          )}
+          </div>
 
           <div className="bg-white rounded-2xl border border-zinc-200 p-6">
             <h3 className="text-sm font-semibold text-zinc-900 mb-5">Redes sociais</h3>

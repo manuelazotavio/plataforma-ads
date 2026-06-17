@@ -33,6 +33,7 @@ export default function AdminArtigosPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [rejectingId, setRejectingId] = useState<string | null>(null)
   const [rejectMessage, setRejectMessage] = useState('')
+  const [actionError, setActionError] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -49,8 +50,21 @@ export default function AdminArtigosPage() {
 
   async function publish(id: string) {
     setUpdatingId(id)
-    await supabase.from('articles').update({ status: 'publicado', rejection_message: null, published_at: new Date().toISOString() }).eq('id', id)
-    setArticles((prev) => prev.map((a) => a.id === id ? { ...a, status: 'publicado', rejection_message: null } : a))
+    setActionError(null)
+    const { data, error } = await supabase
+      .from('articles')
+      .update({ status: 'publicado', rejection_message: null, published_at: new Date().toISOString() })
+      .eq('id', id)
+      .select('status, rejection_message')
+      .single()
+
+    if (error || data?.status !== 'publicado') {
+      setActionError(error?.message ?? 'Não foi possível publicar o artigo. Verifique as permissões no Supabase.')
+      setUpdatingId(null)
+      return
+    }
+
+    setArticles((prev) => prev.map((a) => a.id === id ? { ...a, status: data.status, rejection_message: data.rejection_message } : a))
     setUpdatingId(null)
   }
 
@@ -58,8 +72,21 @@ export default function AdminArtigosPage() {
     const msg = rejectMessage.trim()
     if (!msg) return
     setUpdatingId(id)
-    await supabase.from('articles').update({ status: 'rejeitado', rejection_message: msg }).eq('id', id)
-    setArticles((prev) => prev.map((a) => a.id === id ? { ...a, status: 'rejeitado', rejection_message: msg } : a))
+    setActionError(null)
+    const { data, error } = await supabase
+      .from('articles')
+      .update({ status: 'rejeitado', rejection_message: msg, published_at: null })
+      .eq('id', id)
+      .select('status, rejection_message')
+      .single()
+
+    if (error || data?.status !== 'rejeitado') {
+      setActionError(error?.message ?? 'Não foi possível rejeitar o artigo. Verifique as permissões no Supabase.')
+      setUpdatingId(null)
+      return
+    }
+
+    setArticles((prev) => prev.map((a) => a.id === id ? { ...a, status: data.status, rejection_message: data.rejection_message } : a))
     setRejectingId(null)
     setRejectMessage('')
     setUpdatingId(null)
@@ -104,6 +131,11 @@ export default function AdminArtigosPage() {
         <div className="text-center py-16 text-zinc-400">Nenhum artigo {filter === 'todos' ? '' : filter}.</div>
       ) : (
         <div className="flex flex-col gap-3">
+          {actionError && (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {actionError}
+            </div>
+          )}
           {filtered.map((article) => {
             const cfg = statusConfig[article.status] ?? statusConfig.rascunho
 
