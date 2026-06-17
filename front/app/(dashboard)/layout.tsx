@@ -13,6 +13,7 @@ import ThemeToggle from '@/app/components/ThemeToggle'
 import UserAvatar from '@/app/components/UserAvatar'
 import ProfileProgressRing from '@/app/components/ProfileProgressRing'
 import { useMobileFooterOffset } from '@/app/hooks/useMobileFooterOffset'
+import NpsSatisfactionPrompt from '@/app/components/NpsSatisfactionPrompt'
 
 type UserProfile = {
   name: string
@@ -281,6 +282,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </footer>
           </div>
         </main>
+        <NpsSatisfactionPrompt userId={userId} />
         <QuickCreateMenu />
       </div>
       <BottomNav />

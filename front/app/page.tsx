@@ -164,7 +164,7 @@ function ProjectsSection({ projects }: { projects: Project[] }) {
       {projects.length === 0 ? (
         <EmptyCard text="Nenhum projeto cadastrado ainda." action="Criar o primeiro projeto" href="/cadastro" />
       ) : (
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 2xl:grid-cols-2">
           {projects.map((project) => {
             const tags = project.project_tags as { tag_name: string }[]
             const author = firstRelation(project.users)

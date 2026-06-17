@@ -128,7 +128,7 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
     supabase.from('articles').select('id, title, summary, cover_image_url, published_at, like_count').eq('user_id', id).eq('status', 'publicado'),
     supabase.from('forum_topics').select('id, title, created_at, replies_count').eq('user_id', id),
     supabase.from('levels').select('id, name, min_xp').order('min_xp', { ascending: true }),
-    supabase.from('professors').select('avatar_url').eq('user_id', id).maybeSingle(),
+    supabase.from('professors').select('avatar_url, bio').eq('user_id', id).maybeSingle(),
   ])
 
   if (!profile) notFound()
@@ -144,6 +144,7 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
     : { data: null }
   const mascot = selectedMascot as Mascot | null
   const displayAvatarUrl = linkedProfessor?.avatar_url ?? user.avatar_url
+  const displayBio = linkedProfessor?.bio ?? user.bio
   const skillNames = (skills ?? []).map((skill) => skill.skill_name)
   const preferredAreas = splitPreferredAreas(user.preferred_area)
   const likesReceived =
@@ -157,7 +158,7 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
     commentsCount,
     likesReceived,
     hasAvatar: hasNonEmpty(displayAvatarUrl),
-    hasBio: hasNonEmpty(user.bio),
+    hasBio: hasNonEmpty(displayBio),
     linksCount: countProfileLinks(user),
   })
   const level = currentLevel((levels ?? []) as Level[], xp)
@@ -229,8 +230,8 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
                 {egresso.company ? ` @ ${egresso.company}` : ''}
               </p>
             )}
-            {user.bio && (
-              <p className="mt-4 text-sm leading-relaxed text-zinc-600 whitespace-pre-wrap">{user.bio}</p>
+            {displayBio && (
+              <p className="mt-4 text-sm leading-relaxed text-zinc-600 whitespace-pre-wrap">{displayBio}</p>
             )}
           </div>
         </div>

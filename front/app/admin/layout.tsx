@@ -30,6 +30,7 @@ const nav = [
   { href: '/admin/corpo-docente', label: 'Corpo Docente', icon: <IconPerson /> },
   { href: '/admin/forum', label: 'Fórum', icon: <IconChat /> },
   { href: '/admin/mensagens', label: 'Mensagens', icon: <IconMail /> },
+  { href: '/admin/nps', label: 'NPS', icon: <IconStar /> },
   { href: '/admin/mascote', label: 'Personagem', icon: <IconChat /> },
   { href: '/admin/auditoria', label: 'Auditoria', icon: <IconShield /> },
   { href: '/admin/niveis', label: 'Níveis', icon: <IconStar /> },
@@ -76,7 +77,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [ready])
 
   useEffect(() => {
-    if (pathname === '/admin/mensagens') setUnreadMsgs(0)
+    if (pathname === '/admin/mensagens') {
+      void Promise.resolve().then(() => setUnreadMsgs(0))
+    }
   }, [pathname])
 
   useEffect(() => {

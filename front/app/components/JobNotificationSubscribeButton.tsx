@@ -151,17 +151,25 @@ function LoginPromptModal({ onClose }: { onClose: () => void }) {
 
 function LoginPromptIllustration() {
   return (
-    <svg viewBox="0 0 360 180" role="img" aria-label="Ilustração de notificação por e-mail" className="h-36 w-full">
-      <rect x="70" y="36" width="220" height="118" rx="24" fill="#ffffff" />
-      <path d="M94 64h172v72H94z" fill="#f0fdf4" />
-      <path d="m94 65 86 58 86-58" fill="none" stroke="#2F9E41" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M94 136 154 96M266 136l-60-40" fill="none" stroke="#86efac" strokeWidth="7" strokeLinecap="round" />
-      <circle cx="258" cy="46" r="22" fill="#2F9E41" />
-      <path d="M258 34v13l8 6" fill="none" stroke="#ffffff" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
-      <rect x="118" y="20" width="88" height="20" rx="10" fill="#dcfce7" />
-      <rect x="132" y="144" width="96" height="14" rx="7" fill="#dcfce7" />
-      <circle cx="104" cy="42" r="8" fill="#bbf7d0" />
-      <circle cx="286" cy="126" r="10" fill="#bbf7d0" />
+    <svg viewBox="0 0 360 180" role="img" aria-label="Ícone de e-mail" className="h-36 w-full">
+      <circle cx="180" cy="90" r="62" fill="#dcfce7" />
+      <rect x="118" y="58" width="124" height="84" rx="18" fill="#ffffff" />
+      <path
+        d="M136 78h88a8 8 0 0 1 8 8v44a8 8 0 0 1-8 8h-88a8 8 0 0 1-8-8V86a8 8 0 0 1 8-8Z"
+        fill="none"
+        stroke="#2F9E41"
+        strokeWidth="7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="m130 85 50 36 50-36"
+        fill="none"
+        stroke="#2F9E41"
+        strokeWidth="7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   )
 }
