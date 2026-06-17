@@ -4,6 +4,8 @@ import { supabase } from '@/app/lib/supabase'
 import ArticleFilters from '@/app/components/ArticleFilters'
 import UserAvatar from '@/app/components/UserAvatar'
 import Pagination from '@/app/components/Pagination'
+import UserMascotBadge, { type UserMascot } from '@/app/components/UserMascotBadge'
+import UserHoverCard from '@/app/components/UserHoverCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,7 +34,7 @@ export default async function ArtigosPage({
   
   let query = supabase
     .from('articles')
-    .select('id, title, slug, summary, cover_image_url, published_at, like_count, users(id, name, avatar_url), article_tags(tag_name)', { count: 'exact' })
+    .select('id, title, slug, summary, cover_image_url, published_at, like_count, users(id, name, avatar_url, selected_mascot:mascots(name, image_url)), article_tags(tag_name)', { count: 'exact' })
     .eq('status', 'publicado')
     .order('published_at', { ascending: false })
 
@@ -86,7 +88,7 @@ export default async function ArtigosPage({
         ) : (
           <div className="flex flex-col gap-4">
             {articles.map((article) => {
-              const author = article.users as unknown as { id: string; name: string; avatar_url: string | null } | null
+              const author = article.users as unknown as { id: string; name: string; avatar_url: string | null; selected_mascot: UserMascot } | null
               const tags = article.article_tags as { tag_name: string }[]
 
               return (
@@ -117,13 +119,18 @@ export default async function ArtigosPage({
 
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center gap-2">
-                        <Link href={author ? `/usuarios/${author.id}` : '#'} className="flex items-center gap-2 hover:opacity-80 transition">
-                          {author?.avatar_url
-                            ? <Image src={author.avatar_url} alt={author.name} width={16} height={16} className="w-4 h-4 rounded-full object-cover shrink-0" />
-                            : <UserAvatar name={author?.name} className="h-4 w-4" sizes="16px" />
-                          }
-                          <span className="text-xs text-zinc-400">{author?.name}</span>
-                        </Link>
+                        <UserHoverCard userId={author?.id}>
+                          <Link href={author ? `/usuarios/${author.id}` : '#'} className="flex items-center gap-2 hover:opacity-80 transition">
+                            {author?.avatar_url
+                              ? <Image src={author.avatar_url} alt={author.name} width={16} height={16} className="w-4 h-4 rounded-full object-cover shrink-0" />
+                              : <UserAvatar name={author?.name} className="h-4 w-4" sizes="16px" />
+                            }
+                            <span className="inline-flex items-center gap-1 text-xs text-zinc-400">
+                              <span>{author?.name}</span>
+                              <UserMascotBadge mascot={author?.selected_mascot ?? null} size={17} />
+                            </span>
+                          </Link>
+                        </UserHoverCard>
                         {article.published_at && (
                           <>
                             <span className="text-zinc-300">&bull;</span>

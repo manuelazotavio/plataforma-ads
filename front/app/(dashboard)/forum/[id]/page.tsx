@@ -7,11 +7,13 @@ import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import UserAvatar from '@/app/components/UserAvatar'
+import UserMascotBadge, { type UserMascot } from '@/app/components/UserMascotBadge'
+import UserHoverCard from '@/app/components/UserHoverCard'
 import { formatFileSize } from '@/app/lib/files'
 import MentionTextarea from '@/app/components/MentionTextarea'
 import { parseMentions } from '@/app/lib/mentions'
 
-type Author = { name: string; avatar_url: string | null }
+type Author = { name: string; avatar_url: string | null; selected_mascot: UserMascot }
 type Voter = Author & { id: string }
 type Category = { id: string; name: string }
 type Attachment = { type: 'image' | 'video' | 'file'; url: string; name?: string; size?: number }
@@ -45,6 +47,7 @@ type VoteMap = Record<string, Voter[]>
 
 const MODERATOR_REMOVED_REPLY = 'Esta resposta foi removida por um moderador.'
 const AUTHOR_REMOVED_REPLY = 'Esta resposta foi removida pelo autor.'
+const COMMENT_MASCOT_BADGE_SIZE = 24
 
 function isRemovedReply(content: string) {
   return content === MODERATOR_REMOVED_REPLY || content === AUTHOR_REMOVED_REPLY
@@ -145,7 +148,10 @@ function VotersModal({ title, voters, onClose }: { title: string; voters: Voter[
               className="flex items-center gap-3 rounded-xl px-2 py-2 transition hover:bg-zinc-50"
             >
               <Avatar author={voter} size={36} />
-              <span className="min-w-0 truncate text-sm font-medium text-zinc-700">{voter.name}</span>
+              <span className="inline-flex min-w-0 items-center gap-1 text-sm font-medium text-zinc-700">
+                <span className="truncate">{voter.name}</span>
+                <UserMascotBadge mascot={voter.selected_mascot} size={19} />
+              </span>
             </Link>
           ))}
         </div>
@@ -289,9 +295,12 @@ function ReplyItem({ reply, depth, currentUserId, canModerate, isClosed, voteMap
         </Link>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <Link href={`/usuarios/${reply.user_id}`} className="text-sm font-semibold text-zinc-800 hover:text-[#2F9E41] transition">
-              {reply.users?.name ?? 'Anonimo'}
-            </Link>
+            <UserHoverCard userId={reply.user_id}>
+              <Link href={`/usuarios/${reply.user_id}`} className="inline-flex items-center gap-1 text-sm font-semibold text-zinc-800 hover:text-[#2F9E41] transition">
+                <span>{reply.users?.name ?? 'Anonimo'}</span>
+                <UserMascotBadge mascot={reply.users?.selected_mascot ?? null} size={COMMENT_MASCOT_BADGE_SIZE} />
+              </Link>
+            </UserHoverCard>
             <span className="text-xs text-zinc-400">{date}</span>
           </div>
           <p className={`text-sm leading-relaxed whitespace-pre-wrap wrap-break-word ${removed ? 'italic text-zinc-400' : 'text-zinc-700'}`}>{parseMentions(reply.content)}</p>
@@ -376,7 +385,7 @@ export default function ForumTopicPage() {
     const [{ data: topicData }, user] = await Promise.all([
       supabase
         .from('forum_topics')
-        .select('id, title, content, created_at, replies_count, views_count, user_id, is_closed, attachments, users(name, avatar_url), forum_categories(id, name)')
+        .select('id, title, content, created_at, replies_count, views_count, user_id, is_closed, attachments, users(name, avatar_url, selected_mascot:mascots(name, image_url)), forum_categories(id, name)')
         .eq('id', id)
         .single(),
       getAuthUser(),
@@ -389,11 +398,11 @@ export default function ForumTopicPage() {
     if (user?.id) {
       const { data: profile } = await supabase
         .from('users')
-        .select('name, avatar_url, role')
+        .select('name, avatar_url, role, selected_mascot:mascots(name, image_url)')
         .eq('id', user.id)
         .single()
       setCurrentUserRole(profile?.role ?? null)
-      setCurrentUserProfile(profile ? { id: user.id, name: profile.name, avatar_url: profile.avatar_url } : null)
+      setCurrentUserProfile(profile ? { id: user.id, name: profile.name, avatar_url: profile.avatar_url, selected_mascot: profile.selected_mascot as UserMascot } : null)
     } else {
       setCurrentUserRole(null)
       setCurrentUserProfile(null)
@@ -403,7 +412,7 @@ export default function ForumTopicPage() {
 
     const { data: repliesData } = await supabase
       .from('forum_replies')
-      .select('id, content, attachments, created_at, parent_id, user_id, users(name, avatar_url)')
+      .select('id, content, attachments, created_at, parent_id, user_id, users(name, avatar_url, selected_mascot:mascots(name, image_url))')
       .eq('topic_id', id)
       .order('created_at', { ascending: true })
 
@@ -428,7 +437,7 @@ export default function ForumTopicPage() {
       ...(topicVotes ?? []).map(vote => vote.user_id),
     ])]
     const { data: voterProfiles } = voterIds.length > 0
-      ? await supabase.from('users').select('id, name, avatar_url').in('id', voterIds)
+      ? await supabase.from('users').select('id, name, avatar_url, selected_mascot:mascots(name, image_url)').in('id', voterIds)
       : { data: [] as Voter[] }
     const votersById = new Map(
       (voterProfiles ?? []).map(profile => [profile.id, profile as Voter])
@@ -436,13 +445,13 @@ export default function ForumTopicPage() {
 
     const map: VoteMap = {}
     for (const vote of replyVotes ?? []) {
-      const voter = votersById.get(vote.user_id) ?? { id: vote.user_id, name: 'Usuário', avatar_url: null }
+      const voter = votersById.get(vote.user_id) ?? { id: vote.user_id, name: 'Usuário', avatar_url: null, selected_mascot: null }
       if (!map[vote.reply_id]) map[vote.reply_id] = []
       map[vote.reply_id].push(voter)
     }
     setVoteMap(map)
     setTopicVoters((topicVotes ?? []).flatMap(vote => {
-      const voter = votersById.get(vote.user_id) ?? { id: vote.user_id, name: 'Usuário', avatar_url: null }
+      const voter = votersById.get(vote.user_id) ?? { id: vote.user_id, name: 'Usuário', avatar_url: null, selected_mascot: null }
       return [voter]
     }))
     setLoading(false)
@@ -453,7 +462,7 @@ export default function ForumTopicPage() {
   async function handleTopicVote() {
     if (!currentUserId) return
     const voted = topicVoters.some(voter => voter.id === currentUserId)
-    const voter = currentUserProfile ?? { id: currentUserId, name: 'Você', avatar_url: null }
+    const voter = currentUserProfile ?? { id: currentUserId, name: 'Você', avatar_url: null, selected_mascot: null }
     setTopicVoters(prev => voted ? prev.filter(item => item.id !== currentUserId) : [...prev, voter])
     if (voted) {
       await supabase.from('forum_topic_votes').delete().eq('topic_id', id).eq('user_id', currentUserId)
@@ -467,7 +476,7 @@ export default function ForumTopicPage() {
     const reply = replies.find(r => r.id === replyId)
     if (!reply || isRemovedReply(reply.content)) return
     const voted = (voteMap[replyId] ?? []).some(voter => voter.id === currentUserId)
-    const voter = currentUserProfile ?? { id: currentUserId, name: 'Você', avatar_url: null }
+    const voter = currentUserProfile ?? { id: currentUserId, name: 'Você', avatar_url: null, selected_mascot: null }
     setVoteMap(prev => ({
       ...prev,
       [replyId]: voted
@@ -487,7 +496,7 @@ export default function ForumTopicPage() {
     const { data } = await supabase
       .from('forum_replies')
       .insert({ topic_id: id, user_id: currentUserId, content, parent_id: parentId, attachments })
-      .select('id, content, attachments, created_at, parent_id, user_id, users(name, avatar_url)')
+      .select('id, content, attachments, created_at, parent_id, user_id, users(name, avatar_url, selected_mascot:mascots(name, image_url))')
       .single()
 
     if (data) {
@@ -663,9 +672,12 @@ export default function ForumTopicPage() {
                 <Avatar author={topic.users} size={32} />
               </Link>
               <div className="min-w-0 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:text-sm text-zinc-400">
-                <Link href={`/usuarios/${topic.user_id}`} className="font-medium text-zinc-600 hover:text-[#2F9E41] transition">
-                  {topic.users?.name ?? 'Anonimo'}
-                </Link>
+                <UserHoverCard userId={topic.user_id}>
+                  <Link href={`/usuarios/${topic.user_id}`} className="inline-flex items-center gap-1 font-medium text-zinc-600 hover:text-[#2F9E41] transition">
+                    <span>{topic.users?.name ?? 'Anonimo'}</span>
+                    <UserMascotBadge mascot={topic.users?.selected_mascot ?? null} size={19} />
+                  </Link>
+                </UserHoverCard>
                 <span aria-hidden="true">&bull;</span>
                 <span>{topicDate}</span>
                 <span aria-hidden="true">&bull;</span>

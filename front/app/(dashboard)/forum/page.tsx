@@ -5,6 +5,8 @@ import ForumSortToggle from './ForumSortToggle'
 import ForumSearchInput from './ForumSearchInput'
 import ForumAuthorSelect from './ForumAuthorSelect'
 import Pagination from '@/app/components/Pagination'
+import UserMascotBadge, { type UserMascot } from '@/app/components/UserMascotBadge'
+import UserHoverCard from '@/app/components/UserHoverCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,7 +31,7 @@ export default async function ForumPage({
     supabase.from('forum_categories').select('id, name').order('display_order'),
     supabase
       .from('forum_topics')
-      .select('id, title, created_at, replies_count, views_count, user_id, is_closed, users(id, name), forum_categories(id, name)')
+      .select('id, title, created_at, replies_count, views_count, user_id, is_closed, users(id, name, selected_mascot:mascots(name, image_url)), forum_categories(id, name)')
       .order('created_at', { ascending: false }),
     supabase.from('forum_topic_votes').select('topic_id').gte('created_at', weekAgo),
   ])
@@ -113,7 +115,7 @@ export default async function ForumPage({
       ) : (
         <div className="divide-y divide-zinc-100">
           {paginated.map((topic) => {
-            const author = topic.users as unknown as { id: string; name: string } | null
+            const author = topic.users as unknown as { id: string; name: string; selected_mascot: UserMascot } | null
             const cat = topic.forum_categories as unknown as { id: string; name: string } | null
             const isClosed = (topic as unknown as { is_closed: boolean }).is_closed
             const weekVotes = weeklyVoteMap.get(topic.id) ?? 0
@@ -149,9 +151,12 @@ export default async function ForumPage({
                   </Link>
                   <p className="text-xs text-zinc-400">
                     {author ? (
-                      <Link href={`/usuarios/${author.id}`} className="hover:text-[#2F9E41] transition">
-                        {author.name}
-                      </Link>
+                      <UserHoverCard userId={author.id}>
+                        <Link href={`/usuarios/${author.id}`} className="inline-flex items-center gap-1 hover:text-[#2F9E41] transition">
+                          <span>{author.name}</span>
+                          <UserMascotBadge mascot={author.selected_mascot} size={17} />
+                        </Link>
+                      </UserHoverCard>
                     ) : 'Anonimo'} &bull; {new Date(topic.created_at).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })}
                   </p>
                 </div>

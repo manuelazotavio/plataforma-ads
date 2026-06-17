@@ -201,7 +201,7 @@ export default function CalendarioPage() {
           return (
             <div
               key={i}
-              className={`flex flex-col gap-1 overflow-hidden border-b border-r border-zinc-100 p-1.5 dark:border-zinc-800 ${
+              className={`flex min-h-0 flex-col overflow-hidden border-b border-r border-zinc-100 p-1.5 dark:border-zinc-800 ${
                 !cell.current ? 'bg-zinc-50/60 dark:bg-zinc-900/45' : 'bg-white dark:bg-zinc-950'
               }`}
             >
@@ -215,38 +215,40 @@ export default function CalendarioPage() {
                 {cell.date.getDate()}
               </span>
 
-              {shown.map(ev => {
-                const rawId = ev.id.split(':')[1]
-                const colorClass = ev.kind === 'event'
-                  ? categoryColor(ev.category ?? null)
-                  : calendarItemChip(ev.color ?? null)
-                const shape = ev.isStart && ev.isEnd ? 'rounded' : ev.isStart ? 'rounded-l' : ev.isEnd ? 'rounded-r' : ''
-                const cls = `text-xs font-medium px-1.5 py-0.5 truncate transition hover:opacity-80 ${colorClass} ${shape}`
-                const label = ev.isStart ? ev.title : ' '
+              <div className="mt-1 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto pr-0.5">
+                {shown.map(ev => {
+                  const rawId = ev.id.split(':')[1]
+                  const colorClass = ev.kind === 'event'
+                    ? categoryColor(ev.category ?? null)
+                    : calendarItemChip(ev.color ?? null)
+                  const shape = ev.isStart && ev.isEnd ? 'rounded' : ev.isStart ? 'rounded-l' : ev.isEnd ? 'rounded-r' : ''
+                  const cls = `min-h-5 shrink-0 text-xs font-medium px-1.5 py-0.5 truncate transition hover:opacity-80 ${colorClass} ${shape}`
+                  const label = ev.isStart ? ev.title : ' '
 
-                if (ev.kind === 'event') {
+                  if (ev.kind === 'event') {
+                    return (
+                      <Link key={ev.id} href={`/eventos/${rawId}`} title={ev.title} className={cls}>
+                        {label}
+                      </Link>
+                    )
+                  }
                   return (
-                    <Link key={ev.id} href={`/eventos/${rawId}`} title={ev.title} className={cls}>
+                    <button
+                      key={ev.id}
+                      type="button"
+                      title={ev.title}
+                      className={`${cls} text-left w-full`}
+                      onClick={() => setSelectedItem(ev)}
+                    >
                       {label}
-                    </Link>
+                    </button>
                   )
-                }
-                return (
-                  <button
-                    key={ev.id}
-                    type="button"
-                    title={ev.title}
-                    className={`${cls} text-left w-full`}
-                    onClick={() => setSelectedItem(ev)}
-                  >
-                    {label}
-                  </button>
-                )
-              })}
+                })}
 
-              {overflow > 0 && (
-                <span className="text-xs text-zinc-400 px-1.5">+ {overflow} mais</span>
-              )}
+                {overflow > 0 && (
+                  <span className="shrink-0 px-1.5 text-xs text-zinc-400">+ {overflow} mais</span>
+                )}
+              </div>
             </div>
           )
         })}

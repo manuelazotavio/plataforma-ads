@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 import ProjectFilters from '@/app/components/ProjectFilters'
 import UserAvatar from '@/app/components/UserAvatar'
+import UserMascotBadge, { type UserMascot } from '@/app/components/UserMascotBadge'
+import UserHoverCard from '@/app/components/UserHoverCard'
 import Pagination from '@/app/components/Pagination'
 
 export const dynamic = 'force-dynamic'
@@ -40,7 +42,7 @@ export default async function ProjetosPage({
   
   let query = supabase
     .from('projects')
-    .select('id, title, description, repo_url, deploy_url, semester, is_featured, like_count, created_at, users(id, name, avatar_url), project_tags(tag_name), project_images(image_url, display_order, media_type)', { count: 'exact' })
+    .select('id, title, description, repo_url, deploy_url, semester, is_featured, like_count, created_at, users(id, name, avatar_url, selected_mascot:mascots(name, image_url)), project_tags(tag_name), project_images(image_url, display_order, media_type)', { count: 'exact' })
     .eq('approved', true)
     .eq('is_active', true)
     .order('created_at', { ascending: false })
@@ -132,7 +134,7 @@ export default async function ProjetosPage({
               const cover = (project.project_images as { image_url: string; display_order: number; media_type?: string | null }[])
                 .sort((a, b) => a.display_order - b.display_order)[0]
               const tags = project.project_tags as { tag_name: string }[]
-              const author = project.users as unknown as { id: string; name: string; avatar_url: string | null } | null
+              const author = project.users as unknown as { id: string; name: string; avatar_url: string | null; selected_mascot: UserMascot } | null
 
               return (
                 <div
@@ -178,13 +180,18 @@ export default async function ProjetosPage({
                     )}
 
                     <div className="flex items-center justify-between mt-1">
-                      <Link href={author ? `/usuarios/${author.id}` : '#'} className="flex items-center gap-2 hover:opacity-80 transition">
-                        {author?.avatar_url
-                          ? <Image src={author.avatar_url} alt={author.name} width={16} height={16} className="w-4 h-4 rounded-full object-cover shrink-0" />
-                          : <UserAvatar name={author?.name} className="h-4 w-4" sizes="16px" />
-                        }
-                        <span className="text-xs text-zinc-400">{author?.name}</span>
-                      </Link>
+                      <UserHoverCard userId={author?.id}>
+                        <Link href={author ? `/usuarios/${author.id}` : '#'} className="flex items-center gap-2 hover:opacity-80 transition">
+                          {author?.avatar_url
+                            ? <Image src={author.avatar_url} alt={author.name} width={16} height={16} className="w-4 h-4 rounded-full object-cover shrink-0" />
+                            : <UserAvatar name={author?.name} className="h-4 w-4" sizes="16px" />
+                          }
+                          <span className="inline-flex items-center gap-1 text-xs text-zinc-400">
+                            <span>{author?.name}</span>
+                            <UserMascotBadge mascot={author?.selected_mascot ?? null} size={17} />
+                          </span>
+                        </Link>
+                      </UserHoverCard>
                       {(project.like_count as number) > 0 && (
                         <span className="flex items-center gap-1 text-xs text-zinc-400">
                           <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" /></svg>

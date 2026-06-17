@@ -5,6 +5,8 @@ import { supabase } from '@/app/lib/supabase'
 import LikeButton from '@/app/components/LikeButton'
 import ShareProjectButton from '@/app/components/ShareProjectButton'
 import UserAvatar from '@/app/components/UserAvatar'
+import UserMascotBadge, { type UserMascot } from '@/app/components/UserMascotBadge'
+import UserHoverCard from '@/app/components/UserHoverCard'
 
 export const dynamic = 'force-dynamic'
 import Comments from '@/app/components/Comments'
@@ -15,14 +17,14 @@ export default async function ArtigoDetalhe({ params }: { params: Promise<{ id: 
 
   const { data: article } = await supabase
     .from('articles')
-    .select('id, title, summary, content, cover_image_url, published_at, like_count, status, users(id, name, avatar_url), article_tags(tag_name)')
+    .select('id, title, summary, content, cover_image_url, published_at, like_count, status, users(id, name, avatar_url, selected_mascot:mascots(name, image_url)), article_tags(tag_name)')
     .eq('id', id)
     .eq('status', 'publicado')
     .single()
 
   if (!article) notFound()
 
-  const author = article.users as unknown as { id: string; name: string; avatar_url: string | null } | null
+  const author = article.users as unknown as { id: string; name: string; avatar_url: string | null; selected_mascot: UserMascot } | null
   const tags = article.article_tags as { tag_name: string }[]
 
   return (
@@ -56,13 +58,18 @@ export default async function ArtigoDetalhe({ params }: { params: Promise<{ id: 
           <div className="flex items-center justify-between pb-6 border-b border-zinc-100">
             <div className="flex items-center gap-2">
               {author ? (
-                <Link href={`/usuarios/${author.id}`} className="flex items-center gap-2 hover:opacity-80 transition">
-                  {author.avatar_url
-                    ? <Image src={author.avatar_url} alt={author.name} width={28} height={28} className="w-7 h-7 rounded-full object-cover shrink-0" />
-                    : <UserAvatar name={author.name} className="h-7 w-7" sizes="28px" />
-                  }
-                  <span className="text-sm text-zinc-600 font-medium">{author.name}</span>
-                </Link>
+                <UserHoverCard userId={author.id}>
+                  <Link href={`/usuarios/${author.id}`} className="flex items-center gap-2 hover:opacity-80 transition">
+                    {author.avatar_url
+                      ? <Image src={author.avatar_url} alt={author.name} width={28} height={28} className="w-7 h-7 rounded-full object-cover shrink-0" />
+                      : <UserAvatar name={author.name} className="h-7 w-7" sizes="28px" />
+                    }
+                    <span className="inline-flex items-center gap-1 text-sm text-zinc-600 font-medium">
+                      <span>{author.name}</span>
+                      <UserMascotBadge mascot={author.selected_mascot} size={19} />
+                    </span>
+                  </Link>
+                </UserHoverCard>
               ) : (
                 <span className="text-sm text-zinc-600 font-medium">Anonimo</span>
               )}

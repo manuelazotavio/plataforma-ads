@@ -7,6 +7,8 @@ import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import UserAvatar from '@/app/components/UserAvatar'
+import UserMascotBadge, { type UserMascot } from '@/app/components/UserMascotBadge'
+import UserHoverCard from '@/app/components/UserHoverCard'
 import { REACTIONS, ReactionPicker, type ReactionType } from './LikeButton'
 import MentionTextarea, { type MentionHandle } from './MentionTextarea'
 import { parseMentions } from '@/app/lib/mentions'
@@ -16,7 +18,7 @@ type Comment = {
   content: string
   created_at: string
   parent_id: string | null
-  users: { id: string; name: string; avatar_url: string | null } | null
+  users: { id: string; name: string; avatar_url: string | null; selected_mascot: UserMascot } | null
 }
 
 type CommentWithReplies = Comment & { replies: Comment[] }
@@ -54,12 +56,17 @@ function Avatar({ user }: { user: Comment['users'] }) {
   return content
 }
 
+const COMMENT_MASCOT_BADGE_SIZE = 24
+
 function UserName({ user }: { user: Comment['users'] }) {
   if (!user?.id) return <span className="text-sm font-semibold text-zinc-800">{user?.name}</span>
   return (
-    <Link href={`/usuarios/${user.id}`} className="text-sm font-semibold text-zinc-800 hover:text-[#2F9E41] transition">
-      {user.name}
-    </Link>
+    <UserHoverCard userId={user.id}>
+      <Link href={`/usuarios/${user.id}`} className="inline-flex items-center gap-1 text-sm font-semibold text-zinc-800 hover:text-[#2F9E41] transition">
+        <span>{user.name}</span>
+        <UserMascotBadge mascot={user.selected_mascot} size={COMMENT_MASCOT_BADGE_SIZE} />
+      </Link>
+    </UserHoverCard>
   )
 }
 
@@ -192,7 +199,7 @@ export default function Comments({ type, targetId }: Props) {
   const load = useCallback(async () => {
     const { data } = await supabase
       .from(table)
-      .select('id, content, created_at, parent_id, users(id, name, avatar_url)')
+      .select('id, content, created_at, parent_id, users(id, name, avatar_url, selected_mascot:mascots(name, image_url))')
       .eq(field, targetId)
       .order('created_at', { ascending: true })
 
@@ -249,7 +256,7 @@ export default function Comments({ type, targetId }: Props) {
     const { data, error } = await supabase
       .from(table)
       .insert({ [field]: targetId, user_id: userId, content: trimmed, parent_id: null })
-      .select('id, content, created_at, parent_id, users(id, name, avatar_url)')
+      .select('id, content, created_at, parent_id, users(id, name, avatar_url, selected_mascot:mascots(name, image_url))')
       .single()
     if (!error && data) {
       setThreads(prev => [...prev, { ...(data as unknown as Comment), replies: [] }])
@@ -266,7 +273,7 @@ export default function Comments({ type, targetId }: Props) {
     const { data, error } = await supabase
       .from(table)
       .insert({ [field]: targetId, user_id: userId, content: trimmed, parent_id: replyingTo.id })
-      .select('id, content, created_at, parent_id, users(id, name, avatar_url)')
+      .select('id, content, created_at, parent_id, users(id, name, avatar_url, selected_mascot:mascots(name, image_url))')
       .single()
     if (!error && data) {
       setThreads(prev => prev.map(t =>

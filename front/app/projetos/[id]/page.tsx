@@ -6,6 +6,8 @@ import LikeButton from '@/app/components/LikeButton'
 import ProjectMediaMosaic from '@/app/components/ProjectMediaMosaic'
 import ShareProjectButton from '@/app/components/ShareProjectButton'
 import UserAvatar from '@/app/components/UserAvatar'
+import UserMascotBadge, { type UserMascot } from '@/app/components/UserMascotBadge'
+import UserHoverCard from '@/app/components/UserHoverCard'
 
 export const dynamic = 'force-dynamic'
 import Comments from '@/app/components/Comments'
@@ -16,7 +18,7 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
 
   const { data: project } = await supabase
     .from('projects')
-    .select('id, title, description, repo_url, deploy_url, semester, start_date, end_date, is_featured, is_active, like_count, created_at, user_id, users(id, name, avatar_url), project_tags(tag_name), project_images(image_url, display_order, media_type), project_collaborators(id, user_id, name, users(id, name, avatar_url))')
+    .select('id, title, description, repo_url, deploy_url, semester, start_date, end_date, is_featured, is_active, like_count, created_at, user_id, users(id, name, avatar_url, selected_mascot:mascots(name, image_url)), project_tags(tag_name), project_images(image_url, display_order, media_type), project_collaborators(id, user_id, name, users(id, name, avatar_url, selected_mascot:mascots(name, image_url)))')
     .eq('id', id)
     .single()
 
@@ -25,12 +27,12 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
   const images = (project.project_images as { image_url: string; display_order: number; media_type: string }[])
     .sort((a, b) => a.display_order - b.display_order)
   const tags = project.project_tags as { tag_name: string }[]
-  const author = project.users as unknown as { id: string; name: string; avatar_url: string | null } | null
+  const author = project.users as unknown as { id: string; name: string; avatar_url: string | null; selected_mascot: UserMascot } | null
   const collaborators = (project.project_collaborators ?? []) as unknown as {
     id: string
     user_id: string | null
     name: string
-    users: { id: string; name: string; avatar_url: string | null } | null
+    users: { id: string; name: string; avatar_url: string | null; selected_mascot: UserMascot } | null
   }[]
   const cover = images[0]
   const gallery = images.slice(1)
@@ -81,10 +83,15 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
             {author && (
               <div className="flex flex-col gap-3 sm:ml-auto sm:mr-12">
                 <p className="text-sm font-semibold text-zinc-700">Autor</p>
-                <Link href={`/usuarios/${author.id}`} className="flex items-center gap-3 transition hover:opacity-80">
-                  <UserAvatar src={author.avatar_url} name={author.name} className="h-9 w-9" />
-                  <span className="text-sm font-medium text-zinc-900">{author.name}</span>
-                </Link>
+                <UserHoverCard userId={author.id}>
+                  <Link href={`/usuarios/${author.id}`} className="flex items-center gap-3 transition hover:opacity-80">
+                    <UserAvatar src={author.avatar_url} name={author.name} className="h-9 w-9" />
+                    <span className="inline-flex items-center gap-1 text-sm font-medium text-zinc-900">
+                      <span>{author.name}</span>
+                      <UserMascotBadge mascot={author.selected_mascot} size={20} />
+                    </span>
+                  </Link>
+                </UserHoverCard>
               </div>
             )}
           </div>
@@ -220,15 +227,20 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
                   const inner = (
                     <>
                       <UserAvatar src={linked?.avatar_url ?? null} name={displayName} className="h-8 w-8" />
-                      <span className="min-w-0 truncate text-sm font-medium text-zinc-800">{displayName}</span>
+                      <span className="inline-flex min-w-0 items-center gap-1 text-sm font-medium text-zinc-800">
+                        <span className="truncate">{displayName}</span>
+                        <UserMascotBadge mascot={linked?.selected_mascot ?? null} size={19} />
+                      </span>
                     </>
                   )
                   return (
                     <li key={c.id}>
                       {linked ? (
-                        <Link href={`/usuarios/${linked.id}`} className="flex items-center gap-2.5 rounded-lg px-1.5 py-1 -mx-1.5 transition hover:bg-zinc-50">
-                          {inner}
-                        </Link>
+                        <UserHoverCard userId={linked.id}>
+                          <Link href={`/usuarios/${linked.id}`} className="flex items-center gap-2.5 rounded-lg px-1.5 py-1 -mx-1.5 transition hover:bg-zinc-50">
+                            {inner}
+                          </Link>
+                        </UserHoverCard>
                       ) : (
                         <div className="flex items-center gap-2.5 px-1.5 py-1">
                           {inner}
