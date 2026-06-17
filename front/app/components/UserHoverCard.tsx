@@ -6,6 +6,7 @@ import Link from 'next/link'
 import UserAvatar from '@/app/components/UserAvatar'
 import UserMascotBadge, { type UserMascot } from '@/app/components/UserMascotBadge'
 import { supabase } from '@/app/lib/supabase'
+import { getAuthUser } from '@/app/lib/auth'
 
 type HoverProfile = {
   id: string
@@ -27,6 +28,7 @@ export default function UserHoverCard({
 }) {
   const [open, setOpen] = useState(false)
   const [profile, setProfile] = useState<HoverProfile | null>(null)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null)
   const triggerRef = useRef<HTMLSpanElement>(null)
@@ -35,12 +37,16 @@ export default function UserHoverCard({
   async function loadProfile() {
     if (!userId || profile || loading) return
     setLoading(true)
-    const { data } = await supabase
+    const [{ data }, authUser] = await Promise.all([
+      supabase
       .from('users')
       .select('id, name, avatar_url, semester, role, bio, preferred_area, selected_mascot:mascots(name, image_url)')
       .eq('id', userId)
-      .maybeSingle()
+      .maybeSingle(),
+      getAuthUser(),
+    ])
     if (data) setProfile(data as unknown as HoverProfile)
+    setCurrentUserId(authUser?.id ?? null)
     setLoading(false)
   }
 
@@ -107,7 +113,7 @@ export default function UserHoverCard({
                 </span>
               )}
 
-              <Link href={`/usuarios/${profile.id}`} className="text-xs font-semibold text-[#2F9E41] hover:opacity-75">
+              <Link href={profile.id === currentUserId ? '/perfil' : `/usuarios/${profile.id}`} className="text-xs font-semibold text-[#2F9E41] hover:opacity-75">
                 Ver perfil completo
               </Link>
             </span>

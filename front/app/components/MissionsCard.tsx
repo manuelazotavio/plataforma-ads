@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 
@@ -25,6 +25,10 @@ type MissionProgress = {
   progress: number
   completed: boolean
   xp_claimed: boolean
+}
+
+type WeeklySetMissionRow = {
+  missions: Mission | null
 }
 
 function getMonday(date = new Date()) {
@@ -78,58 +82,15 @@ export default function MissionsCard() {
   const [set, setSet] = useState<WeeklySet | null>(null)
   const [progress, setProgress] = useState<MissionProgress[]>([])
   const [completions, setCompletions] = useState<{ mission_id: string | null; type: string }[]>([])
-  const [userId, setUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [claiming, setClaiming] = useState(false)
 
-  useEffect(() => {
-    void load()
-  }, [])
-
-  async function load() {
-    const user = await getAuthUser()
-    if (!user) { setLoading(false); return }
-    setUserId(user.id)
-
-    const monday = getMonday()
-    const weekStr = monday.toISOString().split('T')[0]
-
-    const { data: setData } = await supabase
-      .from('weekly_mission_sets')
-      .select('id, week_start, bonus_xp, weekly_set_missions(missions(*))')
-      .eq('week_start', weekStr)
-      .eq('is_active', true)
-      .single()
-
-    if (!setData) { setLoading(false); return }
-
-    const missions: Mission[] = (setData.weekly_set_missions as any[])
-      .map((wsm: any) => wsm.missions)
-      .filter(Boolean)
-
-    const currentSet: WeeklySet = { id: setData.id, week_start: setData.week_start, bonus_xp: setData.bonus_xp, missions }
-    setSet(currentSet)
-
-    const [prog, { data: comps }] = await Promise.all([
-      computeProgress(user.id, monday, missions),
-      supabase.from('mission_completions').select('mission_id, type').eq('user_id', user.id).eq('set_id', setData.id),
-    ])
-
-    setProgress(prog)
-    setCompletions((comps ?? []) as { mission_id: string | null; type: string }[])
-    setLoading(false)
-
-    // auto-claim newly completed missions
-    void autoClaim(user.id, setData.id, prog, (comps ?? []) as { mission_id: string | null; type: string }[], missions, setData.bonus_xp)
-  }
-
-  async function autoClaim(
+  const autoClaim = useCallback(async (
     uid: string, setId: string,
     prog: MissionProgress[],
     existingComps: { mission_id: string | null; type: string }[],
     missions: Mission[],
     bonusXp: number,
-  ) {
+  ) => {
     const claimedMissionIds = new Set(existingComps.filter(c => c.type === 'mission').map(c => c.mission_id))
     const newlyCompleted = prog.filter(p => p.completed && !claimedMissionIds.has(p.mission_id))
 
@@ -156,7 +117,47 @@ export default function MissionsCard() {
     // refresh completions
     const { data: comps } = await supabase.from('mission_completions').select('mission_id, type').eq('user_id', uid).eq('set_id', setId)
     setCompletions((comps ?? []) as { mission_id: string | null; type: string }[])
-  }
+  }, [])
+
+  const load = useCallback(async () => {
+    const user = await getAuthUser()
+    if (!user) { setLoading(false); return }
+
+    const monday = getMonday()
+    const weekStr = monday.toISOString().split('T')[0]
+
+    const { data: setData } = await supabase
+      .from('weekly_mission_sets')
+      .select('id, week_start, bonus_xp, weekly_set_missions(missions(*))')
+      .eq('week_start', weekStr)
+      .eq('is_active', true)
+      .single()
+
+    if (!setData) { setLoading(false); return }
+
+    const missions = ((setData.weekly_set_missions ?? []) as WeeklySetMissionRow[])
+      .map((wsm) => wsm.missions)
+      .filter((mission): mission is Mission => Boolean(mission))
+
+    const currentSet: WeeklySet = { id: setData.id, week_start: setData.week_start, bonus_xp: setData.bonus_xp, missions }
+    setSet(currentSet)
+
+    const [prog, { data: comps }] = await Promise.all([
+      computeProgress(user.id, monday, missions),
+      supabase.from('mission_completions').select('mission_id, type').eq('user_id', user.id).eq('set_id', setData.id),
+    ])
+
+    setProgress(prog)
+    setCompletions((comps ?? []) as { mission_id: string | null; type: string }[])
+    setLoading(false)
+
+    // auto-claim newly completed missions
+    void autoClaim(user.id, setData.id, prog, (comps ?? []) as { mission_id: string | null; type: string }[], missions, setData.bonus_xp)
+  }, [autoClaim])
+
+  useEffect(() => {
+    void Promise.resolve().then(load)
+  }, [load])
 
   if (loading || !set) return null
 
@@ -167,6 +168,7 @@ export default function MissionsCard() {
     return p?.completed
   })
   const totalXp = set.missions.reduce((acc, m) => acc + m.xp_reward, 0)
+  const weeklyTotalXp = totalXp + (set.bonus_xp > 0 ? set.bonus_xp : 0)
 
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white p-5">
@@ -209,7 +211,7 @@ export default function MissionsCard() {
                 <div className="h-1.5 w-full rounded-full bg-zinc-200 overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-500"
-                    style={{ width: `${pct}%`, backgroundColor: done ? '#2F9E41' : '#86efac' }}
+                    style={{ width: `${pct}%`, backgroundColor: '#2F9E41' }}
                   />
                 </div>
                 <p className="text-[10px] text-zinc-400 mt-1">{current} / {m.target_count}</p>
@@ -226,7 +228,7 @@ export default function MissionsCard() {
       )}
 
       <p className="mt-3 text-[10px] text-zinc-400 text-center">
-        Até {totalXp + (set.bonus_xp > 0 ? set.bonus_xp : 0)} XP disponíveis esta semana
+        {totalXp} XP nas missões{set.bonus_xp > 0 ? ` + ${set.bonus_xp} XP bônus = ${weeklyTotalXp} XP possíveis` : ' disponíveis'}
       </p>
     </div>
   )
