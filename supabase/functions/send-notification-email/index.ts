@@ -100,7 +100,7 @@ function buildEmail(
   const targetLabel = TARGET_LABELS[n.target_type] ?? 'conteúdo'
   const title = n.target_title ? `“${n.target_title}”` : `seu ${targetLabel}`
   const targetUrl = buildTargetUrl(siteUrl, n.target_type, n.target_id)
-  const logoUrl = siteUrl ? `${siteUrl}/logo-escuro.png` : ''
+  const logoUrl = siteUrl ? `${siteUrl}/logo-claro.png` : ''
   const arrowIconUrl = siteUrl ? `${siteUrl}/arrow-right-email.svg` : ''
 
   let subject = ''
