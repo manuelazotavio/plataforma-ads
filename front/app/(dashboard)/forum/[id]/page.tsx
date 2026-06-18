@@ -12,7 +12,7 @@ import UserHoverCard from '@/app/components/UserHoverCard'
 import { formatFileSize } from '@/app/lib/files'
 import MentionTextarea from '@/app/components/MentionTextarea'
 import { parseMentions } from '@/app/lib/mentions'
-import { computeXp, countProfileLinks, hasNonEmpty } from '@/app/lib/xp'
+import { useImageCropper } from '@/app/components/ImageCropper'
 
 type Author = { name: string; avatar_url: string | null; selected_mascot: UserMascot }
 type Voter = Author & { id: string }
@@ -176,6 +176,7 @@ function ReplyForm({ onSubmit, onCancel, placeholder = 'Escreva sua resposta...'
   const [uploading, setUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { cropImage, cropperNode } = useImageCropper('16:9')
 
   async function uploadFiles(files: File[]) {
     if (!files.length) return
@@ -183,12 +184,14 @@ function ReplyForm({ onSubmit, onCancel, placeholder = 'Escreva sua resposta...'
     const user = await getAuthUser()
     if (!user) { setUploading(false); return }
     for (const file of files) {
-      const ext = file.name.split('.').pop()
+      const uploadFile = await cropImage(file)
+      if (!uploadFile) continue
+      const ext = uploadFile.name.split('.').pop()
       const path = `forum/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-      const { error } = await supabase.storage.from('forum-media').upload(path, file)
+      const { error } = await supabase.storage.from('forum-media').upload(path, uploadFile)
       if (!error) {
         const { data: { publicUrl } } = supabase.storage.from('forum-media').getPublicUrl(path)
-        setAttachments(prev => [...prev, { type: 'image', url: publicUrl, name: file.name, size: file.size }])
+        setAttachments(prev => [...prev, { type: 'image', url: publicUrl, name: uploadFile.name, size: uploadFile.size }])
       }
     }
     setUploading(false)
@@ -207,6 +210,7 @@ function ReplyForm({ onSubmit, onCancel, placeholder = 'Escreva sua resposta...'
 
   return (
     <form onSubmit={handle} className="flex flex-col gap-2 mt-3">
+      {cropperNode}
       <div className="rounded-xl border border-zinc-200 overflow-hidden focus-within:border-zinc-400 transition">
         <MentionTextarea
           value={content}
@@ -308,7 +312,8 @@ function ReplyItem({ reply, depth, currentUserId, canModerate, isClosed, voteMap
   const removed = isRemovedReply(reply.content)
   const isReplying = replyingToId === reply.id
   const replyDateObj = new Date(reply.created_at)
-  const date = replyDateObj.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', ...(replyDateObj.getFullYear() !== new Date().getFullYear() ? { year: 'numeric' } : {}) })
+  const fmtYear = (d: Date) => new Intl.DateTimeFormat('en', { timeZone: 'America/Sao_Paulo', year: 'numeric' }).format(d)
+  const date = replyDateObj.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', day: 'numeric', month: 'short', ...(fmtYear(replyDateObj) !== fmtYear(new Date()) ? { year: 'numeric' } : {}) })
   const avatarSize = depth === 0 ? 32 : 26
 
   return (
@@ -429,30 +434,14 @@ export default function ForumTopicPage() {
     setTopic(topicData as unknown as Topic)
     setCurrentUserId(user?.id ?? null)
     if (user?.id) {
-      const [
-        { data: profile },
-        { count: projCount }, { count: artCount }, { count: topicCount },
-        { count: projComCount }, { count: artComCount },
-        { data: ownProj }, { data: ownArt },
-      ] = await Promise.all([
-        supabase.from('users').select('name, avatar_url, bio, github_url, linkedin_url, portfolio_url, role, selected_mascot:mascots(name, image_url)').eq('id', user.id).single(),
-        supabase.from('projects').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-        supabase.from('articles').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'publicado'),
-        supabase.from('forum_topics').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-        supabase.from('project_comments').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-        supabase.from('article_comments').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-        supabase.from('projects').select('like_count').eq('user_id', user.id),
-        supabase.from('articles').select('like_count').eq('user_id', user.id),
-      ])
+      const { data: profile } = await supabase
+        .from('users')
+        .select('name, avatar_url, role, xp, selected_mascot:mascots(name, image_url)')
+        .eq('id', user.id)
+        .single()
       setCurrentUserRole(profile?.role ?? null)
       setCurrentUserProfile(profile ? { id: user.id, name: profile.name, avatar_url: profile.avatar_url, selected_mascot: profile.selected_mascot as UserMascot } : null)
-      const likes = [...(ownProj ?? []), ...(ownArt ?? [])].reduce((s, r) => s + ((r as { like_count?: number | null }).like_count ?? 0), 0)
-      const xp = computeXp({
-        projectsCount: projCount ?? 0, articlesCount: artCount ?? 0, topicsCount: topicCount ?? 0,
-        commentsCount: (projComCount ?? 0) + (artComCount ?? 0), likesReceived: likes,
-        hasAvatar: hasNonEmpty(profile?.avatar_url), hasBio: hasNonEmpty(profile?.bio),
-        linksCount: countProfileLinks(profile ?? {}),
-      })
+      const xp = profile?.xp ?? 0
       supabase.from('mascots').select('id, name, image_url').eq('is_active', true).lte('min_xp', xp).order('min_xp')
         .then(({ data: m }) => { if (m) setOwnedMascots(m as MascotInfo[]) })
     } else {
@@ -697,7 +686,8 @@ export default function ForumTopicPage() {
   const cat = topic.forum_categories
   const attachments = topic.attachments ?? []
   const topicDateObj = new Date(topic.created_at)
-  const topicDate = topicDateObj.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', ...(topicDateObj.getFullYear() !== new Date().getFullYear() ? { year: 'numeric' } : {}) })
+  const fmtTopicYear = (d: Date) => new Intl.DateTimeFormat('en', { timeZone: 'America/Sao_Paulo', year: 'numeric' }).format(d)
+  const topicDate = topicDateObj.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', day: 'numeric', month: 'long', ...(fmtTopicYear(topicDateObj) !== fmtTopicYear(new Date()) ? { year: 'numeric' } : {}) })
   const canModerate = currentUserRole === 'admin' || currentUserRole === 'moderador'
   const canDeleteTopic = !!currentUserId && (topic.user_id === currentUserId || canModerate)
   const isOwnTopic = currentUserId === topic.user_id

@@ -12,7 +12,6 @@ import UserHoverCard from '@/app/components/UserHoverCard'
 import { REACTIONS, ReactionPicker, type ReactionType } from './LikeButton'
 import MentionTextarea, { type MentionHandle } from './MentionTextarea'
 import { parseMentions } from '@/app/lib/mentions'
-import { computeXp, countProfileLinks, hasNonEmpty } from '@/app/lib/xp'
 
 type MascotInfo = { id: string; name: string; image_url: string }
 
@@ -97,10 +96,14 @@ function CommentText({ content }: { content: string }) {
   )
 }
 
+const TZ = 'America/Sao_Paulo'
+
 function formatDate(iso: string) {
   const date = new Date(iso)
-  const isCurrentYear = date.getFullYear() === new Date().getFullYear()
+  const fmt = (d: Date) => new Intl.DateTimeFormat('en', { timeZone: TZ, year: 'numeric' }).format(d)
+  const isCurrentYear = fmt(date) === fmt(new Date())
   return date.toLocaleDateString('pt-BR', {
+    timeZone: TZ,
     day: 'numeric',
     month: 'short',
     ...(isCurrentYear ? {} : { year: 'numeric' }),
@@ -231,27 +234,8 @@ export default function Comments({ type, targetId }: Props) {
     getAuthUser().then(async (user) => {
       if (!user) return
       setUserId(user.id)
-      const [
-        { count: projCount }, { count: artCount }, { count: topicCount },
-        { count: projComCount }, { count: artComCount },
-        { data: ownProj }, { data: ownArt }, { data: profile },
-      ] = await Promise.all([
-        supabase.from('projects').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-        supabase.from('articles').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'publicado'),
-        supabase.from('forum_topics').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-        supabase.from('project_comments').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-        supabase.from('article_comments').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-        supabase.from('projects').select('like_count').eq('user_id', user.id),
-        supabase.from('articles').select('like_count').eq('user_id', user.id),
-        supabase.from('users').select('avatar_url, bio, github_url, linkedin_url, portfolio_url').eq('id', user.id).single(),
-      ])
-      const likes = [...(ownProj ?? []), ...(ownArt ?? [])].reduce((s, r) => s + ((r as { like_count?: number | null }).like_count ?? 0), 0)
-      const xp = computeXp({
-        projectsCount: projCount ?? 0, articlesCount: artCount ?? 0, topicsCount: topicCount ?? 0,
-        commentsCount: (projComCount ?? 0) + (artComCount ?? 0), likesReceived: likes,
-        hasAvatar: hasNonEmpty(profile?.avatar_url), hasBio: hasNonEmpty(profile?.bio),
-        linksCount: countProfileLinks(profile ?? {}),
-      })
+      const { data: profile } = await supabase.from('users').select('xp').eq('id', user.id).single()
+      const xp = profile?.xp ?? 0
       supabase.from('mascots').select('id, name, image_url').eq('is_active', true).lte('min_xp', xp).order('min_xp')
         .then(({ data: m }) => { if (m) setOwnedMascots(m as MascotInfo[]) })
     })
