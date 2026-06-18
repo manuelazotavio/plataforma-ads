@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '@/app/lib/supabase'
 
 type Professor = {
@@ -62,6 +62,12 @@ function formatInterestArea(value: string) {
     .split(/([\s/-]+)/)
     .map((part) => (/^[\s/-]+$/.test(part) ? part : part.charAt(0).toLocaleUpperCase('pt-BR') + part.slice(1)))
     .join('')
+}
+
+function getDisciplineYear(discipline: Discipline) {
+  const periodYear = discipline.period?.match(/\b(?:19|20)\d{2}\b/)?.[0]
+  if (periodYear) return Number(periodYear)
+  return discipline.version_year
 }
 
 function ProfessorCard({ prof, onOpen }: { prof: Professor; onOpen: (professor: Professor) => void }) {
@@ -146,6 +152,22 @@ function ProfessorDetailsModal({
   const [disciplines, setDisciplines] = useState<Discipline[]>([])
   const [disciplinesLoading, setDisciplinesLoading] = useState(true)
   const [areas, setAreas] = useState<string[]>([])
+  const [openYears, setOpenYears] = useState<Set<string>>(new Set())
+  const disciplineGroups = useMemo(() => {
+    const groups = new Map<string, Discipline[]>()
+
+    disciplines.forEach((discipline) => {
+      const year = getDisciplineYear(discipline)
+      const key = year == null ? 'unknown' : String(year)
+      const group = groups.get(key) ?? []
+      group.push(discipline)
+      groups.set(key, group)
+    })
+
+    return [...groups.entries()]
+      .map(([key, items]) => ({ key, year: key === 'unknown' ? null : Number(key), items }))
+      .sort((a, b) => (b.year ?? -1) - (a.year ?? -1))
+  }, [disciplines])
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
@@ -161,6 +183,7 @@ function ProfessorDetailsModal({
       setDisciplinesLoading(true)
       setDisciplines([])
       setAreas([])
+      setOpenYears(new Set())
     })
 
     const fetchDisciplines = supabase
@@ -207,6 +230,14 @@ function ProfessorDetailsModal({
       if (cancelled) return
       setDisciplines(nextDisciplines)
       setAreas(nextAreas)
+      const availableYears = nextDisciplines
+        .map(getDisciplineYear)
+        .filter((year): year is number => year != null)
+        .sort((a, b) => b - a)
+      const defaultYear = availableYears.includes(new Date().getFullYear())
+        ? new Date().getFullYear()
+        : availableYears[0]
+      setOpenYears(defaultYear == null ? new Set(['unknown']) : new Set([String(defaultYear)]))
       setDisciplinesLoading(false)
     })
 
@@ -301,27 +332,70 @@ function ProfessorDetailsModal({
           ) : disciplines.length === 0 ? (
             <p className="mt-2 text-sm text-zinc-400">Nenhuma disciplina vinculada.</p>
           ) : (
-            <div className="mt-2 flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800 rounded-xl border border-zinc-100 dark:border-zinc-800">
-              {disciplines.map((d, i) => (
-                <div key={i} className="flex items-center justify-between gap-3 px-3 py-2">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-zinc-800 dark:text-zinc-200">{d.subject_name}</p>
-                    {d.subject_semester != null && (
-                      <p className="text-xs text-zinc-400">{d.subject_semester}º semestre</p>
-                    )}
-                  </div>
-                  <div className="flex shrink-0 flex-col items-end gap-0.5">
-                    {d.version_year && (
-                      <span className="rounded-full bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
-                        {d.version_year}
+            <div className="mt-2 flex flex-col gap-2">
+              {disciplineGroups.map((group) => {
+                const isOpen = openYears.has(group.key)
+                const isCurrentYear = group.year === new Date().getFullYear()
+
+                return (
+                  <div key={group.key} className="overflow-hidden rounded-xl border border-zinc-100 dark:border-zinc-800">
+                    <button
+                      type="button"
+                      onClick={() => setOpenYears((current) => {
+                        const next = new Set(current)
+                        if (next.has(group.key)) next.delete(group.key)
+                        else next.add(group.key)
+                        return next
+                      })}
+                      className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                      aria-expanded={isOpen}
+                    >
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${
+                        isCurrentYear
+                          ? 'bg-[#2F9E41] text-white'
+                          : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300'
+                      }`}>
+                        {group.year ?? 'Ano não informado'}
                       </span>
-                    )}
-                    {d.period && (
-                      <span className="text-[11px] text-zinc-400">{d.period}</span>
+                      <span className="flex items-center gap-2 text-xs text-zinc-400">
+                        {group.items.length} {group.items.length === 1 ? 'disciplina' : 'disciplinas'}
+                        <svg
+                          width={16}
+                          height={16}
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                          aria-hidden="true"
+                        >
+                          <path d="m6 9 6 6 6-6" />
+                        </svg>
+                      </span>
+                    </button>
+
+                    {isOpen && (
+                      <div className="divide-y divide-zinc-100 border-t border-zinc-100 dark:divide-zinc-800 dark:border-zinc-800">
+                        {group.items.map((d, i) => (
+                          <div key={`${d.subject_name}-${d.period ?? ''}-${i}`} className="flex items-center justify-between gap-3 px-3 py-2">
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium text-zinc-800 dark:text-zinc-200">{d.subject_name}</p>
+                              {d.subject_semester != null && (
+                                <p className="text-xs text-zinc-400">{d.subject_semester}º semestre</p>
+                              )}
+                            </div>
+                            {d.period && (
+                              <span className="shrink-0 text-[11px] text-zinc-400">{d.period}</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
