@@ -37,14 +37,20 @@ export default function ProfileEventReminders({ userId }: { userId: string }) {
   const [reminders, setReminders] = useState<Reminder[]>([])
   const [loading, setLoading] = useState(true)
   const [removingId, setRemovingId] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
       const todayStr = new Date().toISOString().slice(0, 10)
-      const { data } = await supabase
+      const { data, error: loadError } = await supabase
         .from('event_reminders')
         .select('id, event_id, events(id, title, start_date)')
         .eq('user_id', userId)
+      if (loadError) {
+        setError('Não foi possível carregar os lembretes.')
+        setLoading(false)
+        return
+      }
       const rows = ((data ?? []) as unknown as Reminder[])
         .filter((r) => r.events && r.events.start_date && r.events.start_date >= todayStr)
         .sort((a, b) => (a.events!.start_date! < b.events!.start_date! ? -1 : 1))
@@ -56,7 +62,13 @@ export default function ProfileEventReminders({ userId }: { userId: string }) {
 
   async function remove(reminderId: string) {
     setRemovingId(reminderId)
-    await supabase.from('event_reminders').delete().eq('id', reminderId)
+    setError(null)
+    const { error: removeError } = await supabase.from('event_reminders').delete().eq('id', reminderId)
+    if (removeError) {
+      setError('Não foi possível remover o lembrete.')
+      setRemovingId(null)
+      return
+    }
     setReminders((prev) => prev.filter((r) => r.id !== reminderId))
     setRemovingId(null)
   }
@@ -66,9 +78,13 @@ export default function ProfileEventReminders({ userId }: { userId: string }) {
     return (
       <section className="py-6 border-b border-zinc-100">
         <h2 className="text-sm font-semibold text-zinc-900 mb-3">Lembretes de eventos</h2>
-        <p className="text-sm text-zinc-400">
-          Você ainda não adicionou lembretes. Visite um evento e clique em <span className="font-medium text-zinc-600">Lembrar-me</span> para ser avisado.
-        </p>
+        {error ? (
+          <p className="text-sm text-red-500">{error}</p>
+        ) : (
+          <p className="text-sm text-zinc-400">
+            Você ainda não adicionou lembretes. Visite um evento e clique em <span className="font-medium text-zinc-600">Lembrar-me</span> para ser avisado.
+          </p>
+        )}
       </section>
     )
   }
@@ -81,6 +97,7 @@ export default function ProfileEventReminders({ userId }: { userId: string }) {
           {reminders.length} {reminders.length === 1 ? 'evento' : 'eventos'}
         </span>
       </h2>
+      {error && <p className="mb-3 text-xs text-red-500">{error}</p>}
       <div className="flex flex-col gap-2">
         {reminders.map((r) => {
           const ev = r.events!
