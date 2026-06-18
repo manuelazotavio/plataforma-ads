@@ -227,7 +227,7 @@ export default function CalendarioPage() {
 
                   if (ev.kind === 'event') {
                     return (
-                      <Link key={ev.id} href={`/eventos/${rawId}`} title={ev.title} className={cls}>
+                      <Link key={ev.id} href={`/eventos/${rawId}?from=calendario`} title={ev.title} className={cls}>
                         {label}
                       </Link>
                     )

@@ -15,8 +15,11 @@ function formatDate(date: string | null) {
   return new Date(y, m - 1, d).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-export default async function EventoPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EventoPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ from?: string }> }) {
   const { id } = await params
+  const { from } = await searchParams
+  const backHref = from === 'calendario' ? '/calendario' : '/eventos'
+  const backLabel = from === 'calendario' ? 'Calendário' : 'Eventos'
 
   const [{ data: event }, { data: categoriesData }] = await Promise.all([
     supabase.from('events').select('*, speaker:speaker_user_id(id, name, avatar_url)').eq('id', id).single(),
@@ -39,9 +42,9 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
   return (
     <div className="px-4 md:px-6 py-8 w-full">
 
-      <Link href="/eventos" className="text-sm text-zinc-400 hover:text-zinc-700 transition mb-8 inline-flex items-center gap-1.5">
+      <Link href={backHref} className="text-sm text-zinc-400 hover:text-zinc-700 transition mb-8 inline-flex items-center gap-1.5">
         <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-        Eventos
+        {backLabel}
       </Link>
 
       
