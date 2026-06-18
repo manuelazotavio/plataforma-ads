@@ -319,7 +319,7 @@ async function loadHomeData(): Promise<PublicHomeData | null> {
   ] = await Promise.all([
     supabase.from('users').select('name, avatar_url, semester, role, xp').eq('id', user.id).single(),
     supabase.from('forum_topics').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-    supabase.from('projects').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('approved', true),
+    supabase.from('projects').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('approved', true).eq('is_active', true),
     supabase.from('articles').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'publicado'),
     supabase.from('project_comments').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
     supabase.from('article_comments').select('*', { count: 'exact', head: true }).eq('user_id', user.id),

@@ -183,10 +183,10 @@ export default function PerfilPage() {
         { data: levels },
         { data: xpBreakdownData },
       ] = await Promise.all([
-        supabase.from('projects').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('approved', true),
+        supabase.from('projects').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('approved', true).eq('is_active', true),
         supabase.from('articles').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'publicado'),
         supabase.from('forum_topics').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-        supabase.from('projects').select('id, title, description, is_featured, created_at, like_count, project_images(image_url, display_order, media_type)').eq('user_id', user.id).eq('approved', true),
+        supabase.from('projects').select('id, title, description, is_featured, created_at, like_count, project_images(image_url, display_order, media_type)').eq('user_id', user.id).eq('approved', true).eq('is_active', true),
         supabase.from('articles').select('id, title, summary, cover_image_url, published_at, like_count').eq('user_id', user.id).eq('status', 'publicado'),
         supabase.from('forum_topics').select('id, title, created_at, replies_count').eq('user_id', user.id),
         supabase.from('levels').select('id, name, min_xp').order('min_xp', { ascending: true }),
