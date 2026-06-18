@@ -37,7 +37,7 @@ export default async function ForumPage({
     supabase.from('forum_topic_votes').select('topic_id').gte('created_at', weekAgo),
   ])
 
-  // Autores únicos com tópicos (para o select)
+  
   const authorsMap = new Map<string, string>()
   for (const t of topics ?? []) {
     const u = t.users as unknown as { id: string; name: string } | null
@@ -47,7 +47,7 @@ export default async function ForumPage({
     .map(([id, name]) => ({ id, name }))
     .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
 
-  // Votos desta semana (badge + ordenação "mais votados")
+
   const weeklyVoteMap = new Map<string, number>()
   for (const v of weeklyVotes ?? []) {
     weeklyVoteMap.set(v.topic_id, (weeklyVoteMap.get(v.topic_id) ?? 0) + 1)

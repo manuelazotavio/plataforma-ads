@@ -86,7 +86,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       setSemesterPromptOpen(shouldAskSemesterConfirmation(normalizedProfile))
       setLoading(false)
 
-      // load level progress in background (non-blocking)
+      
       void loadLevelProgress(authUser.id).then(setLevelProgress)
     }
     loadUser()

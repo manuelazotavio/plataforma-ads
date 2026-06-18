@@ -236,7 +236,7 @@ export default function OnboardingPage() {
 
     if (step > 1 && step < TOTAL - 1) {
       const updates: Record<string, unknown> = { onboarding_step: step + 1 }
-      // assign default mascot when entering the mascot step
+      
       if (step === 4) {
         const { data: defaultMascot } = await supabase
           .from('mascots')

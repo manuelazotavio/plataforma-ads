@@ -39,7 +39,7 @@ export default function AdminMascotePage() {
   const [tab, setTab] = useState<'colecao' | 'frases'>('colecao')
   const [loading, setLoading] = useState(true)
 
-  // ── Coleção ──
+ 
   const [mascots, setMascots] = useState<Mascot[]>([])
   const [form, setForm] = useState({ name: '', description: '', rarity: 1, image_url: '' })
   const [uploading, setUploading] = useState(false)
@@ -47,7 +47,7 @@ export default function AdminMascotePage() {
   const [formError, setFormError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // ── Frases ──
+
   const [phrasesText, setPhrasesText] = useState(DEFAULT_MASCOT_PHRASES.join('\n'))
   const [phrasesSaving, setPhrasesSaving] = useState(false)
   const [phrasesNotice, setPhrasesNotice] = useState<string | null>(null)
@@ -145,7 +145,7 @@ export default function AdminMascotePage() {
 
       {tab === 'colecao' && (
         <div className="flex flex-col gap-8">
-          {/* Form */}
+  
           <div className="rounded-2xl border border-zinc-200 bg-white p-6">
             <h2 className="text-base font-semibold text-zinc-900 mb-5">Adicionar personagem</h2>
 
@@ -219,7 +219,7 @@ export default function AdminMascotePage() {
             </button>
           </div>
 
-          {/* List */}
+          
           <div className="flex flex-col gap-3">
             {mascots.length === 0 && <p className="text-sm text-zinc-400 text-center py-8">Nenhum personagem cadastrado.</p>}
             {mascots.map(m => {

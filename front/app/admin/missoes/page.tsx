@@ -47,12 +47,11 @@ export default function AdminMissoesPage() {
   const [sets, setSets] = useState<WeeklySet[]>([])
   const [loading, setLoading] = useState(true)
 
-  // mission form
   const [mForm, setMForm] = useState({ title: '', description: '', type: 'forum_votes', target_count: 10, xp_reward: 50 })
   const [mSaving, setMSaving] = useState(false)
   const [mError, setMError] = useState<string | null>(null)
 
-  // weekly set form
+  
   const [sForm, setSForm] = useState({ week_start: getMonday(), bonus_xp: 100, selectedMissions: [] as string[] })
   const [sSaving, setSSaving] = useState(false)
   const [sError, setSError] = useState<string | null>(null)

@@ -2,7 +2,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 
-// Payload enviado pelo Database Webhook do Supabase
+
 type WebhookPayload = {
   type: 'INSERT'
   table: string
@@ -44,7 +44,7 @@ Deno.serve(async (req: Request) => {
     const payload: WebhookPayload = await req.json()
     const notification = payload.record
 
-    // Estes tipos têm fluxos de e-mail próprios.
+    
     if (['event_reminder', 'review_request', 'content_approved', 'content_rejected'].includes(notification.type)) {
       return json({ skipped: 'handled separately' }, 200)
     }
@@ -55,11 +55,11 @@ Deno.serve(async (req: Request) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
-    // Buscar email do destinatário
+    
     const { data: { user: recipient } } = await admin.auth.admin.getUserById(notification.user_id)
     if (!recipient?.email) return json({ skipped: 'no email' }, 200)
 
-    // Buscar nome do ator (quem gerou a notificação)
+  
     let actorName = 'Alguém'
     if (notification.actor_id) {
       const { data: actorProfile } = await admin

@@ -77,7 +77,7 @@ async function processWindow(
   const reminderList = (reminders ?? []) as ReminderRow[]
   if (reminderList.length === 0) return 0
 
-  // Create in-app notifications
+
   await admin.from('notifications').insert(
     reminderList.map((r) => ({
       user_id: r.user_id,
@@ -88,13 +88,13 @@ async function processWindow(
     }))
   )
 
-  // Mark flags
+  
   await admin
     .from('event_reminders')
     .update({ [flag]: true })
     .in('id', reminderList.map((r) => r.id))
 
-  // Send emails
+  
   if (emailConfig) {
     const userIds = [...new Set(reminderList.map((r) => r.user_id))]
     const { data: authUsers } = await admin.auth.admin.listUsers()

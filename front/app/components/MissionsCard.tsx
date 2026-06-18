@@ -114,7 +114,7 @@ export default function MissionsCard() {
       })
     }
 
-    // refresh completions
+    
     const { data: comps } = await supabase.from('mission_completions').select('mission_id, type').eq('user_id', uid).eq('set_id', setId)
     setCompletions((comps ?? []) as { mission_id: string | null; type: string }[])
   }, [])
@@ -151,7 +151,7 @@ export default function MissionsCard() {
     setCompletions((comps ?? []) as { mission_id: string | null; type: string }[])
     setLoading(false)
 
-    // auto-claim newly completed missions
+    
     void autoClaim(user.id, setData.id, prog, (comps ?? []) as { mission_id: string | null; type: string }[], missions, setData.bonus_xp)
   }, [autoClaim])
 

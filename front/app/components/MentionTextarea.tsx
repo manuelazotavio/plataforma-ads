@@ -78,8 +78,8 @@ const MentionTextarea = forwardRef<MentionHandle, Props>(function MentionTextare
 
   useEffect(() => {
     if (divRef.current) divRef.current.innerHTML = storedToHtml(value)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // only on mount
+ 
+  }, []) 
 
   useEffect(() => {
     if (value !== prevValueRef.current) {
@@ -115,13 +115,13 @@ const MentionTextarea = forwardRef<MentionHandle, Props>(function MentionTextare
     const sel = window.getSelection()!
     const range = sel.getRangeAt(0)
 
-    // delete @query
+    
     const del = document.createRange()
     del.setStart(q.textNode, q.atOffset)
     del.setEnd(q.textNode, range.startOffset)
     del.deleteContents()
 
-    // insert mention span
+    
     const span = document.createElement('span')
     span.className = 'text-blue-500 font-semibold'
     span.contentEditable = 'false'

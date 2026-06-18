@@ -23,7 +23,7 @@ type Props = {
   targetType: string
   targetId: string
   userId: string | null
-  // Quando fornecido pelo pai (ex: Comments.tsx), evita N queries
+ 
   allReactions?: MascotReaction[]
   availableMascots?: MascotInfo[]
   onToggle?: (targetId: string, mascotId: string, add: boolean) => void
@@ -46,7 +46,7 @@ export default function MascotReactionBar({
   const [pickerOpen, setPickerOpen] = useState(false)
   const pickerRef = useRef<HTMLDivElement>(null)
 
-  // Modo standalone: carrega reações do DB
+
   const loadStandalone = useCallback(async () => {
     const [{ data: rData }, { data: mData }] = await Promise.all([
       supabase
@@ -66,7 +66,6 @@ export default function MascotReactionBar({
     if (!isManaged) void loadStandalone()
   }, [isManaged, loadStandalone])
 
-  // Modo gerenciado: usa dados do pai
   useEffect(() => {
     if (isManaged) {
       setReactions(allReactions.filter(r => r.target_id === targetId))
@@ -77,7 +76,7 @@ export default function MascotReactionBar({
     if (propMascots) setMascots(propMascots)
   }, [propMascots])
 
-  // Fecha picker no clique fora
+
   useEffect(() => {
     function close(e: MouseEvent) {
       if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) setPickerOpen(false)
@@ -86,7 +85,7 @@ export default function MascotReactionBar({
     return () => document.removeEventListener('mousedown', close)
   }, [])
 
-  // Agrupa reações por mascote
+
   const groups = new Map<string, { mascot: MascotInfo; count: number; isMine: boolean }>()
   for (const r of reactions) {
     const g = groups.get(r.mascot_id)
@@ -109,7 +108,7 @@ export default function MascotReactionBar({
     setPickerOpen(false)
 
     if (alreadyReacted) {
-      // Remove otimisticamente
+      
       setReactions(prev => prev.filter(r => !(r.mascot_id === mascotId && r.user_id === userId)))
       onToggle?.(targetId, mascotId, false)
       await supabase.from('mascot_reactions')
@@ -121,7 +120,7 @@ export default function MascotReactionBar({
     } else {
       const mascot = mascots.find(m => m.id === mascotId)
       if (!mascot) return
-      // Adiciona otimisticamente
+   
       const newReaction: MascotReaction = { target_id: targetId, mascot_id: mascotId, user_id: userId, mascots: mascot }
       setReactions(prev => [...prev, newReaction])
       onToggle?.(targetId, mascotId, true)
@@ -136,7 +135,7 @@ export default function MascotReactionBar({
 
   return (
     <div className="flex flex-wrap items-center gap-1">
-      {/* Pills de reação existentes */}
+     
       {groupList.map(({ mascot, count, isMine }) => (
         <button
           key={mascot.id}
@@ -160,7 +159,7 @@ export default function MascotReactionBar({
         </button>
       ))}
 
-      {/* Botão "+" + picker — sempre visível */}
+    
       <div ref={pickerRef} className="relative">
         {pickerOpen && (
           <div className="absolute bottom-full left-0 mb-1.5 z-50 w-52 rounded-xl border border-zinc-200 bg-white p-2 shadow-xl">

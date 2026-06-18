@@ -26,11 +26,11 @@ export default function RedefinirSenhaPage() {
       }
     })
 
-    // Check if already in a recovery session
+    
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) setReady(true)
       else {
-        // Give onAuthStateChange a moment to fire before marking invalid
+       
         const timer = setTimeout(() => setInvalid(true), 2000)
         return () => clearTimeout(timer)
       }

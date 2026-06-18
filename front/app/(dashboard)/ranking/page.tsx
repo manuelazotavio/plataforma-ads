@@ -59,19 +59,19 @@ export default async function RankingPage({
     position: 0,
   }))
 
-  // Ordenar por XP para atribuir posições globais
+  
   ranked.sort((a, b) => b.xp - a.xp)
   ranked.forEach((u, i) => { u.position = i + 1 })
 
-  // Filtrar por role
+ 
   const filtered = role
     ? ranked.filter((u) => u.role === role)
     : ranked
 
-  // Ordenar conforme filtro
+  
   const sorted = sort === 'antigos'
     ? [...filtered].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-    : filtered // já ordenado por XP
+    : filtered 
 
   const top3   = sorted.slice(0, 3)
   const rest   = sorted.slice(3)
@@ -97,7 +97,7 @@ export default async function RankingPage({
         </div>
       ) : (
         <>
-          {/* Pódio top 3 */}
+       
           {top3.length > 0 && sort !== 'antigos' && (
             <div className="mb-8 grid grid-cols-3 items-end gap-2">
               {([top3[1], top3[0], top3[2]] as (RankedUser | undefined)[]).map((u, idx) => {
@@ -130,7 +130,7 @@ export default async function RankingPage({
             </div>
           )}
 
-          {/* Lista completa */}
+         
           <div className="flex flex-col divide-y divide-zinc-100 rounded-2xl border border-zinc-100 overflow-hidden">
             {sorted.map((u, idx) => {
               const medal = MEDAL[u.position]
