@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
 import ForumCategorySelect from './ForumCategorySelect'
 import ForumSortToggle from './ForumSortToggle'
@@ -31,7 +32,7 @@ export default async function ForumPage({
     supabase.from('forum_categories').select('id, name').order('display_order'),
     supabase
       .from('forum_topics')
-      .select('id, title, created_at, replies_count, views_count, user_id, is_closed, users(id, name, selected_mascot:mascots(name, image_url)), forum_categories(id, name)')
+      .select('id, title, created_at, replies_count, views_count, user_id, is_closed, attachments, users(id, name, selected_mascot:mascots(name, image_url)), forum_categories(id, name)')
       .order('created_at', { ascending: false }),
     supabase.from('forum_topic_votes').select('topic_id').gte('created_at', weekAgo),
   ])
@@ -120,12 +121,25 @@ export default async function ForumPage({
             const isClosed = (topic as unknown as { is_closed: boolean }).is_closed
             const weekVotes = weeklyVoteMap.get(topic.id) ?? 0
             const isTopOfWeek = weekVotes > 0 && weekVotes === maxWeeklyVotes
+            const atts = (topic as unknown as { attachments?: { type: string; url: string }[] }).attachments ?? []
+            const coverImage = atts.find(a => a.type === 'image')
             return (
               <div
                 key={topic.id}
                 className="flex items-start justify-between gap-8 py-5"
               >
-                <div className="flex flex-col gap-1.5 min-w-0">
+                {coverImage && (
+                  <Link href={`/forum/${topic.id}`} className="shrink-0">
+                    <Image
+                      src={coverImage.url}
+                      alt={topic.title}
+                      width={72}
+                      height={72}
+                      className="h-18 w-18 rounded-xl object-cover"
+                    />
+                  </Link>
+                )}
+                <div className="flex flex-col gap-1.5 min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     {cat && (
                       <span className="text-xs font-semibold text-[#2F9E41]">{cat.name}</span>

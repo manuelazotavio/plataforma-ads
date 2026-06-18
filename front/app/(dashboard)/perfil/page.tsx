@@ -12,6 +12,7 @@ import UserAvatar from '@/app/components/UserAvatar'
 import ProfileProgressRing from '@/app/components/ProfileProgressRing'
 import { LoadingState } from '@/app/components/LoadingScreen'
 import { useImageCropper } from '@/app/components/ImageCropper'
+import TechnologyTagPicker from '@/app/components/TechnologyTagPicker'
 
 type Profile = {
   name: string
@@ -89,7 +90,6 @@ export default function PerfilPage() {
   const [profile, setProfile] = useState<Profile>(EMPTY_PROFILE)
   const [skills, setSkills] = useState<string[]>([])
   const [preferredAreas, setPreferredAreas] = useState<string[]>([])
-  const [newSkill, setNewSkill] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
@@ -304,13 +304,6 @@ export default function PerfilPage() {
 
   function handleChange(field: keyof Profile, value: string) {
     setProfile((prev) => ({ ...prev, [field]: value }))
-  }
-
-  function addSkill() {
-    const trimmed = newSkill.trim()
-    if (!trimmed || skills.includes(trimmed)) return
-    setSkills((prev) => [...prev, trimmed])
-    setNewSkill('')
   }
 
   function removeSkill(skill: string) {
@@ -901,29 +894,7 @@ export default function PerfilPage() {
 
           <div className="bg-white rounded-2xl border border-zinc-200 p-6">
             <h3 className="text-sm font-semibold text-zinc-900 mb-5">Habilidades</h3>
-            <div className="flex gap-2 mb-3">
-              <input
-                type="text"
-                value={newSkill}
-                onChange={(e) => setNewSkill(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
-                className={inputClass + ' flex-1'}
-                placeholder="Ex: React, Python..."
-              />
-              <button type="button" onClick={addSkill} className="rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 transition shrink-0">
-                Adicionar
-              </button>
-            </div>
-            {skills.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {skills.map((skill) => (
-                  <span key={skill} className="flex items-center gap-1 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium capitalize text-zinc-700">
-                    {formatProfileArea(skill)}
-                    <button type="button" onClick={() => removeSkill(skill)} className="text-zinc-400 hover:text-zinc-700 transition ml-0.5">×</button>
-                  </span>
-                ))}
-              </div>
-            )}
+            <TechnologyTagPicker value={skills} onChange={setSkills} />
           </div>
 
           <div className="bg-white rounded-2xl border border-zinc-200 p-6">
