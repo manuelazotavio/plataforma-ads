@@ -83,8 +83,7 @@ export default async function RankingPage({
           <h1 className="text-2xl font-bold text-zinc-900">Ranking</h1>
           <p className="text-sm text-zinc-500 mt-1">{sorted.length} participante{sorted.length !== 1 ? 's' : ''}</p>
         </div>
-        <div className="flex items-center gap-1.5 mt-1 text-xs text-zinc-400">
-          <span>Como funciona o XP?</span>
+        <div className="mt-1">
           <XpInfoModal />
         </div>
       </div>

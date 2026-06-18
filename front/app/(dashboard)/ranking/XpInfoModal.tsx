@@ -23,12 +23,13 @@ export default function XpInfoModal() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="text-zinc-300 transition hover:text-zinc-500"
+        className="flex items-center gap-1.5 rounded-xl bg-[#2F9E41] px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90"
         aria-label="Como o XP é calculado"
       >
-        <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
         </svg>
+        Como funciona o XP?
       </button>
 
       {open && (
