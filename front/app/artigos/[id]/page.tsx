@@ -94,7 +94,7 @@ export default async function ArtigoDetalhe({ params }: { params: Promise<{ id: 
           dangerouslySetInnerHTML={{ __html: injectMentionsIntoHtml(article.content) }}
         />
 
-        <div className="mb-6 mt-8 flex flex-col gap-3 border-t border-zinc-100 pt-8 sm:flex-row sm:flex-wrap sm:items-center sm:gap-8">
+        <div className="mb-6 mt-8 flex flex-col gap-2 border-t border-zinc-100 pt-8 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
           <div className="flex w-full sm:w-auto">
             <LikeButton
               type="article"
@@ -103,6 +103,7 @@ export default async function ArtigoDetalhe({ params }: { params: Promise<{ id: 
               label="Curtir artigo"
               variant="action"
               className="justify-center"
+              summaryTargetId={`article-reactions-${article.id}`}
             />
           </div>
           <ShareProjectButton
@@ -110,6 +111,7 @@ export default async function ArtigoDetalhe({ params }: { params: Promise<{ id: 
             label="Compartilhar artigo"
             className="w-full justify-center sm:w-auto"
           />
+          <span id={`article-reactions-${article.id}`} className="contents" />
         </div>
 
         <Comments type="article" targetId={article.id} />

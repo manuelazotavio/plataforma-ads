@@ -6,6 +6,7 @@ import { LoadingState } from '@/app/components/LoadingScreen'
 import { COURSE_SETTINGS_TABLE } from '@/app/lib/courseSettings'
 import { DEFAULT_MASCOT_PHRASES, MASCOT_PHRASES_KEY, parseMascotPhrases } from '@/app/lib/mascotSettings'
 import { supabase } from '@/app/lib/supabase'
+import { useImageCropper } from '@/app/components/ImageCropper'
 
 type Mascot = {
   id: string
@@ -34,6 +35,7 @@ function rarityFromXp(min_xp: number) {
 }
 
 export default function AdminMascotePage() {
+  const { cropImage, cropperNode } = useImageCropper('1:1')
   const [tab, setTab] = useState<'colecao' | 'frases'>('colecao')
   const [loading, setLoading] = useState(true)
 
@@ -74,6 +76,11 @@ export default function AdminMascotePage() {
     const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
     setForm(f => ({ ...f, image_url: publicUrl }))
     setUploading(false)
+  }
+
+  async function selectImage(file: File) {
+    const cropped = await cropImage(file)
+    if (cropped) await uploadImage(cropped)
   }
 
   async function saveMascot() {
@@ -121,6 +128,7 @@ export default function AdminMascotePage() {
 
   return (
     <div className="mx-auto max-w-3xl">
+      {cropperNode}
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-zinc-900">Personagem</h1>
         <p className="text-sm text-zinc-500 mt-0.5">Gerencie a coleção de personagens e as frases do balão.</p>
@@ -171,7 +179,7 @@ export default function AdminMascotePage() {
                     <p className="text-xs text-zinc-400">PNG ou WebP com fundo transparente</p>
                   </div>
                   <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
-                    onChange={e => { const f = e.target.files?.[0]; if (f) void uploadImage(f); e.target.value = '' }} />
+                    onChange={e => { const f = e.target.files?.[0]; if (f) void selectImage(f); e.target.value = '' }} />
                 </div>
               </div>
 

@@ -7,6 +7,7 @@ import { DEFAULT_PROJECT_TAGS, PROJECT_TAG_OPTIONS_TABLE, uniqueTagNames } from 
 import DatePicker from '@/app/components/DatePicker'
 import { fileKind, formatFileSize, getFileExtension } from '@/app/lib/files'
 import MentionTextarea from '@/app/components/MentionTextarea'
+import { useImageCropper } from '@/app/components/ImageCropper'
 
 export type Collaborator = {
   user_id: string | null
@@ -81,6 +82,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
   const [readmePreview, setReadmePreview] = useState<ReadmePreview | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { cropImage, cropperNode } = useImageCropper('16:9')
   const formRef = useRef<HTMLFormElement>(null)
   const collabRef = useRef<HTMLDivElement>(null)
   const tagRef = useRef<HTMLDivElement>(null)
@@ -186,16 +188,18 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
 
     for (const file of files) {
       const kind = fileKind(file)
-      const ext = getFileExtension(file)
+      const uploadFile = kind === 'image' ? await cropImage(file) : file
+      if (!uploadFile) continue
+      const ext = getFileExtension(uploadFile)
       const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
 
       const { error } = await supabase.storage
         .from('project-images')
-        .upload(path, file, { upsert: true })
+        .upload(path, uploadFile, { upsert: true })
 
       if (!error) {
         const { data: { publicUrl } } = supabase.storage.from('project-images').getPublicUrl(path)
-        uploaded.push({ url: publicUrl, type: kind, name: file.name, size: file.size })
+        uploaded.push({ url: publicUrl, type: kind, name: uploadFile.name, size: uploadFile.size })
       }
     }
 
@@ -298,6 +302,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-6">
+      {cropperNode}
 
       <div className="flex flex-col gap-2">
         <label className="text-sm font-medium text-zinc-700">Imagens, vídeos e arquivos</label>

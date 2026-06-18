@@ -8,6 +8,7 @@ import { getAuthUser } from '@/app/lib/auth'
 import Select from '@/app/components/Select'
 import { LoadingState } from '@/app/components/LoadingScreen'
 import { useAppDialog } from '@/app/components/AppDialog'
+import { useImageCropper } from '@/app/components/ImageCropper'
 
 type Professor = {
   id: string
@@ -48,6 +49,7 @@ const EMPTY_FORM = {
 export default function AdminCorpoDocentePage() {
   const router = useRouter()
   const { confirm, alert, dialogNode } = useAppDialog()
+  const { cropImage, cropperNode } = useImageCropper('1:1')
   const [professors, setProfessors] = useState<Professor[]>([])
   const [userOptions, setUserOptions] = useState<UserOption[]>([])
   const [loading, setLoading] = useState(true)
@@ -232,7 +234,8 @@ export default function AdminCorpoDocentePage() {
     const file = e.target.files?.[0]
     const profId = targetProfId.current
     if (!file || !profId) return
-    await uploadProfAvatar(file, profId)
+    const cropped = await cropImage(file)
+    if (cropped) await uploadProfAvatar(cropped, profId)
     e.target.value = ''
   }
 
@@ -380,6 +383,7 @@ export default function AdminCorpoDocentePage() {
   return (
     <div className="mx-auto max-w-3xl">
       {dialogNode}
+      {cropperNode}
 
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -470,8 +474,8 @@ export default function AdminCorpoDocentePage() {
                   <div
                     className="flex shrink-0 flex-col items-start gap-1 sm:items-center"
                     onDragOver={(e) => e.preventDefault()}
-                    onDrop={(e) => { e.preventDefault(); const f = Array.from(e.dataTransfer.files).find((x) => x.type.startsWith('image/')); if (f) void uploadProfAvatar(f, prof.id) }}
-                    onPaste={(e) => { const f = Array.from(e.clipboardData.files).find((x) => x.type.startsWith('image/')); if (!f) return; e.preventDefault(); void uploadProfAvatar(f, prof.id) }}
+                    onDrop={(e) => { e.preventDefault(); const f = Array.from(e.dataTransfer.files).find((x) => x.type.startsWith('image/')); if (f) void cropImage(f).then((cropped) => cropped && uploadProfAvatar(cropped, prof.id)) }}
+                    onPaste={(e) => { const f = Array.from(e.clipboardData.files).find((x) => x.type.startsWith('image/')); if (!f) return; e.preventDefault(); void cropImage(f).then((cropped) => cropped && uploadProfAvatar(cropped, prof.id)) }}
                   >
                     <div className="relative w-16 h-16 rounded-full overflow-hidden bg-zinc-100 border border-zinc-200">
                       {prof.avatar_url ? (

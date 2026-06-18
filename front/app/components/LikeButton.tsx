@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
@@ -87,19 +88,55 @@ export function ReactionPicker({
   size?: 'sm' | 'md'
 }) {
   const iconSize = size === 'sm' ? 22 : 28
+
+  function animateReactionIcon(button: HTMLButtonElement, active: boolean, selected: boolean) {
+    const icon = button.querySelector<HTMLElement>('[data-reaction-icon]')
+    if (!icon) return
+
+    icon.getAnimations().forEach((animation) => animation.cancel())
+    icon.animate(
+      [
+        { transform: getComputedStyle(icon).transform === 'none' ? 'translateY(0) scale(1)' : getComputedStyle(icon).transform },
+        {
+          transform: active
+            ? 'translateY(-7px) scale(1.6)'
+            : selected
+              ? 'translateY(-2px) scale(1.15)'
+              : 'translateY(0) scale(1)',
+        },
+      ],
+      {
+        duration: active ? 360 : 420,
+        easing: active ? 'cubic-bezier(0.34, 1.56, 0.64, 1)' : 'cubic-bezier(0.22, 1, 0.36, 1)',
+        fill: 'forwards',
+      }
+    )
+  }
+
   return (
-    <div className="no-scrollbar flex items-end gap-0.5 overflow-x-auto overscroll-x-contain bg-white rounded-2xl shadow-xl border border-zinc-100 px-2 py-2 max-w-[calc(100vw-2rem)]">
+    <div className="no-scrollbar flex items-end gap-0.5 overflow-x-auto overscroll-x-contain rounded-2xl border border-zinc-100 bg-white px-2 pb-2 pt-4 shadow-xl max-w-[calc(100vw-2rem)]">
       {REACTIONS.map((r) => (
         <button
           key={r.type}
+          data-reaction-option
           onClick={() => onReact(r.type)}
+          onMouseEnter={(event) => animateReactionIcon(event.currentTarget, true, myReaction === r.type)}
+          onMouseLeave={(event) => animateReactionIcon(event.currentTarget, false, myReaction === r.type)}
           title={r.label}
-          className={`flex flex-col items-center gap-1 px-2 py-1 rounded-xl transition-transform duration-150 hover:scale-125 hover:bg-zinc-50 ${
-            myReaction === r.type ? 'scale-110 bg-zinc-50' : ''
+          className={`reaction-option flex w-14 shrink-0 flex-col items-center gap-1 rounded-xl px-2 py-1 transition-colors duration-300 hover:bg-zinc-50 ${
+            myReaction === r.type ? 'bg-zinc-50' : ''
           }`}
         >
-          <ReactionIcon type={r.type} size={iconSize} />
-          <span className="text-[9px] text-zinc-400 leading-none font-medium whitespace-nowrap">{r.label}</span>
+          <span
+            className="reaction-option-icon inline-flex"
+            data-reaction-icon
+            data-selected={myReaction === r.type ? 'true' : 'false'}
+          >
+            <ReactionIcon type={r.type} size={iconSize} />
+          </span>
+          <span className="reaction-option-label whitespace-nowrap text-[9px] font-medium leading-none text-zinc-400">
+            {r.label}
+          </span>
         </button>
       ))}
     </div>
@@ -113,6 +150,7 @@ type Props = {
   label?: string
   variant?: 'default' | 'action'
   className?: string
+  summaryTargetId?: string
 }
 
 type ReactionUser = {
@@ -122,7 +160,15 @@ type ReactionUser = {
   reactionType: ReactionType
 }
 
-export default function LikeButton({ type, targetId, initialCount, label, variant = 'default', className = '' }: Props) {
+export default function LikeButton({
+  type,
+  targetId,
+  initialCount,
+  label,
+  variant = 'default',
+  className = '',
+  summaryTargetId,
+}: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const table = type === 'project' ? 'project_likes' : type === 'article' ? 'article_likes' : 'event_likes'
@@ -137,11 +183,23 @@ export default function LikeButton({ type, targetId, initialCount, label, varian
   const [peopleLoading, setPeopleLoading] = useState(false)
   const [peopleError, setPeopleError] = useState<string | null>(null)
   const [reactionUsers, setReactionUsers] = useState<ReactionUser[]>([])
+  const [summaryTarget, setSummaryTarget] = useState<HTMLElement | null>(null)
   const ref = useRef<HTMLDivElement>(null)
+  const pickerRef = useRef<HTMLDivElement>(null)
+  const hoverCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const total = Object.values(counts).reduce((a, c) => a + c, 0) || initialCount
-  const topTypes = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([t]) => t as ReactionType)
+  const topTypes = Object.entries(counts)
+    .filter(([, count]) => count > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([reactionType]) => reactionType as ReactionType)
   const reactionData = REACTIONS.find(r => r.type === myReaction)
+
+  useEffect(() => {
+    if (!summaryTargetId) return
+    setSummaryTarget(document.getElementById(summaryTargetId))
+  }, [summaryTargetId])
 
   useEffect(() => {
     getAuthUser().then((user) => {
@@ -165,6 +223,64 @@ export default function LikeButton({ type, targetId, initialCount, label, varian
     document.addEventListener('mousedown', close)
     return () => document.removeEventListener('mousedown', close)
   }, [])
+
+  useEffect(() => {
+    return () => {
+      if (hoverCloseTimeoutRef.current) clearTimeout(hoverCloseTimeoutRef.current)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!open || !pickerRef.current) return
+
+    const picker = pickerRef.current
+    const animation = picker.animate(
+      [
+        { opacity: 0, transform: 'translateY(28px)' },
+        { opacity: 0.7, transform: 'translateY(10px)', offset: 0.45 },
+        { opacity: 1, transform: 'translateY(-4px)', offset: 0.78 },
+        { opacity: 1, transform: 'translateY(0)' },
+      ],
+      {
+        duration: 850,
+        easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+        fill: 'both',
+      }
+    )
+
+    const optionAnimations = Array.from(
+      picker.querySelectorAll<HTMLElement>('[data-reaction-option]')
+    ).map((option, index) => option.animate(
+      [
+        { opacity: 0, transform: 'translateY(14px)' },
+        { opacity: 1, transform: 'translateY(0)' },
+      ],
+      {
+        duration: 360,
+        delay: 160 + index * 90,
+        easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+        fill: 'backwards',
+      }
+    ))
+
+    return () => {
+      animation.cancel()
+      optionAnimations.forEach((optionAnimation) => optionAnimation.cancel())
+    }
+  }, [open])
+
+  function openOnHover() {
+    if (hoverCloseTimeoutRef.current) {
+      clearTimeout(hoverCloseTimeoutRef.current)
+      hoverCloseTimeoutRef.current = null
+    }
+    if (userId && !loading) setOpen(true)
+  }
+
+  function closeAfterHover() {
+    if (hoverCloseTimeoutRef.current) clearTimeout(hoverCloseTimeoutRef.current)
+    hoverCloseTimeoutRef.current = setTimeout(() => setOpen(false), 180)
+  }
 
   async function react(reactionType: ReactionType) {
     if (!userId || loading) return
@@ -252,15 +368,47 @@ export default function LikeButton({ type, targetId, initialCount, label, varian
     setPeopleLoading(false)
   }
 
+  const reactionSummary = total > 0 ? (
+    <button
+      type="button"
+      onClick={() => void openPeople()}
+      className="inline-flex shrink-0 items-center gap-2 rounded-full border border-zinc-200 px-3 py-2 text-xs font-semibold text-zinc-500 transition hover:bg-zinc-50 hover:text-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
+      aria-label={`Ver ${total} ${total === 1 ? 'reação' : 'reações'}`}
+    >
+      <span className="flex gap-0.5">
+        {topTypes.map((reactionType) => (
+          <span key={reactionType} className="rounded-full bg-white ring-2 ring-white dark:bg-zinc-950 dark:ring-zinc-950">
+            <ReactionIcon type={reactionType} size={17} />
+          </span>
+        ))}
+      </span>
+      <span className="tabular-nums">{total}</span>
+    </button>
+  ) : null
+
   return (
-    <div ref={ref} className={`relative inline-flex items-center gap-2 ${variant === 'action' ? 'w-full sm:w-auto' : ''}`}>
-      {open && userId && (
-        <div className="absolute bottom-full left-0 mb-2 z-50">
+    <div
+      ref={ref}
+      className={`relative inline-flex items-center gap-2 ${variant === 'action' ? 'w-full sm:w-auto' : ''}`}
+    >
+      {userId && (
+        <div
+          ref={pickerRef}
+          onMouseEnter={openOnHover}
+          onMouseLeave={closeAfterHover}
+          className={`absolute bottom-full left-0 z-50 mb-2 ${
+            open
+              ? 'pointer-events-auto'
+              : 'pointer-events-none translate-y-4 opacity-0'
+          }`}
+        >
           <ReactionPicker myReaction={myReaction} onReact={react} />
         </div>
       )}
 
       <button
+        onMouseEnter={openOnHover}
+        onMouseLeave={closeAfterHover}
         onClick={() => {
           if (!userId) { router.push(`/login?redirect=${encodeURIComponent(pathname)}`); return }
           setOpen(o => !o)
@@ -278,27 +426,28 @@ export default function LikeButton({ type, targetId, initialCount, label, varian
         }`}
       >
         {label && <span className="font-semibold text-zinc-900">{label}</span>}
-        {topTypes.length > 0 ? (
-          <span className="flex -space-x-1">
-            {topTypes.map(t => <ReactionIcon key={t} type={t} size={17} />)}
-          </span>
-        ) : myReaction ? (
+        {myReaction ? (
           <ReactionIcon type={myReaction} size={17} />
         ) : (
-          <svg width={17} height={17} viewBox="0 0 24 24" fill="currentColor"><path d="M7.493 18.75c-.425 0-.82-.236-.975-.632A7.48 7.48 0 0 1 6 15.375c0-1.75.599-3.358 1.602-4.634.151-.192.373-.309.6-.397.473-.183.89-.514 1.212-.924a9.042 9.042 0 0 1 2.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 0 0 .322-1.672V3a.75.75 0 0 1 .75-.75 2.25 2.25 0 0 1 2.25 2.25c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 0 1-2.649 7.521c-.388.482-.987.729-1.605.729H14.23c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 0 0-1.423-.23h-.777ZM2.331 10.977a11.969 11.969 0 0 0-.831 4.398 12 12 0 0 0 .52 3.507c.26.85 1.084 1.368 1.973 1.368H4.9c.445 0 .72-.498.523-.898a8.963 8.963 0 0 1-.924-3.977c0-1.708.476-3.305 1.302-4.666.245-.403-.028-.959-.5-.959H4.25c-.832 0-1.612.453-1.918 1.227Z" /></svg>
+          <svg
+            width={18}
+            height={18}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78Z" />
+          </svg>
         )}
       </button>
 
-      {total > 0 && (
-        <button
-          type="button"
-          onClick={() => void openPeople()}
-          className="shrink-0 rounded-full border border-zinc-200 px-3 py-2 text-xs font-semibold text-zinc-500 transition hover:bg-zinc-50 hover:text-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
-          aria-label={`Ver ${total} ${total === 1 ? 'reação' : 'reações'}`}
-        >
-          {total} {total === 1 ? 'reação' : 'reações'}
-        </button>
-      )}
+      {summaryTargetId
+        ? summaryTarget && reactionSummary && createPortal(reactionSummary, summaryTarget)
+        : reactionSummary}
 
       {peopleOpen && (
         <div

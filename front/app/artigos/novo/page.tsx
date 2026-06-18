@@ -7,6 +7,7 @@ import { getAuthUser } from '@/app/lib/auth'
 import RichTextEditor from '@/app/components/RichTextEditor'
 import TechnologyTagPicker from '@/app/components/TechnologyTagPicker'
 import { fileKind, formatFileSize, getFileExtension } from '@/app/lib/files'
+import { useImageCropper } from '@/app/components/ImageCropper'
 
 type ArticleAttachment = { type: 'image' | 'file'; url: string; name: string; size: number }
 
@@ -29,6 +30,7 @@ function escapeHtml(text: string) {
 }
 
 export default function NovoArtigoPage() {
+  const { cropImage, cropperNode } = useImageCropper('16:9')
   const router = useRouter()
   const [userId, setUserId] = useState<string | null>(null)
 
@@ -73,20 +75,22 @@ export default function NovoArtigoPage() {
 
     for (const file of files) {
       const kind = fileKind(file)
-      const ext = getFileExtension(file)
+      const uploadFile = kind === 'image' ? await cropImage(file) : file
+      if (!uploadFile) continue
+      const ext = getFileExtension(uploadFile)
       const path = `articles/${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
 
       const { error: uploadError } = await supabase.storage
         .from('forum-media')
-        .upload(path, file, { upsert: true })
+        .upload(path, uploadFile, { upsert: true })
 
       if (uploadError) {
-        setError(`Erro ao enviar ${file.name}: ${uploadError.message}`)
+        setError(`Erro ao enviar ${uploadFile.name}: ${uploadError.message}`)
         continue
       }
 
       const { data: { publicUrl } } = supabase.storage.from('forum-media').getPublicUrl(path)
-      uploaded.push({ type: kind === 'image' ? 'image' : 'file', url: publicUrl, name: file.name, size: file.size })
+      uploaded.push({ type: kind === 'image' ? 'image' : 'file', url: publicUrl, name: uploadFile.name, size: uploadFile.size })
     }
 
     setAttachments((prev) => [...prev, ...uploaded])
@@ -177,6 +181,7 @@ export default function NovoArtigoPage() {
 
   return (
     <div className="min-h-screen bg-white px-4 py-12 md:px-6">
+      {cropperNode}
       <div className="w-full">
         <h1 className="text-2xl font-semibold text-zinc-900 mb-1">Novo artigo</h1>
         <p className="text-sm text-zinc-500 mb-8">Escreva e publique seu conteúdo</p>

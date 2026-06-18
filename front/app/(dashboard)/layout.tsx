@@ -341,39 +341,14 @@ function profileLabel(profile: Pick<UserProfile, 'role' | 'semester' | 'isProfes
 
 async function loadLevelProgress(uid: string): Promise<number> {
   const [
-    { data: prof },
-    { count: projCount },
-    { count: artCount },
-    { count: topicCount },
-    { count: projComCount },
-    { count: artComCount },
-    { data: ownProj },
-    { data: ownArt },
+    { data: profile },
     { data: levels },
   ] = await Promise.all([
-    supabase.from('users').select('avatar_url, bio, github_url, linkedin_url, portfolio_url').eq('id', uid).single(),
-    supabase.from('projects').select('*', { count: 'exact', head: true }).eq('user_id', uid),
-    supabase.from('articles').select('*', { count: 'exact', head: true }).eq('user_id', uid).eq('status', 'publicado'),
-    supabase.from('forum_topics').select('*', { count: 'exact', head: true }).eq('user_id', uid),
-    supabase.from('project_comments').select('*', { count: 'exact', head: true }).eq('user_id', uid),
-    supabase.from('article_comments').select('*', { count: 'exact', head: true }).eq('user_id', uid),
-    supabase.from('projects').select('like_count').eq('user_id', uid),
-    supabase.from('articles').select('like_count').eq('user_id', uid),
+    supabase.from('users').select('xp').eq('id', uid).single(),
     supabase.from('levels').select('id, min_xp').order('min_xp', { ascending: true }),
   ])
-  if (!prof || !levels?.length) return 0
-  const { computeXp, countProfileLinks, hasNonEmpty } = await import('@/app/lib/xp')
-  const likes = [...(ownProj ?? []), ...(ownArt ?? [])].reduce((s, r) => s + ((r as { like_count?: number | null }).like_count ?? 0), 0)
-  const xp = computeXp({
-    projectsCount: projCount ?? 0,
-    articlesCount: artCount ?? 0,
-    topicsCount: topicCount ?? 0,
-    commentsCount: (projComCount ?? 0) + (artComCount ?? 0),
-    likesReceived: likes,
-    hasAvatar: hasNonEmpty(prof.avatar_url),
-    hasBio: hasNonEmpty(prof.bio),
-    linksCount: countProfileLinks(prof),
-  })
+  if (!profile || !levels?.length) return 0
+  const xp = profile.xp ?? 0
   const sorted = [...levels].sort((a, b) => a.min_xp - b.min_xp)
   const level = [...sorted].reverse().find((l) => xp >= l.min_xp) ?? sorted[0]
   const idx = sorted.findIndex((l) => l.id === level?.id)

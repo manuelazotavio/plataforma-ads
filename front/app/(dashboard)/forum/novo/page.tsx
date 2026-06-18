@@ -9,6 +9,7 @@ import MentionTextarea from '@/app/components/MentionTextarea'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import { fileKind, formatFileSize, getFileExtension } from '@/app/lib/files'
+import { useImageCropper } from '@/app/components/ImageCropper'
 
 type Category = { id: string; name: string }
 type Attachment = { type: 'image' | 'video' | 'file'; url: string; name?: string; size?: number }
@@ -26,6 +27,7 @@ export default function NovoTopicoPage() {
   const [videoUrl, setVideoUrl] = useState('')
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { cropImage, cropperNode } = useImageCropper('16:9')
 
   useEffect(() => {
     supabase.from('forum_categories').select('id, name').order('display_order').then(({ data }) => {
@@ -47,14 +49,16 @@ export default function NovoTopicoPage() {
 
     for (const file of files) {
       const kind = fileKind(file)
-      const ext = getFileExtension(file)
+      const uploadFile = kind === 'image' ? await cropImage(file) : file
+      if (!uploadFile) continue
+      const ext = getFileExtension(uploadFile)
       const path = `forum/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-      const { error: uploadError } = await supabase.storage.from('forum-media').upload(path, file)
+      const { error: uploadError } = await supabase.storage.from('forum-media').upload(path, uploadFile)
       if (!uploadError) {
         const { data: { publicUrl } } = supabase.storage.from('forum-media').getPublicUrl(path)
-        setAttachments(prev => [...prev, { type: kind, url: publicUrl, name: file.name, size: file.size }])
+        setAttachments(prev => [...prev, { type: kind, url: publicUrl, name: uploadFile.name, size: uploadFile.size }])
       } else {
-        setError(`Erro ao enviar ${file.name}: ${uploadError.message}`)
+        setError(`Erro ao enviar ${uploadFile.name}: ${uploadError.message}`)
       }
     }
     setUploading(false)
@@ -123,6 +127,7 @@ export default function NovoTopicoPage() {
 
   return (
     <div className="px-4 md:px-6 py-8 w-full">
+      {cropperNode}
       <Link href="/forum" className="text-sm text-zinc-400 hover:text-zinc-700 transition mb-8 inline-flex items-center gap-1.5">
         <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
         Fórum

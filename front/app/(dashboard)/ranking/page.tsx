@@ -3,7 +3,6 @@ export const dynamic = 'force-dynamic'
 import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
-import { computeXp, hasNonEmpty, countProfileLinks } from '@/app/lib/xp'
 import UserAvatar from '@/app/components/UserAvatar'
 import RankingFilters from './RankingFilters'
 import XpInfoModal from './XpInfoModal'
@@ -18,6 +17,7 @@ type UserRow = {
   portfolio_url: string | null
   role: string | null
   created_at: string
+  xp: number
 }
 
 type RankedUser = UserRow & { xp: number; position: number }
@@ -49,58 +49,13 @@ export default async function RankingPage({
 }) {
   const { sort = 'xp', role = '' } = await searchParams
 
-  const [
-    { data: users },
-    { data: projects },
-    { data: articles },
-    { data: topics },
-    { data: projectComments },
-    { data: articleComments },
-  ] = await Promise.all([
-    supabase
-      .from('users')
-      .select('id, name, avatar_url, bio, github_url, linkedin_url, portfolio_url, role, created_at'),
-    supabase.from('projects').select('user_id, like_count'),
-    supabase.from('articles').select('user_id, like_count').eq('status', 'publicado'),
-    supabase.from('forum_topics').select('user_id'),
-    supabase.from('project_comments').select('user_id'),
-    supabase.from('article_comments').select('user_id'),
-  ])
+  const { data: users } = await supabase
+    .from('users')
+    .select('id, name, avatar_url, bio, github_url, linkedin_url, portfolio_url, role, created_at, xp')
 
-  // Agregar por usuário
-  const projectsCount  = new Map<string, number>()
-  const articlesCount  = new Map<string, number>()
-  const topicsCount    = new Map<string, number>()
-  const commentsCount  = new Map<string, number>()
-  const likesReceived  = new Map<string, number>()
-
-  for (const p of projects ?? []) {
-    if (!p.user_id) continue
-    projectsCount.set(p.user_id, (projectsCount.get(p.user_id) ?? 0) + 1)
-    likesReceived.set(p.user_id, (likesReceived.get(p.user_id) ?? 0) + (p.like_count ?? 0))
-  }
-  for (const a of articles ?? []) {
-    if (!a.user_id) continue
-    articlesCount.set(a.user_id, (articlesCount.get(a.user_id) ?? 0) + 1)
-    likesReceived.set(a.user_id, (likesReceived.get(a.user_id) ?? 0) + (a.like_count ?? 0))
-  }
-  for (const t of topics ?? [])         if (t.user_id) topicsCount.set(t.user_id,   (topicsCount.get(t.user_id)   ?? 0) + 1)
-  for (const c of projectComments ?? []) if (c.user_id) commentsCount.set(c.user_id, (commentsCount.get(c.user_id) ?? 0) + 1)
-  for (const c of articleComments ?? []) if (c.user_id) commentsCount.set(c.user_id, (commentsCount.get(c.user_id) ?? 0) + 1)
-
-  // Calcular XP
   const ranked: RankedUser[] = (users ?? [] as UserRow[]).map((u) => ({
     ...(u as UserRow),
-    xp: computeXp({
-      projectsCount:  projectsCount.get(u.id)  ?? 0,
-      articlesCount:  articlesCount.get(u.id)  ?? 0,
-      topicsCount:    topicsCount.get(u.id)    ?? 0,
-      commentsCount:  commentsCount.get(u.id)  ?? 0,
-      likesReceived:  likesReceived.get(u.id)  ?? 0,
-      hasAvatar: hasNonEmpty((u as UserRow).avatar_url),
-      hasBio:    hasNonEmpty((u as UserRow).bio),
-      linksCount: countProfileLinks(u as UserRow),
-    }),
+    xp: (u as UserRow).xp ?? 0,
     position: 0,
   }))
 

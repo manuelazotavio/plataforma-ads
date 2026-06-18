@@ -12,6 +12,7 @@ const ITEMS = [
   { label: 'Foto de perfil',       detail: `bônus único`,        xp: XP_PROFILE_AVATAR },
   { label: 'Bio preenchida',       detail: `bônus único`,        xp: XP_PROFILE_BIO },
   { label: 'Link de perfil',       detail: `por link`,           xp: XP_PROFILE_LINK },
+  { label: 'Missão concluída',      detail: `conforme missão`,    xp: null },
 ]
 
 export default function XpInfoModal() {
@@ -48,7 +49,7 @@ export default function XpInfoModal() {
                     <span className="text-sm text-zinc-700">{item.label}</span>
                     <span className="text-xs text-zinc-400">{item.detail}</span>
                   </div>
-                  <span className="shrink-0 text-sm font-bold text-[#2F9E41]">+{item.xp}</span>
+                  <span className="shrink-0 text-sm font-bold text-[#2F9E41]">{item.xp === null ? 'variável' : `+${item.xp}`}</span>
                 </div>
               ))}
             </div>

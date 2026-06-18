@@ -8,6 +8,7 @@ import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import BrandLogo from '@/app/components/BrandLogo'
 import { DEFAULT_PROJECT_TAGS, PROJECT_TAG_OPTIONS_TABLE, uniqueTagNames } from '@/app/lib/projectTags'
+import { useImageCropper } from '@/app/components/ImageCropper'
 
 const TOTAL = 10
 
@@ -77,6 +78,7 @@ export default function OnboardingPage() {
   const [linkedin, setLinkedin] = useState('')
   const [github, setGithub] = useState('')
   const avatarInputRef = useRef<HTMLInputElement>(null)
+  const { cropImage, cropperNode } = useImageCropper('1:1', true)
 
   useEffect(() => {
     getAuthUser().then(async (user) => {
@@ -164,21 +166,22 @@ export default function OnboardingPage() {
   async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    await uploadAvatarFile(file)
+    const cropped = await cropImage(file)
+    if (cropped) await uploadAvatarFile(cropped)
     e.target.value = ''
   }
 
   function handleAvatarDrop(e: React.DragEvent) {
     e.preventDefault()
     const file = Array.from(e.dataTransfer.files).find((f) => f.type.startsWith('image/'))
-    if (file) void uploadAvatarFile(file)
+    if (file) void cropImage(file).then((cropped) => cropped && uploadAvatarFile(cropped))
   }
 
   function handleAvatarPaste(e: React.ClipboardEvent) {
     const file = Array.from(e.clipboardData.files).find((f) => f.type.startsWith('image/'))
     if (!file) return
     e.preventDefault()
-    void uploadAvatarFile(file)
+    void cropImage(file).then((cropped) => cropped && uploadAvatarFile(cropped))
   }
 
   function addSkill(tag: string) {
@@ -263,6 +266,7 @@ export default function OnboardingPage() {
 
   return (
     <div className="onboarding-page min-h-screen bg-white flex flex-col dark:bg-zinc-950">
+      {cropperNode}
 
       <header className="sticky top-0 bg-white/90 backdrop-blur border-b border-zinc-100 px-5 py-4 z-10 dark:bg-zinc-950/90 dark:border-zinc-800">
         <div className="max-w-lg mx-auto">

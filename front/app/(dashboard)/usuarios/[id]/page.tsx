@@ -4,7 +4,6 @@ import { notFound } from 'next/navigation'
 import { supabase } from '@/app/lib/supabase'
 import ProfileActivityFeed, { type ProfileActivityItem } from '@/app/components/ProfileActivityFeed'
 import UserAvatar from '@/app/components/UserAvatar'
-import { computeXp, countProfileLinks, hasNonEmpty } from '@/app/lib/xp'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,6 +19,7 @@ type Profile = {
   role: string | null
   preferred_area: string | null
   selected_mascot_id: string | null
+  xp: number
 }
 
 type Level = {
@@ -94,13 +94,6 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
     { count: projectsCount },
     { count: articlesCount },
     { count: topicsCount },
-    { count: xpProjectsCount },
-    { count: xpArticlesCount },
-    { count: xpTopicsCount },
-    { count: projectCommentsCount },
-    { count: articleCommentsCount },
-    { data: xpProjects },
-    { data: xpArticles },
     { data: projects },
     { data: articles },
     { data: topics },
@@ -109,7 +102,7 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
   ] = await Promise.all([
     supabase
       .from('users')
-      .select('id, name, bio, semester, github_url, linkedin_url, portfolio_url, avatar_url, role, preferred_area, selected_mascot_id')
+      .select('id, name, bio, semester, github_url, linkedin_url, portfolio_url, avatar_url, role, preferred_area, selected_mascot_id, xp')
       .eq('id', id)
       .single(),
     supabase.from('user_skills').select('skill_name').eq('user_id', id).order('skill_name'),
@@ -117,13 +110,6 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
     supabase.from('projects').select('id', { count: 'exact', head: true }).eq('user_id', id).eq('approved', true),
     supabase.from('articles').select('id', { count: 'exact', head: true }).eq('user_id', id).eq('status', 'publicado'),
     supabase.from('forum_topics').select('id', { count: 'exact', head: true }).eq('user_id', id),
-    supabase.from('projects').select('id', { count: 'exact', head: true }).eq('user_id', id),
-    supabase.from('articles').select('id', { count: 'exact', head: true }).eq('user_id', id).eq('status', 'publicado'),
-    supabase.from('forum_topics').select('id', { count: 'exact', head: true }).eq('user_id', id),
-    supabase.from('project_comments').select('id', { count: 'exact', head: true }).eq('user_id', id),
-    supabase.from('article_comments').select('id', { count: 'exact', head: true }).eq('user_id', id),
-    supabase.from('projects').select('like_count').eq('user_id', id),
-    supabase.from('articles').select('like_count').eq('user_id', id),
     supabase.from('projects').select('id, title, description, is_featured, created_at, like_count, project_images(image_url, display_order, media_type)').eq('user_id', id).eq('approved', true),
     supabase.from('articles').select('id, title, summary, cover_image_url, published_at, like_count').eq('user_id', id).eq('status', 'publicado'),
     supabase.from('forum_topics').select('id, title, created_at, replies_count').eq('user_id', id),
@@ -147,20 +133,7 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
   const displayBio = linkedProfessor?.bio ?? user.bio
   const skillNames = (skills ?? []).map((skill) => skill.skill_name)
   const preferredAreas = splitPreferredAreas(user.preferred_area)
-  const likesReceived =
-    (xpProjects ?? []).reduce((total, project) => total + (project.like_count ?? 0), 0) +
-    (xpArticles ?? []).reduce((total, article) => total + (article.like_count ?? 0), 0)
-  const commentsCount = (projectCommentsCount ?? 0) + (articleCommentsCount ?? 0)
-  const xp = computeXp({
-    projectsCount: xpProjectsCount ?? 0,
-    articlesCount: xpArticlesCount ?? 0,
-    topicsCount: xpTopicsCount ?? 0,
-    commentsCount,
-    likesReceived,
-    hasAvatar: hasNonEmpty(displayAvatarUrl),
-    hasBio: hasNonEmpty(displayBio),
-    linksCount: countProfileLinks(user),
-  })
+  const xp = user.xp ?? 0
   const level = currentLevel((levels ?? []) as Level[], xp)
   const socials = [
     user.github_url ? { label: 'GitHub', url: user.github_url } : null,

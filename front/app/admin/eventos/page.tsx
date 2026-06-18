@@ -7,6 +7,7 @@ import DatePicker from '@/app/components/DatePicker'
 import { LoadingState } from '@/app/components/LoadingScreen'
 import { useAppDialog } from '@/app/components/AppDialog'
 import { supabase } from '@/app/lib/supabase'
+import { useImageCropper } from '@/app/components/ImageCropper'
 
 type Category = {
   id: string
@@ -52,6 +53,7 @@ const empty = (): Omit<Event, 'id'> => ({
 
 export default function AdminEventosPage() {
   const { confirm, alert, dialogNode } = useAppDialog()
+  const { cropImage, cropperNode } = useImageCropper('16:9')
   const [events, setEvents] = useState<Event[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
@@ -157,12 +159,12 @@ export default function AdminEventosPage() {
     e.preventDefault()
     setDraggingBanner(false)
     const file = e.dataTransfer.files?.[0]
-    if (file?.type.startsWith('image/')) await uploadBannerFile(file)
+    if (file?.type.startsWith('image/')) await selectBannerFile(file)
   }
 
   async function handleBannerPaste(e: React.ClipboardEvent) {
     const file = Array.from(e.clipboardData.files).find((f) => f.type.startsWith('image/'))
-    if (file) await uploadBannerFile(file)
+    if (file) await selectBannerFile(file)
   }
 
   async function uploadBannerFile(file: File) {
@@ -184,6 +186,11 @@ export default function AdminEventosPage() {
     setUploadingBanner(false)
   }
 
+  async function selectBannerFile(file: File) {
+    const cropped = await cropImage(file)
+    if (cropped) await uploadBannerFile(cropped)
+  }
+
   async function deleteEvent(id: string) {
     if (!(await confirm({ message: 'Remover este evento?', confirmLabel: 'Remover' }))) return
     setDeletingId(id)
@@ -197,6 +204,7 @@ export default function AdminEventosPage() {
   return (
     <div>
       {dialogNode}
+      {cropperNode}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900">Eventos</h1>
@@ -379,7 +387,7 @@ export default function AdminEventosPage() {
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void uploadBannerFile(f) }}
+                  onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void selectBannerFile(f) }}
                 />
               </Field>
 

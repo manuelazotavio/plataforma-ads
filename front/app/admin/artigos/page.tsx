@@ -18,6 +18,7 @@ type Article = {
 }
 
 type Filter = 'pendentes' | 'publicados' | 'rejeitados' | 'todos'
+type ReviewResult = { status: string; rejection_message: string | null }
 
 const statusConfig: Record<string, { label: string; class: string; dot: string }> = {
   pendente:   { label: 'Pendente',   class: 'border-amber-200 text-amber-700', dot: 'bg-amber-500' },
@@ -52,19 +53,21 @@ export default function AdminArtigosPage() {
     setUpdatingId(id)
     setActionError(null)
     const { data, error } = await supabase
-      .from('articles')
-      .update({ status: 'publicado', rejection_message: null, published_at: new Date().toISOString() })
-      .eq('id', id)
-      .select('status, rejection_message')
+      .rpc('admin_review_article', {
+        p_article_id: id,
+        p_status: 'publicado',
+        p_rejection_message: null,
+      })
       .single()
 
-    if (error || data?.status !== 'publicado') {
+    const review = data as ReviewResult | null
+    if (error || review?.status !== 'publicado') {
       setActionError(error?.message ?? 'Não foi possível publicar o artigo. Verifique as permissões no Supabase.')
       setUpdatingId(null)
       return
     }
 
-    setArticles((prev) => prev.map((a) => a.id === id ? { ...a, status: data.status, rejection_message: data.rejection_message } : a))
+    setArticles((prev) => prev.map((a) => a.id === id ? { ...a, status: review.status, rejection_message: review.rejection_message } : a))
     setUpdatingId(null)
   }
 
@@ -74,19 +77,21 @@ export default function AdminArtigosPage() {
     setUpdatingId(id)
     setActionError(null)
     const { data, error } = await supabase
-      .from('articles')
-      .update({ status: 'rejeitado', rejection_message: msg, published_at: null })
-      .eq('id', id)
-      .select('status, rejection_message')
+      .rpc('admin_review_article', {
+        p_article_id: id,
+        p_status: 'rejeitado',
+        p_rejection_message: msg,
+      })
       .single()
 
-    if (error || data?.status !== 'rejeitado') {
+    const review = data as ReviewResult | null
+    if (error || review?.status !== 'rejeitado') {
       setActionError(error?.message ?? 'Não foi possível rejeitar o artigo. Verifique as permissões no Supabase.')
       setUpdatingId(null)
       return
     }
 
-    setArticles((prev) => prev.map((a) => a.id === id ? { ...a, status: data.status, rejection_message: data.rejection_message } : a))
+    setArticles((prev) => prev.map((a) => a.id === id ? { ...a, status: review.status, rejection_message: review.rejection_message } : a))
     setRejectingId(null)
     setRejectMessage('')
     setUpdatingId(null)

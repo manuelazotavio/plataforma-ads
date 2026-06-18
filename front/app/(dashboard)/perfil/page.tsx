@@ -9,9 +9,9 @@ import { getAuthUser } from '@/app/lib/auth'
 import ProfileActivityFeed, { type ProfileActivityItem } from '@/app/components/ProfileActivityFeed'
 import ProfileEventReminders from '@/app/components/ProfileEventReminders'
 import UserAvatar from '@/app/components/UserAvatar'
-import { computeXp, countProfileLinks, hasNonEmpty } from '@/app/lib/xp'
 import ProfileProgressRing from '@/app/components/ProfileProgressRing'
 import { LoadingState } from '@/app/components/LoadingScreen'
+import { useImageCropper } from '@/app/components/ImageCropper'
 
 type Profile = {
   name: string
@@ -45,6 +45,12 @@ type Level = {
   id: number
   name: string
   min_xp: number
+}
+
+type XpBreakdownRow = {
+  label: string
+  detail: string | null
+  xp: number
 }
 
 const AREAS = [
@@ -103,6 +109,7 @@ export default function PerfilPage() {
   const [xpBreakdown, setXpBreakdown] = useState<{ label: string; detail?: string; xp: number }[]>([])
   const [showXpBreakdown, setShowXpBreakdown] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { cropImage, cropperNode } = useImageCropper('1:1', true)
 
   const [role, setRole] = useState<string | null>(null)
   const [professorData, setProfessorData] = useState<ProfessorData>(EMPTY_PROFESSOR)
@@ -124,7 +131,7 @@ export default function PerfilPage() {
       const [{ data: profileData }, { data: allMascots }] = await Promise.all([
         supabase
           .from('users')
-          .select('name, bio, semester, github_url, linkedin_url, portfolio_url, avatar_url, role, preferred_area, selected_mascot_id')
+          .select('name, bio, semester, github_url, linkedin_url, portfolio_url, avatar_url, role, preferred_area, selected_mascot_id, xp')
           .eq('id', user.id)
           .single(),
         supabase.from('mascots').select('id, name, description, image_url, min_xp').eq('is_active', true).order('min_xp'),
@@ -170,48 +177,23 @@ export default function PerfilPage() {
         { count: projectsCount },
         { count: articlesCount },
         { count: topicsCount },
-        { count: xpProjectsCount },
-        { count: xpArticlesCount },
-        { count: xpTopicsCount },
-        { count: projectCommentsCount },
-        { count: articleCommentsCount },
-        { data: xpProjects },
-        { data: xpArticles },
         { data: projects },
         { data: articles },
         { data: topics },
         { data: levels },
+        { data: xpBreakdownData },
       ] = await Promise.all([
         supabase.from('projects').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('approved', true),
         supabase.from('articles').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'publicado'),
         supabase.from('forum_topics').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-        supabase.from('projects').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-        supabase.from('articles').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'publicado'),
-        supabase.from('forum_topics').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-        supabase.from('project_comments').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-        supabase.from('article_comments').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-        supabase.from('projects').select('like_count').eq('user_id', user.id),
-        supabase.from('articles').select('like_count').eq('user_id', user.id),
         supabase.from('projects').select('id, title, description, is_featured, created_at, like_count, project_images(image_url, display_order, media_type)').eq('user_id', user.id).eq('approved', true),
         supabase.from('articles').select('id, title, summary, cover_image_url, published_at, like_count').eq('user_id', user.id).eq('status', 'publicado'),
         supabase.from('forum_topics').select('id, title, created_at, replies_count').eq('user_id', user.id),
         supabase.from('levels').select('id, name, min_xp').order('min_xp', { ascending: true }),
+        supabase.rpc('get_user_xp_breakdown', { p_user_id: user.id }),
       ])
 
-      const likesReceived =
-        (xpProjects ?? []).reduce((total, project) => total + (project.like_count ?? 0), 0) +
-        (xpArticles ?? []).reduce((total, article) => total + (article.like_count ?? 0), 0)
-      const commentsCount = (projectCommentsCount ?? 0) + (articleCommentsCount ?? 0)
-      const xp = computeXp({
-        projectsCount: xpProjectsCount ?? 0,
-        articlesCount: xpArticlesCount ?? 0,
-        topicsCount: xpTopicsCount ?? 0,
-        commentsCount,
-        likesReceived,
-        hasAvatar: hasNonEmpty(profileData?.avatar_url),
-        hasBio: hasNonEmpty(profileData?.bio),
-        linksCount: countProfileLinks(profileData ?? {}),
-      })
+      const xp = profileData?.xp ?? 0
       const sorted = ((levels ?? []) as Level[]).sort((a, b) => a.min_xp - b.min_xp)
       const level = currentLevel(sorted, xp)
       const idx = sorted.findIndex((l) => l.id === level?.id)
@@ -228,18 +210,11 @@ export default function PerfilPage() {
         topicsCount: topicsCount ?? 0,
       })
 
-      const n = (v: number, s: string, p: string) => `${v} ${v === 1 ? s : p}`
-      const breakdown: { label: string; detail?: string; xp: number }[] = [
-        { label: n(xpProjectsCount ?? 0, 'projeto publicado', 'projetos publicados'), detail: `${xpProjectsCount ?? 0} × 50`, xp: (xpProjectsCount ?? 0) * 50 },
-        { label: n(xpArticlesCount ?? 0, 'artigo publicado', 'artigos publicados'), detail: `${xpArticlesCount ?? 0} × 40`, xp: (xpArticlesCount ?? 0) * 40 },
-        { label: n(xpTopicsCount ?? 0, 'tópico criado', 'tópicos criados'), detail: `${xpTopicsCount ?? 0} × 20`, xp: (xpTopicsCount ?? 0) * 20 },
-        { label: n(commentsCount, 'comentário feito', 'comentários feitos'), detail: `${commentsCount} × 10`, xp: commentsCount * 10 },
-        { label: n(likesReceived, 'curtida recebida', 'curtidas recebidas'), detail: `${likesReceived} × 5`, xp: likesReceived * 5 },
-        { label: 'Foto de perfil', xp: hasNonEmpty(profileData?.avatar_url) ? 15 : 0 },
-        { label: 'Bio preenchida', xp: hasNonEmpty(profileData?.bio) ? 15 : 0 },
-        { label: n(countProfileLinks(profileData ?? {}), 'link de perfil', 'links de perfil'), detail: `${countProfileLinks(profileData ?? {})} × 10`, xp: countProfileLinks(profileData ?? {}) * 10 },
-      ].filter((item) => item.xp > 0)
-      setXpBreakdown(breakdown)
+      setXpBreakdown(((xpBreakdownData ?? []) as XpBreakdownRow[]).map((item) => ({
+        label: item.label,
+        detail: item.detail ?? undefined,
+        xp: item.xp,
+      })))
       setFeedItems([
         ...(projects ?? []).map((project) => ({
           id: project.id,
@@ -309,20 +284,22 @@ export default function PerfilPage() {
   async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    await uploadAvatarFile(file)
+    const cropped = await cropImage(file)
+    if (cropped) await uploadAvatarFile(cropped)
+    e.target.value = ''
   }
 
   function handleAvatarDrop(e: React.DragEvent) {
     e.preventDefault()
     const file = Array.from(e.dataTransfer.files).find((f) => f.type.startsWith('image/'))
-    if (file) void uploadAvatarFile(file)
+    if (file) void cropImage(file).then((cropped) => cropped && uploadAvatarFile(cropped))
   }
 
   function handleAvatarPaste(e: React.ClipboardEvent) {
     const file = Array.from(e.clipboardData.files).find((f) => f.type.startsWith('image/'))
     if (!file) return
     e.preventDefault()
-    void uploadAvatarFile(file)
+    void cropImage(file).then((cropped) => cropped && uploadAvatarFile(cropped))
   }
 
   function handleChange(field: keyof Profile, value: string) {
@@ -643,6 +620,7 @@ export default function PerfilPage() {
 
   return (
     <div className="px-4 md:px-6 py-8 w-full">
+      {cropperNode}
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900">Editar perfil</h1>

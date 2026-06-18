@@ -511,3 +511,32 @@ input[type="checkbox"] {
 .dark .sidebar-nav::-webkit-scrollbar-thumb:hover {
   background: #52525b;
 }
+
+.reaction-option-icon {
+  transform: translateY(0) scale(1);
+  transition: transform 480ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform;
+}
+
+.reaction-option-icon[data-selected="true"] {
+  transform: translateY(-2px) scale(1.15);
+}
+
+.reaction-option:hover .reaction-option-icon {
+  transform: translateY(-6px) scale(1.55);
+}
+
+.reaction-option-label {
+  transition: color 300ms ease;
+}
+
+.reaction-option:hover .reaction-option-label {
+  color: #52525b;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reaction-option-icon,
+  .reaction-option-label {
+    transition-duration: 1ms;
+  }
+}

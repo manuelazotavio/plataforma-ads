@@ -136,7 +136,7 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
             isActive={(project as unknown as { is_active: boolean }).is_active ?? true}
           />
 
-          <div className="mb-6 flex flex-col gap-3 pt-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-8">
+          <div className="mb-6 flex flex-col gap-2 pt-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
             <div className="flex w-full sm:w-auto">
               <LikeButton
                 type="project"
@@ -145,9 +145,11 @@ export default async function ProjetoDetalhe({ params }: { params: Promise<{ id:
                 label="Curtir projeto"
                 variant="action"
                 className="justify-center"
+                summaryTargetId={`project-reactions-${project.id}`}
               />
             </div>
             <ShareProjectButton title={project.title} className="w-full justify-center sm:w-auto" />
+            <span id={`project-reactions-${project.id}`} className="contents" />
           </div>
 
           <div className="border-t border-zinc-100 pt-8">

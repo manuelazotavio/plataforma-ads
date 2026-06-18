@@ -6,7 +6,6 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import UserAvatar from '@/app/components/UserAvatar'
-import { computeXp, countProfileLinks, hasNonEmpty } from '@/app/lib/xp'
 import ProfileProgressRing from '@/app/components/ProfileProgressRing'
 
 type Level = { id: number; name: string; min_xp: number; description: string | null }
@@ -23,7 +22,6 @@ type PublicHomeData = {
   projectsCount: number
   articlesCount: number
   commentsCount: number
-  likesReceived: number
   xp: number
   level: Level | null
   nextLevel: Level | null
@@ -316,43 +314,23 @@ async function loadHomeData(): Promise<PublicHomeData | null> {
     { count: articlesCount },
     { count: projCommentsCount },
     { count: artCommentsCount },
-    { data: ownProjects },
-    { data: ownArticles },
     { data: levelsData },
     { data: professorProfile },
-    { data: missionCompletions },
   ] = await Promise.all([
-    supabase.from('users').select('name, avatar_url, semester, role, bio, github_url, linkedin_url, portfolio_url').eq('id', user.id).single(),
+    supabase.from('users').select('name, avatar_url, semester, role, xp').eq('id', user.id).single(),
     supabase.from('forum_topics').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-    supabase.from('projects').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+    supabase.from('projects').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('approved', true),
     supabase.from('articles').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'publicado'),
     supabase.from('project_comments').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
     supabase.from('article_comments').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-    supabase.from('projects').select('like_count').eq('user_id', user.id),
-    supabase.from('articles').select('like_count').eq('user_id', user.id),
     supabase.from('levels').select('id, name, min_xp, description').order('min_xp', { ascending: true }),
     supabase.from('professors').select('id').eq('user_id', user.id).maybeSingle(),
-    supabase.from('mission_completions').select('xp').eq('user_id', user.id),
   ])
 
   if (!profile) return null
 
-  const likesReceived =
-    (ownProjects ?? []).reduce((sum, project) => sum + (project.like_count ?? 0), 0) +
-    (ownArticles ?? []).reduce((sum, article) => sum + (article.like_count ?? 0), 0)
-
   const commentsCount = (projCommentsCount ?? 0) + (artCommentsCount ?? 0)
-  const missionXp = (missionCompletions ?? []).reduce((sum, c) => sum + ((c as { xp: number }).xp ?? 0), 0)
-  const xp = computeXp({
-    projectsCount: projectsCount ?? 0,
-    articlesCount: articlesCount ?? 0,
-    topicsCount: topicsCount ?? 0,
-    commentsCount,
-    likesReceived,
-    hasAvatar: hasNonEmpty(profile.avatar_url),
-    hasBio: hasNonEmpty(profile.bio),
-    linksCount: countProfileLinks(profile),
-  }) + missionXp
+  const xp = profile.xp ?? 0
 
   const levels = (levelsData ?? []) as Level[]
   const level = [...levels].reverse().find((item) => xp >= item.min_xp) ?? levels[0] ?? null
@@ -374,7 +352,6 @@ async function loadHomeData(): Promise<PublicHomeData | null> {
     projectsCount: projectsCount ?? 0,
     articlesCount: articlesCount ?? 0,
     commentsCount,
-    likesReceived,
     xp,
     level,
     nextLevel,

@@ -3,7 +3,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
-import { computeXp, hasNonEmpty, countProfileLinks } from '@/app/lib/xp'
 import HomeShell from '@/app/components/HomeShell'
 import { PublicProfileCard, PublicWelcomeCard } from '@/app/components/PublicAuthControls'
 import HomeCalendarCard from '@/app/components/HomeCalendarCard'
@@ -54,11 +53,7 @@ type ContributorUser = {
   github_url: string | null
   linkedin_url: string | null
   portfolio_url: string | null
-}
-
-type XpContent = {
-  user_id: string | null
-  like_count?: number | null
+  xp: number
 }
 
 export default async function HomePage() {
@@ -67,11 +62,6 @@ export default async function HomePage() {
     { data: topics },
     { data: tags },
     { data: contributorUsers },
-    { data: contributorProjects },
-    { data: contributorArticles },
-    { data: contributorTopics },
-    { data: contributorProjectComments },
-    { data: contributorArticleComments },
     { data: events },
     { data: calendarItems },
   ] = await Promise.all([
@@ -88,12 +78,7 @@ export default async function HomePage() {
     supabase.from('project_tags').select('tag_name, projects!inner(approved)').eq('projects.approved', true),
     supabase
       .from('users')
-      .select('id, name, avatar_url, semester, role, bio, github_url, linkedin_url, portfolio_url'),
-    supabase.from('projects').select('user_id, like_count'),
-    supabase.from('articles').select('user_id, like_count').eq('status', 'publicado'),
-    supabase.from('forum_topics').select('user_id'),
-    supabase.from('project_comments').select('user_id'),
-    supabase.from('article_comments').select('user_id'),
+      .select('id, name, avatar_url, semester, role, bio, github_url, linkedin_url, portfolio_url, xp'),
     supabase
       .from('events')
       .select('id, title, category, start_date, end_date')
@@ -109,14 +94,7 @@ export default async function HomePage() {
   const featuredProjects = (projects ?? []) as unknown as Project[]
   const recentTopics = (topics ?? []) as unknown as Topic[]
   const popularTags = getPopularTags((tags ?? []).map((tag) => tag.tag_name))
-  const topContributors = getTopContributors({
-    users: (contributorUsers ?? []) as ContributorUser[],
-    projects: (contributorProjects ?? []) as XpContent[],
-    articles: (contributorArticles ?? []) as XpContent[],
-    topics: (contributorTopics ?? []) as XpContent[],
-    projectComments: (contributorProjectComments ?? []) as XpContent[],
-    articleComments: (contributorArticleComments ?? []) as XpContent[],
-  })
+  const topContributors = getTopContributors((contributorUsers ?? []) as ContributorUser[])
   const eventEntries = ((events ?? []) as { id: string; title: string; category: string | null; start_date: string | null; end_date: string | null }[])
     .map((e) => ({ ...e, kind: 'event' as const, color: null, url: null }))
   const itemEntries = ((calendarItems ?? []) as { id: string; title: string; start_date: string | null; end_date: string | null; color: string | null; url: string | null }[])
@@ -331,54 +309,9 @@ function Stat({ label, value }: { label: string; value: number }) {
   )
 }
 
-function getTopContributors({
-  users,
-  projects,
-  articles,
-  topics,
-  projectComments,
-  articleComments,
-}: {
-  users: ContributorUser[]
-  projects: XpContent[]
-  articles: XpContent[]
-  topics: XpContent[]
-  projectComments: XpContent[]
-  articleComments: XpContent[]
-}): Contributor[] {
-  const usersById = new Map(users.map((user) => [user.id, user]))
-
-  const projectsCount = new Map<string, number>()
-  const articlesCount = new Map<string, number>()
-  const topicsCount = new Map<string, number>()
-  const commentsCount = new Map<string, number>()
-  const likesReceived = new Map<string, number>()
-
-  function inc(map: Map<string, number>, userId: string | null | undefined, by = 1) {
-    if (!userId || !usersById.has(userId)) return
-    map.set(userId, (map.get(userId) ?? 0) + by)
-  }
-
-  for (const p of projects) { inc(projectsCount, p.user_id); inc(likesReceived, p.user_id, p.like_count ?? 0) }
-  for (const a of articles) { inc(articlesCount, a.user_id); inc(likesReceived, a.user_id, a.like_count ?? 0) }
-  for (const t of topics) inc(topicsCount, t.user_id)
-  for (const c of projectComments) inc(commentsCount, c.user_id)
-  for (const c of articleComments) inc(commentsCount, c.user_id)
-
-  return Array.from(usersById.values())
-    .map((user) => {
-      const xp = computeXp({
-        projectsCount: projectsCount.get(user.id) ?? 0,
-        articlesCount: articlesCount.get(user.id) ?? 0,
-        topicsCount: topicsCount.get(user.id) ?? 0,
-        commentsCount: commentsCount.get(user.id) ?? 0,
-        likesReceived: likesReceived.get(user.id) ?? 0,
-        hasAvatar: hasNonEmpty(user.avatar_url),
-        hasBio: hasNonEmpty(user.bio),
-        linksCount: countProfileLinks(user),
-      })
-      return { id: user.id, name: user.name, avatar_url: user.avatar_url, semester: user.semester, role: user.role, xp }
-    })
+function getTopContributors(users: ContributorUser[]): Contributor[] {
+  return users
+    .map((user) => ({ id: user.id, name: user.name, avatar_url: user.avatar_url, semester: user.semester, role: user.role, xp: user.xp ?? 0 }))
     .filter((c) => c.xp > 0)
     .sort((a, b) => b.xp - a.xp)
     .slice(0, 3)

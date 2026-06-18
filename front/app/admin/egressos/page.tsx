@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
 import { LoadingState } from '@/app/components/LoadingScreen'
 import { useAppDialog } from '@/app/components/AppDialog'
+import { useImageCropper } from '@/app/components/ImageCropper'
 
 type Egresso = {
   id: string
@@ -33,6 +34,7 @@ const empty = (): Omit<Egresso, 'id'> => ({
 
 export default function AdminEgressosPage() {
   const { confirm, dialogNode } = useAppDialog()
+  const { cropImage, cropperNode } = useImageCropper('1:1')
   const [egressos, setEgressos] = useState<Egresso[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -106,21 +108,22 @@ export default function AdminEgressosPage() {
   async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    await uploadAvatarFile(file)
+    const cropped = await cropImage(file)
+    if (cropped) await uploadAvatarFile(cropped)
     e.target.value = ''
   }
 
   function handleAvatarDrop(e: React.DragEvent) {
     e.preventDefault()
     const file = Array.from(e.dataTransfer.files).find((f) => f.type.startsWith('image/'))
-    if (file) void uploadAvatarFile(file)
+    if (file) void cropImage(file).then((cropped) => cropped && uploadAvatarFile(cropped))
   }
 
   function handleAvatarPaste(e: React.ClipboardEvent) {
     const file = Array.from(e.clipboardData.files).find((f) => f.type.startsWith('image/'))
     if (!file) return
     e.preventDefault()
-    void uploadAvatarFile(file)
+    void cropImage(file).then((cropped) => cropped && uploadAvatarFile(cropped))
   }
 
   async function save() {
@@ -188,6 +191,7 @@ export default function AdminEgressosPage() {
   return (
     <div>
       {dialogNode}
+      {cropperNode}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900">Ex-alunos</h1>

@@ -46,14 +46,13 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
 
       
       {event.banner_url && (
-        <div className="relative w-full rounded-2xl overflow-hidden mb-8 bg-zinc-900 flex items-center justify-center" style={{ minHeight: 220 }}>
-          <Image
+        <div className="mx-auto mb-8 w-full max-w-4xl overflow-hidden rounded-2xl">
+          {/* The uploaded file already contains the chosen crop ratio. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
             src={event.banner_url}
             alt={event.title}
-            width={1200}
-            height={630}
-            className="w-full h-auto max-h-120 object-contain"
-            priority
+            className="block h-auto w-full"
           />
         </div>
       )}
@@ -132,7 +131,7 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
         )
       })()}
 
-      <div className="flex flex-wrap items-center gap-3 mb-12">
+      <div className="mb-12 flex flex-wrap items-center gap-2">
         {event.registration_open && event.registration_url && (
           <a
             href={event.registration_url}
@@ -147,9 +146,17 @@ export default async function EventoPage({ params }: { params: Promise<{ id: str
             </svg>
           </a>
         )}
-        <LikeButton type="event" targetId={event.id} initialCount={0} label="Curtir evento" variant="action" />
+        <LikeButton
+          type="event"
+          targetId={event.id}
+          initialCount={0}
+          label="Curtir evento"
+          variant="action"
+          summaryTargetId={`event-reactions-${event.id}`}
+        />
         <EventReminderButton eventId={event.id} startDate={event.start_date} />
         <ShareProjectButton title={event.title} label="Compartilhar evento" />
+        <span id={`event-reactions-${event.id}`} className="contents" />
       </div>
 
       
