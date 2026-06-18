@@ -246,7 +246,7 @@ function ImageCropperDialog({
             onPointerCancel={onPointerUp}
             onLostPointerCapture={onPointerUp}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+           
             <img
               ref={imageRef}
               src={pending.url}

@@ -68,7 +68,7 @@ export default function ProjectFilters({ tags, semesters, students, categories }
 
   return (
     <div className="mb-6 flex flex-col gap-3">
-      {/* search + filter button row */}
+    
       <div ref={panelRef} className="relative flex gap-2">
         <div className="relative flex-1">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">

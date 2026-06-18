@@ -50,8 +50,7 @@ export default async function EventoPage({ params, searchParams }: { params: Pro
       
       {event.banner_url && (
         <div className="mx-auto mb-8 w-full max-w-4xl overflow-hidden rounded-2xl">
-          {/* The uploaded file already contains the chosen crop ratio. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
+         
           <img
             src={event.banner_url}
             alt={event.title}

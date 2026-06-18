@@ -41,7 +41,7 @@ body * {
   transition-timing-function: ease;
 }
 
-/* Evita zoom automático do iOS ao focar inputs com font-size < 16px */
+
 @media (max-width: 767px) {
   input, textarea, select {
     font-size: 16px !important;
@@ -274,7 +274,6 @@ body * {
   color: #f4f4f5;
 }
 
-/* Force light theme for specific steps (e.g. mascot reveal) */
 .dark .onboarding-light,
 .dark .onboarding-page .onboarding-light {
   background-color: #ffffff !important;

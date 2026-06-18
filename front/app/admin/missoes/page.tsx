@@ -145,7 +145,7 @@ export default function AdminMissoesPage() {
 
       {tab === 'missions' && (
         <div className="flex flex-col gap-8">
-          {/* Create mission */}
+        
           <div className="rounded-2xl border border-zinc-200 bg-white p-6">
             <h2 className="text-base font-semibold text-zinc-900 mb-4">Nova missão</h2>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -178,7 +178,7 @@ export default function AdminMissoesPage() {
             </button>
           </div>
 
-          {/* List */}
+        
           <div className="flex flex-col gap-3">
             {missions.length === 0 && <p className="text-sm text-zinc-400 text-center py-8">Nenhuma missão criada.</p>}
             {missions.map(m => (
@@ -204,7 +204,7 @@ export default function AdminMissoesPage() {
 
       {tab === 'sets' && (
         <div className="flex flex-col gap-8">
-          {/* Create set */}
+        
           <div className="rounded-2xl border border-zinc-200 bg-white p-6">
             <h2 className="text-base font-semibold text-zinc-900 mb-4">Nova semana</h2>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -243,7 +243,7 @@ export default function AdminMissoesPage() {
             </button>
           </div>
 
-          {/* List */}
+         
           <div className="flex flex-col gap-4">
             {sets.length === 0 && <p className="text-sm text-zinc-400 text-center py-8">Nenhuma semana criada.</p>}
             {sets.map(s => {
