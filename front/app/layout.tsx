@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import NavigationProgress from "@/app/components/NavigationProgress";
@@ -12,6 +12,12 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "ADS Conecta",
   description: "A plataforma dos alunos de ADS",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({
