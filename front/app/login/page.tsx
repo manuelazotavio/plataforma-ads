@@ -17,6 +17,7 @@ function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirect') || '/'
+  const suspended = searchParams.get('suspended') === '1'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -31,7 +32,7 @@ function LoginForm() {
     setError(null)
     setLoading(true)
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
       setError('E-mail ou senha inválidos.')
@@ -39,6 +40,18 @@ function LoginForm() {
       return
     }
 
+    const { data: profile } = await supabase
+      .from('users')
+      .select('suspended')
+      .eq('id', data.user.id)
+      .maybeSingle()
+
+    if (profile?.suspended) {
+      await supabase.auth.signOut()
+      setError('Esta conta está suspensa. Entre em contato com a administração.')
+      setLoading(false)
+      return
+    }
     router.push(redirectTo)
   }
 
@@ -88,6 +101,12 @@ function LoginForm() {
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {suspended && !error && (
+            <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+              Esta conta está suspensa. Entre em contato com a administração.
+            </p>
+          )}
+
           <div className="flex flex-col gap-1">
             <label htmlFor="email" className="text-sm font-medium text-zinc-700">
               E-mail <span className="text-red-500">*</span>

@@ -18,7 +18,7 @@ type Author = { name: string; avatar_url: string | null; selected_mascot: UserMa
 type Voter = Author & { id: string }
 type Category = { id: string; name: string }
 type Attachment = { type: 'image' | 'video' | 'file'; url: string; name?: string; size?: number }
-type MascotInfo = { id: string; name: string; image_url: string }
+type MascotInfo = { id: string; name: string; image_url: string; min_xp?: number | null }
 
 type Topic = {
   id: string
@@ -436,14 +436,21 @@ export default function ForumTopicPage() {
     if (user?.id) {
       const { data: profile } = await supabase
         .from('users')
-        .select('name, avatar_url, role, xp, selected_mascot:mascots(name, image_url)')
+        .select('name, avatar_url, role, xp, selected_mascot_id, selected_mascot:mascots(name, image_url)')
         .eq('id', user.id)
         .single()
       setCurrentUserRole(profile?.role ?? null)
       setCurrentUserProfile(profile ? { id: user.id, name: profile.name, avatar_url: profile.avatar_url, selected_mascot: profile.selected_mascot as UserMascot } : null)
       const xp = profile?.xp ?? 0
-      supabase.from('mascots').select('id, name, image_url').eq('is_active', true).lte('min_xp', xp).order('min_xp')
-        .then(({ data: m }) => { if (m) setOwnedMascots(m as MascotInfo[]) })
+      supabase.from('mascots').select('id, name, image_url, min_xp').eq('is_active', true).order('min_xp')
+        .then(({ data: mascots }) => {
+          if (!mascots) return
+          setOwnedMascots(
+            (mascots as MascotInfo[]).filter(
+              (mascot) => mascot.id === profile?.selected_mascot_id || (mascot.min_xp ?? 0) <= xp
+            )
+          )
+        })
     } else {
       setCurrentUserRole(null)
       setCurrentUserProfile(null)

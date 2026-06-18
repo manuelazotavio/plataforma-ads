@@ -13,7 +13,7 @@ import { REACTIONS, ReactionPicker, type ReactionType } from './LikeButton'
 import MentionTextarea, { type MentionHandle } from './MentionTextarea'
 import { parseMentions } from '@/app/lib/mentions'
 
-type MascotInfo = { id: string; name: string; image_url: string }
+type MascotInfo = { id: string; name: string; image_url: string; min_xp?: number | null }
 
 type Comment = {
   id: string
@@ -234,10 +234,21 @@ export default function Comments({ type, targetId }: Props) {
     getAuthUser().then(async (user) => {
       if (!user) return
       setUserId(user.id)
-      const { data: profile } = await supabase.from('users').select('xp').eq('id', user.id).single()
+      const { data: profile } = await supabase
+        .from('users')
+        .select('xp, selected_mascot_id')
+        .eq('id', user.id)
+        .single()
       const xp = profile?.xp ?? 0
-      supabase.from('mascots').select('id, name, image_url').eq('is_active', true).lte('min_xp', xp).order('min_xp')
-        .then(({ data: m }) => { if (m) setOwnedMascots(m as MascotInfo[]) })
+      supabase.from('mascots').select('id, name, image_url, min_xp').eq('is_active', true).order('min_xp')
+        .then(({ data: mascots }) => {
+          if (!mascots) return
+          setOwnedMascots(
+            (mascots as MascotInfo[]).filter(
+              (mascot) => mascot.id === profile?.selected_mascot_id || (mascot.min_xp ?? 0) <= xp
+            )
+          )
+        })
     })
   }, [load])
 
