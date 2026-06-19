@@ -5,7 +5,7 @@ const materials = [
   {
     title: 'Biblioteca virtual',
     description: 'Livros, artigos e bases de pesquisa usados nas disciplinas do curso.',
-    href: '#',
+    href: 'https://ifsp.pergamum.com.br/',
   },
   {
     title: 'Modelos acadêmicos',
@@ -469,6 +469,8 @@ export default function AreaAlunoPage() {
               <Link
                 key={item.title}
                 href={item.href}
+                target={item.href.startsWith('http') ? '_blank' : undefined}
+                rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}
                 className="flex flex-col gap-1 px-5 py-4 transition hover:bg-zinc-50 dark:hover:bg-zinc-900 sm:flex-row sm:items-center sm:justify-between"
               >
                 <span>

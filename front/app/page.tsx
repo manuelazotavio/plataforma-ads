@@ -68,8 +68,11 @@ export default async function HomePage() {
     supabase
       .from('projects')
       .select('id, title, description, updated_at, like_count, project_tags(tag_name), project_images(image_url, display_order, media_type), users(id, name, avatar_url, semester)')
+      .eq('approved', true)
+      .eq('is_active', true)
+      .eq('is_featured', true)
       .order('like_count', { ascending: false })
-      .limit(2),
+      .limit(12),
     supabase
       .from('forum_topics')
       .select('id, title, created_at, replies_count, users(name), forum_categories(name)')
@@ -91,7 +94,7 @@ export default async function HomePage() {
       .order('start_date', { ascending: true }),
   ])
 
-  const featuredProjects = (projects ?? []) as unknown as Project[]
+  const featuredProjects = getRotatingProjects((projects ?? []) as unknown as Project[])
   const recentTopics = (topics ?? []) as unknown as Topic[]
   const popularTags = getPopularTags((tags ?? []).map((tag) => tag.tag_name))
   const topContributors = getTopContributors((contributorUsers ?? []) as ContributorUser[])
@@ -328,6 +331,17 @@ function getPopularTags(tags: string[]): PopularTag[] {
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
     .slice(0, 8)
+}
+
+function getRotatingProjects(projects: Project[], limit = 2): Project[] {
+  if (projects.length <= limit) return projects
+
+  const hourlySlot = Math.floor(Date.now() / 3_600_000)
+  const startIndex = hourlySlot % projects.length
+
+  return Array.from({ length: limit }, (_, offset) => (
+    projects[(startIndex + offset) % projects.length]
+  ))
 }
 
 function contributorLabel(contributor: Pick<Contributor, 'role' | 'semester'>) {
