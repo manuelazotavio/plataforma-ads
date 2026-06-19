@@ -39,6 +39,12 @@ function getMonday(date = new Date()) {
   return d
 }
 
+function formatWeekEnd(weekStart: string) {
+  const endDate = new Date(`${weekStart}T12:00:00`)
+  endDate.setDate(endDate.getDate() + 6)
+  return endDate.toLocaleDateString('pt-BR')
+}
+
 async function computeProgress(userId: string, weekStart: Date, missions: Mission[]): Promise<MissionProgress[]> {
   const ws = weekStart.toISOString()
   const we = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString()
@@ -173,7 +179,10 @@ export default function MissionsCard() {
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white p-5">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-semibold text-zinc-900">Missões da semana</h3>
+        <div>
+          <h3 className="text-base font-semibold text-zinc-900">Missões da semana</h3>
+          <p className="mt-0.5 text-xs text-zinc-400">Termina em {formatWeekEnd(set.week_start)}</p>
+        </div>
         {allComplete && set.bonus_xp > 0 && (
           <span className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold" style={{ backgroundColor: '#e6f4ec', color: '#2F9E41' }}>
             +{set.bonus_xp} XP bônus {bonusClaimed ? '✓' : ''}
