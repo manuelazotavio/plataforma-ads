@@ -80,6 +80,32 @@ const guidance = [
     ],
   },
   {
+    title: 'Frequência e limite de faltas',
+    description: 'Entenda quantas faltas são permitidas de acordo com a quantidade de aulas da disciplina.',
+    videoTitle: null,
+    videoEmbedUrl: null,
+    steps: [
+      'Para ser aprovado, o aluno precisa ter no mínimo 75% de frequência em cada disciplina.',
+      'Isso significa que é possível faltar, no máximo, 25% do total de aulas da disciplina.',
+      'Em uma disciplina com 80 aulas, o limite é de 20 faltas.',
+      'Em uma disciplina com 60 aulas, o limite é de 15 faltas.',
+      'Em uma disciplina com 40 aulas, o limite é de 10 faltas.',
+      'Em uma disciplina com 20 aulas, o limite é de 5 faltas.',
+      'As faltas são registradas por aula, e não apenas por dia. Se uma disciplina tiver quatro aulas no mesmo dia, faltar nesse dia pode resultar em quatro faltas.',
+      'Acompanhe sua frequência pelo SUAP. Evite chegar exatamente ao limite, pois ultrapassar 25% pode causar reprovação por falta, mesmo que as notas estejam suficientes.',
+    ],
+    sections: [
+      {
+        title: 'Como fazer o cálculo',
+        content: [
+          'Multiplique o total de aulas da disciplina por 0,25. O resultado corresponde ao limite máximo de faltas.',
+          'Exemplo: 80 aulas × 0,25 = 20 faltas. Para manter os 75% de frequência, o aluno deve comparecer a pelo menos 60 aulas.',
+          'Se o resultado não for um número inteiro, não arredonde o limite para cima. Consulte o registro oficial no SUAP ou a coordenação para confirmar a quantidade permitida.',
+        ],
+      },
+    ],
+  },
+  {
     title: 'Estágio',
     description: 'Orientações sobre estágio obrigatório e não obrigatório, documentos, prazos, acompanhamento e encerramento.',
     videoTitle: null,
