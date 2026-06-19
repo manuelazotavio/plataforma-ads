@@ -433,11 +433,25 @@ function ProfessorDetailsModal({
   )
 }
 
-export default function ProfessorsSection({ professors }: { professors: Professor[] }) {
-  const [selectedProfessor, setSelectedProfessor] = useState<Professor | null>(null)
+export default function ProfessorsSection({
+  professors,
+  initialProfessorId,
+}: {
+  professors: Professor[]
+  initialProfessorId?: string
+}) {
+  const router = useRouter()
+  const [selectedProfessor, setSelectedProfessor] = useState<Professor | null>(
+    () => professors.find((item) => item.id === initialProfessorId) ?? null
+  )
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
+
+  const closeProfessor = useCallback(() => {
+    setSelectedProfessor(null)
+    if (initialProfessorId) router.replace('/curso#professores', { scroll: false })
+  }, [initialProfessorId, router])
 
   const updateButtons = useCallback(() => {
     const el = scrollRef.current
@@ -505,7 +519,7 @@ export default function ProfessorsSection({ professors }: { professors: Professo
       {selectedProfessor && (
         <ProfessorDetailsModal
           professor={selectedProfessor}
-          onClose={() => setSelectedProfessor(null)}
+          onClose={closeProfessor}
         />
       )}
     </>

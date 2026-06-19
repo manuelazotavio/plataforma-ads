@@ -24,7 +24,14 @@ import {
   InfoCard,
 } from '@/app/lib/courseSettings'
 
-export default async function CursoPage() {
+export default async function CursoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ professor?: string | string[] }>
+}) {
+  const requestedProfessor = (await searchParams).professor
+  const initialProfessorId = Array.isArray(requestedProfessor) ? requestedProfessor[0] : requestedProfessor
+
   const [{ data: professors }, { data: rawSubjects, error: subjectsError }, { data: courseSettings }, { data: versions }, { data: ppcDocs }, { data: equivalencyGroups }] = await Promise.all([
     supabase
       .from('professors')
@@ -178,7 +185,7 @@ export default async function CursoPage() {
             <p className="text-sm text-zinc-400">Nenhum professor cadastrado ainda.</p>
           </div>
         ) : (
-          <ProfessorsSection professors={professors} />
+          <ProfessorsSection professors={professors} initialProfessorId={initialProfessorId} />
         )}
       </section>
 

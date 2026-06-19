@@ -50,6 +50,7 @@ const STATIC_PAGES: { title: string; subtitle: string; url: string; keywords: st
   { title: 'Iniciação científica', subtitle: 'Orientações Acadêmicas', url: '/area-aluno#orientacoes-academicas', keywords: 'iniciação científica pesquisa edital orientador bolsa' },
   { title: 'TCC', subtitle: 'Orientações Acadêmicas', url: '/area-aluno#orientacoes-academicas', keywords: 'tcc trabalho conclusão monografia defesa' },
   { title: 'Processos acadêmicos', subtitle: 'Orientações Acadêmicas', url: '/area-aluno#orientacoes-academicas', keywords: 'processo matrícula trancamento frequência setor' },
+  { title: 'Frequência e limite de faltas', subtitle: 'Orientações Acadêmicas', url: '/area-aluno#orientacoes-academicas', keywords: 'faltas falta frequência frequencia presença presenca 75% 25% aulas disciplina reprovação reprovacao limite' },
   { title: 'Materiais acadêmicos', subtitle: 'Área do Aluno', url: '/area-aluno#materiais', keywords: 'biblioteca modelos templates relatório trabalho' },
   { title: 'Links úteis', subtitle: 'Área do Aluno', url: '/area-aluno#links-uteis', keywords: 'suap moodle portal links acesso sistema' },
 ]

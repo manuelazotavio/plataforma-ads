@@ -236,6 +236,11 @@ export default async function SubjectDetailPage({ params }: { params: Promise<{ 
             {professors.map((prof) => {
               const userId = prof.professors?.user_id ?? null
               const avatarUrl = prof.professors?.avatar_url ?? null
+              const professorHref = prof.professor_id
+                ? `/curso?professor=${prof.professor_id}#professores`
+                : userId
+                  ? `/usuarios/${userId}`
+                  : null
               const inner = (
                 <>
                   <div className="flex min-w-0 items-center gap-3">
@@ -256,9 +261,14 @@ export default async function SubjectDetailPage({ params }: { params: Promise<{ 
 
               const className = 'flex items-center justify-between gap-3 rounded-lg bg-zinc-50 px-3 py-2'
 
-              if (userId) {
+              if (professorHref) {
                 return (
-                  <Link key={prof.id} href={`/usuarios/${userId}`} className={`${className} transition hover:bg-zinc-100`}>
+                  <Link
+                    key={prof.id}
+                    href={professorHref}
+                    className={`${className} transition hover:bg-zinc-100`}
+                    aria-label={`Ver detalhes de ${prof.professor_name}`}
+                  >
                     {inner}
                   </Link>
                 )
