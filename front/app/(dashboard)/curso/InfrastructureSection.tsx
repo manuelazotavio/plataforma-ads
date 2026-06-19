@@ -1,138 +1,167 @@
 'use client'
 
 import Image from 'next/image'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 type InfraItem = {
   title: string
   description: string
   tags: string[]
-  image?: string
+  images: string[]
 }
 
-function useDark() {
-  const [dark, setDark] = useState(false)
-  useEffect(() => {
-    const el = document.documentElement
-    setDark(el.classList.contains('dark'))
-    const obs = new MutationObserver(() => setDark(el.classList.contains('dark')))
-    obs.observe(el, { attributeFilter: ['class'] })
-    return () => obs.disconnect()
-  }, [])
-  return dark
-}
+const AUTOPLAY_DELAY = 4500
 
-function InfraRow({ item, index }: { item: InfraItem; index: number }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const [visible, setVisible] = useState(false)
-  const [hovered, setHovered] = useState(false)
-  const dark = useDark()
+function ImageCarousel({ images, title }: { images: string[]; title: string }) {
+  const [activeImage, setActiveImage] = useState(0)
+  const [paused, setPaused] = useState(false)
+
+  const goTo = useCallback((index: number) => {
+    setActiveImage((index + images.length) % images.length)
+  }, [images.length])
 
   useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setVisible(true); observer.disconnect() } },
-      { threshold: 0.15 }
+    if (paused || images.length < 2) return
+    const interval = window.setInterval(() => {
+      setActiveImage((current) => (current + 1) % images.length)
+    }, AUTOPLAY_DELAY)
+    return () => window.clearInterval(interval)
+  }, [images.length, paused])
+
+  if (images.length === 0) {
+    return (
+      <div className="flex min-h-64 items-center justify-center bg-zinc-100 md:min-h-96">
+        <div className="flex flex-col items-center gap-3 text-zinc-400">
+          <svg width={36} height={36} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+            <rect x={3} y={3} width={18} height={18} rx={2} />
+            <circle cx={8.5} cy={8.5} r={1.5} />
+            <path d="m21 15-5-5L5 21" />
+          </svg>
+          <span className="text-sm">Galeria em atualização</span>
+        </div>
+      </div>
     )
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
+  }
 
   return (
     <div
-      ref={ref}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className="grid grid-cols-1 md:grid-cols-[3fr_2fr] rounded-2xl overflow-hidden cursor-default"
-      style={{
-        opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0)' : 'translateY(32px)',
-        transition: 'opacity 0.6s ease, transform 0.6s ease',
-        transitionDelay: `${index * 100}ms`,
-      }}
+      className="group relative min-h-64 overflow-hidden bg-zinc-100 md:min-h-96"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
     >
-      <div className="py-6 md:py-9 pr-0 md:pr-12 flex flex-col gap-4">
-        <p
-          className="text-2xl font-black leading-tight"
-          style={{
-            color: hovered ? '#2F9E41' : (dark ? '#f4f4f5' : '#18181b'),
-            letterSpacing: hovered ? '0.01em' : '0em',
-            transition: 'color 0.4s ease, letter-spacing 0.4s ease',
-          }}
-        >
-          {item.title}
-        </p>
+      {images.map((image, index) => (
+        <Image
+          key={`${title}-${image}`}
+          src={image}
+          alt={`${title} — foto ${index + 1}`}
+          fill
+          priority={index === 0}
+          className={`object-cover transition duration-700 ease-out ${
+            index === activeImage ? 'scale-100 opacity-100' : 'scale-105 opacity-0'
+          }`}
+        />
+      ))}
 
-        <p
-          className="text-sm leading-relaxed"
-          style={{
-            color: hovered ? (dark ? '#a1a1aa' : '#52525b') : '#71717a',
-            transform: hovered ? 'translateX(8px)' : 'translateX(0)',
-            transition: 'color 0.4s ease, transform 0.4s ease',
-          }}
-        >
-          {item.description}
-        </p>
+      <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
 
-        <div className="flex flex-wrap gap-2">
-          {item.tags.map((tag, t) => (
-            <span
-              key={tag}
-              className="text-xs border rounded-full px-3 py-1"
-              style={{
-                color: hovered ? '#2F9E41' : '#71717a',
-                borderColor: hovered ? '#2F9E41' : (dark ? '#3f3f46' : '#e4e4e7'),
-                transform: hovered ? 'translateY(0)' : 'translateY(4px)',
-                opacity: hovered ? 1 : 0.7,
-                transition: 'color 0.3s ease, border-color 0.3s ease, transform 0.3s ease, opacity 0.3s ease',
-                transitionDelay: hovered ? `${t * 50}ms` : '0ms',
-              }}
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      <div className="relative overflow-hidden h-48 md:h-auto md:min-h-50 bg-zinc-100">
-        {item.image ? (
-          <Image
-            src={item.image}
-            alt={item.title}
-            fill
-            className="object-cover"
-            style={{
-              transform: hovered ? 'scale(1.06)' : 'scale(1)',
-              transition: 'transform 0.6s cubic-bezier(0.76, 0, 0.24, 1)',
-            }}
-          />
-        ) : (
-          <div
-            className="w-full h-full flex items-center justify-center"
-            style={{
-              transform: hovered ? 'scale(1.03)' : 'scale(1)',
-              transition: 'transform 0.6s cubic-bezier(0.76, 0, 0.24, 1)',
-            }}
+      {images.length > 1 && (
+        <>
+          <button
+            type="button"
+            onClick={() => goTo(activeImage - 1)}
+            className="absolute left-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-zinc-800 shadow-sm transition hover:bg-white dark:bg-zinc-900/90 dark:text-white dark:hover:bg-zinc-900"
+            aria-label="Foto anterior"
           >
-            <svg width={32} height={32} viewBox="0 0 24 24" fill="none" stroke="#d4d4d8" strokeWidth={1.5}>
-              <rect x={3} y={3} width={18} height={18} rx={2} />
-              <circle cx={8.5} cy={8.5} r={1.5} />
-              <path d="m21 15-5-5L5 21" />
+            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="m15 18-6-6 6-6" />
             </svg>
+          </button>
+          <button
+            type="button"
+            onClick={() => goTo(activeImage + 1)}
+            className="absolute right-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-zinc-800 shadow-sm transition hover:bg-white dark:bg-zinc-900/90 dark:text-white dark:hover:bg-zinc-900"
+            aria-label="Próxima foto"
+          >
+            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="m9 18 6-6-6-6" />
+            </svg>
+          </button>
+
+          <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
+            {images.map((_, index) => (
+              <button
+                key={index}
+                type="button"
+                onClick={() => goTo(index)}
+                className={`h-2 rounded-full transition-all ${
+                  index === activeImage ? 'w-7 bg-white' : 'w-2 bg-white/55 hover:bg-white/80'
+                }`}
+                aria-label={`Abrir foto ${index + 1}`}
+                aria-current={index === activeImage ? 'true' : undefined}
+              />
+            ))}
           </div>
-        )}
-      </div>
+        </>
+      )}
     </div>
   )
 }
 
 export default function InfrastructureSection({ infrastructure }: { infrastructure: InfraItem[] }) {
+  const [activeTab, setActiveTab] = useState(0)
+  const activeItem = infrastructure[activeTab] ?? infrastructure[0]
+
+  if (!activeItem) return null
+
   return (
-    <div className="flex flex-col gap-4">
-      {infrastructure.map((item, i) => (
-        <InfraRow key={item.title} item={item} index={i} />
-      ))}
+    <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+      <div
+        className="flex gap-2 overflow-x-auto border-b border-zinc-200 p-3"
+        role="tablist"
+        aria-label="Infraestrutura do câmpus"
+      >
+        {infrastructure.map((item, index) => (
+          <button
+            key={item.title}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === index}
+            onClick={() => setActiveTab(index)}
+            className={`shrink-0 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+              activeTab === index
+                ? 'bg-[#2F9E41] text-white shadow-sm'
+                : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900'
+            }`}
+          >
+            {item.title}
+          </button>
+        ))}
+      </div>
+
+      <div key={activeItem.title} role="tabpanel" className="grid grid-cols-1 lg:grid-cols-[minmax(0,4fr)_minmax(320px,3fr)]">
+        <ImageCarousel images={activeItem.images} title={activeItem.title} />
+
+        <div className="flex flex-col justify-center gap-5 p-6 md:p-9">
+          <h3 className="text-2xl font-black leading-tight text-zinc-900">
+            {activeItem.title}
+          </h3>
+
+          <p className="text-sm leading-7 text-zinc-600">{activeItem.description}</p>
+
+          <div className="flex flex-wrap gap-2">
+            {activeItem.tags.map((tag) => (
+              <span
+                key={tag}
+                className="rounded-full border border-[#2F9E41]/20 bg-[#2F9E41]/5 px-3 py-1.5 text-xs font-medium text-[#277F35]"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

@@ -310,25 +310,54 @@ function CourseDocumentLink({ title, description, href }: { title: string; descr
 
 const infrastructure = [
   {
+    title: 'Sobre o Câmpus',
+    description: 'O Câmpus Caraguatatuba do IFSP reúne espaços de ensino, pesquisa, extensão e convivência para apoiar a formação acadêmica e a integração da comunidade.',
+    tags: ['IFSP Caraguatatuba', 'Ensino público', 'Pesquisa e extensão', 'Comunidade acadêmica'],
+    images: [
+      '/campus/entrada-ifsp.jpeg',
+      '/campus/placa-direcoes.jpeg',
+      '/campus/auditorio-frente.jpeg',
+      '/campus/auditorio-fundo.jpeg',
+      '/campus/patio-principal.jpeg',
+      '/campus/refeitorio.jpeg',
+    ],
+  },
+  {
     title: 'Laboratórios de Informática',
     description: 'Laboratórios equipados com computadores modernos e acesso a softwares e ferramentas de desenvolvimento profissional.',
     tags: ['Hardware atualizado', 'IDEs instaladas', 'Acesso remoto', 'Suporte técnico'],
+    images: [
+      '/laboratorios/informatica-01.jpeg',
+      '/laboratorios/informatica-02.jpeg',
+      '/laboratorios/informatica-03.jpeg',
+    ],
   },
   {
     title: 'Impressora 3D',
     description: 'Equipamento para criar protótipos, peças e modelos tridimensionais utilizados em projetos acadêmicos e atividades práticas.',
     tags: ['Modelagem 3D', 'Prototipagem', 'Projetos práticos'],
-    image: '/impressora.jpeg',
+    images: [
+      '/impressora.jpeg',
+      '/impressora-3d/impressora-3d-02.jpeg',
+      '/impressora-3d/impressora-3d-03.jpeg',
+    ],
   },
   {
     title: 'Biblioteca e Acervo Digital',
     description: 'Acervo de livros técnicos, assinatura de plataformas de ensino online e acesso a periódicos e artigos científicos.',
     tags: ['Livros técnicos', 'IEEE Access', 'E-books'],
+    images: [
+      '/biblioteca/acervo-tecnico.jpeg',
+      '/biblioteca/espaco-digital.jpeg',
+      '/biblioteca/acervo-geral.jpeg',
+      '/biblioteca/espaco-estudo.jpeg',
+      '/biblioteca/estantes.jpeg',
+    ],
   },
   {
     title: 'LabTech',
     description: 'Laboratório de prototipagem com impressoras 3D, Arduino, Raspberry Pi e equipamentos de IoT para projetos práticos.',
     tags: ['Impressão 3D', 'Arduino & RPi', 'IoT', 'Prototipagem rápida'],
-    image: '/labtech.jpeg',
+    images: ['/labtech.jpeg', '/impressora.jpeg', '/labtech/kits-robotica.jpeg'],
   },
 ]
