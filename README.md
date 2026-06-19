@@ -4,6 +4,44 @@ Plataforma comunitária para alunos do curso de Análise e Desenvolvimento de Si
 
 O projeto usa Next.js no frontend e Supabase como backend completo (banco de dados, autenticação, storage de arquivos e funções serverless). Não há servidor próprio, toda a lógica de backend vive no Supabase.
 
+## Docker
+
+O arquivo `compose.yaml` sobe dois serviços:
+
+- `app`: frontend Next.js em modo de produção, disponível em `http://localhost:3000`.
+- `backup`: backup diário do banco Supabase com `pg_dump`, salvo localmente e em uma pasta sincronizada pelo OneDrive.
+
+Antes da primeira execução, defina a connection string do banco na sessão do terminal:
+
+```powershell
+$env:SUPABASE_DB_URL='postgresql://...'
+```
+
+Opcionalmente, altere a pasta do OneDrive e os intervalos:
+
+```powershell
+$env:ONEDRIVE_BACKUP_DIR='C:/Users/SEU_USUARIO/OneDrive/ADS Conecta/Backups/Supabase'
+$env:BACKUP_INTERVAL_SECONDS='86400'
+$env:KEEP_DAYS='14'
+```
+
+Depois execute:
+
+```powershell
+docker compose up -d --build
+```
+
+O serviço de backup executa uma cópia imediatamente ao iniciar e repete no intervalo configurado. Os arquivos ficam em:
+
+- `backups/supabase`
+- pasta configurada em `ONEDRIVE_BACKUP_DIR`
+
+Para acompanhar:
+
+```powershell
+docker compose logs -f backup
+```
+
 ---
 
 ## Pré-requisitos

@@ -1,6 +1,7 @@
 param(
   [string]$TaskName = 'ADS Conecta - Backup Supabase',
   [string]$At = '03:00',
+  [string]$CloudBackupDir = '',
   [int]$KeepDays = 14
 )
 
@@ -17,9 +18,24 @@ if (-not $env:SUPABASE_DB_URL) {
   throw 'Defina a variavel de ambiente SUPABASE_DB_URL antes de instalar a tarefa. A tarefa usara essa variavel do usuario atual.'
 }
 
+if (-not $CloudBackupDir) {
+  $oneDriveRoot = $env:OneDrive
+  if (-not $oneDriveRoot) {
+    $oneDriveRoot = $env:OneDriveConsumer
+  }
+  if ($oneDriveRoot) {
+    $CloudBackupDir = Join-Path $oneDriveRoot 'ADS Conecta\Backups\Supabase'
+  }
+}
+
+$backupArguments = "-NoProfile -ExecutionPolicy Bypass -File `"$scriptPath`" -KeepDays $KeepDays"
+if ($CloudBackupDir) {
+  $backupArguments += " -CloudBackupDir `"$CloudBackupDir`""
+}
+
 $action = New-ScheduledTaskAction `
   -Execute 'powershell.exe' `
-  -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$scriptPath`" -KeepDays $KeepDays" `
+  -Argument $backupArguments `
   -WorkingDirectory $projectRoot
 
 $trigger = New-ScheduledTaskTrigger -Daily -At $At
@@ -34,3 +50,8 @@ Register-ScheduledTask `
   -Force | Out-Null
 
 Write-Host "Tarefa criada: $TaskName, diariamente as $At."
+if ($CloudBackupDir) {
+  Write-Host "Copia em nuvem: $CloudBackupDir"
+} else {
+  Write-Warning 'OneDrive nao encontrado. A tarefa salvara apenas a copia local.'
+}

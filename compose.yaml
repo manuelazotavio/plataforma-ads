@@ -1,0 +1,28 @@
+services:
+  app:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    image: ads-conecta-app:local
+    env_file:
+      - ./front/.env.local
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  backup:
+    image: postgres:17-alpine
+    environment:
+      SUPABASE_DB_URL: ${SUPABASE_DB_URL}
+      BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
+      KEEP_DAYS: ${KEEP_DAYS:-14}
+      LOCAL_BACKUP_DIR: /backups
+      CLOUD_BACKUP_DIR: /cloud-backups
+    volumes:
+      - ./docker/backup-entrypoint.sh:/usr/local/bin/backup-entrypoint.sh:ro
+      - ./backups/supabase:/backups
+      - type: bind
+        source: ${ONEDRIVE_BACKUP_DIR:-C:/Users/manu/OneDrive/ADS Conecta/Backups/Supabase}
+        target: /cloud-backups
+    entrypoint: ["/bin/sh", "/usr/local/bin/backup-entrypoint.sh"]
+    restart: unless-stopped
