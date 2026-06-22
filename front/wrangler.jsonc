@@ -4,20 +4,12 @@
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-06-22",
   "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "preview_urls": true,
   "assets": {
     "binding": "ASSETS",
     "directory": ".open-next/assets"
   },
-  "routes": [
-    {
-      "pattern": "adsconecta.com",
-      "custom_domain": true
-    },
-    {
-      "pattern": "www.adsconecta.com",
-      "custom_domain": true
-    }
-  ],
   "observability": {
     "enabled": true
   }

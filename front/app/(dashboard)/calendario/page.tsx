@@ -244,11 +244,11 @@ export default function CalendarioPage() {
                     </button>
                   )
                 })}
-
-                {overflow > 0 && (
-                  <span className="shrink-0 px-1.5 text-xs text-zinc-400">+ {overflow} mais</span>
-                )}
               </div>
+
+              {overflow > 0 && (
+                <span className="shrink-0 px-1.5 text-[11px] text-zinc-400">+{overflow} mais</span>
+              )}
             </div>
           )
         })}
