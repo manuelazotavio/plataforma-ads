@@ -52,6 +52,58 @@ body * {
   }
 }
 
+/* O botão padrão fica oculto; o footer oferece o acionador personalizado. */
+div[vw] > div[vw-access-button] {
+  position: fixed !important;
+  right: -9999px !important;
+  bottom: -9999px !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+}
+
+body.a11y-bold,
+body.a11y-bold * {
+  font-weight: bold !important;
+}
+
+body.a11y-highlight-links a {
+  outline: 3px solid #ff0 !important;
+  outline-offset: 2px !important;
+  background-color: rgb(255 255 0 / 15%) !important;
+  text-decoration: underline !important;
+}
+
+body.a11y-highlight-buttons button,
+body.a11y-highlight-buttons [role="button"],
+body.a11y-highlight-buttons input[type="submit"],
+body.a11y-highlight-buttons input[type="button"] {
+  outline: 3px solid #00e5ff !important;
+  outline-offset: 2px !important;
+}
+
+#a11y-content.a11y-high-contrast {
+  filter: contrast(1.5);
+}
+
+#a11y-content.a11y-inverted {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+#a11y-content.a11y-inverted img,
+#a11y-content.a11y-inverted video {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+#a11y-content.a11y-low-saturation {
+  filter: saturate(0.4);
+}
+
+#a11y-content.a11y-grayscale {
+  filter: grayscale(1);
+}
+
 .dark .bg-white {
   background-color: #121214 !important;
 }

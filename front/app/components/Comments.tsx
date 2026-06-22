@@ -198,6 +198,7 @@ export default function Comments({ type, targetId }: Props) {
   const [selectedMascot, setSelectedMascot] = useState<MascotInfo | null>(null)
   const [replyMascot, setReplyMascot]       = useState<MascotInfo | null>(null)
   const [userId, setUserId]       = useState<string | null>(null)
+  const [userRole, setUserRole]   = useState<string | null>(null)
   const [text, setText]             = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -236,9 +237,10 @@ export default function Comments({ type, targetId }: Props) {
       setUserId(user.id)
       const { data: profile } = await supabase
         .from('users')
-        .select('xp, selected_mascot_id')
+        .select('xp, selected_mascot_id, role')
         .eq('id', user.id)
         .single()
+      setUserRole(profile?.role ?? null)
       const xp = profile?.xp ?? 0
       supabase.from('mascots').select('id, name, image_url, min_xp').eq('is_active', true).order('min_xp')
         .then(({ data: mascots }) => {
@@ -316,7 +318,12 @@ export default function Comments({ type, targetId }: Props) {
 
   async function handleDelete(id: string, parentId: string | null) {
     setDeletingId(id)
-    await supabase.from(table).delete().eq('id', id)
+    const { error } = await supabase.from(table).delete().eq('id', id)
+    if (error) {
+      console.error('Erro ao excluir comentário:', error)
+      setDeletingId(null)
+      return
+    }
     if (parentId) {
       setThreads(prev => prev.map(t =>
         t.id === parentId ? { ...t, replies: t.replies.filter(r => r.id !== id) } : t
@@ -328,6 +335,7 @@ export default function Comments({ type, targetId }: Props) {
   }
 
   const totalCount = threads.reduce((acc, t) => acc + 1 + t.replies.length, 0)
+  const canModerateComments = userRole === 'admin' || userRole === 'moderador'
 
   return (
     <div className="mt-10 pt-8 border-t border-zinc-100">
@@ -365,7 +373,7 @@ export default function Comments({ type, targetId }: Props) {
                         Responder
                       </button>
                     )}
-                    {userId === comment.users?.id && (
+                    {(userId === comment.users?.id || canModerateComments) && (
                       <button
                         onClick={() => handleDelete(comment.id, null)}
                         disabled={deletingId === comment.id}
@@ -399,7 +407,7 @@ export default function Comments({ type, targetId }: Props) {
                         )}
                         <div className="flex flex-wrap items-center gap-2 mt-2">
                           <CommentReactionBar commentId={reply.id} userId={userId} reactions={reactions} onReact={handleReact} />
-                          {userId === reply.users?.id && (
+                          {(userId === reply.users?.id || canModerateComments) && (
                             <button
                               onClick={() => handleDelete(reply.id, comment.id)}
                               disabled={deletingId === reply.id}

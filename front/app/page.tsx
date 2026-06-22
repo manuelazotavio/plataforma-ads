@@ -8,6 +8,7 @@ import { PublicProfileCard, PublicWelcomeCard } from '@/app/components/PublicAut
 import HomeCalendarCard from '@/app/components/HomeCalendarCard'
 import UserAvatar from '@/app/components/UserAvatar'
 import MissionsCard from '@/app/components/MissionsCard'
+import AccessibilityControls from '@/app/components/AccessibilityControls'
 
 type Project = {
   id: string
@@ -130,7 +131,10 @@ export default async function HomePage() {
           <Link href="/regras" className="transition hover:text-zinc-700">Regras do ADS Conecta</Link>
           <Link href="/privacidade" className="transition hover:text-zinc-700">Política de Privacidade</Link>
           <Link href="/contrato" className="transition hover:text-zinc-700">Contrato de Usuário</Link>
-          <Link href="/acessibilidade" className="transition hover:text-zinc-700">Acessibilidade</Link>
+          <span className="inline-flex items-center gap-2">
+            <Link href="/acessibilidade" className="transition hover:text-zinc-700">Acessibilidade</Link>
+            <AccessibilityControls />
+          </span>
           <span className="md:ml-auto">ADS Conecta, Inc. &copy; 2026. Todos os direitos reservados.</span>
         </div>
       </footer>
