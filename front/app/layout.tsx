@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import NavigationProgress from "@/app/components/NavigationProgress";
 import SuspendedUserGuard from "@/app/components/SuspendedUserGuard";
-import Script from "next/script";
+import VLibrasWidget from "@/app/components/VLibrasWidget";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -41,16 +41,7 @@ export default function RootLayout({
         <div id="a11y-content" className="flex min-h-full flex-1 flex-col">
           {children}
         </div>
-        <div {...{ vw: "true" }} className="enabled">
-          <div {...{ "vw-access-button": "true" }} className="active" />
-          <div {...{ "vw-plugin-wrapper": "true" }}>
-            <div className="vw-plugin-top-wrapper" />
-          </div>
-        </div>
-        <Script src="https://vlibras.gov.br/app/vlibras-plugin.js" strategy="afterInteractive" />
-        <Script id="vlibras-init" strategy="afterInteractive">
-          {`(function init(){if(window.VLibras&&window.VLibras.Widget){new window.VLibras.Widget('https://vlibras.gov.br/app')}else{setTimeout(init,200)}})();`}
-        </Script>
+        <VLibrasWidget />
       </body>
     </html>
   );
