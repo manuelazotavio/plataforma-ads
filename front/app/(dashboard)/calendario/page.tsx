@@ -151,6 +151,10 @@ export default function CalendarioPage() {
       .filter(Boolean) as (CalendarEntry & { isStart: boolean; isEnd: boolean })[]
   }
 
+  function toDateStr(date: Date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  }
+
   function isToday(date: Date) {
     return date.getDate() === today.getDate() &&
       date.getMonth() === today.getMonth() &&
@@ -247,7 +251,12 @@ export default function CalendarioPage() {
               </div>
 
               {overflow > 0 && (
-                <span className="shrink-0 px-1.5 text-[11px] text-zinc-400">+{overflow} mais</span>
+                <Link
+                  href={`/calendario/${toDateStr(cell.date)}`}
+                  className="mx-1 shrink-0 rounded px-1 py-0.5 text-[10px] font-semibold text-zinc-500 bg-zinc-100 transition hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
+                >
+                  +{overflow} mais
+                </Link>
               )}
             </div>
           )
