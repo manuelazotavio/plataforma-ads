@@ -215,7 +215,7 @@ export default function CalendarioPage() {
                 {cell.date.getDate()}
               </span>
 
-              <div className="mt-1 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto pr-0.5">
+              <div className="mt-1 flex min-h-0 flex-1 flex-col gap-1 overflow-hidden">
                 {shown.map(ev => {
                   const rawId = ev.id.split(':')[1]
                   const colorClass = ev.kind === 'event'
