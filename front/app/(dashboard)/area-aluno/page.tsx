@@ -352,6 +352,45 @@ const guidance = [
     ],
   },
   {
+    title: 'RESAB',
+    description: 'Reconhecimento de Saberes: saiba como aproveitar conhecimentos e experiências profissionais para dispensar disciplinas do curso.',
+    videoTitle: null,
+    videoEmbedUrl: null,
+    steps: [
+      'O Reconhecimento de Saberes (RESAB) é um instrumento pelo qual o estudante comprova que possui conhecimentos, habilidades e competências específicos da área de conhecimento de um componente curricular do curso.',
+      'Por meio do RESAB, o aluno pode aproveitar até 30% da carga horária total do curso.',
+      'O pedido deve ser feito dentro do prazo definido no calendário acadêmico.',
+      'O RESAB é regulamentado pela Instrução Normativa PRE/IFSP nº 003, de 11 de maio de 2020.',
+    ],
+    sections: [
+      {
+        title: 'Como solicitar',
+        content: [
+          'Abra um requerimento no SUAP e anexe os documentos exigidos.',
+        ],
+        steps: [
+          'Acesse o SUAP e abra um novo requerimento (veja a orientação "Requerimentos no SUAP" para o passo a passo).',
+          'Preencha o Requerimento de Reconhecimento de Saberes e anexe-o ao requerimento.',
+          'Anexe ao menos um documento comprobatório que demonstre seu conhecimento no componente curricular solicitado.',
+        ],
+      },
+      {
+        title: 'Documentos comprobatórios aceitos',
+        content: [
+          'Ao menos um dos documentos abaixo deve ser anexado ao requerimento:',
+          'Carteira de Trabalho — páginas da foto, da identificação e do registro utilizado para requerer o RESAB.',
+          'Contrato de Estágio ou Contrato de Trabalho.',
+          'Declaração do Empregador descrevendo as atividades desempenhadas com período de início e fim.',
+          'Anotações de Responsabilidade Técnica (ART) devidamente recolhidas.',
+          'Certificado ou Diploma de curso(s) ligado(s) ao componente curricular solicitado.',
+          'Registros fotográficos, audiovisuais ou escritos relacionados à prática profissional.',
+          'Documentos comprobatórios de exercício profissional: projetos, portfólios ou declaração de serviços prestados emitida por pessoa jurídica.',
+          'Memorial Socioprofissional firmado pelo candidato.',
+        ],
+      },
+    ],
+  },
+  {
     title: 'TCC',
     description: 'Orientações para escolha do tema, desenvolvimento, estrutura, formatação e defesa do Trabalho de Conclusão de Curso.',
     videoTitle: null,
