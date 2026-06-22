@@ -194,8 +194,8 @@ export default function CalendarioPage() {
       <div className="grid flex-1 grid-cols-7 grid-rows-6 overflow-hidden border-l border-zinc-100 dark:border-zinc-800">
         {cells.map((cell, i) => {
           const dayEvents = eventsForDay(cell.date)
-          const shown = dayEvents.slice(0, 3)
-          const overflow = dayEvents.length - 3
+          const shown = dayEvents.slice(0, 2)
+          const overflow = dayEvents.length - 2
           const todayCell = isToday(cell.date)
 
           return (

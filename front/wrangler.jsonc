@@ -8,6 +8,16 @@
     "binding": "ASSETS",
     "directory": ".open-next/assets"
   },
+  "routes": [
+    {
+      "pattern": "adsconecta.com",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.adsconecta.com",
+      "custom_domain": true
+    }
+  ],
   "observability": {
     "enabled": true
   }
