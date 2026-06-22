@@ -131,7 +131,7 @@ export default async function HomePage() {
           <Link href="/regras" className="transition hover:text-zinc-700">Regras do ADS Conecta</Link>
           <Link href="/privacidade" className="transition hover:text-zinc-700">Política de Privacidade</Link>
           <Link href="/contrato" className="transition hover:text-zinc-700">Contrato de Usuário</Link>
-          <span className="inline-flex items-center gap-2">
+          <span className="inline-flex items-center">
             <Link href="/acessibilidade" className="transition hover:text-zinc-700">Acessibilidade</Link>
             <AccessibilityControls />
           </span>

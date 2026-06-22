@@ -123,15 +123,15 @@ export default function AccessibilityControls() {
 
   return (
     <>
-      <span className="inline-flex items-center gap-1.5" role="group" aria-label="Recursos de acessibilidade">
+      <span className="ml-2 inline-flex items-center gap-1.5" role="group" aria-label="Recursos de acessibilidade">
         <button
           type="button"
           onClick={openVLibras}
-          className="overflow-hidden rounded-md transition hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+          className="overflow-hidden rounded-md bg-[#1986d1] transition hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
           aria-label="Traduzir a página em Libras"
           title="Traduzir em Libras"
         >
-          <Image src="/accessibility/libras.png" alt="" width={28} height={28} className="size-7 object-cover" />
+          <Image src="/accessibility/libras.png" alt="" width={28} height={28} className="size-7 scale-110 object-cover" />
         </button>
         <button
           type="button"

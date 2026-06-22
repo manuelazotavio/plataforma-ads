@@ -246,7 +246,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <Link href="/regras" className="hover:text-zinc-700 transition">Regras do ADS Conecta</Link>
                 <Link href="/privacidade" className="hover:text-zinc-700 transition">Política de Privacidade</Link>
                 <Link href="/contrato" className="hover:text-zinc-700 transition">Contrato de Usuário</Link>
-                <span className="inline-flex items-center gap-2">
+                <span className="inline-flex items-center">
                   <Link href="/acessibilidade" className="hover:text-zinc-700 transition">Acessibilidade</Link>
                   <AccessibilityControls />
                 </span>
