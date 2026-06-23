@@ -408,7 +408,7 @@ function PollCard({ poll, voteCounts, userVotes, onVote, canVote, disabled }: {
   const hasVoted = userVotes.length > 0
 
   return (
-    <div className="mt-6 rounded-2xl border border-zinc-200 bg-zinc-50/60 p-4">
+    <div className="mt-6 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
       <div className="mb-4 flex items-start gap-2">
         <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="#2F9E41" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 shrink-0">
           <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>

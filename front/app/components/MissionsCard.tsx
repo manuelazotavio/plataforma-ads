@@ -184,7 +184,7 @@ export default function MissionsCard() {
           <p className="mt-0.5 text-xs text-zinc-400">Termina em {formatWeekEnd(set.week_start)}</p>
         </div>
         {allComplete && set.bonus_xp > 0 && (
-          <span className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold" style={{ backgroundColor: '#e6f4ec', color: '#2F9E41' }}>
+          <span className="flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-bold text-[#2F9E41]">
             +{set.bonus_xp} XP bônus {bonusClaimed ? '✓' : ''}
           </span>
         )}
@@ -199,7 +199,7 @@ export default function MissionsCard() {
           const pct = Math.min(100, Math.round((current / m.target_count) * 100))
 
           return (
-            <div key={m.id} className={`rounded-xl p-3 transition ${done ? 'bg-green-50/60' : 'bg-zinc-50'}`}>
+            <div key={m.id} className={`rounded-xl p-3 transition ${done ? 'bg-green-50' : 'bg-zinc-50'}`}>
               <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2 min-w-0">
                   {done ? (
@@ -231,7 +231,7 @@ export default function MissionsCard() {
       </div>
 
       {allComplete && set.bonus_xp > 0 && (
-        <div className="mt-4 rounded-xl p-3 text-center text-sm font-semibold border" style={{ backgroundColor: '#e6f4ec', borderColor: '#bbf7d0', color: '#2F9E41' }}>
+        <div className="mt-4 rounded-xl border border-green-200 bg-green-50 p-3 text-center text-sm font-semibold text-[#2F9E41]">
           🎉 Todas as missões completadas! +{set.bonus_xp} XP bônus ganho
         </div>
       )}
