@@ -64,7 +64,7 @@ export default async function RankingPage({
       .order('score', { ascending: false })
       .limit(200)
 
-    const scores = (rawScores ?? []) as GameScoreRow[]
+    const scores = (rawScores ?? []) as unknown as GameScoreRow[]
 
     return (
       <div className="px-4 md:px-6 py-8 w-full max-w-2xl mx-auto">
