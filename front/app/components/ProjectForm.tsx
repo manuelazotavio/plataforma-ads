@@ -82,7 +82,7 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
   const [readmePreview, setReadmePreview] = useState<ReadmePreview | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const { cropImage, cropperNode } = useImageCropper('16:9')
+  const { cropImage, cropperNode } = useImageCropper('free')
   const formRef = useRef<HTMLFormElement>(null)
   const collabRef = useRef<HTMLDivElement>(null)
   const tagRef = useRef<HTMLDivElement>(null)
