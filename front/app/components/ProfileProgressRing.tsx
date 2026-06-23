@@ -1,6 +1,6 @@
 type Props = {
-  progress: number   // 0–1
-  avatarSize: number // avatar px (e.g. 36, 80)
+  progress: number   
+  avatarSize: number 
   children: React.ReactNode
 }
 

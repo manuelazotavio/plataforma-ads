@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 
-// Logical game coordinate space
+
 const W = 800
 const H = 340
 const GROUND = 278
@@ -15,7 +15,7 @@ const CAT_X = 80
 const GRAVITY = 0.20
 const JUMP_V = -8
 const BASE_SPEED = 3
-const CAT_FOOT = 22  // pixels transparentes na base das imagens da gata
+const CAT_FOOT = 22  
 
 type Phase = 'idle' | 'playing' | 'dead'
 type Obs = { x: number; w: number; h: number; count: number; flying?: boolean; fy?: number; cw?: number; ch?: number }
@@ -47,7 +47,7 @@ export default function CorridaPage() {
       gain.gain.exponentialRampToValueAtTime(0.001, t + duration)
       osc.start(t)
       osc.stop(t + duration + 0.01)
-    } catch { /* AudioContext blocked */ }
+    } catch 
   }
 
   function playJump()      { snd(520, 260, 0.11, 0, 0.15, 'triangle'); snd(260, 130, 0.11, 0, 0.07, 'sine') }
@@ -102,7 +102,6 @@ export default function CorridaPage() {
     }
   }, [])
 
-  // Load images & best score
   useEffect(() => {
     const srcs: [string, string][] = [
       ['idle',       '/games/cat-idle.png'],
@@ -122,14 +121,15 @@ export default function CorridaPage() {
     getAuthUser().then(u => { userIdRef.current = u?.id ?? null })
   }, [])
 
-  // Game loop
+
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')!
 
-    // Resize canvas to match physical pixels (fixes blurriness)
+    
     function resize() {
+      if (!canvas) return
       const dpr  = window.devicePixelRatio || 1
       const rect = canvas.parentElement!.getBoundingClientRect()
       canvas.width  = rect.width  * dpr
@@ -149,7 +149,7 @@ export default function CorridaPage() {
       return i?.complete && i.naturalWidth > 0 ? i : null
     }
 
-    // ── pre-render sprites once (avoids per-frame fillRect loops) ─────
+  
     function bitmapSprite(bmp: number[][], P: number, colors: string[]) {
       const c = document.createElement('canvas')
       c.width = bmp[0].length * P
@@ -180,36 +180,32 @@ export default function CorridaPage() {
       4, ['#86efac', '#4ade80']
     )
 
-    const CACTUS_W    = 64   // largura do cacto
-    const CACTUS_H    = 64   // altura total da imagem
-    const CACTUS_FOOT = 16   // pixels transparentes na base da imagem
+    const CACTUS_W    = 64   
+    const CACTUS_H    = 64   
+    const CACTUS_FOOT = 16  
 
-    const BUTTERFLY_W  = 56  // borboleta
+    const BUTTERFLY_W  = 56  
     const BUTTERFLY_H  = 36
-    const BUTTERFLY_FY = GROUND - 58  // altura y do obstáculo voador
+    const BUTTERFLY_FY = GROUND - 58  
 
-    // building sprite — fachada IFSP Caraguatatuba pixel art (logo completa)
+    
     const building = (() => {
       const OV = 4, BW = 158, TOTAL_H = 138
       const c = document.createElement('canvas')
-      c.width  = BW + OV * 2  // 166
+      c.width  = BW + OV * 2  
       c.height = TOTAL_H
       const cc = c.getContext('2d')!
 
-      // corpo branco
+      
       cc.fillStyle = '#f8fafc'
       cc.fillRect(0, 0, c.width, TOTAL_H)
-      // laje de topo
+     
       cc.fillStyle = '#cbd5e1'
       cc.fillRect(0, 0, c.width, 4)
 
-      // ── logo IFSP: grade 3 colunas × 4 linhas (forma o "IF") ─────
-      // [●][■][■]
-      // [■][■][ ]
-      // [■][■][■]
-      // [■][■][ ]
+     
       const CS = 6, CG = 1
-      // centralizado: canvas 166px, bloco logo ~120px → margem ~23px cada lado
+     
       const lx = 22, ly = 12
       const LOGO = [
         [1, 2, 2],
@@ -234,7 +230,7 @@ export default function CorridaPage() {
         })
       })
 
-      // ── texto ao lado do logo ─────────────────────────────────────
+      
       const tx = lx + 3 * (CS + CG) + 5
       cc.fillStyle = '#1e293b'
       cc.font = 'bold 9px sans-serif'
@@ -244,10 +240,10 @@ export default function CorridaPage() {
       cc.fillText('São Paulo', tx, ly + 22)
       cc.fillText('Campus Caraguatatuba', tx, ly + 32)
 
-      // ── janelas (vidro azul) ──────────────────────────────────────
+      
       const WW = 18, WH = 10
-      // 4 janelas com gap de 8px
-      const mX = (BW - (4 * WW + 3 * 8)) / 2  // ~27px
+     
+      const mX = (BW - (4 * WW + 3 * 8)) / 2  
       for (let r = 0; r < 2; r++) {
         for (let col = 0; col < 4; col++) {
           const wx = Math.round(OV + mX + col * (WW + 8))
@@ -259,23 +255,23 @@ export default function CorridaPage() {
         }
       }
 
-      // ── cobertura / marquise de entrada ──────────────────────────
+    
       const coverY = TOTAL_H - 26
       cc.fillStyle = '#94a3b8'
       cc.fillRect(0, coverY, c.width, 6)
-      // luminárias no teto
+    
       cc.fillStyle = '#fef08a'
       for (let i = 0; i < 5; i++) cc.fillRect(10 + i * 30, coverY + 1, 5, 2)
 
-      // ── área de entrada aberta (sem portão) ───────────────────────
+    
       cc.fillStyle = '#e8edf2'
       cc.fillRect(OV, coverY + 6, BW, 20)
 
       return c
     })()
-    const BUILDING_H = building.height // 138
+    const BUILDING_H = building.height 
 
-    // ── background layers ──────────────────────────────────────────────
+   
     function drawCloudLayer() {
       const WW = 1400
       const clouds = [
@@ -394,7 +390,7 @@ export default function CorridaPage() {
     }
 
     function loop() {
-      // Apply scale transform so all drawing uses W×H logical coords
+     
       const { x: sx, y: sy } = scaleRef.current
       ctx.setTransform(sx, 0, 0, sy, 0, 0)
       ctx.clearRect(0, 0, W, H)
@@ -422,14 +418,14 @@ export default function CorridaPage() {
         scoreRef.current += 0.1
         speedRef.current  = Math.min(14, BASE_SPEED + scoreRef.current * 0.018)
 
-        // Milestone a cada 100 pts
+       
         const milestone = Math.floor(scoreRef.current / 100)
         if (milestone > milestoneRef.current) {
           milestoneRef.current = milestone
           playMilestone()
         }
 
-        // Physics
+      
         catVYRef.current += GRAVITY
         catYRef.current  += catVYRef.current
         if (catYRef.current >= GROUND - CAT_H + CAT_FOOT) {
@@ -438,18 +434,18 @@ export default function CorridaPage() {
           groundedRef.current = true
         }
 
-        // Walk cycle
+       
         walkRef.current = Math.floor(tickRef.current / 7) % 4
 
-        // Spawn obstacles — gap shrinks as score grows
+      
         const last = obsRef.current.at(-1)
         const spawnGap = Math.max(260, 480 - scoreRef.current * 0.2) + Math.random() * 260
         if (!last || last.x < W - spawnGap) {
           if (Math.random() < 0.28) {
-            // borboleta voadora
+          
             obsRef.current.push({ x: W + 10, w: BUTTERFLY_W, h: BUTTERFLY_H, count: 1, flying: true, fy: BUTTERFLY_FY })
           } else {
-            // grupo de cactos (1, 2 ou 3) com tamanho aleatório
+           
             const count = 1 + Math.floor(Math.random() * 3)
             const SIZES = [{ cw: 62, ch: 68 }, { cw: 74, ch: 80 }, { cw: 86, ch: 92 }]
             const { cw, ch } = SIZES[Math.floor(Math.random() * 3)]
@@ -459,13 +455,13 @@ export default function CorridaPage() {
           }
         }
 
-        // Move + cull
+     
         const sp = speedRef.current
         obsRef.current = obsRef.current
           .map(o => ({ ...o, x: o.x - sp }))
           .filter(o => o.x + o.w > -20)
 
-        // Collision (AABB com margem generosa)
+     
         for (const o of obsRef.current) {
           const catTop = catYRef.current + 16
           const catBot = catYRef.current + CAT_H - 16
@@ -521,7 +517,7 @@ export default function CorridaPage() {
     }
   }, [])
 
-  // Keyboard
+ 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.code === 'Space' || e.code === 'ArrowUp') {

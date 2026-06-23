@@ -52,7 +52,7 @@ body * {
   }
 }
 
-/* O botão padrão fica oculto; o footer oferece o acionador personalizado. */
+
 div[vw] > div[vw-access-button] {
   position: fixed !important;
   right: -9999px !important;

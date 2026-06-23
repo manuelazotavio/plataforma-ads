@@ -55,7 +55,7 @@ export default async function RankingPage({
 }) {
   const { sort = 'xp', role = '', tab = '' } = await searchParams
 
-  // ── Aba Jogos ──────────────────────────────────────────────────────────
+ 
   if (tab === 'jogos') {
     const { data: rawScores } = await supabase
       .from('game_scores')
@@ -145,7 +145,7 @@ export default async function RankingPage({
     )
   }
 
-  // ── Aba XP (padrão) ────────────────────────────────────────────────────
+  
   const { data: users } = await supabase
     .from('users')
     .select('id, name, avatar_url, bio, github_url, linkedin_url, portfolio_url, role, created_at, xp')

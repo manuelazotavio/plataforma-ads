@@ -64,7 +64,7 @@ export default function JogosPage() {
             className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
             onClick={e => e.stopPropagation()}
           >
-            {/* header */}
+            
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Contribuir com um jogo</h2>
@@ -83,7 +83,7 @@ export default function JogosPage() {
               </button>
             </div>
 
-            {/* steps */}
+            
             <ol className="mb-5 flex flex-col gap-3">
               {[
                 { n: '1', text: 'Faça um fork do repositório no GitHub' },
@@ -98,7 +98,7 @@ export default function JogosPage() {
               ))}
             </ol>
 
-            {/* repo link */}
+          
             <a
               href="https://github.com/adsifspcaragua/plataforma-ads"
               target="_blank"
@@ -111,7 +111,7 @@ export default function JogosPage() {
               github.com/adsifspcaragua/plataforma-ads
             </a>
 
-            {/* contact */}
+         
             <div className="flex items-center gap-3 rounded-xl bg-zinc-50 px-4 py-3 dark:bg-zinc-900">
               <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#2F9E41" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.64 1.18h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 21.73 16z"/>
