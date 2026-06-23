@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
+import { supabase } from '@/app/lib/supabase'
+import { getAuthUser } from '@/app/lib/auth'
 
 // Logical game coordinate space
 const W = 800
@@ -23,6 +25,7 @@ export default function CorridaPage() {
   const scaleRef    = useRef({ x: 1, y: 1 })
   const acRef       = useRef<AudioContext | null>(null)
   const milestoneRef = useRef(0)
+  const userIdRef   = useRef<string | null>(null)
 
   function ac() {
     if (!acRef.current) acRef.current = new AudioContext()
@@ -116,6 +119,7 @@ export default function CorridaPage() {
     })
     const stored = localStorage.getItem('gata-run-best')
     if (stored) bestRef.current = parseInt(stored, 10)
+    getAuthUser().then(u => { userIdRef.current = u?.id ?? null })
   }, [])
 
   // Game loop
@@ -478,6 +482,12 @@ export default function CorridaPage() {
             if (s > bestRef.current) {
               bestRef.current = s
               localStorage.setItem('gata-run-best', String(s))
+              if (userIdRef.current) {
+                void supabase.from('game_scores').upsert(
+                  { user_id: userIdRef.current, game_id: 'corrida', score: s, updated_at: new Date().toISOString() },
+                  { onConflict: 'user_id,game_id' }
+                )
+              }
             }
             playDead()
             break
@@ -524,8 +534,8 @@ export default function CorridaPage() {
   }, [action])
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] flex-col bg-white px-4 py-5 dark:bg-zinc-950 md:px-6">
-      <div className="mb-4 flex items-center gap-2">
+    <div className="flex h-[calc(100vh-4rem)] flex-col bg-white px-4 py-4 dark:bg-zinc-950 md:px-6">
+      <div className="mb-3 flex shrink-0 items-center gap-2">
         <Link
           href="/jogos"
           className="inline-flex items-center gap-1.5 text-sm font-medium text-zinc-500 transition hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
@@ -539,14 +549,20 @@ export default function CorridaPage() {
         <h1 className="text-base font-bold text-zinc-900 dark:text-zinc-100">Corrida da Gata</h1>
       </div>
 
-      <div
-        className="flex-1 cursor-pointer select-none overflow-hidden rounded-2xl border border-zinc-200 bg-[#fafafa] dark:border-zinc-800 dark:bg-zinc-900"
-        onClick={action}
-      >
-        <canvas ref={canvasRef} className="block h-full w-full" />
+      <div className="flex min-h-0 flex-1 items-center justify-center">
+        <div
+          className="cursor-pointer select-none overflow-hidden rounded-2xl border border-zinc-200 bg-[#fafafa] dark:border-zinc-800 dark:bg-zinc-900"
+          style={{
+            aspectRatio: '800 / 340',
+            width: 'min(100%, calc((100vh - 10rem) * 2.353))',
+          }}
+          onClick={action}
+        >
+          <canvas ref={canvasRef} className="block h-full w-full" />
+        </div>
       </div>
 
-      <p className="mt-3 text-center text-xs text-zinc-400">
+      <p className="mt-2 shrink-0 text-center text-xs text-zinc-400">
         Espaço · ↑ · Toque para pular
       </p>
     </div>
