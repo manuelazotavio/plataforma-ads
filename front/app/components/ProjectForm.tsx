@@ -228,6 +228,14 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
     setImages((prev) => prev.filter((_, i) => i !== index))
   }
 
+  function setCover(index: number) {
+    setImages((prev) => {
+      const arr = [...prev]
+      const [cover] = arr.splice(index, 1)
+      return [cover, ...arr]
+    })
+  }
+
   async function importReadmeFromRepository() {
     setReadmeError(null)
     const repo = parseGithubRepoUrl(repoUrl)
@@ -336,9 +344,21 @@ export default function ProjectForm({ userId, initial, saving, onSave, onCancel 
               >
                 ×
               </button>
-              <span className="absolute bottom-1 left-1 rounded-full bg-black/60 text-white text-xs px-1.5 py-0.5">
-                {i === 0 ? 'Capa' : media.type === 'video' ? 'â–¶ Vídeo' : media.type === 'file' ? 'Arquivo' : ''}
-              </span>
+              {i === 0 ? (
+                <span className="absolute bottom-1 left-1 rounded-full bg-[#2F9E41]/80 text-white text-xs px-1.5 py-0.5">Capa</span>
+              ) : media.type === 'image' ? (
+                <button
+                  type="button"
+                  onClick={() => setCover(i)}
+                  className="absolute bottom-1 left-1 rounded-full bg-black/60 text-white text-xs px-1.5 py-0.5 opacity-0 group-hover:opacity-100 transition"
+                >
+                  Definir como capa
+                </button>
+              ) : (
+                <span className="absolute bottom-1 left-1 rounded-full bg-black/60 text-white text-xs px-1.5 py-0.5">
+                  {media.type === 'video' ? '▶ Vídeo' : 'Arquivo'}
+                </span>
+              )}
             </div>
           ))}
           <button
