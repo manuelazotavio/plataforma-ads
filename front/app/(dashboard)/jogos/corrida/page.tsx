@@ -64,7 +64,7 @@ export default function CorridaPage() {
   const speedRef    = useRef(BASE_SPEED)
   const tickRef     = useRef(0)
   const walkRef     = useRef(0)
-  const rafRef      = useRef<number>()
+  const rafRef      = useRef<number | undefined>(undefined)
   const imgsRef     = useRef<Partial<Record<string, HTMLImageElement>>>({})
   const bgRef       = useRef({ building: 0, cloud: 0, bush: 0 })
 
