@@ -848,36 +848,37 @@ export default function ForumTopicPage() {
               <Link href={`/usuarios/${topic.user_id}`} className="rounded-full hover:opacity-80 transition shrink-0">
                 <Avatar author={topic.users} size={32} />
               </Link>
-              <div className="min-w-0">
-                <UserHoverCard userId={topic.user_id}>
-                  <Link href={`/usuarios/${topic.user_id}`} className="inline-flex items-center gap-1 font-medium text-zinc-600 hover:text-[#2F9E41] transition">
-                    <span>{topic.users?.name ?? 'Anonimo'}</span>
-                    <UserMascotBadge mascot={topic.users?.selected_mascot ?? null} size={19} />
-                  </Link>
-                </UserHoverCard>
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <UpvoteButton
-                    voters={topicVoters}
-                    voted={topicVoted}
-                    onToggle={handleTopicVote}
-                    disabled={!currentUserId}
-                  />
-                  {topicVoters.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setVotersModal({ title: 'Votos no tópico', voters: topicVoters })}
-                      className="text-xs font-semibold text-zinc-400 opacity-0 transition hover:text-[#2F9E41] group-hover:opacity-100 focus-visible:opacity-100"
-                    >
-                      Ver quem votou
-                    </button>
-                  )}
-                </div>
-                <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:text-sm text-zinc-400">
-                  <span>{topicDate}</span>
-                  <span aria-hidden="true">&bull;</span>
-                  <span>{topic.replies_count ?? 0} respostas</span>
-                  <span aria-hidden="true">&bull;</span>
-                  <span>{(topic.views_count ?? 0) + 1} views</span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <UserHoverCard userId={topic.user_id}>
+                      <Link href={`/usuarios/${topic.user_id}`} className="inline-flex items-center gap-1 font-medium text-zinc-600 hover:text-[#2F9E41] transition">
+                        <span>{topic.users?.name ?? 'Anonimo'}</span>
+                        <UserMascotBadge mascot={topic.users?.selected_mascot ?? null} size={19} />
+                      </Link>
+                    </UserHoverCard>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <UpvoteButton
+                        voters={topicVoters}
+                        voted={topicVoted}
+                        onToggle={handleTopicVote}
+                        disabled={!currentUserId}
+                      />
+                      {topicVoters.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setVotersModal({ title: 'Votos no tópico', voters: topicVoters })}
+                          className="text-xs font-semibold text-zinc-400 opacity-0 transition hover:text-[#2F9E41] group-hover:opacity-100 focus-visible:opacity-100"
+                        >
+                          Ver quem votou
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="shrink-0 text-right text-xs text-zinc-400 leading-relaxed">
+                    <span className="block">{topicDate}</span>
+                    <span className="block mt-0.5">{topic.replies_count ?? 0} respostas · {(topic.views_count ?? 0) + 1} views</span>
+                  </div>
                 </div>
               </div>
             </div>
