@@ -23,12 +23,13 @@ type WeeklySet = {
 }
 
 const MISSION_TYPES = [
-  { value: 'forum_votes',       label: 'Votos no fórum' },
-  { value: 'comments',          label: 'Comentários' },
-  { value: 'forum_replies',     label: 'Respostas no fórum' },
-  { value: 'topics_created',    label: 'Tópicos criados' },
-  { value: 'projects_created',  label: 'Projetos publicados' },
-  { value: 'articles_created',  label: 'Artigos publicados' },
+  { value: 'forum_votes',                label: 'Votos no fórum' },
+  { value: 'comments',                   label: 'Comentários' },
+  { value: 'forum_replies',              label: 'Respostas no fórum' },
+  { value: 'topics_created',             label: 'Tópicos criados' },
+  { value: 'projects_created',           label: 'Projetos publicados' },
+  { value: 'articles_created',           label: 'Artigos publicados' },
+  { value: 'projects_with_collaborator', label: 'Projetos com colaborador cadastrado' },
 ]
 
 const inputCls = 'w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-400 transition'
@@ -155,7 +156,13 @@ export default function AdminMissoesPage() {
               </div>
               <div className="sm:col-span-2">
                 <label className="text-xs font-medium text-zinc-500 mb-1 block">Descrição (opcional)</label>
-                <input value={mForm.description} onChange={e => setMForm(f => ({ ...f, description: e.target.value }))} className={inputCls} placeholder="Detalhes da missão..." />
+                <textarea
+                  value={mForm.description}
+                  onChange={e => setMForm(f => ({ ...f, description: e.target.value }))}
+                  className={`${inputCls} resize-none`}
+                  rows={3}
+                  placeholder="Ex: O projeto precisa ter pelo menos um colaborador com conta no ADS Conecta."
+                />
               </div>
               <div>
                 <label className="text-xs font-medium text-zinc-500 mb-1 block">Tipo de ação</label>

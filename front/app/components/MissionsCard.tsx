@@ -78,6 +78,30 @@ async function computeProgress(userId: string, weekStart: Date, missions: Missio
     articles_created: articles ?? 0,
   }
 
+  if (missions.some(m => m.type === 'projects_with_collaborator')) {
+    const { data: myProjects } = await supabase
+      .from('projects')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('approved', true)
+      .gte('created_at', ws)
+      .lt('created_at', we)
+
+    const ids = (myProjects ?? []).map(p => p.id)
+
+    if (ids.length > 0) {
+      const { data: collabs } = await supabase
+        .from('project_collaborators')
+        .select('project_id')
+        .in('project_id', ids)
+        .not('user_id', 'is', null)
+
+      counts['projects_with_collaborator'] = new Set((collabs ?? []).map(c => c.project_id)).size
+    } else {
+      counts['projects_with_collaborator'] = 0
+    }
+  }
+
   return missions.map(m => {
     const progress = Math.min(m.target_count, counts[m.type] ?? 0)
     return { mission_id: m.id, progress, completed: progress >= m.target_count, xp_claimed: false }
