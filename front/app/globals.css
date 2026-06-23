@@ -460,17 +460,6 @@ input[type="checkbox"] {
   height: 0 !important;
 }
 
-.sidebar-nav {
-  -ms-overflow-style: none !important;
-  scrollbar-width: none !important;
-}
-
-.sidebar-nav::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-  background: transparent !important;
-}
 
 .gallery-thumbnails-scroll {
   -ms-overflow-style: none;
@@ -535,36 +524,42 @@ input[type="checkbox"] {
 }
 .sidebar-nav {
   scrollbar-width: thin;
-  scrollbar-color: #d4d4d8 transparent;
+  scrollbar-color: #a1a1aa #f4f4f5;
 }
 
 .sidebar-nav::-webkit-scrollbar {
-  width: 5px;
+  width: 6px !important;
+  display: block !important;
 }
 
 .sidebar-nav::-webkit-scrollbar-track {
-  background: transparent;
+  background: #f4f4f5 !important;
+  border-radius: 999px;
 }
 
 .sidebar-nav::-webkit-scrollbar-thumb {
   border-radius: 999px;
-  background: #d4d4d8;
+  background: #a1a1aa !important;
 }
 
 .sidebar-nav::-webkit-scrollbar-thumb:hover {
-  background: #a1a1aa;
+  background: #71717a !important;
 }
 
 .dark .sidebar-nav {
-  scrollbar-color: #3f3f46 transparent;
+  scrollbar-color: #52525b #27272a;
+}
+
+.dark .sidebar-nav::-webkit-scrollbar-track {
+  background: #27272a !important;
 }
 
 .dark .sidebar-nav::-webkit-scrollbar-thumb {
-  background: #3f3f46;
+  background: #52525b !important;
 }
 
 .dark .sidebar-nav::-webkit-scrollbar-thumb:hover {
-  background: #52525b;
+  background: #71717a !important;
 }
 
 .reaction-option-icon {

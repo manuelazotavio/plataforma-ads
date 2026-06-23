@@ -26,6 +26,10 @@ export default function NovoTopicoPage() {
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [videoUrl, setVideoUrl] = useState('')
   const [uploading, setUploading] = useState(false)
+  const [pollEnabled, setPollEnabled] = useState(false)
+  const [pollQuestion, setPollQuestion] = useState('')
+  const [pollOptions, setPollOptions] = useState(['', ''])
+  const [pollAllowsMultiple, setPollAllowsMultiple] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { cropImage, cropperNode } = useImageCropper('16:9')
 
@@ -122,6 +126,22 @@ export default function NovoTopicoPage() {
       return
     }
 
+    if (pollEnabled && pollQuestion.trim()) {
+      const validOptions = pollOptions.filter(o => o.trim())
+      if (validOptions.length >= 2) {
+        const { data: pollData } = await supabase
+          .from('forum_polls')
+          .insert({ topic_id: data.id, question: pollQuestion.trim(), allows_multiple: pollAllowsMultiple })
+          .select('id')
+          .single()
+        if (pollData) {
+          await supabase.from('forum_poll_options').insert(
+            validOptions.map((text, i) => ({ poll_id: pollData.id, text: text.trim(), display_order: i }))
+          )
+        }
+      }
+    }
+
     router.push(`/forum/${data.id}`)
   }
 
@@ -171,7 +191,75 @@ export default function NovoTopicoPage() {
           />
         </div>
 
-        
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-zinc-700">Enquete</label>
+            <button
+              type="button"
+              onClick={() => setPollEnabled(v => !v)}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition ${pollEnabled ? 'bg-[#2F9E41]/10 text-[#2F9E41]' : 'border border-zinc-200 text-zinc-500 hover:bg-zinc-50'}`}
+            >
+              <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                {pollEnabled ? <><path d="M18 6 6 18"/><path d="m6 6 12 12"/></> : <><path d="M5 12h14"/><path d="M12 5v14"/></>}
+              </svg>
+              {pollEnabled ? 'Remover enquete' : 'Adicionar enquete'}
+            </button>
+          </div>
+
+          {pollEnabled && (
+            <div className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-zinc-50/50 p-4">
+              <input
+                value={pollQuestion}
+                onChange={e => setPollQuestion(e.target.value)}
+                className={inputClass}
+                placeholder="Qual é a pergunta da enquete?"
+              />
+              <div className="flex flex-col gap-2">
+                {pollOptions.map((opt, i) => (
+                  <div key={i} className="flex gap-2">
+                    <input
+                      value={opt}
+                      onChange={e => {
+                        const next = [...pollOptions]
+                        next[i] = e.target.value
+                        setPollOptions(next)
+                      }}
+                      className={`${inputClass} flex-1`}
+                      placeholder={`Opção ${i + 1}`}
+                    />
+                    {pollOptions.length > 2 && (
+                      <button
+                        type="button"
+                        onClick={() => setPollOptions(pollOptions.filter((_, idx) => idx !== i))}
+                        className="rounded-lg border border-zinc-200 px-2.5 text-zinc-400 transition hover:border-red-200 hover:text-red-500"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {pollOptions.length < 8 && (
+                  <button
+                    type="button"
+                    onClick={() => setPollOptions([...pollOptions, ''])}
+                    className="self-start text-xs font-medium text-[#2F9E41] transition hover:opacity-70"
+                  >
+                    + Adicionar opção
+                  </button>
+                )}
+              </div>
+              <label className="flex cursor-pointer items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={pollAllowsMultiple}
+                  onChange={e => setPollAllowsMultiple(e.target.checked)}
+                />
+                <span className="text-sm text-zinc-600">Permitir múltipla escolha</span>
+              </label>
+            </div>
+          )}
+        </div>
+
         <div
           className="flex flex-col gap-3 rounded-xl"
           onDragOver={(e) => e.preventDefault()}

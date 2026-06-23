@@ -19,6 +19,8 @@ type Voter = Author & { id: string }
 type Category = { id: string; name: string }
 type Attachment = { type: 'image' | 'video' | 'file'; url: string; name?: string; size?: number }
 type MascotInfo = { id: string; name: string; image_url: string; min_xp?: number | null }
+type PollOption = { id: string; text: string; display_order: number }
+type Poll = { id: string; question: string; allows_multiple: boolean; options: PollOption[] }
 
 type Topic = {
   id: string
@@ -394,6 +396,76 @@ function ReplyItem({ reply, depth, currentUserId, canModerate, isClosed, voteMap
   )
 }
 
+function PollCard({ poll, voteCounts, userVotes, onVote, canVote, disabled }: {
+  poll: Poll
+  voteCounts: Record<string, number>
+  userVotes: string[]
+  onVote: (optionId: string) => void
+  canVote: boolean
+  disabled: boolean
+}) {
+  const totalVotes = poll.options.reduce((sum, o) => sum + (voteCounts[o.id] ?? 0), 0)
+  const hasVoted = userVotes.length > 0
+
+  return (
+    <div className="mt-6 rounded-2xl border border-zinc-200 bg-zinc-50/60 p-4">
+      <div className="mb-4 flex items-start gap-2">
+        <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="#2F9E41" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 shrink-0">
+          <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        </svg>
+        <p className="text-sm font-semibold text-zinc-800">{poll.question}</p>
+      </div>
+      <div className="flex flex-col gap-2">
+        {poll.options.map(option => {
+          const count = voteCounts[option.id] ?? 0
+          const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0
+          const isVoted = userVotes.includes(option.id)
+          return (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => canVote && !disabled && onVote(option.id)}
+              disabled={disabled || !canVote}
+              className={`relative overflow-hidden rounded-xl border px-3 py-2.5 text-left transition ${
+                isVoted ? 'border-[#2F9E41] bg-white' : 'border-zinc-200 bg-white hover:border-zinc-300'
+              } ${!canVote ? 'cursor-default' : 'cursor-pointer'}`}
+            >
+              {(hasVoted || !canVote) && (
+                <div
+                  className={`absolute inset-y-0 left-0 transition-all duration-500 ${isVoted ? 'bg-[#2F9E41]/10' : 'bg-zinc-100'}`}
+                  style={{ width: `${pct}%` }}
+                />
+              )}
+              <div className="relative flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  {poll.allows_multiple ? (
+                    <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${isVoted ? 'border-[#2F9E41] bg-[#2F9E41] text-white' : 'border-zinc-300'}`}>
+                      {isVoted && <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3.5}><path d="M20 6 9 17l-5-5"/></svg>}
+                    </div>
+                  ) : (
+                    <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${isVoted ? 'border-[#2F9E41]' : 'border-zinc-300'}`}>
+                      {isVoted && <div className="h-2 w-2 rounded-full bg-[#2F9E41]" />}
+                    </div>
+                  )}
+                  <span className={`text-sm truncate ${isVoted ? 'font-medium text-zinc-900' : 'text-zinc-700'}`}>{option.text}</span>
+                </div>
+                {(hasVoted || !canVote) && (
+                  <span className={`shrink-0 text-xs font-semibold ${isVoted ? 'text-[#2F9E41]' : 'text-zinc-400'}`}>{pct}%</span>
+                )}
+              </div>
+            </button>
+          )
+        })}
+      </div>
+      <p className="mt-3 text-xs text-zinc-400">
+        {totalVotes} {totalVotes === 1 ? 'voto' : 'votos'}
+        {poll.allows_multiple ? ' · Múltipla escolha' : ''}
+        {!canVote ? ' · Faça login para votar' : ''}
+      </p>
+    </div>
+  )
+}
+
 export default function ForumTopicPage() {
   const router = useRouter()
   const params = useParams()
@@ -418,6 +490,10 @@ export default function ForumTopicPage() {
   const [pendingClose, setPendingClose] = useState(false)
   const [votersModal, setVotersModal] = useState<{ title: string; voters: Voter[] } | null>(null)
   const [ownedMascots, setOwnedMascots] = useState<MascotInfo[]>([])
+  const [poll, setPoll] = useState<Poll | null>(null)
+  const [pollVoteCounts, setPollVoteCounts] = useState<Record<string, number>>({})
+  const [pollUserVotes, setPollUserVotes] = useState<string[]>([])
+  const [pollVoting, setPollVoting] = useState(false)
 
   const load = useCallback(async () => {
     const [{ data: topicData }, user] = await Promise.all([
@@ -457,6 +533,30 @@ export default function ForumTopicPage() {
     }
 
     await supabase.from('forum_topics').update({ views_count: (topicData.views_count ?? 0) + 1 }).eq('id', id)
+
+    const { data: pollData } = await supabase
+      .from('forum_polls')
+      .select('id, question, allows_multiple, forum_poll_options(id, text, display_order)')
+      .eq('topic_id', id)
+      .maybeSingle()
+
+    if (pollData) {
+      type RawPoll = typeof pollData & { forum_poll_options: PollOption[] }
+      const raw = pollData as RawPoll
+      const options = [...(raw.forum_poll_options ?? [])].sort((a, b) => a.display_order - b.display_order)
+      setPoll({ id: raw.id, question: raw.question, allows_multiple: raw.allows_multiple, options })
+      if (options.length > 0) {
+        const optionIds = options.map(o => o.id)
+        const { data: votesData } = await supabase
+          .from('forum_poll_votes')
+          .select('option_id, user_id')
+          .in('option_id', optionIds)
+        const counts: Record<string, number> = {}
+        for (const v of votesData ?? []) counts[v.option_id] = (counts[v.option_id] ?? 0) + 1
+        setPollVoteCounts(counts)
+        if (user?.id) setPollUserVotes((votesData ?? []).filter(v => v.user_id === user.id).map(v => v.option_id))
+      }
+    }
 
     const { data: repliesData } = await supabase
       .from('forum_replies')
@@ -536,6 +636,33 @@ export default function ForumTopicPage() {
     } else {
       await supabase.from('forum_reply_votes').insert({ reply_id: replyId, user_id: currentUserId })
     }
+  }
+
+  async function handlePollVote(optionId: string) {
+    if (!currentUserId || !poll) return
+    setPollVoting(true)
+    const alreadyVoted = pollUserVotes.includes(optionId)
+    if (alreadyVoted) {
+      await supabase.from('forum_poll_votes').delete().eq('option_id', optionId).eq('user_id', currentUserId)
+      setPollUserVotes(prev => prev.filter(id => id !== optionId))
+      setPollVoteCounts(prev => ({ ...prev, [optionId]: Math.max(0, (prev[optionId] ?? 0) - 1) }))
+    } else {
+      if (!poll.allows_multiple && pollUserVotes.length > 0) {
+        for (const prevId of pollUserVotes) {
+          await supabase.from('forum_poll_votes').delete().eq('option_id', prevId).eq('user_id', currentUserId)
+        }
+        setPollVoteCounts(prev => {
+          const next = { ...prev }
+          for (const prevId of pollUserVotes) next[prevId] = Math.max(0, (next[prevId] ?? 0) - 1)
+          return next
+        })
+        setPollUserVotes([])
+      }
+      await supabase.from('forum_poll_votes').insert({ poll_id: poll.id, option_id: optionId, user_id: currentUserId })
+      setPollUserVotes(prev => [...prev, optionId])
+      setPollVoteCounts(prev => ({ ...prev, [optionId]: (prev[optionId] ?? 0) + 1 }))
+    }
+    setPollVoting(false)
   }
 
   async function handleReply(content: string, parentId: string | null, attachments: Attachment[] = [], mascotId: string | null = null) {
@@ -761,7 +888,17 @@ export default function ForumTopicPage() {
       <div className="border-t border-zinc-100 pt-8">
         <p className="text-base text-zinc-800 leading-relaxed whitespace-pre-wrap wrap-break-word">{parseMentions(topic.content)}</p>
 
-      
+        {poll && (
+          <PollCard
+            poll={poll}
+            voteCounts={pollVoteCounts}
+            userVotes={pollUserVotes}
+            onVote={handlePollVote}
+            canVote={!!currentUserId && !topic.is_closed}
+            disabled={pollVoting}
+          />
+        )}
+
         {attachments.length > 0 && (
           <div className="flex flex-col gap-4 mt-6">
             {attachments.map((att, i) => (

@@ -45,6 +45,7 @@ const sidebarItems: SidebarItem[] = [
   { href: '/vagas', label: 'Oportunidades', icon: <IconBriefcase /> },
   { href: '/egressos', label: 'Ex-alunos', icon: <IconUsers /> },
   { href: '/ranking', label: 'Ranking', icon: <IconTrophy /> },
+  { href: '/jogos', label: 'Jogos', icon: <IconGamepad /> },
   {
     href: '/area-aluno',
     label: 'Área do Aluno',
@@ -110,7 +111,7 @@ export default function AppSidebar({ open = true, onClose }: AppSidebarProps) {
         </Link>
       </div>
 
-      <nav ref={navRef} className="sidebar-nav flex flex-col gap-1 px-3 py-4 flex-1 overflow-y-auto">
+      <nav ref={navRef} style={{ overflowY: 'scroll' }} className="sidebar-nav flex flex-col gap-1 px-3 py-4 flex-1">
         {sidebarItems.map((item, i) => {
           const active = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href + '/'))
           const hasChildren = Boolean(item.children?.length)
@@ -306,6 +307,18 @@ function IconTrophy({ size = 18 }: { size?: number }) {
       <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
       <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
       <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+    </svg>
+  )
+}
+
+function IconGamepad({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <line x1={6} y1={12} x2={10} y2={12} />
+      <line x1={8} y1={10} x2={8} y2={14} />
+      <line x1={15} y1={13} x2={15.01} y2={13} />
+      <line x1={18} y1={11} x2={18.01} y2={11} />
+      <rect x={2} y={6} width={20} height={12} rx={2} />
     </svg>
   )
 }
