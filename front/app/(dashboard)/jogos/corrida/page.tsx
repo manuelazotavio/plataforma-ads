@@ -47,7 +47,7 @@ export default function CorridaPage() {
       gain.gain.exponentialRampToValueAtTime(0.001, t + duration)
       osc.start(t)
       osc.stop(t + duration + 0.01)
-    } catch 
+    } catch { /* ignore audio errors */ }
   }
 
   function playJump()      { snd(520, 260, 0.11, 0, 0.15, 'triangle'); snd(260, 130, 0.11, 0, 0.07, 'sine') }
