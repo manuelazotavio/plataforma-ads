@@ -84,9 +84,9 @@ export default function MeusProjetosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white px-4 py-12 md:px-6">
+    <div className="min-h-screen bg-white px-4 py-8 md:px-6">
       {dialogNode}
-      <div className="w-full">
+      <div className="w-full max-w-3xl mx-auto">
         <div className="flex flex-col gap-4 mb-8 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-zinc-900">Meus projetos</h1>
@@ -152,8 +152,8 @@ export default function MeusProjetosPage() {
                       </div>
                     </div>
                   )}
-                  <div className="flex gap-4">
-                    <div className="relative w-28 h-20 shrink-0 rounded-lg overflow-hidden bg-zinc-100">
+                  <div className="flex gap-3 sm:gap-4">
+                    <div className="relative w-20 h-14 shrink-0 rounded-lg overflow-hidden bg-zinc-100 sm:w-28 sm:h-20">
                       {cover
                         ? <Image src={cover.image_url} alt={project.title} fill className="object-cover" />
                         : <div className="w-full h-full flex items-center justify-center text-zinc-300 text-2xl">?</div>
@@ -210,20 +210,20 @@ export default function MeusProjetosPage() {
                         </div>
                       )}
 
-                      <div className="flex items-center justify-between mt-auto pt-1">
+                      <div className="mt-auto pt-1 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
                         <div className="flex gap-3">
                           {project.repo_url && (
                             <a href={project.repo_url} target="_blank" rel="noopener noreferrer" className="text-xs text-zinc-400 hover:text-zinc-700 transition">
-                              GitHub ?
+                              GitHub
                             </a>
                           )}
                           {project.deploy_url && (
                             <a href={project.deploy_url} target="_blank" rel="noopener noreferrer" className="text-xs text-zinc-400 hover:text-zinc-700 transition">
-                              Demo ?
+                              Demo
                             </a>
                           )}
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-1.5">
                           <Link
                             href={`/projetos/${project.id}/editar`}
                             className="rounded-lg border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition"
