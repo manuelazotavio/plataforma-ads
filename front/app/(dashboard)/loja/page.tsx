@@ -38,7 +38,7 @@ export default function LojaPage() {
       .then(({ data }) => { setItems((data ?? []) as StoreItem[]); setLoading(false) })
   }, [])
 
-  // Close drawer on outside click
+  
   useEffect(() => {
     function handler(e: MouseEvent) {
       if (cartOpen && drawerRef.current && !drawerRef.current.contains(e.target as Node)) {
@@ -92,7 +92,7 @@ export default function LojaPage() {
   return (
     <div className="relative px-4 md:px-6 py-8 w-full max-w-5xl mx-auto">
 
-      {/* Header */}
+     
       <div className="mb-6 flex items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Loja</h1>
@@ -112,7 +112,7 @@ export default function LojaPage() {
         </button>
       </div>
 
-      {/* Search + category filters */}
+     
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -148,7 +148,7 @@ export default function LojaPage() {
         )}
       </div>
 
-      {/* Product grid */}
+    
       {loading ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
@@ -210,7 +210,7 @@ export default function LojaPage() {
                         style={{ backgroundColor: '#2F9E41' }}
                       >
                         <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                        Add
+                        Adicionar
                       </button>
                     )}
                   </div>
@@ -221,12 +221,12 @@ export default function LojaPage() {
         </div>
       )}
 
-      {/* Cart drawer backdrop */}
+      
       {cartOpen && (
         <div className="fixed inset-0 z-40 bg-black/40" onClick={() => setCartOpen(false)} />
       )}
 
-      {/* Cart drawer */}
+     
       <div
         ref={drawerRef}
         className={`fixed top-0 right-0 z-50 h-full w-full max-w-sm bg-white dark:bg-zinc-900 shadow-2xl flex flex-col transition-transform duration-300 ${cartOpen ? 'translate-x-0' : 'translate-x-full'}`}
