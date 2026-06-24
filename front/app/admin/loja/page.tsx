@@ -12,10 +12,13 @@ type StoreItem = {
   description: string | null
   price: number
   image_url: string | null
+  category: string | null
   is_visible: boolean
   display_order: number
   created_at: string
 }
+
+const CATEGORIES = ['Vestuário', 'Papelaria', 'Acessórios', 'Outros']
 
 const inputCls = 'w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-400 transition'
 
@@ -25,7 +28,7 @@ export default function AdminLojaPage() {
 
   const [items, setItems] = useState<StoreItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [form, setForm] = useState({ name: '', description: '', price: '', image_url: '' })
+  const [form, setForm] = useState({ name: '', description: '', price: '', image_url: '', category: '' })
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -68,6 +71,7 @@ export default function AdminLojaPage() {
         description: form.description.trim() || null,
         price,
         image_url: form.image_url || null,
+        category: form.category.trim() || null,
       }).eq('id', editingId)
       if (e) { setError(e.message); setSaving(false); return }
       setEditingId(null)
@@ -77,12 +81,13 @@ export default function AdminLojaPage() {
         description: form.description.trim() || null,
         price,
         image_url: form.image_url || null,
+        category: form.category.trim() || null,
         display_order: items.length,
       })
       if (e) { setError(e.message); setSaving(false); return }
     }
 
-    setForm({ name: '', description: '', price: '', image_url: '' })
+    setForm({ name: '', description: '', price: '', image_url: '', category: '' })
     await load()
     setSaving(false)
   }
@@ -104,13 +109,14 @@ export default function AdminLojaPage() {
       description: item.description ?? '',
       price: item.price.toFixed(2),
       image_url: item.image_url ?? '',
+      category: item.category ?? '',
     })
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   function cancelEdit() {
     setEditingId(null)
-    setForm({ name: '', description: '', price: '', image_url: '' })
+    setForm({ name: '', description: '', price: '', image_url: '', category: '' })
     setError(null)
   }
 
@@ -169,6 +175,15 @@ export default function AdminLojaPage() {
                 <input value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} className={inputCls} placeholder="0,00" inputMode="decimal" />
               </div>
             </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="text-xs font-medium text-zinc-500 mb-1 block">Categoria</label>
+                <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} className={inputCls}>
+                  <option value="">Sem categoria</option>
+                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+            </div>
             <div>
               <label className="text-xs font-medium text-zinc-500 mb-1 block">Descrição (opcional)</label>
               <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className={`${inputCls} resize-none`} rows={2} placeholder="Detalhes do produto..." />
@@ -204,7 +219,10 @@ export default function AdminLojaPage() {
                 }
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-zinc-900 truncate">{item.name}</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-sm font-semibold text-zinc-900 truncate">{item.name}</p>
+                  {item.category && <span className="shrink-0 rounded-full border border-zinc-200 px-2 py-0.5 text-[10px] font-semibold text-zinc-500">{item.category}</span>}
+                </div>
                 {item.description && <p className="text-xs text-zinc-400 truncate mt-0.5">{item.description}</p>}
                 <p className="text-sm font-bold mt-0.5" style={{ color: '#2F9E41' }}>
                   {item.price === 0 ? 'Grátis' : `R$ ${item.price.toFixed(2).replace('.', ',')}`}

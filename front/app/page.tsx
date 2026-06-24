@@ -96,7 +96,7 @@ export default async function HomePage() {
       .order('start_date', { ascending: true }),
     supabase
       .from('store_items')
-      .select('id, name, price, image_url')
+      .select('id, name, price, image_url, category')
       .eq('is_visible', true)
       .order('display_order')
       .limit(4),
@@ -131,7 +131,7 @@ export default async function HomePage() {
         <div className="flex flex-col gap-4">
           <HomeCalendarCard events={allEvents} />
           {(storeItems ?? []).length > 0 && (
-            <StorePreviewCard items={(storeItems ?? []) as { id: string; name: string; price: number; image_url: string | null }[]} />
+            <StorePreviewCard items={(storeItems ?? []) as { id: string; name: string; price: number; image_url: string | null; category: string | null }[]} />
           )}
         </div>
       </div>
@@ -386,7 +386,7 @@ function formatDate(iso: string): string {
 }
 
 
-function StorePreviewCard({ items }: { items: { id: string; name: string; price: number; image_url: string | null }[] }) {
+function StorePreviewCard({ items }: { items: { id: string; name: string; price: number; image_url: string | null; category: string | null }[] }) {
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white p-5">
       <div className="mb-4 flex items-center justify-between gap-2">
