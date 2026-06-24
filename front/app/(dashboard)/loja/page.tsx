@@ -33,19 +33,19 @@ export default function LojaPage() {
   const [user, setUser] = useState<User | null>(null)
   const [whatsappNumber, setWhatsappNumber] = useState('')
 
-  // Collective
+ 
   const [signupCounts, setSignupCounts] = useState<Record<string, number>>({})
   const [mySignups, setMySignups] = useState<Record<string, { size: string }>>({})
   const [signupModal, setSignupModal] = useState<StoreItem | null>(null)
   const [selectedSize, setSelectedSize] = useState('')
   const [signupSaving, setSignupSaving] = useState(false)
 
-  // Cart (normal items only)
+
   const [cart, setCart] = useState<CartItem[]>([])
   const [cartOpen, setCartOpen] = useState(false)
   const [orderSaving, setOrderSaving] = useState(false)
 
-  // Filters
+
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
 
@@ -93,7 +93,7 @@ export default function LojaPage() {
     void init()
   }, [])
 
-  // Close cart drawer on outside click
+
   useEffect(() => {
     function handler(e: MouseEvent) {
       if (cartOpen && drawerRef.current && !drawerRef.current.contains(e.target as Node)) setCartOpen(false)
@@ -101,9 +101,8 @@ export default function LojaPage() {
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
-  }, [cartOpen, signupModal]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [cartOpen, signupModal])
 
-  // Filters
   const categories = useMemo(() => {
     const set = new Set(items.map(i => i.category).filter(Boolean) as string[])
     return [...set].sort((a, b) => a.localeCompare(b, 'pt-BR'))
@@ -118,7 +117,7 @@ export default function LojaPage() {
     })
   }, [items, search, activeCategory])
 
-  // Cart actions
+  
   function addToCart(item: StoreItem) {
     setCart(prev => {
       const ex = prev.find(c => c.id === item.id)
@@ -138,7 +137,7 @@ export default function LojaPage() {
   const cartCount = cart.reduce((s, c) => s + c.qty, 0)
   const cartTotal = cart.reduce((s, c) => s + c.price * c.qty, 0)
 
-  // WhatsApp order
+  
   async function placeOrder() {
     if (!user || !whatsappNumber) return
     setOrderSaving(true)
@@ -152,7 +151,7 @@ export default function LojaPage() {
     setOrderSaving(false)
   }
 
-  // Collective signup
+
   function openSignupModal(item: StoreItem) {
     if (!user) return
     setSignupModal(item)
@@ -192,7 +191,7 @@ export default function LojaPage() {
   return (
     <div className="relative px-4 md:px-6 py-8 w-full max-w-5xl mx-auto">
 
-      {/* Header */}
+      
       <div className="mb-6 flex items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Loja</h1>
@@ -210,7 +209,7 @@ export default function LojaPage() {
         </button>
       </div>
 
-      {/* Search + categories */}
+    
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -231,7 +230,7 @@ export default function LojaPage() {
         )}
       </div>
 
-      {/* Grid */}
+      
       {loading ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
@@ -276,7 +275,7 @@ export default function LojaPage() {
                   <div className="flex flex-col gap-2 p-3 flex-1">
                     <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 leading-snug line-clamp-2">{item.name}</p>
                     <p className="text-sm font-bold" style={{ color: '#2F9E41' }}>{fmtPrice(item.price)}</p>
-                    {/* Progress */}
+                  
                     <div>
                       <div className="flex justify-between text-[10px] text-zinc-500 mb-1">
                         <span>{count} inscrito{count !== 1 ? 's' : ''}</span>
@@ -287,7 +286,7 @@ export default function LojaPage() {
                       </div>
                       {reached && <p className="text-[10px] font-semibold mt-1" style={{ color: '#2F9E41' }}>Meta atingida!</p>}
                     </div>
-                    {/* CTA */}
+            
                     <div className="mt-auto pt-1">
                       {!user ? (
                         <Link href="/login" className="block text-center w-full rounded-lg py-1.5 text-[11px] font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 transition">
@@ -316,7 +315,7 @@ export default function LojaPage() {
               )
             }
 
-            // Normal item
+        
             const inCart = cart.find(c => c.id === item.id)
             return (
               <div key={item.id} className="group flex flex-col rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden transition hover:shadow-md hover:border-zinc-200">
@@ -343,7 +342,7 @@ export default function LojaPage() {
                     ) : (
                       <button onClick={() => addToCart(item)} className="flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-semibold text-white transition hover:opacity-90" style={{ backgroundColor: '#2F9E41' }}>
                         <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                        Add
+                        Adicionar
                       </button>
                     )}
                   </div>
@@ -354,12 +353,12 @@ export default function LojaPage() {
         </div>
       )}
 
-      {/* Backdrop */}
+     
       {(cartOpen || signupModal) && (
         <div className="fixed inset-0 z-40 bg-black/40" onClick={() => { setCartOpen(false); closeSignupModal() }} />
       )}
 
-      {/* Cart drawer */}
+   
       <div ref={drawerRef}
         className={`fixed top-0 right-0 z-50 h-full w-full max-w-sm bg-white dark:bg-zinc-900 shadow-2xl flex flex-col transition-transform duration-300 ${cartOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 px-5 py-4">
@@ -437,7 +436,7 @@ export default function LojaPage() {
         )}
       </div>
 
-      {/* Signup modal */}
+    
       {signupModal && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
           <div ref={modalRef} className="w-full max-w-sm rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl p-6">

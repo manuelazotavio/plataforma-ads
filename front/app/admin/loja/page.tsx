@@ -68,7 +68,7 @@ export default function AdminLojaPage() {
 
   const [tab, setTab] = useState<'produtos' | 'pedidos' | 'inscricoes' | 'config'>('produtos')
 
-  // Produtos
+  
   const [items, setItems] = useState<StoreItem[]>([])
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState({ name: '', description: '', price: '', image_url: '', category: '', type: 'normal' as 'normal' | 'collective', min_quantity: '10', sizes: [] as string[] })
@@ -77,17 +77,17 @@ export default function AdminLojaPage() {
   const [error, setError] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
 
-  // Pedidos
+ 
   const [orders, setOrders] = useState<StoreOrder[]>([])
   const [ordersLoaded, setOrdersLoaded] = useState(false)
 
-  // Inscrições
+ 
   const [selectedItemId, setSelectedItemId] = useState('')
   const [signups, setSignups] = useState<StoreSignup[]>([])
   const [signupsLoading, setSignupsLoading] = useState(false)
   const [closingBatch, setClosingBatch] = useState(false)
 
-  // Config
+ 
   const [whatsappNumber, setWhatsappNumber] = useState('')
   const [configSaving, setConfigSaving] = useState(false)
   const [configSaved, setConfigSaved] = useState(false)
@@ -107,7 +107,7 @@ export default function AdminLojaPage() {
       if (first && !selectedItemId) setSelectedItemId(first.id)
     }
     if (tab === 'config') void loadConfig()
-  }, [tab, items]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [tab, items])
 
   useEffect(() => {
     if (selectedItemId) void loadSignups(selectedItemId)
@@ -257,7 +257,7 @@ export default function AdminLojaPage() {
         <p className="text-sm text-zinc-500 mt-0.5">Gerencie produtos, pedidos e inscrições</p>
       </div>
 
-      {/* Tab nav */}
+      
       <div className="flex gap-1 border-b border-zinc-200 mb-8">
         {TABS.map(t => (
           <button
@@ -270,10 +270,10 @@ export default function AdminLojaPage() {
         ))}
       </div>
 
-      {/* ── PRODUTOS ── */}
+      
       {tab === 'produtos' && (
         <div>
-          {/* Form */}
+          
           <div className="rounded-2xl border border-zinc-200 bg-white p-6 mb-8">
             <h2 className="text-base font-semibold text-zinc-900 mb-4">{editingId ? 'Editar produto' : 'Novo produto'}</h2>
 
@@ -358,7 +358,7 @@ export default function AdminLojaPage() {
             </div>
           </div>
 
-          {/* List */}
+         
           {items.length === 0 ? (
             <p className="text-center text-sm text-zinc-400 py-12">Nenhum produto cadastrado ainda.</p>
           ) : (
@@ -395,7 +395,7 @@ export default function AdminLojaPage() {
         </div>
       )}
 
-      {/* ── PEDIDOS ── */}
+     
       {tab === 'pedidos' && (
         <div>
           {!ordersLoaded ? (
@@ -442,7 +442,7 @@ export default function AdminLojaPage() {
         </div>
       )}
 
-      {/* ── INSCRIÇÕES ── */}
+    
       {tab === 'inscricoes' && (
         <div>
           {collectiveItems.length === 0 ? (
@@ -521,7 +521,7 @@ export default function AdminLojaPage() {
         </div>
       )}
 
-      {/* ── CONFIGURAÇÕES ── */}
+      
       {tab === 'config' && (
         <div className="max-w-md">
           <div className="rounded-2xl border border-zinc-200 bg-white p-6">

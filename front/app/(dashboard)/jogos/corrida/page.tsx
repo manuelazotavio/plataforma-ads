@@ -47,7 +47,7 @@ export default function CorridaPage() {
       gain.gain.exponentialRampToValueAtTime(0.001, t + duration)
       osc.start(t)
       osc.stop(t + duration + 0.01)
-    } catch { /* ignore audio errors */ }
+    } catch { }
   }
 
   function playJump()      { snd(520, 260, 0.11, 0, 0.15, 'triangle'); snd(260, 130, 0.11, 0, 0.07, 'sine') }
@@ -532,7 +532,7 @@ export default function CorridaPage() {
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col bg-white px-4 py-4 dark:bg-zinc-950 md:px-6">
 
-      {/* Portrait mobile → pede para virar */}
+   
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-5 bg-white dark:bg-zinc-950 md:hidden landscape:hidden">
         <svg width={56} height={56} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 animate-bounce">
           <rect x="5" y="2" width="14" height="20" rx="2" />
@@ -573,7 +573,7 @@ export default function CorridaPage() {
         </div>
       </div>
 
-      {/* Botão de pulo — landscape mobile (visível quando < md e landscape) */}
+   
       <div className="mt-2 shrink-0 flex items-center justify-center md:hidden">
         <button
           type="button"
