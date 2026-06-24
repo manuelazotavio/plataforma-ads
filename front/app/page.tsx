@@ -65,6 +65,7 @@ export default async function HomePage() {
     { data: contributorUsers },
     { data: events },
     { data: calendarItems },
+    { data: storeItems },
   ] = await Promise.all([
     supabase
       .from('projects')
@@ -93,6 +94,12 @@ export default async function HomePage() {
       .select('id, title, start_date, end_date, color, url')
       .eq('is_active', true)
       .order('start_date', { ascending: true }),
+    supabase
+      .from('store_items')
+      .select('id, name, price, image_url')
+      .eq('is_visible', true)
+      .order('display_order')
+      .limit(4),
   ])
 
   const featuredProjects = getRotatingProjects((projects ?? []) as unknown as Project[])
@@ -123,6 +130,9 @@ export default async function HomePage() {
 
         <div className="flex flex-col gap-4">
           <HomeCalendarCard events={allEvents} />
+          {(storeItems ?? []).length > 0 && (
+            <StorePreviewCard items={(storeItems ?? []) as { id: string; name: string; price: number; image_url: string | null }[]} />
+          )}
         </div>
       </div>
 
@@ -375,6 +385,49 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })
 }
 
+
+function StorePreviewCard({ items }: { items: { id: string; name: string; price: number; image_url: string | null }[] }) {
+  return (
+    <div className="rounded-2xl border border-zinc-200 bg-white p-5">
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <h3 className="flex items-center gap-2 text-base font-semibold text-zinc-900">
+          <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#2F9E41" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+            <line x1={3} y1={6} x2={21} y2={6} />
+            <path d="M16 10a4 4 0 0 1-8 0" />
+          </svg>
+          Loja
+        </h3>
+        <Link href="/loja" className="text-xs font-medium text-green-600 hover:text-green-700 transition">Ver tudo</Link>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        {items.map(item => (
+          <Link key={item.id} href="/loja" className="group flex flex-col overflow-hidden rounded-xl border border-zinc-100 bg-zinc-50 hover:border-zinc-200 transition">
+            <div className="relative aspect-square w-full bg-zinc-100">
+              {item.image_url ? (
+                <Image src={item.image_url} alt={item.name} fill className="object-cover" />
+              ) : (
+                <div className="flex h-full items-center justify-center text-zinc-200">
+                  <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                    <line x1={3} y1={6} x2={21} y2={6} />
+                    <path d="M16 10a4 4 0 0 1-8 0" />
+                  </svg>
+                </div>
+              )}
+            </div>
+            <div className="px-2 py-1.5">
+              <p className="text-[11px] font-medium text-zinc-700 truncate leading-snug">{item.name}</p>
+              <p className="text-[11px] font-bold leading-snug" style={{ color: '#2F9E41' }}>
+                {item.price === 0 ? 'Grátis' : `R$ ${item.price.toFixed(2).replace('.', ',')}`}
+              </p>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 function ArrowIcon() {
   return <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
