@@ -5,8 +5,17 @@ import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
 import { LoadingState } from '@/app/components/LoadingScreen'
 import { useImageCropper } from '@/app/components/ImageCropper'
-import { COURSE_SETTINGS_TABLE } from '@/app/lib/courseSettings'
 import UserAvatar from '@/app/components/UserAvatar'
+
+// ─── Types ──────────────────────────────────────────────────────────────────
+
+type SellerProfile = {
+  user_id: string
+  whatsapp: string | null
+  pix_key: string | null
+  deposit_percent: number
+  users: { id: string; name: string; avatar_url: string | null } | null
+}
 
 type StoreItem = {
   id: string
@@ -18,12 +27,16 @@ type StoreItem = {
   type: 'normal' | 'collective'
   min_quantity: number
   sizes: string[]
-  pix_key: string | null
-  deposit_percent: number
-  whatsapp_contact: string | null
+  seller_id: string | null
   is_visible: boolean
   display_order: number
   created_at: string
+  seller: {
+    id: string
+    name: string
+    avatar_url: string | null
+    store_seller_profiles: { whatsapp: string | null; pix_key: string | null; deposit_percent: number }[]
+  } | null
 }
 
 type StoreSignup = {
@@ -37,7 +50,6 @@ type StoreSignup = {
 }
 
 type OrderItem = { id: string; name: string; price: number; qty: number; category?: string }
-
 type StoreOrder = {
   id: string
   user_id: string | null
@@ -48,11 +60,12 @@ type StoreOrder = {
   users: { id: string; name: string; avatar_url: string | null } | null
 }
 
+// ─── Constants ───────────────────────────────────────────────────────────────
+
 const CATEGORIES = ['Vestuário', 'Papelaria', 'Acessórios', 'Outros']
 const SIZES = ['PP', 'P', 'M', 'G', 'GG', 'XGG']
-const WHATSAPP_KEY = 'store_whatsapp'
 
-const inputCls = 'w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-400 transition'
+const inputCls = 'w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-400 transition dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100'
 
 const ORDER_STATUS: Record<string, { label: string; color: string }> = {
   pending:   { label: 'Pendente',   color: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
@@ -65,56 +78,71 @@ function fmtPrice(price: number) {
   return price === 0 ? 'Grátis' : `R$ ${price.toFixed(2).replace('.', ',')}`
 }
 
+// ─── Page ─────────────────────────────────────────────────────────────────
+
 export default function AdminLojaPage() {
   const { cropImage, cropperNode } = useImageCropper('1:1')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const [tab, setTab] = useState<'produtos' | 'pedidos' | 'inscricoes' | 'config'>('produtos')
+  const [tab, setTab] = useState<'produtos' | 'pedidos' | 'inscricoes' | 'vendedores'>('produtos')
 
-  
+  // Products
   const [items, setItems] = useState<StoreItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [form, setForm] = useState({ name: '', description: '', price: '', image_url: '', category: '', type: 'normal' as 'normal' | 'collective', min_quantity: '10', sizes: [] as string[], pix_key: '', deposit_percent: '50', whatsapp_contact: '' })
+  const [form, setForm] = useState({
+    name: '', description: '', price: '', image_url: '', category: '',
+    type: 'normal' as 'normal' | 'collective', min_quantity: '10',
+    sizes: [] as string[], seller_id: '', is_visible: true,
+  })
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
 
- 
+  // Orders
   const [orders, setOrders] = useState<StoreOrder[]>([])
   const [ordersLoaded, setOrdersLoaded] = useState(false)
 
- 
+  // Signups
   const [selectedItemId, setSelectedItemId] = useState('')
   const [signups, setSignups] = useState<StoreSignup[]>([])
   const [signupsLoading, setSignupsLoading] = useState(false)
   const [closingBatch, setClosingBatch] = useState(false)
 
- 
-  const [whatsappNumber, setWhatsappNumber] = useState('')
-  const [configSaving, setConfigSaving] = useState(false)
-  const [configSaved, setConfigSaved] = useState(false)
+  // Sellers
+  const [sellers, setSellers] = useState<SellerProfile[]>([])
+  const [allUsers, setAllUsers] = useState<{ id: string; name: string; avatar_url: string | null }[]>([])
+  const [sellerForm, setSellerForm] = useState({ userId: '', whatsapp: '', pix_key: '', deposit_percent: '50' })
+  const [sellerEditId, setSellerEditId] = useState<string | null>(null)
+  const [sellerSaving, setSellerSaving] = useState(false)
+  const [sellerError, setSellerError] = useState<string | null>(null)
+  const [userSearch, setUserSearch] = useState('')
+  const [sellersLoaded, setSellersLoaded] = useState(false)
+
+  // ─── Load ──────────────────────────────────────────────────────────────────
 
   async function loadItems() {
-    const { data } = await supabase.from('store_items').select('*').order('display_order').order('created_at')
-    setItems((data ?? []) as StoreItem[])
+    const { data } = await supabase
+      .from('store_items')
+      .select('*, seller:users!seller_id(id, name, avatar_url, store_seller_profiles(whatsapp, pix_key, deposit_percent))')
+      .order('display_order').order('created_at')
+    setItems((data ?? []) as unknown as StoreItem[])
     setLoading(false)
   }
 
-  useEffect(() => { void loadItems() }, [])
+  async function loadSellers() {
+    const { data } = await supabase
+      .from('store_seller_profiles')
+      .select('*, users(id, name, avatar_url)')
+      .order('created_at')
+    setSellers((data ?? []) as unknown as SellerProfile[])
+    setSellersLoaded(true)
+  }
 
-  useEffect(() => {
-    if (tab === 'pedidos' && !ordersLoaded) void loadOrders()
-    if (tab === 'inscricoes' && items.length > 0) {
-      const first = items.find(i => i.type === 'collective')
-      if (first && !selectedItemId) setSelectedItemId(first.id)
-    }
-    if (tab === 'config') void loadConfig()
-  }, [tab, items])
-
-  useEffect(() => {
-    if (selectedItemId) void loadSignups(selectedItemId)
-  }, [selectedItemId])
+  async function loadAllUsers() {
+    const { data } = await supabase.from('users').select('id, name, avatar_url').order('name')
+    setAllUsers((data ?? []) as { id: string; name: string; avatar_url: string | null }[])
+  }
 
   async function loadOrders() {
     const { data } = await supabase
@@ -136,18 +164,23 @@ export default function AdminLojaPage() {
     setSignupsLoading(false)
   }
 
-  async function loadConfig() {
-    const { data } = await supabase.from(COURSE_SETTINGS_TABLE).select('value').eq('key', WHATSAPP_KEY).maybeSingle()
-    if (data?.value) setWhatsappNumber(data.value)
-  }
+  useEffect(() => {
+    void Promise.all([loadItems(), loadSellers(), loadAllUsers()])
+  }, [])
 
-  async function saveConfig() {
-    setConfigSaving(true)
-    await supabase.from(COURSE_SETTINGS_TABLE).upsert({ key: WHATSAPP_KEY, value: whatsappNumber.trim() }, { onConflict: 'key' })
-    setConfigSaving(false)
-    setConfigSaved(true)
-    setTimeout(() => setConfigSaved(false), 2000)
-  }
+  useEffect(() => {
+    if (tab === 'pedidos' && !ordersLoaded) void loadOrders()
+    if (tab === 'inscricoes' && items.length > 0) {
+      const first = items.find(i => i.type === 'collective')
+      if (first && !selectedItemId) setSelectedItemId(first.id)
+    }
+  }, [tab, items]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (selectedItemId) void loadSignups(selectedItemId)
+  }, [selectedItemId])
+
+  // ─── Products ──────────────────────────────────────────────────────────────
 
   async function uploadImage(file: File) {
     setUploading(true); setError(null)
@@ -174,9 +207,8 @@ export default function AdminLojaPage() {
       type: form.type,
       min_quantity: parseInt(form.min_quantity) || 10,
       sizes: form.type === 'collective' ? form.sizes : [],
-      pix_key: form.type === 'collective' ? (form.pix_key.trim() || null) : null,
-      deposit_percent: parseInt(form.deposit_percent) || 50,
-      whatsapp_contact: form.type === 'collective' ? (form.whatsapp_contact.trim() || null) : null,
+      seller_id: form.seller_id || null,
+      is_visible: form.is_visible,
     }
     setSaving(true); setError(null)
     if (editingId) {
@@ -193,7 +225,7 @@ export default function AdminLojaPage() {
   }
 
   function resetForm() {
-    setForm({ name: '', description: '', price: '', image_url: '', category: '', type: 'normal', min_quantity: '10', sizes: [], pix_key: '', deposit_percent: '50', whatsapp_contact: '' })
+    setForm({ name: '', description: '', price: '', image_url: '', category: '', type: 'normal', min_quantity: '10', sizes: [], seller_id: '', is_visible: true })
     setEditingId(null); setError(null)
   }
 
@@ -203,9 +235,13 @@ export default function AdminLojaPage() {
       name: item.name, description: item.description ?? '', price: item.price.toFixed(2),
       image_url: item.image_url ?? '', category: item.category ?? '',
       type: item.type, min_quantity: String(item.min_quantity), sizes: item.sizes ?? [],
-      pix_key: item.pix_key ?? '', deposit_percent: String(item.deposit_percent ?? 50), whatsapp_contact: item.whatsapp_contact ?? '',
+      seller_id: item.seller_id ?? '', is_visible: item.is_visible,
     })
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function toggleSize(size: string) {
+    setForm(f => ({ ...f, sizes: f.sizes.includes(size) ? f.sizes.filter(s => s !== size) : [...f.sizes, size] }))
   }
 
   async function toggleVisible(id: string, current: boolean) {
@@ -214,14 +250,19 @@ export default function AdminLojaPage() {
   }
 
   async function deleteItem(id: string) {
+    if (!window.confirm('Excluir este produto?')) return
     await supabase.from('store_items').delete().eq('id', id)
     setItems(prev => prev.filter(i => i.id !== id))
   }
+
+  // ─── Orders ────────────────────────────────────────────────────────────────
 
   async function updateOrderStatus(id: string, status: string) {
     await supabase.from('store_orders').update({ status }).eq('id', id)
     setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o))
   }
+
+  // ─── Signups ───────────────────────────────────────────────────────────────
 
   async function confirmPayment(signupId: string) {
     await supabase.from('store_signups').update({ status: 'active' }).eq('id', signupId)
@@ -237,26 +278,63 @@ export default function AdminLojaPage() {
     setClosingBatch(false)
   }
 
-  function toggleSize(size: string) {
-    setForm(f => ({
-      ...f,
-      sizes: f.sizes.includes(size) ? f.sizes.filter(s => s !== size) : [...f.sizes, size],
-    }))
+  // ─── Sellers ───────────────────────────────────────────────────────────────
+
+  function startEditSeller(s: SellerProfile) {
+    setSellerEditId(s.user_id)
+    setSellerForm({ userId: s.user_id, whatsapp: s.whatsapp ?? '', pix_key: s.pix_key ?? '', deposit_percent: String(s.deposit_percent) })
+    setSellerError(null)
   }
+
+  function resetSellerForm() {
+    setSellerForm({ userId: '', whatsapp: '', pix_key: '', deposit_percent: '50' })
+    setSellerEditId(null); setSellerError(null); setUserSearch('')
+  }
+
+  async function saveSeller() {
+    if (!sellerForm.userId) { setSellerError('Selecione um usuário'); return }
+    if (!sellerForm.whatsapp.trim()) { setSellerError('WhatsApp obrigatório'); return }
+    setSellerSaving(true); setSellerError(null)
+    const { error: e } = await supabase.from('store_seller_profiles').upsert({
+      user_id: sellerForm.userId,
+      whatsapp: sellerForm.whatsapp.trim(),
+      pix_key: sellerForm.pix_key.trim() || null,
+      deposit_percent: parseInt(sellerForm.deposit_percent) || 50,
+    }, { onConflict: 'user_id' })
+    if (e) { setSellerError(e.message); setSellerSaving(false); return }
+    await loadSellers()
+    resetSellerForm()
+    setSellerSaving(false)
+  }
+
+  async function deleteSeller(userId: string) {
+    if (!window.confirm('Remover este vendedor? Os produtos vinculados perderão o vendedor.')) return
+    await supabase.from('store_seller_profiles').delete().eq('user_id', userId)
+    setSellers(prev => prev.filter(s => s.user_id !== userId))
+  }
+
+  // ─── Derived ───────────────────────────────────────────────────────────────
 
   const collectiveItems = items.filter(i => i.type === 'collective')
   const activeSignups = signups.filter(s => s.status === 'active' || s.status === 'awaiting_payment')
   const awaitingPayment = signups.filter(s => s.status === 'awaiting_payment')
   const selectedItem = items.find(i => i.id === selectedItemId)
 
-  if (loading) return <LoadingState message="Carregando loja" />
+  const existingSellerIds = new Set(sellers.map(s => s.user_id))
+  const availableUsers = allUsers.filter(u =>
+    !existingSellerIds.has(u.id) || u.id === sellerEditId
+  ).filter(u => userSearch.trim() === '' || u.name.toLowerCase().includes(userSearch.toLowerCase()))
 
   const TABS = [
-    { id: 'produtos', label: 'Produtos' },
-    { id: 'pedidos', label: 'Pedidos WhatsApp' },
-    { id: 'inscricoes', label: 'Inscrições' },
-    { id: 'config', label: 'Configurações' },
+    { id: 'produtos',    label: 'Produtos' },
+    { id: 'pedidos',     label: 'Pedidos' },
+    { id: 'inscricoes',  label: 'Inscrições' },
+    { id: 'vendedores',  label: 'Vendedores' },
   ] as const
+
+  if (loading) return <LoadingState message="Carregando loja" />
+
+  // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -266,45 +344,42 @@ export default function AdminLojaPage() {
       }} />
 
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-zinc-900">Loja</h1>
-        <p className="text-sm text-zinc-500 mt-0.5">Gerencie produtos, pedidos e inscrições</p>
+        <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">Loja</h1>
+        <p className="text-sm text-zinc-500 mt-0.5">Gerencie produtos, pedidos e vendedores</p>
       </div>
 
-      
-      <div className="flex gap-1 border-b border-zinc-200 mb-8">
+      <div className="flex gap-1 border-b border-zinc-200 dark:border-zinc-800 mb-8">
         {TABS.map(t => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition ${tab === t.id ? 'border-[#2F9E41] text-[#2F9E41]' : 'border-transparent text-zinc-500 hover:text-zinc-800'}`}
-          >
+          <button key={t.id} onClick={() => setTab(t.id)}
+            className={`px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition ${tab === t.id ? 'border-[#2F9E41] text-[#2F9E41]' : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300'}`}>
             {t.label}
           </button>
         ))}
       </div>
 
-      
+      {/* ── Produtos ── */}
       {tab === 'produtos' && (
         <div>
-          
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6 mb-8">
-            <h2 className="text-base font-semibold text-zinc-900 mb-4">{editingId ? 'Editar produto' : 'Novo produto'}</h2>
+          <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 mb-8">
+            <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
+              {editingId ? 'Editar produto' : 'Novo produto'}
+            </h2>
 
             <div className="flex gap-5">
+              {/* Image */}
               <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading}
-                className="relative h-24 w-24 shrink-0 rounded-xl border-2 border-dashed border-zinc-300 overflow-hidden bg-zinc-50 hover:border-zinc-400 transition disabled:opacity-50">
+                className="relative h-24 w-24 shrink-0 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 overflow-hidden bg-zinc-50 dark:bg-zinc-800 hover:border-zinc-400 transition disabled:opacity-50">
                 {form.image_url
                   ? <Image src={form.image_url} alt="" fill className="object-cover" />
                   : <div className="flex h-full flex-col items-center justify-center gap-1 text-zinc-400">
-                      <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-                        <rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><path d="m21 15-5-5L5 21" />
-                      </svg>
+                      <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><path d="m21 15-5-5L5 21" /></svg>
                       <span className="text-[10px] font-medium">{uploading ? 'Enviando...' : 'Foto'}</span>
                     </div>
                 }
               </button>
 
               <div className="flex-1 grid gap-3">
+                {/* Row 1 */}
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
                     <label className="text-xs font-medium text-zinc-500 mb-1 block">Nome *</label>
@@ -315,7 +390,9 @@ export default function AdminLojaPage() {
                     <input value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} className={inputCls} placeholder="0,00" inputMode="decimal" />
                   </div>
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2">
+
+                {/* Row 2 */}
+                <div className="grid gap-3 sm:grid-cols-3">
                   <div>
                     <label className="text-xs font-medium text-zinc-500 mb-1 block">Categoria</label>
                     <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} className={inputCls}>
@@ -324,52 +401,63 @@ export default function AdminLojaPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-zinc-500 mb-1 block">Tipo de pedido</label>
+                    <label className="text-xs font-medium text-zinc-500 mb-1 block">Tipo</label>
                     <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value as 'normal' | 'collective' }))} className={inputCls}>
-                      <option value="normal">Normal (WhatsApp)</option>
+                      <option value="normal">Normal</option>
                       <option value="collective">Compra coletiva</option>
                     </select>
                   </div>
+                  <div>
+                    <label className="text-xs font-medium text-zinc-500 mb-1 block">Vendedor</label>
+                    <select value={form.seller_id} onChange={e => setForm(f => ({ ...f, seller_id: e.target.value }))} className={inputCls}>
+                      <option value="">Sem vendedor</option>
+                      {sellers.map(s => (
+                        <option key={s.user_id} value={s.user_id}>{s.users?.name ?? s.user_id}</option>
+                      ))}
+                    </select>
+                    {sellers.length === 0 && (
+                      <p className="text-[10px] text-zinc-400 mt-1">
+                        Cadastre vendedores na aba <button type="button" onClick={() => setTab('vendedores')} className="underline">Vendedores</button>
+                      </p>
+                    )}
+                  </div>
                 </div>
 
+                {/* Collective options */}
                 {form.type === 'collective' && (
-                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex flex-col gap-3">
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div>
-                        <label className="text-xs font-medium text-amber-700 mb-1 block">Mínimo de inscrições</label>
-                        <input value={form.min_quantity} onChange={e => setForm(f => ({ ...f, min_quantity: e.target.value }))} className={inputCls} type="number" min={1} placeholder="10" />
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-amber-700 mb-1 block">% do sinal (entrada)</label>
-                        <input value={form.deposit_percent} onChange={e => setForm(f => ({ ...f, deposit_percent: e.target.value }))} className={inputCls} type="number" min={1} max={100} placeholder="50" />
-                      </div>
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div>
-                        <label className="text-xs font-medium text-amber-700 mb-1 block">Chave PIX</label>
-                        <input value={form.pix_key} onChange={e => setForm(f => ({ ...f, pix_key: e.target.value }))} className={inputCls} placeholder="email, CPF ou telefone" />
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-amber-700 mb-1 block">WhatsApp para comprovante</label>
-                        <input value={form.whatsapp_contact} onChange={e => setForm(f => ({ ...f, whatsapp_contact: e.target.value }))} className={inputCls} placeholder="5511999999999" inputMode="numeric" />
-                      </div>
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900/40 p-4 flex flex-col gap-3">
+                    <div>
+                      <label className="text-xs font-medium text-amber-700 mb-1 block">Mínimo de inscrições</label>
+                      <input value={form.min_quantity} onChange={e => setForm(f => ({ ...f, min_quantity: e.target.value }))} className={inputCls} type="number" min={1} placeholder="10" />
                     </div>
                     <div>
                       <label className="text-xs font-medium text-amber-700 mb-2 block">Tamanhos disponíveis</label>
                       <div className="flex flex-wrap gap-2">
                         {SIZES.map(size => (
                           <button key={size} type="button" onClick={() => toggleSize(size)}
-                            className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${form.sizes.includes(size) ? 'border-amber-400 bg-amber-100 text-amber-700' : 'border-zinc-200 bg-white text-zinc-500 hover:border-zinc-300'}`}>
+                            className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${form.sizes.includes(size) ? 'border-amber-400 bg-amber-100 text-amber-700' : 'border-zinc-200 bg-white text-zinc-500 hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-800'}`}>
                             {size}
                           </button>
                         ))}
                       </div>
                     </div>
+                    {form.seller_id && (() => {
+                      const sp = sellers.find(s => s.user_id === form.seller_id)
+                      if (!sp) return null
+                      return (
+                        <p className="text-xs text-amber-700 bg-amber-100 rounded-lg px-3 py-2">
+                          PIX e WhatsApp virão do vendedor <strong>{sp.users?.name}</strong>.
+                          {!sp.pix_key && ' ⚠️ Vendedor sem chave PIX cadastrada.'}
+                          {!sp.whatsapp && ' ⚠️ Vendedor sem WhatsApp cadastrado.'}
+                        </p>
+                      )
+                    })()}
                   </div>
                 )}
 
+                {/* Description */}
                 <div>
-                  <label className="text-xs font-medium text-zinc-500 mb-1 block">Descrição (opcional)</label>
+                  <label className="text-xs font-medium text-zinc-500 mb-1 block">Descrição</label>
                   <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className={`${inputCls} resize-none`} rows={2} placeholder="Detalhes do produto..." />
                 </div>
               </div>
@@ -378,53 +466,61 @@ export default function AdminLojaPage() {
             {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
             <div className="mt-4 flex gap-2">
-              <button onClick={save} disabled={saving || uploading} className="rounded-lg px-5 py-2 text-sm font-medium text-white disabled:opacity-50 transition" style={{ backgroundColor: '#2F9E41' }}>
+              <button onClick={save} disabled={saving || uploading}
+                className="rounded-lg px-5 py-2 text-sm font-medium text-white disabled:opacity-50 transition hover:opacity-90" style={{ backgroundColor: '#2F9E41' }}>
                 {saving ? 'Salvando...' : editingId ? 'Salvar alterações' : 'Adicionar produto'}
               </button>
               {editingId && (
-                <button onClick={resetForm} className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-50 transition">Cancelar</button>
+                <button onClick={resetForm} className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">Cancelar</button>
               )}
             </div>
           </div>
 
-         
+          {/* Products list */}
           {items.length === 0 ? (
             <p className="text-center text-sm text-zinc-400 py-12">Nenhum produto cadastrado ainda.</p>
           ) : (
             <div className="flex flex-col gap-3">
-              {items.map(item => (
-                <div key={item.id} className={`flex items-center gap-4 rounded-xl border bg-white p-4 ${item.is_visible ? 'border-zinc-200' : 'border-zinc-100 opacity-60'}`}>
-                  <div className="relative h-14 w-14 shrink-0 rounded-lg overflow-hidden bg-zinc-100">
-                    {item.image_url
-                      ? <Image src={item.image_url} alt={item.name} fill className="object-cover" />
-                      : <div className="flex h-full items-center justify-center text-zinc-300 text-xl">?</div>}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-semibold text-zinc-900 truncate">{item.name}</p>
-                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold border ${item.type === 'collective' ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-zinc-50 text-zinc-500 border-zinc-200'}`}>
-                        {item.type === 'collective' ? 'Compra coletiva' : 'Normal'}
-                      </span>
-                      {item.category && <span className="shrink-0 rounded-full border border-zinc-200 px-2 py-0.5 text-[10px] font-semibold text-zinc-500">{item.category}</span>}
+              {items.map(item => {
+                const sp = item.seller?.store_seller_profiles?.[0]
+                return (
+                  <div key={item.id} className={`flex items-center gap-4 rounded-xl border bg-white dark:bg-zinc-900 p-4 ${item.is_visible ? 'border-zinc-200 dark:border-zinc-800' : 'border-zinc-100 dark:border-zinc-800/50 opacity-60'}`}>
+                    <div className="relative h-14 w-14 shrink-0 rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+                      {item.image_url ? <Image src={item.image_url} alt={item.name} fill className="object-cover" /> : <div className="flex h-full items-center justify-center text-zinc-300 text-xl">?</div>}
                     </div>
-                    {item.description && <p className="text-xs text-zinc-400 truncate mt-0.5">{item.description}</p>}
-                    <p className="text-sm font-bold mt-0.5" style={{ color: '#2F9E41' }}>{fmtPrice(item.price)}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">{item.name}</p>
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold border ${item.type === 'collective' ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-zinc-50 text-zinc-500 border-zinc-200 dark:bg-zinc-800 dark:border-zinc-700'}`}>
+                          {item.type === 'collective' ? 'Coletivo' : 'Normal'}
+                        </span>
+                        {item.category && <span className="shrink-0 rounded-full border border-zinc-200 dark:border-zinc-700 px-2 py-0.5 text-[10px] font-semibold text-zinc-500">{item.category}</span>}
+                        {item.seller && (
+                          <span className="shrink-0 flex items-center gap-1 text-[10px] text-zinc-400">
+                            <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx={12} cy={7} r={4}/></svg>
+                            {item.seller.name}
+                            {sp && !sp.whatsapp && <span className="text-amber-500" title="Sem WhatsApp">⚠</span>}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm font-bold mt-0.5" style={{ color: '#2F9E41' }}>{fmtPrice(item.price)}</p>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <button onClick={() => startEdit(item)} className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">Editar</button>
+                      <button onClick={() => toggleVisible(item.id, item.is_visible)} className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
+                        {item.is_visible ? 'Ocultar' : 'Publicar'}
+                      </button>
+                      <button onClick={() => deleteItem(item.id)} className="rounded-lg border border-red-100 px-3 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 transition">Excluir</button>
+                    </div>
                   </div>
-                  <div className="flex gap-2 shrink-0">
-                    <button onClick={() => startEdit(item)} className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition">Editar</button>
-                    <button onClick={() => toggleVisible(item.id, item.is_visible)} className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition">
-                      {item.is_visible ? 'Ocultar' : 'Publicar'}
-                    </button>
-                    <button onClick={() => deleteItem(item.id)} className="rounded-lg border border-red-100 px-3 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 transition">Excluir</button>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
       )}
 
-     
+      {/* ── Pedidos ── */}
       {tab === 'pedidos' && (
         <div>
           {!ordersLoaded ? (
@@ -434,32 +530,29 @@ export default function AdminLojaPage() {
           ) : (
             <div className="flex flex-col gap-3">
               {orders.map(order => {
-                const user = order.users as unknown as { id: string; name: string; avatar_url: string | null } | null
+                const u = order.users as unknown as { name: string; avatar_url: string | null } | null
                 const st = ORDER_STATUS[order.status] ?? ORDER_STATUS.pending
                 return (
-                  <div key={order.id} className="rounded-xl border border-zinc-200 bg-white p-4">
+                  <div key={order.id} className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
                     <div className="flex items-start justify-between gap-3 mb-3">
                       <div className="flex items-center gap-2.5">
-                        <UserAvatar src={user?.avatar_url} name={user?.name ?? '?'} className="h-8 w-8 shrink-0" />
+                        <UserAvatar src={u?.avatar_url} name={u?.name ?? '?'} className="h-8 w-8 shrink-0" />
                         <div>
-                          <p className="text-sm font-semibold text-zinc-900">{user?.name ?? 'Usuário removido'}</p>
+                          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{u?.name ?? 'Usuário removido'}</p>
                           <p className="text-xs text-zinc-400">{new Date(order.created_at).toLocaleString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <span className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${st.color}`}>{st.label}</span>
-                        <select
-                          value={order.status}
-                          onChange={e => updateOrderStatus(order.id, e.target.value)}
-                          className="rounded-lg border border-zinc-200 px-2 py-1 text-xs text-zinc-600 outline-none"
-                        >
+                        <select value={order.status} onChange={e => updateOrderStatus(order.id, e.target.value)}
+                          className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-2 py-1 text-xs text-zinc-600 dark:text-zinc-400 outline-none bg-white dark:bg-zinc-900">
                           {Object.entries(ORDER_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                         </select>
                       </div>
                     </div>
                     <div className="flex flex-col gap-1 mb-2">
                       {(order.items as OrderItem[]).map((it, i) => (
-                        <p key={i} className="text-xs text-zinc-600">• {it.qty}x {it.name} — {fmtPrice(it.price)}</p>
+                        <p key={i} className="text-xs text-zinc-600 dark:text-zinc-400">• {it.qty}x {it.name} — {fmtPrice(it.price)}</p>
                       ))}
                     </div>
                     <p className="text-sm font-bold" style={{ color: '#2F9E41' }}>Total: {fmtPrice(order.total)}</p>
@@ -471,33 +564,26 @@ export default function AdminLojaPage() {
         </div>
       )}
 
-    
+      {/* ── Inscrições ── */}
       {tab === 'inscricoes' && (
         <div>
           {collectiveItems.length === 0 ? (
             <p className="text-sm text-zinc-400 text-center py-12">Nenhum produto de compra coletiva cadastrado.</p>
           ) : (
             <div>
-              <div className="flex items-center gap-3 mb-6">
-                <select
-                  value={selectedItemId}
-                  onChange={e => setSelectedItemId(e.target.value)}
-                  className={`${inputCls} max-w-xs`}
-                >
+              <div className="flex flex-wrap items-center gap-3 mb-6">
+                <select value={selectedItemId} onChange={e => setSelectedItemId(e.target.value)} className={`${inputCls} max-w-xs`}>
                   {collectiveItems.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
                 </select>
                 {selectedItem && (
                   <span className="text-sm text-zinc-500">
-                    Meta: <strong className="text-zinc-900">{selectedItem.min_quantity}</strong> — Inscritos: <strong style={{ color: activeSignups.length >= selectedItem.min_quantity ? '#2F9E41' : '#f59e0b' }}>{activeSignups.length}</strong>
+                    Meta: <strong className="text-zinc-900 dark:text-zinc-100">{selectedItem.min_quantity}</strong>
+                    {' '}— Inscritos: <strong style={{ color: activeSignups.length >= selectedItem.min_quantity ? '#2F9E41' : '#f59e0b' }}>{activeSignups.length}</strong>
                     {awaitingPayment.length > 0 && <span className="ml-2 text-amber-600">({awaitingPayment.length} aguardando PIX)</span>}
                   </span>
                 )}
-                <button
-                  onClick={closeBatch}
-                  disabled={closingBatch || activeSignups.length === 0}
-                  className="ml-auto rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-40 transition"
-                  style={{ backgroundColor: '#2F9E41' }}
-                >
+                <button onClick={closeBatch} disabled={closingBatch || activeSignups.length === 0}
+                  className="ml-auto rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-40 transition hover:opacity-90" style={{ backgroundColor: '#2F9E41' }}>
                   {closingBatch ? 'Fechando...' : 'Fechar lote'}
                 </button>
               </div>
@@ -507,9 +593,9 @@ export default function AdminLojaPage() {
               ) : signups.length === 0 ? (
                 <p className="text-sm text-zinc-400 text-center py-12">Nenhuma inscrição ainda.</p>
               ) : (
-                <div className="rounded-xl border border-zinc-200 overflow-hidden">
+                <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
                   <table className="w-full text-sm">
-                    <thead className="bg-zinc-50 border-b border-zinc-200">
+                    <thead className="bg-zinc-50 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
                       <tr>
                         <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500">Aluno</th>
                         <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500">Tamanho</th>
@@ -518,27 +604,29 @@ export default function AdminLojaPage() {
                         <th className="px-4 py-3" />
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-zinc-100">
+                    <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                       {signups.map(s => {
-                        const u = s.users as unknown as { id: string; name: string; avatar_url: string | null } | null
+                        const u = s.users as unknown as { name: string; avatar_url: string | null } | null
                         return (
                           <tr key={s.id} className={s.status === 'cancelled' ? 'opacity-40' : ''}>
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2">
                                 <UserAvatar src={u?.avatar_url} name={u?.name ?? '?'} className="h-7 w-7 shrink-0" />
-                                <span className="font-medium text-zinc-900">{u?.name ?? '—'}</span>
+                                <span className="font-medium text-zinc-900 dark:text-zinc-100">{u?.name ?? '—'}</span>
                               </div>
                             </td>
-                            <td className="px-4 py-3 text-zinc-700 font-semibold">{s.size ?? '—'}</td>
+                            <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300 font-semibold">{s.size ?? '—'}</td>
                             <td className="px-4 py-3 text-zinc-400 text-xs">{new Date(s.created_at).toLocaleDateString('pt-BR')}</td>
                             <td className="px-4 py-3">
                               <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold border ${
                                 s.status === 'awaiting_payment' ? 'bg-amber-50 text-amber-600 border-amber-200' :
-                                s.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' :
-                                s.status === 'confirmed' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                'bg-zinc-50 text-zinc-400 border-zinc-200'
+                                s.status === 'active'           ? 'bg-green-50 text-green-700 border-green-200' :
+                                s.status === 'confirmed'        ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                'bg-zinc-50 text-zinc-400 border-zinc-200 dark:bg-zinc-800 dark:border-zinc-700'
                               }`}>
-                                {s.status === 'awaiting_payment' ? 'Aguardando PIX' : s.status === 'active' ? 'Inscrito' : s.status === 'confirmed' ? 'Confirmado' : 'Cancelado'}
+                                {s.status === 'awaiting_payment' ? 'Aguardando PIX' :
+                                 s.status === 'active'           ? 'Inscrito' :
+                                 s.status === 'confirmed'        ? 'Confirmado' : 'Cancelado'}
                               </span>
                             </td>
                             <td className="px-4 py-3">
@@ -561,25 +649,113 @@ export default function AdminLojaPage() {
         </div>
       )}
 
-      
-      {tab === 'config' && (
-        <div className="max-w-md">
-          <div className="rounded-2xl border border-zinc-200 bg-white p-6">
-            <h2 className="text-base font-semibold text-zinc-900 mb-1">WhatsApp do vendedor</h2>
-            <p className="text-xs text-zinc-400 mb-4">Número que receberá os pedidos. Inclua DDI e DDD (ex: 5511999999999).</p>
-            <div className="flex gap-2">
-              <input
-                value={whatsappNumber}
-                onChange={e => setWhatsappNumber(e.target.value)}
-                className={`${inputCls} flex-1`}
-                placeholder="5511999999999"
-                inputMode="numeric"
-              />
-              <button onClick={saveConfig} disabled={configSaving} className="rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50 transition" style={{ backgroundColor: '#2F9E41' }}>
-                {configSaved ? 'Salvo!' : configSaving ? '...' : 'Salvar'}
+      {/* ── Vendedores ── */}
+      {tab === 'vendedores' && (
+        <div>
+          {/* Form */}
+          <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 mb-8">
+            <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
+              {sellerEditId ? 'Editar vendedor' : 'Adicionar vendedor'}
+            </h2>
+
+            <div className="grid gap-4">
+              {/* User picker — only when adding */}
+              {!sellerEditId ? (
+                <div>
+                  <label className="text-xs font-medium text-zinc-500 mb-1 block">Usuário *</label>
+                  <div className="flex flex-col gap-2">
+                    <input value={userSearch} onChange={e => setUserSearch(e.target.value)} placeholder="Buscar por nome..." className={inputCls} />
+                    {userSearch.trim().length > 0 && (
+                      <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 overflow-hidden max-h-48 overflow-y-auto">
+                        {availableUsers.length === 0 ? (
+                          <p className="px-4 py-3 text-sm text-zinc-400">Nenhum usuário encontrado.</p>
+                        ) : availableUsers.slice(0, 8).map(u => (
+                          <button key={u.id} type="button" onClick={() => { setSellerForm(f => ({ ...f, userId: u.id })); setUserSearch(u.name) }}
+                            className={`flex w-full items-center gap-3 px-4 py-2.5 text-sm text-left hover:bg-zinc-50 dark:hover:bg-zinc-800 transition ${sellerForm.userId === u.id ? 'bg-zinc-50 dark:bg-zinc-800' : ''}`}>
+                            <UserAvatar src={u.avatar_url} name={u.name} className="h-7 w-7 shrink-0" />
+                            <span className="font-medium text-zinc-900 dark:text-zinc-100">{u.name}</span>
+                            {sellerForm.userId === u.id && <svg className="ml-auto text-[#2F9E41]" width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {sellerForm.userId && !userSearch.trim() && (
+                      <p className="text-xs text-zinc-400">Usuário selecionado: <strong className="text-zinc-700 dark:text-zinc-300">{allUsers.find(u => u.id === sellerForm.userId)?.name}</strong></p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 rounded-xl bg-zinc-50 dark:bg-zinc-800 px-4 py-3">
+                  <UserAvatar src={sellers.find(s => s.user_id === sellerEditId)?.users?.avatar_url} name={sellers.find(s => s.user_id === sellerEditId)?.users?.name ?? '?'} className="h-8 w-8 shrink-0" />
+                  <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{sellers.find(s => s.user_id === sellerEditId)?.users?.name}</span>
+                </div>
+              )}
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div>
+                  <label className="text-xs font-medium text-zinc-500 mb-1 block">WhatsApp *</label>
+                  <input value={sellerForm.whatsapp} onChange={e => setSellerForm(f => ({ ...f, whatsapp: e.target.value }))} className={inputCls} placeholder="5511999999999" inputMode="numeric" />
+                  <p className="text-[10px] text-zinc-400 mt-1">Com DDI e DDD, sem espaços</p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-zinc-500 mb-1 block">Chave PIX</label>
+                  <input value={sellerForm.pix_key} onChange={e => setSellerForm(f => ({ ...f, pix_key: e.target.value }))} className={inputCls} placeholder="email, CPF ou telefone" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-zinc-500 mb-1 block">% do sinal</label>
+                  <input value={sellerForm.deposit_percent} onChange={e => setSellerForm(f => ({ ...f, deposit_percent: e.target.value }))} className={inputCls} type="number" min={1} max={100} placeholder="50" />
+                  <p className="text-[10px] text-zinc-400 mt-1">Aplicado nas compras coletivas</p>
+                </div>
+              </div>
+            </div>
+
+            {sellerError && <p className="mt-3 text-sm text-red-600">{sellerError}</p>}
+
+            <div className="mt-4 flex gap-2">
+              <button onClick={saveSeller} disabled={sellerSaving || !sellerForm.userId}
+                className="rounded-lg px-5 py-2 text-sm font-medium text-white disabled:opacity-50 transition hover:opacity-90" style={{ backgroundColor: '#2F9E41' }}>
+                {sellerSaving ? 'Salvando...' : sellerEditId ? 'Salvar alterações' : 'Adicionar vendedor'}
               </button>
+              {sellerEditId && (
+                <button onClick={resetSellerForm} className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">Cancelar</button>
+              )}
             </div>
           </div>
+
+          {/* Sellers list */}
+          {!sellersLoaded ? (
+            <p className="text-sm text-zinc-400 text-center py-8">Carregando...</p>
+          ) : sellers.length === 0 ? (
+            <p className="text-sm text-zinc-400 text-center py-12">Nenhum vendedor cadastrado ainda.</p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {sellers.map(s => (
+                <div key={s.user_id} className="flex items-center gap-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+                  <UserAvatar src={s.users?.avatar_url} name={s.users?.name ?? '?'} className="h-10 w-10 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{s.users?.name ?? s.user_id}</p>
+                    <div className="flex flex-wrap gap-3 mt-1 text-xs text-zinc-500">
+                      {s.whatsapp ? (
+                        <span className="flex items-center gap-1">
+                          <svg width={11} height={11} viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+                          {s.whatsapp}
+                        </span>
+                      ) : <span className="text-amber-500">⚠ Sem WhatsApp</span>}
+                      {s.pix_key ? (
+                        <span>PIX: {s.pix_key}</span>
+                      ) : <span className="text-amber-500">⚠ Sem PIX</span>}
+                      <span>Sinal: {s.deposit_percent}%</span>
+                      <span className="text-zinc-400">{items.filter(i => i.seller_id === s.user_id).length} produto(s)</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <button onClick={() => startEditSeller(s)} className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">Editar</button>
+                    <button onClick={() => deleteSeller(s.user_id)} className="rounded-lg border border-red-100 px-3 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 transition">Remover</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
