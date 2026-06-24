@@ -17,40 +17,48 @@ type StoreItem = {
   type: 'normal' | 'collective'
   min_quantity: number
   sizes: string[]
+  pix_key: string | null
+  deposit_percent: number
+  whatsapp_contact: string | null
 }
 
 type CartItem = StoreItem & { qty: number }
+type MySignup = { size: string; status: string }
 
 const WHATSAPP_KEY = 'store_whatsapp'
 
-function fmtPrice(price: number) {
-  return price === 0 ? 'Grátis' : `R$ ${price.toFixed(2).replace('.', ',')}`
+function fmtPrice(v: number) {
+  return v === 0 ? 'Grátis' : `R$ ${v.toFixed(2).replace('.', ',')}`
 }
 
 export default function LojaPage() {
   const [items, setItems] = useState<StoreItem[]>([])
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<User | null>(null)
+  const [userName, setUserName] = useState('')
   const [whatsappNumber, setWhatsappNumber] = useState('')
 
- 
+  // Collective
   const [signupCounts, setSignupCounts] = useState<Record<string, number>>({})
-  const [mySignups, setMySignups] = useState<Record<string, { size: string }>>({})
+  const [mySignups, setMySignups] = useState<Record<string, MySignup>>({})
   const [signupModal, setSignupModal] = useState<StoreItem | null>(null)
   const [selectedSize, setSelectedSize] = useState('')
   const [signupSaving, setSignupSaving] = useState(false)
+  const [paymentModal, setPaymentModal] = useState<{ item: StoreItem; size: string } | null>(null)
+  const [pixCopied, setPixCopied] = useState(false)
 
-
+  // Cart
   const [cart, setCart] = useState<CartItem[]>([])
   const [cartOpen, setCartOpen] = useState(false)
   const [orderSaving, setOrderSaving] = useState(false)
 
-
+  // Filters
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
 
   const drawerRef = useRef<HTMLDivElement>(null)
-  const modalRef = useRef<HTMLDivElement>(null)
+  const signupModalRef = useRef<HTMLDivElement>(null)
+  const paymentModalRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     async function init() {
@@ -60,7 +68,7 @@ export default function LojaPage() {
         { data: settingData },
       ] = await Promise.all([
         supabase.from('store_items')
-          .select('id, name, description, price, image_url, category, type, min_quantity, sizes')
+          .select('id, name, description, price, image_url, category, type, min_quantity, sizes, pix_key, deposit_percent, whatsapp_contact')
           .eq('is_visible', true).order('display_order').order('created_at'),
         supabase.auth.getUser(),
         supabase.from(COURSE_SETTINGS_TABLE).select('value').eq('key', WHATSAPP_KEY).maybeSingle(),
@@ -71,20 +79,26 @@ export default function LojaPage() {
       setUser(authUser)
       if (settingData?.value) setWhatsappNumber(settingData.value)
 
+      if (authUser) {
+        supabase.from('users').select('name').eq('id', authUser.id).maybeSingle()
+          .then(({ data }) => { if (data?.name) setUserName(data.name) })
+      }
+
       const collectiveIds = loadedItems.filter(i => i.type === 'collective').map(i => i.id)
       if (collectiveIds.length > 0) {
-        const promises: [Promise<{ data: { item_id: string }[] | null }>, Promise<{ data: { item_id: string; size: string | null }[] | null }>] = [
-          supabase.from('store_signups').select('item_id').in('item_id', collectiveIds).eq('status', 'active') as unknown as Promise<{ data: { item_id: string }[] | null }>,
+        const [{ data: allSignups }, { data: mySignupData }] = await Promise.all([
+          supabase.from('store_signups').select('item_id').in('item_id', collectiveIds).neq('status', 'cancelled'),
           authUser
-            ? supabase.from('store_signups').select('item_id, size').in('item_id', collectiveIds).eq('user_id', authUser.id).eq('status', 'active') as unknown as Promise<{ data: { item_id: string; size: string | null }[] | null }>
-            : Promise.resolve({ data: [] as { item_id: string; size: string | null }[] }),
-        ]
-        const [{ data: allSignups }, { data: mySignupData }] = await Promise.all(promises)
+            ? supabase.from('store_signups').select('item_id, size, status').in('item_id', collectiveIds).eq('user_id', authUser.id).neq('status', 'cancelled')
+            : Promise.resolve({ data: [] as { item_id: string; size: string | null; status: string }[] }),
+        ])
         const counts: Record<string, number> = {}
-        for (const s of allSignups ?? []) counts[s.item_id] = (counts[s.item_id] ?? 0) + 1
+        for (const s of (allSignups ?? []) as { item_id: string }[]) counts[s.item_id] = (counts[s.item_id] ?? 0) + 1
         setSignupCounts(counts)
-        const mine: Record<string, { size: string }> = {}
-        for (const s of mySignupData ?? []) mine[s.item_id] = { size: s.size ?? '' }
+        const mine: Record<string, MySignup> = {}
+        for (const s of (mySignupData ?? []) as { item_id: string; size: string | null; status: string }[]) {
+          mine[s.item_id] = { size: s.size ?? '', status: s.status }
+        }
         setMySignups(mine)
       }
 
@@ -93,15 +107,16 @@ export default function LojaPage() {
     void init()
   }, [])
 
-
   useEffect(() => {
     function handler(e: MouseEvent) {
-      if (cartOpen && drawerRef.current && !drawerRef.current.contains(e.target as Node)) setCartOpen(false)
-      if (signupModal && modalRef.current && !modalRef.current.contains(e.target as Node)) closeSignupModal()
+      const target = e.target as Node
+      if (cartOpen && drawerRef.current && !drawerRef.current.contains(target)) setCartOpen(false)
+      if (signupModal && signupModalRef.current && !signupModalRef.current.contains(target)) closeSignupModal()
+      if (paymentModal && paymentModalRef.current && !paymentModalRef.current.contains(target)) setPaymentModal(null)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
-  }, [cartOpen, signupModal])
+  }, [cartOpen, signupModal, paymentModal]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const categories = useMemo(() => {
     const set = new Set(items.map(i => i.category).filter(Boolean) as string[])
@@ -117,7 +132,7 @@ export default function LojaPage() {
     })
   }, [items, search, activeCategory])
 
-  
+  // Cart
   function addToCart(item: StoreItem) {
     setCart(prev => {
       const ex = prev.find(c => c.id === item.id)
@@ -137,21 +152,22 @@ export default function LojaPage() {
   const cartCount = cart.reduce((s, c) => s + c.qty, 0)
   const cartTotal = cart.reduce((s, c) => s + c.price * c.qty, 0)
 
-  
   async function placeOrder() {
     if (!user || !whatsappNumber) return
     setOrderSaving(true)
     const orderItems = cart.map(c => ({ id: c.id, name: c.name, price: c.price, qty: c.qty, category: c.category ?? undefined }))
-    await supabase.from('store_orders').insert({ user_id: user.id, items: orderItems, total: cartTotal, status: 'pending' })
     const lines = cart.map(c => `• ${c.qty}x ${c.name} — ${fmtPrice(c.price)}`)
     const msg = `Olá! Gostaria de fazer um pedido na Loja ADS Conecta:\n\n${lines.join('\n')}\n\n*Total: ${fmtPrice(cartTotal)}*`
-    window.open(`https://wa.me/${whatsappNumber.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank')
+    const waUrl = `https://wa.me/${whatsappNumber.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`
+    // Salva em background — abre o WhatsApp antes do await para não perder o gesto do usuário em mobile
+    supabase.from('store_orders').insert({ user_id: user.id, items: orderItems, total: cartTotal, status: 'pending' })
+    window.location.href = waUrl
     setCart([])
     setCartOpen(false)
     setOrderSaving(false)
   }
 
-
+  // Collective signup
   function openSignupModal(item: StoreItem) {
     if (!user) return
     setSignupModal(item)
@@ -166,16 +182,22 @@ export default function LojaPage() {
   async function submitSignup() {
     if (!user || !signupModal) return
     setSignupSaving(true)
-    const isUpdating = !!mySignups[signupModal.id]
+    const isNew = !mySignups[signupModal.id]
     const { error } = await supabase.from('store_signups').upsert(
-      { user_id: user.id, item_id: signupModal.id, size: selectedSize || null, status: 'active' },
+      { user_id: user.id, item_id: signupModal.id, size: selectedSize || null, status: 'awaiting_payment' },
       { onConflict: 'user_id,item_id' }
     )
     if (!error) {
-      const prev = mySignups[signupModal.id]
-      setMySignups(m => ({ ...m, [signupModal.id]: { size: selectedSize } }))
-      if (!isUpdating) setSignupCounts(c => ({ ...c, [signupModal.id]: (c[signupModal.id] ?? 0) + 1 }))
-      void prev
+      setMySignups(m => ({ ...m, [signupModal.id]: { size: selectedSize, status: 'awaiting_payment' } }))
+      if (isNew) setSignupCounts(c => ({ ...c, [signupModal.id]: (c[signupModal.id] ?? 0) + 1 }))
+      if (signupModal.pix_key) {
+        const item = signupModal
+        const size = selectedSize
+        closeSignupModal()
+        setSignupSaving(false)
+        setPaymentModal({ item, size })
+        return
+      }
     }
     closeSignupModal()
     setSignupSaving(false)
@@ -188,10 +210,33 @@ export default function LojaPage() {
     setSignupCounts(c => ({ ...c, [itemId]: Math.max(0, (c[itemId] ?? 1) - 1) }))
   }
 
+  function openPaymentModal(item: StoreItem) {
+    setPaymentModal({ item, size: mySignups[item.id]?.size ?? '' })
+  }
+
+  function copyPix(key: string) {
+    navigator.clipboard.writeText(key)
+    setPixCopied(true)
+    setTimeout(() => setPixCopied(false), 2000)
+  }
+
+  function buildProofMessage(item: StoreItem, size: string) {
+    const depositAmt = item.price * (item.deposit_percent ?? 50) / 100
+    const lines = [
+      `Olá! Estou enviando o comprovante do sinal referente ao meu pedido:`,
+      ``,
+      `• Produto: ${item.name}`,
+      size ? `• Tamanho: ${size}` : null,
+      `• Valor enviado: ${fmtPrice(depositAmt)} (${item.deposit_percent ?? 50}% de ${fmtPrice(item.price)})`,
+      userName ? `• Nome: ${userName}` : null,
+    ].filter(Boolean).join('\n')
+    return lines
+  }
+
   return (
     <div className="relative px-4 md:px-6 py-8 w-full max-w-5xl mx-auto">
 
-      
+      {/* Header */}
       <div className="mb-6 flex items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Loja</h1>
@@ -209,7 +254,7 @@ export default function LojaPage() {
         </button>
       </div>
 
-    
+      {/* Search + categories */}
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -220,17 +265,15 @@ export default function LojaPage() {
         </div>
         {categories.length > 0 && (
           <div className="flex flex-wrap gap-2">
-            <FilterChip active={!activeCategory} onClick={() => setActiveCategory(null)}>Todos</FilterChip>
+            <Chip active={!activeCategory} onClick={() => setActiveCategory(null)}>Todos</Chip>
             {categories.map(cat => (
-              <FilterChip key={cat} active={activeCategory === cat} onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}>
-                {cat}
-              </FilterChip>
+              <Chip key={cat} active={activeCategory === cat} onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}>{cat}</Chip>
             ))}
           </div>
         )}
       </div>
 
-      
+      {/* Grid */}
       {loading ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
@@ -247,9 +290,7 @@ export default function LojaPage() {
         <div className="rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-700 py-20 text-center">
           <p className="text-sm text-zinc-400">Nenhum produto encontrado.</p>
           {(search || activeCategory) && (
-            <button onClick={() => { setSearch(''); setActiveCategory(null) }} className="mt-3 text-sm font-medium" style={{ color: '#2F9E41' }}>
-              Limpar filtros
-            </button>
+            <button onClick={() => { setSearch(''); setActiveCategory(null) }} className="mt-3 text-sm font-medium" style={{ color: '#2F9E41' }}>Limpar filtros</button>
           )}
         </div>
       ) : (
@@ -260,22 +301,23 @@ export default function LojaPage() {
               const progress = Math.min(100, (count / item.min_quantity) * 100)
               const reached = count >= item.min_quantity
               const mySignup = mySignups[item.id]
+              const depositAmt = item.price * (item.deposit_percent ?? 50) / 100
+
               return (
                 <div key={item.id} className="flex flex-col rounded-2xl border border-amber-200 bg-amber-50/40 dark:bg-zinc-900 dark:border-amber-900/40 overflow-hidden">
                   <div className="relative aspect-square bg-amber-50 dark:bg-zinc-800">
-                    {item.image_url
-                      ? <Image src={item.image_url} alt={item.name} fill className="object-cover" />
-                      : <div className="flex h-full items-center justify-center text-amber-200"><IconBag size={36} /></div>
-                    }
+                    {item.image_url ? <Image src={item.image_url} alt={item.name} fill className="object-cover" /> : <div className="flex h-full items-center justify-center text-amber-200"><IconBag size={36} /></div>}
                     <span className="absolute top-2 left-2 rounded-full bg-amber-500 px-2 py-0.5 text-[9px] font-bold text-white">Compra coletiva</span>
-                    {item.category && (
-                      <span className="absolute top-2 right-2 rounded-full bg-white/90 dark:bg-zinc-900/90 px-2 py-0.5 text-[10px] font-semibold text-zinc-500 backdrop-blur-sm">{item.category}</span>
-                    )}
+                    {item.category && <span className="absolute top-2 right-2 rounded-full bg-white/90 dark:bg-zinc-900/90 px-2 py-0.5 text-[10px] font-semibold text-zinc-500 backdrop-blur-sm">{item.category}</span>}
                   </div>
                   <div className="flex flex-col gap-2 p-3 flex-1">
                     <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 leading-snug line-clamp-2">{item.name}</p>
-                    <p className="text-sm font-bold" style={{ color: '#2F9E41' }}>{fmtPrice(item.price)}</p>
-                  
+                    <div className="flex items-baseline gap-1.5">
+                      <p className="text-sm font-bold" style={{ color: '#2F9E41' }}>{fmtPrice(item.price)}</p>
+                      {item.pix_key && <p className="text-[10px] text-zinc-400">sinal: {fmtPrice(depositAmt)}</p>}
+                    </div>
+
+                    {/* Progress bar */}
                     <div>
                       <div className="flex justify-between text-[10px] text-zinc-500 mb-1">
                         <span>{count} inscrito{count !== 1 ? 's' : ''}</span>
@@ -284,22 +326,34 @@ export default function LojaPage() {
                       <div className="h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-700">
                         <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, backgroundColor: reached ? '#2F9E41' : '#f59e0b' }} />
                       </div>
-                      {reached && <p className="text-[10px] font-semibold mt-1" style={{ color: '#2F9E41' }}>Meta atingida!</p>}
+                      {reached && <p className="text-[10px] font-semibold mt-0.5" style={{ color: '#2F9E41' }}>Meta atingida!</p>}
                     </div>
-            
+
+                    {/* CTA */}
                     <div className="mt-auto pt-1">
                       {!user ? (
                         <Link href="/login" className="block text-center w-full rounded-lg py-1.5 text-[11px] font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 transition">
                           Entre para participar
                         </Link>
                       ) : mySignup ? (
-                        <div>
-                          <p className="text-[11px] font-semibold text-green-700 mb-1">✓ Inscrito{mySignup.size ? ` — ${mySignup.size}` : ''}</p>
+                        <div className="flex flex-col gap-1.5">
+                          {mySignup.status === 'awaiting_payment' ? (
+                            <>
+                              <p className="text-[10px] font-semibold text-amber-600">⏳ Aguardando confirmação do PIX</p>
+                              {item.pix_key && (
+                                <button onClick={() => openPaymentModal(item)} className="w-full rounded-lg py-1.5 text-[10px] font-semibold text-amber-700 border border-amber-200 bg-amber-50 hover:bg-amber-100 transition">
+                                  Ver instruções de pagamento
+                                </button>
+                              )}
+                            </>
+                          ) : (
+                            <p className="text-[11px] font-semibold text-green-700">✓ Inscrito{mySignup.size ? ` — ${mySignup.size}` : ''}</p>
+                          )}
                           <div className="flex gap-1.5">
-                            <button onClick={() => openSignupModal(item)} className="flex-1 rounded-lg py-1.5 text-[10px] font-semibold text-zinc-600 border border-zinc-200 hover:bg-zinc-50 transition">
+                            <button onClick={() => openSignupModal(item)} className="flex-1 rounded-lg py-1 text-[10px] font-semibold text-zinc-600 border border-zinc-200 hover:bg-zinc-50 transition">
                               Alterar tamanho
                             </button>
-                            <button onClick={() => cancelSignup(item.id)} className="rounded-lg py-1.5 px-2 text-[10px] font-semibold text-red-500 border border-red-100 hover:bg-red-50 transition">
+                            <button onClick={() => cancelSignup(item.id)} className="rounded-lg py-1 px-2 text-[10px] font-semibold text-red-500 border border-red-100 hover:bg-red-50 transition">
                               Cancelar
                             </button>
                           </div>
@@ -315,18 +369,13 @@ export default function LojaPage() {
               )
             }
 
-        
+            // Normal item
             const inCart = cart.find(c => c.id === item.id)
             return (
               <div key={item.id} className="group flex flex-col rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden transition hover:shadow-md hover:border-zinc-200">
                 <div className="relative aspect-square bg-zinc-50 dark:bg-zinc-800">
-                  {item.image_url
-                    ? <Image src={item.image_url} alt={item.name} fill className="object-cover" />
-                    : <div className="flex h-full items-center justify-center text-zinc-200 dark:text-zinc-700"><IconBag size={36} /></div>
-                  }
-                  {item.category && (
-                    <span className="absolute top-2 left-2 rounded-full bg-white/90 dark:bg-zinc-900/90 px-2 py-0.5 text-[10px] font-semibold text-zinc-500 backdrop-blur-sm">{item.category}</span>
-                  )}
+                  {item.image_url ? <Image src={item.image_url} alt={item.name} fill className="object-cover" /> : <div className="flex h-full items-center justify-center text-zinc-200 dark:text-zinc-700"><IconBag size={36} /></div>}
+                  {item.category && <span className="absolute top-2 left-2 rounded-full bg-white/90 dark:bg-zinc-900/90 px-2 py-0.5 text-[10px] font-semibold text-zinc-500 backdrop-blur-sm">{item.category}</span>}
                 </div>
                 <div className="flex flex-col gap-1 p-3 flex-1">
                   <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 leading-snug line-clamp-2">{item.name}</p>
@@ -335,14 +384,14 @@ export default function LojaPage() {
                     <p className="text-sm font-bold" style={{ color: '#2F9E41' }}>{fmtPrice(item.price)}</p>
                     {inCart ? (
                       <div className="flex items-center gap-1.5">
-                        <button onClick={() => changeQty(item.id, -1)} className="flex h-6 w-6 items-center justify-center rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition text-sm font-bold leading-none">-</button>
+                        <button onClick={() => changeQty(item.id, -1)} className="flex h-6 w-6 items-center justify-center rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:bg-zinc-50 transition text-sm font-bold leading-none">-</button>
                         <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 min-w-[14px] text-center">{inCart.qty}</span>
-                        <button onClick={() => changeQty(item.id, 1)} className="flex h-6 w-6 items-center justify-center rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition text-sm font-bold leading-none">+</button>
+                        <button onClick={() => changeQty(item.id, 1)} className="flex h-6 w-6 items-center justify-center rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:bg-zinc-50 transition text-sm font-bold leading-none">+</button>
                       </div>
                     ) : (
                       <button onClick={() => addToCart(item)} className="flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-semibold text-white transition hover:opacity-90" style={{ backgroundColor: '#2F9E41' }}>
                         <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                        Adicionar
+                        Add
                       </button>
                     )}
                   </div>
@@ -353,12 +402,12 @@ export default function LojaPage() {
         </div>
       )}
 
-     
-      {(cartOpen || signupModal) && (
-        <div className="fixed inset-0 z-40 bg-black/40" onClick={() => { setCartOpen(false); closeSignupModal() }} />
+      {/* Backdrop */}
+      {(cartOpen || !!signupModal || !!paymentModal) && (
+        <div className="fixed inset-0 z-40 bg-black/40" />
       )}
 
-   
+      {/* Cart drawer */}
       <div ref={drawerRef}
         className={`fixed top-0 right-0 z-50 h-full w-full max-w-sm bg-white dark:bg-zinc-900 shadow-2xl flex flex-col transition-transform duration-300 ${cartOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 px-5 py-4">
@@ -368,9 +417,7 @@ export default function LojaPage() {
             {cartCount > 0 && <span className="rounded-full px-2 py-0.5 text-xs font-bold text-white" style={{ backgroundColor: '#2F9E41' }}>{cartCount}</span>}
           </h2>
           <button onClick={() => setCartOpen(false)} className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition">
-            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-              <line x1={18} y1={6} x2={6} y2={18}/><line x1={6} y1={6} x2={18} y2={18}/>
-            </svg>
+            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><line x1={18} y1={6} x2={6} y2={18}/><line x1={6} y1={6} x2={18} y2={18}/></svg>
           </button>
         </div>
 
@@ -386,9 +433,7 @@ export default function LojaPage() {
               {cart.map(item => (
                 <div key={item.id} className="flex gap-3">
                   <div className="relative h-16 w-16 shrink-0 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800">
-                    {item.image_url
-                      ? <Image src={item.image_url} alt={item.name} fill className="object-cover" />
-                      : <div className="flex h-full items-center justify-center text-zinc-300 dark:text-zinc-600"><IconBag size={22} /></div>}
+                    {item.image_url ? <Image src={item.image_url} alt={item.name} fill className="object-cover" /> : <div className="flex h-full items-center justify-center text-zinc-300"><IconBag size={22} /></div>}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 leading-snug line-clamp-2">{item.name}</p>
@@ -397,20 +442,17 @@ export default function LojaPage() {
                   </div>
                   <div className="flex flex-col items-end justify-between shrink-0">
                     <button onClick={() => changeQty(item.id, -item.qty)} className="text-zinc-300 hover:text-red-400 transition">
-                      <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                        <line x1={18} y1={6} x2={6} y2={18}/><line x1={6} y1={6} x2={18} y2={18}/>
-                      </svg>
+                      <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><line x1={18} y1={6} x2={6} y2={18}/><line x1={6} y1={6} x2={18} y2={18}/></svg>
                     </button>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => changeQty(item.id, -1)} className="flex h-6 w-6 items-center justify-center rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition text-sm font-bold">-</button>
+                      <button onClick={() => changeQty(item.id, -1)} className="flex h-6 w-6 items-center justify-center rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:bg-zinc-50 transition text-sm font-bold">-</button>
                       <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100 min-w-[16px] text-center">{item.qty}</span>
-                      <button onClick={() => changeQty(item.id, 1)} className="flex h-6 w-6 items-center justify-center rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition text-sm font-bold">+</button>
+                      <button onClick={() => changeQty(item.id, 1)} className="flex h-6 w-6 items-center justify-center rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:bg-zinc-50 transition text-sm font-bold">+</button>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-
             <div className="border-t border-zinc-100 dark:border-zinc-800 px-5 py-4 flex flex-col gap-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-zinc-500">Subtotal ({cartCount} {cartCount === 1 ? 'item' : 'itens'})</span>
@@ -423,23 +465,21 @@ export default function LojaPage() {
               ) : !whatsappNumber ? (
                 <p className="text-center text-xs text-zinc-400 py-1">Contato do vendedor não configurado ainda.</p>
               ) : (
-                <button onClick={placeOrder} disabled={orderSaving} className="w-full rounded-xl py-3 text-sm font-bold text-white disabled:opacity-50 transition flex items-center justify-center gap-2 hover:opacity-90" style={{ backgroundColor: '#2F9E41' }}>
+                <button onClick={placeOrder} disabled={orderSaving} className="w-full rounded-xl py-3 text-sm font-bold text-white disabled:opacity-50 flex items-center justify-center gap-2 hover:opacity-90 transition" style={{ backgroundColor: '#2F9E41' }}>
                   <IconWhatsApp />
                   {orderSaving ? 'Registrando...' : 'Pedir via WhatsApp'}
                 </button>
               )}
-              <button onClick={() => setCart([])} className="text-center text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition">
-                Limpar carrinho
-              </button>
+              <button onClick={() => setCart([])} className="text-center text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition">Limpar carrinho</button>
             </div>
           </>
         )}
       </div>
 
-    
+      {/* Signup modal (size selection) */}
       {signupModal && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
-          <div ref={modalRef} className="w-full max-w-sm rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl p-6">
+          <div ref={signupModalRef} className="w-full max-w-sm rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl p-6">
             <div className="flex items-start gap-3 mb-5">
               {signupModal.image_url && (
                 <div className="relative h-14 w-14 shrink-0 rounded-xl overflow-hidden">
@@ -449,6 +489,9 @@ export default function LojaPage() {
               <div>
                 <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100">{signupModal.name}</h3>
                 <p className="text-sm font-bold mt-0.5" style={{ color: '#2F9E41' }}>{fmtPrice(signupModal.price)}</p>
+                {signupModal.pix_key && (
+                  <p className="text-xs text-zinc-400 mt-0.5">Sinal: {fmtPrice(signupModal.price * (signupModal.deposit_percent ?? 50) / 100)} via PIX</p>
+                )}
               </div>
             </div>
 
@@ -479,11 +522,73 @@ export default function LojaPage() {
           </div>
         </div>
       )}
+
+      {/* Payment modal */}
+      {paymentModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+          <div ref={paymentModalRef} className="w-full max-w-sm rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl p-6">
+            <div className="text-center mb-5">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-50">
+                <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#2F9E41" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100">Inscrição registrada!</h3>
+              <p className="text-sm text-zinc-500 mt-1">Envie o sinal via PIX para confirmar sua vaga.</p>
+            </div>
+
+            {/* Amount */}
+            <div className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/20 p-4 mb-4 text-center">
+              <p className="text-xs font-semibold text-amber-600 mb-1">
+                Valor do sinal ({paymentModal.item.deposit_percent ?? 50}% de {fmtPrice(paymentModal.item.price)})
+              </p>
+              <p className="text-2xl font-black text-amber-700">
+                {fmtPrice(paymentModal.item.price * (paymentModal.item.deposit_percent ?? 50) / 100)}
+              </p>
+              {paymentModal.size && <p className="text-xs text-amber-600 mt-1">Tamanho: <strong>{paymentModal.size}</strong></p>}
+            </div>
+
+            {/* PIX key */}
+            {paymentModal.item.pix_key && (
+              <div className="mb-4">
+                <p className="text-xs font-semibold text-zinc-500 mb-1.5">Chave PIX</p>
+                <div className="flex items-center gap-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2.5">
+                  <p className="flex-1 text-sm font-mono text-zinc-900 dark:text-zinc-100 break-all">{paymentModal.item.pix_key}</p>
+                  <button onClick={() => copyPix(paymentModal.item.pix_key!)}
+                    className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold text-white transition hover:opacity-90" style={{ backgroundColor: '#2F9E41' }}>
+                    {pixCopied ? '✓ Copiado' : 'Copiar'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Send proof via WhatsApp */}
+            {paymentModal.item.whatsapp_contact && (
+              <button
+                onClick={() => {
+                  const msg = buildProofMessage(paymentModal.item, paymentModal.size)
+                  window.location.href = `https://wa.me/${paymentModal.item.whatsapp_contact!.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`
+                }}
+                className="w-full rounded-xl py-3 text-sm font-bold text-white flex items-center justify-center gap-2 mb-3 hover:opacity-90 transition"
+                style={{ backgroundColor: '#25D366' }}
+              >
+                <IconWhatsApp />
+                Enviar comprovante via WhatsApp
+              </button>
+            )}
+
+            <button onClick={() => setPaymentModal(null)} className="w-full text-center text-sm text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition py-1">
+              Fechar
+            </button>
+            <p className="text-[11px] text-zinc-400 text-center mt-2">
+              Sua inscrição será confirmada após verificação do pagamento pelo responsável.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-function FilterChip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button onClick={onClick}
       className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition ${active ? 'border-transparent text-white' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 bg-white dark:bg-zinc-900 hover:border-zinc-300'}`}

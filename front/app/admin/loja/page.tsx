@@ -18,6 +18,9 @@ type StoreItem = {
   type: 'normal' | 'collective'
   min_quantity: number
   sizes: string[]
+  pix_key: string | null
+  deposit_percent: number
+  whatsapp_contact: string | null
   is_visible: boolean
   display_order: number
   created_at: string
@@ -71,7 +74,7 @@ export default function AdminLojaPage() {
   
   const [items, setItems] = useState<StoreItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [form, setForm] = useState({ name: '', description: '', price: '', image_url: '', category: '', type: 'normal' as 'normal' | 'collective', min_quantity: '10', sizes: [] as string[] })
+  const [form, setForm] = useState({ name: '', description: '', price: '', image_url: '', category: '', type: 'normal' as 'normal' | 'collective', min_quantity: '10', sizes: [] as string[], pix_key: '', deposit_percent: '50', whatsapp_contact: '' })
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -171,6 +174,9 @@ export default function AdminLojaPage() {
       type: form.type,
       min_quantity: parseInt(form.min_quantity) || 10,
       sizes: form.type === 'collective' ? form.sizes : [],
+      pix_key: form.type === 'collective' ? (form.pix_key.trim() || null) : null,
+      deposit_percent: parseInt(form.deposit_percent) || 50,
+      whatsapp_contact: form.type === 'collective' ? (form.whatsapp_contact.trim() || null) : null,
     }
     setSaving(true); setError(null)
     if (editingId) {
@@ -187,7 +193,7 @@ export default function AdminLojaPage() {
   }
 
   function resetForm() {
-    setForm({ name: '', description: '', price: '', image_url: '', category: '', type: 'normal', min_quantity: '10', sizes: [] })
+    setForm({ name: '', description: '', price: '', image_url: '', category: '', type: 'normal', min_quantity: '10', sizes: [], pix_key: '', deposit_percent: '50', whatsapp_contact: '' })
     setEditingId(null); setError(null)
   }
 
@@ -197,6 +203,7 @@ export default function AdminLojaPage() {
       name: item.name, description: item.description ?? '', price: item.price.toFixed(2),
       image_url: item.image_url ?? '', category: item.category ?? '',
       type: item.type, min_quantity: String(item.min_quantity), sizes: item.sizes ?? [],
+      pix_key: item.pix_key ?? '', deposit_percent: String(item.deposit_percent ?? 50), whatsapp_contact: item.whatsapp_contact ?? '',
     })
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -216,6 +223,11 @@ export default function AdminLojaPage() {
     setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o))
   }
 
+  async function confirmPayment(signupId: string) {
+    await supabase.from('store_signups').update({ status: 'active' }).eq('id', signupId)
+    setSignups(prev => prev.map(s => s.id === signupId ? { ...s, status: 'active' } : s))
+  }
+
   async function closeBatch() {
     if (!selectedItemId) return
     if (!window.confirm('Fechar este lote? Todos os inscritos serão marcados como confirmados.')) return
@@ -233,7 +245,8 @@ export default function AdminLojaPage() {
   }
 
   const collectiveItems = items.filter(i => i.type === 'collective')
-  const activeSignups = signups.filter(s => s.status === 'active')
+  const activeSignups = signups.filter(s => s.status === 'active' || s.status === 'awaiting_payment')
+  const awaitingPayment = signups.filter(s => s.status === 'awaiting_payment')
   const selectedItem = items.find(i => i.id === selectedItemId)
 
   if (loading) return <LoadingState message="Carregando loja" />
@@ -321,9 +334,25 @@ export default function AdminLojaPage() {
 
                 {form.type === 'collective' && (
                   <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex flex-col gap-3">
-                    <div>
-                      <label className="text-xs font-medium text-amber-700 mb-1 block">Mínimo de inscrições para fechar o lote</label>
-                      <input value={form.min_quantity} onChange={e => setForm(f => ({ ...f, min_quantity: e.target.value }))} className={inputCls} type="number" min={1} placeholder="10" />
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className="text-xs font-medium text-amber-700 mb-1 block">Mínimo de inscrições</label>
+                        <input value={form.min_quantity} onChange={e => setForm(f => ({ ...f, min_quantity: e.target.value }))} className={inputCls} type="number" min={1} placeholder="10" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-amber-700 mb-1 block">% do sinal (entrada)</label>
+                        <input value={form.deposit_percent} onChange={e => setForm(f => ({ ...f, deposit_percent: e.target.value }))} className={inputCls} type="number" min={1} max={100} placeholder="50" />
+                      </div>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className="text-xs font-medium text-amber-700 mb-1 block">Chave PIX</label>
+                        <input value={form.pix_key} onChange={e => setForm(f => ({ ...f, pix_key: e.target.value }))} className={inputCls} placeholder="email, CPF ou telefone" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-amber-700 mb-1 block">WhatsApp para comprovante</label>
+                        <input value={form.whatsapp_contact} onChange={e => setForm(f => ({ ...f, whatsapp_contact: e.target.value }))} className={inputCls} placeholder="5511999999999" inputMode="numeric" />
+                      </div>
                     </div>
                     <div>
                       <label className="text-xs font-medium text-amber-700 mb-2 block">Tamanhos disponíveis</label>
@@ -459,7 +488,8 @@ export default function AdminLojaPage() {
                 </select>
                 {selectedItem && (
                   <span className="text-sm text-zinc-500">
-                    Meta: <strong className="text-zinc-900">{selectedItem.min_quantity}</strong> — Ativos: <strong style={{ color: activeSignups.length >= selectedItem.min_quantity ? '#2F9E41' : '#f59e0b' }}>{activeSignups.length}</strong>
+                    Meta: <strong className="text-zinc-900">{selectedItem.min_quantity}</strong> — Inscritos: <strong style={{ color: activeSignups.length >= selectedItem.min_quantity ? '#2F9E41' : '#f59e0b' }}>{activeSignups.length}</strong>
+                    {awaitingPayment.length > 0 && <span className="ml-2 text-amber-600">({awaitingPayment.length} aguardando PIX)</span>}
                   </span>
                 )}
                 <button
@@ -485,13 +515,14 @@ export default function AdminLojaPage() {
                         <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500">Tamanho</th>
                         <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500">Data</th>
                         <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500">Status</th>
+                        <th className="px-4 py-3" />
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-100">
                       {signups.map(s => {
                         const u = s.users as unknown as { id: string; name: string; avatar_url: string | null } | null
                         return (
-                          <tr key={s.id} className={s.status !== 'active' ? 'opacity-50' : ''}>
+                          <tr key={s.id} className={s.status === 'cancelled' ? 'opacity-40' : ''}>
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2">
                                 <UserAvatar src={u?.avatar_url} name={u?.name ?? '?'} className="h-7 w-7 shrink-0" />
@@ -502,12 +533,21 @@ export default function AdminLojaPage() {
                             <td className="px-4 py-3 text-zinc-400 text-xs">{new Date(s.created_at).toLocaleDateString('pt-BR')}</td>
                             <td className="px-4 py-3">
                               <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold border ${
+                                s.status === 'awaiting_payment' ? 'bg-amber-50 text-amber-600 border-amber-200' :
                                 s.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' :
                                 s.status === 'confirmed' ? 'bg-blue-50 text-blue-700 border-blue-200' :
                                 'bg-zinc-50 text-zinc-400 border-zinc-200'
                               }`}>
-                                {s.status === 'active' ? 'Inscrito' : s.status === 'confirmed' ? 'Confirmado' : 'Cancelado'}
+                                {s.status === 'awaiting_payment' ? 'Aguardando PIX' : s.status === 'active' ? 'Inscrito' : s.status === 'confirmed' ? 'Confirmado' : 'Cancelado'}
                               </span>
+                            </td>
+                            <td className="px-4 py-3">
+                              {s.status === 'awaiting_payment' && (
+                                <button onClick={() => confirmPayment(s.id)}
+                                  className="rounded-lg border border-green-200 bg-green-50 px-3 py-1 text-xs font-semibold text-green-700 hover:bg-green-100 transition">
+                                  Confirmar PIX
+                                </button>
+                              )}
                             </td>
                           </tr>
                         )

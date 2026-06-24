@@ -363,7 +363,7 @@ const infrastructure = [
   },
   {
     title: 'LabTech',
-    description: 'Laboratório de prototipagem com impressoras 3D, Arduino, Raspberry Pi e equipamentos de IoT para projetos práticos.',
+    description: 'Laboratório de prototipagem com impressoras 3D, Arduino, e equipamentos de IoT para projetos práticos.',
     tags: ['Impressão 3D', 'Arduino & RPi', 'IoT', 'Prototipagem rápida'],
     images: ['/labtech.jpeg', '/impressora.jpeg', '/labtech/kits-robotica.jpeg'],
   },
