@@ -446,7 +446,7 @@ export default function CorridaPage() {
             obsRef.current.push({ x: W + 10, w: BUTTERFLY_W, h: BUTTERFLY_H, count: 1, flying: true, fy: BUTTERFLY_FY })
           } else {
            
-            const count = 1 + Math.floor(Math.random() * 3)
+            const count = 1 + Math.floor(Math.random() * 2)
             const SIZES = [{ cw: 62, ch: 68 }, { cw: 74, ch: 80 }, { cw: 86, ch: 92 }]
             const { cw, ch } = SIZES[Math.floor(Math.random() * 3)]
             const step = Math.round(cw * 0.50)
@@ -531,7 +531,22 @@ export default function CorridaPage() {
 
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col bg-white px-4 py-4 dark:bg-zinc-950 md:px-6">
-      <div className="mb-3 flex shrink-0 items-center gap-2">
+
+      {/* Portrait mobile → pede para virar */}
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-5 bg-white dark:bg-zinc-950 md:hidden landscape:hidden">
+        <svg width={56} height={56} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 animate-bounce">
+          <rect x="5" y="2" width="14" height="20" rx="2" />
+          <path d="M12 18h.01" />
+          <path d="M3 9l3-3 3 3" stroke="#2F9E41" strokeWidth={2} />
+          <path d="M6 6v6" stroke="#2F9E41" strokeWidth={2} />
+        </svg>
+        <div className="text-center">
+          <p className="text-base font-bold text-zinc-800 dark:text-zinc-100">Vire o dispositivo</p>
+          <p className="mt-1 text-sm text-zinc-400">O jogo é jogado na horizontal</p>
+        </div>
+      </div>
+
+      <div className="mb-2 flex shrink-0 items-center gap-2">
         <Link
           href="/jogos"
           className="inline-flex items-center gap-1.5 text-sm font-medium text-zinc-500 transition hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
@@ -550,7 +565,7 @@ export default function CorridaPage() {
           className="cursor-pointer select-none overflow-hidden rounded-2xl border border-zinc-200 bg-[#fafafa] dark:border-zinc-800 dark:bg-zinc-900"
           style={{
             aspectRatio: '800 / 340',
-            width: 'min(100%, calc((100vh - 10rem) * 2.353))',
+            width: 'min(100%, calc((100vh - 9rem) * 2.353))',
           }}
           onClick={action}
         >
@@ -558,7 +573,23 @@ export default function CorridaPage() {
         </div>
       </div>
 
-      <p className="mt-2 shrink-0 text-center text-xs text-zinc-400">
+      {/* Botão de pulo — landscape mobile (visível quando < md e landscape) */}
+      <div className="mt-2 shrink-0 flex items-center justify-center md:hidden">
+        <button
+          type="button"
+          onClick={action}
+          style={{ touchAction: 'manipulation' }}
+          className="flex h-12 w-44 select-none items-center justify-center gap-2 rounded-2xl border-2 border-zinc-300 bg-zinc-100 text-sm font-bold text-zinc-600 active:scale-95 active:bg-zinc-200 transition-transform dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+          aria-label="Pular"
+        >
+          <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 19V5M5 12l7-7 7 7" />
+          </svg>
+          Pular
+        </button>
+      </div>
+
+      <p className="mt-2 shrink-0 text-center text-xs text-zinc-400 hidden md:block">
         Espaço · ↑ · Toque para pular
       </p>
     </div>
