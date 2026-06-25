@@ -1,5 +1,7 @@
 'use client'
 
+/* eslint-disable react-hooks/set-state-in-effect */
+
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
@@ -106,6 +108,7 @@ export default function AdminLojaPage() {
   const [selectedItemId, setSelectedItemId] = useState('')
   const [signups, setSignups] = useState<StoreSignup[]>([])
   const [signupsLoading, setSignupsLoading] = useState(false)
+  const [signupsError, setSignupsError] = useState<string | null>(null)
   const [closingBatch, setClosingBatch] = useState(false)
 
  
@@ -153,12 +156,30 @@ export default function AdminLojaPage() {
 
   async function loadSignups(itemId: string) {
     setSignupsLoading(true)
-    const { data } = await supabase
+    setSignupsError(null)
+    const { data, error } = await supabase
       .from('store_signups')
-      .select('*, users(id, name, avatar_url)')
+      .select('id, user_id, item_id, size, status, created_at')
       .eq('item_id', itemId)
       .order('created_at', { ascending: false })
-    setSignups((data ?? []) as unknown as StoreSignup[])
+    if (error) {
+      setSignups([])
+      setSignupsError(error.message)
+      setSignupsLoading(false)
+      return
+    }
+
+    const rows = (data ?? []) as Omit<StoreSignup, 'users'>[]
+    const userIds = [...new Set(rows.map(s => s.user_id).filter(Boolean))]
+    const { data: usersData } = userIds.length > 0
+      ? await supabase.from('users').select('id, name, avatar_url').in('id', userIds)
+      : { data: [] as { id: string; name: string; avatar_url: string | null }[] }
+    const usersById = new Map((usersData ?? []).map(u => [u.id, u]))
+
+    setSignups(rows.map(s => ({
+      ...s,
+      users: usersById.get(s.user_id) ?? null,
+    })))
     setSignupsLoading(false)
   }
 
@@ -172,7 +193,7 @@ export default function AdminLojaPage() {
       const first = items.find(i => i.type === 'collective')
       if (first && !selectedItemId) setSelectedItemId(first.id)
     }
-  }, [tab, items]) 
+  }, [tab, items, ordersLoaded, selectedItemId]) 
 
   useEffect(() => {
     if (selectedItemId) void loadSignups(selectedItemId)
@@ -585,6 +606,8 @@ export default function AdminLojaPage() {
 
               {signupsLoading ? (
                 <p className="text-sm text-zinc-400 text-center py-8">Carregando...</p>
+              ) : signupsError ? (
+                <p className="text-sm text-red-500 text-center py-12">Erro ao carregar inscricoes: {signupsError}</p>
               ) : signups.length === 0 ? (
                 <p className="text-sm text-zinc-400 text-center py-12">Nenhuma inscrição ainda.</p>
               ) : (

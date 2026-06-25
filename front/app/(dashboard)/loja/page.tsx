@@ -245,14 +245,23 @@ export default function LojaPage() {
     if (!user || !signupModal) return
     setSignupSaving(true)
     const isNew = !mySignups[signupModal.id]
-    const { error } = await supabase.from('store_signups').upsert(
-      { user_id: user.id, item_id: signupModal.id, size: selectedSize || null, status: 'awaiting_payment' },
+    const sp = sellerProfile(signupModal)
+    let nextStatus = sp?.pix_key ? 'awaiting_payment' : 'active'
+    let { error } = await supabase.from('store_signups').upsert(
+      { user_id: user.id, item_id: signupModal.id, size: selectedSize || null, status: nextStatus },
       { onConflict: 'user_id,item_id' }
     )
+    if (error && nextStatus === 'awaiting_payment') {
+      nextStatus = 'active'
+      const retry = await supabase.from('store_signups').upsert(
+        { user_id: user.id, item_id: signupModal.id, size: selectedSize || null, status: nextStatus },
+        { onConflict: 'user_id,item_id' }
+      )
+      error = retry.error
+    }
     if (!error) {
-      setMySignups(m => ({ ...m, [signupModal.id]: { size: selectedSize, status: 'awaiting_payment' } }))
+      setMySignups(m => ({ ...m, [signupModal.id]: { size: selectedSize, status: nextStatus } }))
       if (isNew) setSignupCounts(c => ({ ...c, [signupModal.id]: (c[signupModal.id] ?? 0) + 1 }))
-      const sp = sellerProfile(signupModal)
       if (sp?.pix_key) {
         const item = signupModal
         const size = selectedSize
@@ -298,7 +307,7 @@ export default function LojaPage() {
         </div>
         <button onClick={() => setCartOpen(true)}
           className="relative flex items-center gap-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
-          <IconBag />
+          <IconCart />
           Carrinho
           {cartCount > 0 && (
             <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ backgroundColor: '#2F9E41' }}>
@@ -392,17 +401,30 @@ export default function LojaPage() {
                     
                     <div className="mt-auto pt-1">
                       {!user ? (
-                        <Link href="/login" aria-label="Entrar para participar" className="relative flex h-8 w-8 items-center justify-center rounded-lg text-white transition hover:opacity-90 ml-auto" style={{ backgroundColor: '#f59e0b' }}>
-                          <IconBag size={15} />
+                        <Link href="/login" className="block text-center w-full rounded-lg py-1.5 text-[11px] font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 transition">
+                          Entre para participar
                         </Link>
                       ) : mySignup ? (
-                        <button onClick={() => openSignupModal(item)} aria-label="Alterar inscricao" className="relative ml-auto flex h-8 w-8 items-center justify-center rounded-lg text-white transition hover:opacity-90" style={{ backgroundColor: '#f59e0b' }}>
-                          <IconBag size={15} />
-                          <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-white bg-green-500 dark:border-zinc-900" />
-                        </button>
+                        <div className="flex flex-col gap-1.5">
+                          {mySignup.status === 'awaiting_payment' ? (
+                            <>
+                              <p className="text-[10px] font-semibold text-amber-600">Aguardando confirmacao do PIX</p>
+                              {sp?.pix_key && (
+                                <button onClick={() => setPaymentModal({ item, size: mySignup.size })} className="w-full rounded-lg py-1.5 text-[10px] font-semibold text-amber-700 border border-amber-200 bg-amber-50 hover:bg-amber-100 transition">
+                                  Ver instrucoes de pagamento
+                                </button>
+                              )}
+                            </>
+                          ) : (
+                            <p className="text-[11px] font-semibold text-green-700">Inscrito{mySignup.size ? ` - ${mySignup.size}` : ''}</p>
+                          )}
+                          <button onClick={() => openSignupModal(item)} className="w-full rounded-lg py-1 text-[10px] font-semibold text-zinc-600 border border-zinc-200 hover:bg-zinc-50 transition">
+                            Alterar tamanho
+                          </button>
+                        </div>
                       ) : (
-                        <button onClick={() => openSignupModal(item)} aria-label="Participar da compra coletiva" className="relative ml-auto flex h-8 w-8 items-center justify-center rounded-lg text-white transition hover:opacity-90" style={{ backgroundColor: '#f59e0b' }}>
-                          <IconBag size={15} />
+                        <button onClick={() => openSignupModal(item)} className="w-full rounded-lg py-1.5 text-[11px] font-semibold text-white transition hover:opacity-90" style={{ backgroundColor: '#f59e0b' }}>
+                          Quero participar
                         </button>
                       )}
                     </div>
@@ -431,7 +453,7 @@ export default function LojaPage() {
                   <div className="mt-auto pt-2 flex items-center justify-between gap-2">
                     <p className="text-sm font-bold" style={{ color: '#2F9E41' }}>{fmtPrice(item.price)}</p>
                     <button onClick={() => addToCart(item)} aria-label="Adicionar ao carrinho" className="relative flex h-8 w-8 items-center justify-center rounded-lg text-white transition hover:opacity-90" style={{ backgroundColor: '#2F9E41' }}>
-                      <IconBag size={15} />
+                      <IconCart size={15} />
                       {inCart && (
                         <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-white bg-zinc-900 px-1 text-[9px] font-bold leading-none text-white dark:border-zinc-900">
                           {inCart.qty > 9 ? '9+' : inCart.qty}
@@ -456,7 +478,7 @@ export default function LojaPage() {
         className={`fixed top-0 right-0 z-50 h-full w-full max-w-sm bg-white dark:bg-zinc-900 shadow-2xl flex flex-col transition-transform duration-300 ${cartOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 px-5 py-4">
           <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-            <IconBag />
+            <IconCart />
             Carrinho
             {cartCount > 0 && <span className="rounded-full px-2 py-0.5 text-xs font-bold text-white" style={{ backgroundColor: '#2F9E41' }}>{cartCount}</span>}
           </h2>
@@ -687,6 +709,16 @@ function IconBag({ size = 18 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1={3} y1={6} x2={21} y2={6}/><path d="M16 10a4 4 0 0 1-8 0"/>
+    </svg>
+  )
+}
+
+function IconCart({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx={8} cy={21} r={1} />
+      <circle cx={19} cy={21} r={1} />
+      <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h8.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
     </svg>
   )
 }

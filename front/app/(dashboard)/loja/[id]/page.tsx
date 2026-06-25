@@ -148,11 +148,19 @@ export default function LojaProdutoPage() {
     if (!item || !user) return
     setSignupSaving(true)
     const isNew = !mySignup
-    const nextStatus = sp?.pix_key ? 'awaiting_payment' : 'active'
-    const { error } = await supabase.from('store_signups').upsert(
+    let nextStatus = sp?.pix_key ? 'awaiting_payment' : 'active'
+    let { error } = await supabase.from('store_signups').upsert(
       { user_id: user.id, item_id: item.id, size: selectedSize || null, status: nextStatus },
       { onConflict: 'user_id,item_id' }
     )
+    if (error && nextStatus === 'awaiting_payment') {
+      nextStatus = 'active'
+      const retry = await supabase.from('store_signups').upsert(
+        { user_id: user.id, item_id: item.id, size: selectedSize || null, status: nextStatus },
+        { onConflict: 'user_id,item_id' }
+      )
+      error = retry.error
+    }
     if (!error) {
       setMySignup({ size: selectedSize, status: nextStatus })
       if (isNew) setSignupCount(c => c + 1)
