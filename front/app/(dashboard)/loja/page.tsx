@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import type { User } from '@supabase/supabase-js'
@@ -31,16 +31,8 @@ type StoreItem = {
 }
 
 type CartItem = StoreItem & { qty: number }
-type CollectiveDetails = { zipper: boolean; helanca: boolean; pocket: boolean; hood: boolean; price: number }
-type MySignup = { size: string; status: string; details?: CollectiveDetails | null }
+type MySignup = { size: string; status: string }
 type CheckoutGroup = { sellerName: string; whatsapp: string | null; msg: string; total: number }
-
-const DEFAULT_COLLECTIVE_DETAILS: CollectiveDetails = { zipper: false, helanca: true, pocket: true, hood: true, price: 155 }
-
-function collectivePrice(details: Pick<CollectiveDetails, 'zipper' | 'helanca'>) {
-  if (details.helanca) return details.zipper ? 165 : 155
-  return details.zipper ? 175 : 165
-}
 
 
 
@@ -65,17 +57,10 @@ export default function LojaPage() {
   const [items, setItems] = useState<StoreItem[]>([])
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<User | null>(null)
-  const [userName, setUserName] = useState('')
 
   
   const [signupCounts, setSignupCounts] = useState<Record<string, number>>({})
   const [mySignups, setMySignups] = useState<Record<string, MySignup>>({})
-  const [signupModal, setSignupModal] = useState<StoreItem | null>(null)
-  const [selectedSize, setSelectedSize] = useState('')
-  const [collectiveDetails, setCollectiveDetails] = useState<CollectiveDetails>(DEFAULT_COLLECTIVE_DETAILS)
-  const [signupSaving, setSignupSaving] = useState(false)
-  const [paymentModal, setPaymentModal] = useState<{ item: StoreItem; size: string; details: CollectiveDetails } | null>(null)
-  const [pixCopied, setPixCopied] = useState(false)
 
 
   const [cart, setCart] = useState<CartItem[]>([])
@@ -88,14 +73,7 @@ export default function LojaPage() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
 
   const drawerRef = useRef<HTMLDivElement>(null)
-  const signupModalRef = useRef<HTMLDivElement>(null)
-  const paymentModalRef = useRef<HTMLDivElement>(null)
   const checkoutModalRef = useRef<HTMLDivElement>(null)
-
-  const closeSignupModal = useCallback(() => {
-    setSignupModal(null)
-    setSelectedSize('')
-  }, [])
 
   useEffect(() => {
     if (checkoutGroups?.length !== 1) return
@@ -120,26 +98,20 @@ export default function LojaPage() {
       setItems(loadedItems)
       setUser(authUser)
 
-      if (authUser) {
-        supabase.from('users').select('name').eq('id', authUser.id).maybeSingle()
-          .then(({ data }) => { if (data?.name) setUserName(data.name) })
-      }
-
       const collectiveIds = loadedItems.filter(i => i.type === 'collective').map(i => i.id)
       if (collectiveIds.length > 0) {
         const [{ data: allSignups }, { data: mySignupData }] = await Promise.all([
           supabase.from('store_signups').select('item_id').in('item_id', collectiveIds).neq('status', 'cancelled'),
           authUser
-            ? supabase.from('store_signups').select('item_id, size, status, details').in('item_id', collectiveIds).eq('user_id', authUser.id).neq('status', 'cancelled')
-            : Promise.resolve({ data: [] as { item_id: string; size: string | null; status: string; details: CollectiveDetails | null }[] }),
+            ? supabase.from('store_signups').select('item_id, size, status').in('item_id', collectiveIds).eq('user_id', authUser.id).neq('status', 'cancelled')
+            : Promise.resolve({ data: [] as { item_id: string; size: string | null; status: string }[] }),
         ])
         const counts: Record<string, number> = {}
         for (const s of (allSignups ?? []) as { item_id: string }[]) counts[s.item_id] = (counts[s.item_id] ?? 0) + 1
         setSignupCounts(counts)
         const mine: Record<string, MySignup> = {}
-        for (const s of (mySignupData ?? []) as { item_id: string; size: string | null; status: string; details: CollectiveDetails | null }[]) {
-          const details = s.details ? { ...DEFAULT_COLLECTIVE_DETAILS, ...s.details, price: collectivePrice(s.details) } : null
-          mine[s.item_id] = { size: s.size ?? '', status: s.status, details }
+        for (const s of (mySignupData ?? []) as { item_id: string; size: string | null; status: string }[]) {
+          mine[s.item_id] = { size: s.size ?? '', status: s.status }
         }
         setMySignups(mine)
       }
@@ -153,13 +125,11 @@ export default function LojaPage() {
     function handler(e: MouseEvent) {
       const t = e.target as Node
       if (cartOpen && drawerRef.current && !drawerRef.current.contains(t)) setCartOpen(false)
-      if (signupModal && signupModalRef.current && !signupModalRef.current.contains(t)) closeSignupModal()
-      if (paymentModal && paymentModalRef.current && !paymentModalRef.current.contains(t)) setPaymentModal(null)
       if (checkoutGroups && checkoutModalRef.current && !checkoutModalRef.current.contains(t)) setCheckoutGroups(null)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
-  }, [cartOpen, signupModal, paymentModal, checkoutGroups, closeSignupModal])
+  }, [cartOpen, checkoutGroups])
 
   
 
@@ -244,75 +214,6 @@ export default function LojaPage() {
     }
   }
 
- 
-
-  function openSignupModal(item: StoreItem) {
-    if (!user) return
-    setSignupModal(item)
-    setSelectedSize(mySignups[item.id]?.size ?? (item.sizes?.[0] ?? ''))
-    setCollectiveDetails(mySignups[item.id]?.details ?? DEFAULT_COLLECTIVE_DETAILS)
-  }
-
-  async function submitSignup() {
-    if (!user || !signupModal) return
-    setSignupSaving(true)
-    const isNew = !mySignups[signupModal.id]
-    const sp = sellerProfile(signupModal)
-    let nextStatus = sp?.pix_key ? 'awaiting_payment' : 'active'
-    const pricedDetails = { ...collectiveDetails, price: collectivePrice(collectiveDetails) }
-    let { error } = await supabase.from('store_signups').upsert(
-      { user_id: user.id, item_id: signupModal.id, size: selectedSize || null, details: pricedDetails, status: nextStatus },
-      { onConflict: 'user_id,item_id' }
-    )
-    if (error && nextStatus === 'awaiting_payment') {
-      nextStatus = 'active'
-      const retry = await supabase.from('store_signups').upsert(
-        { user_id: user.id, item_id: signupModal.id, size: selectedSize || null, details: pricedDetails, status: nextStatus },
-        { onConflict: 'user_id,item_id' }
-      )
-      error = retry.error
-    }
-    if (!error) {
-      setMySignups(m => ({ ...m, [signupModal.id]: { size: selectedSize, status: nextStatus, details: pricedDetails } }))
-      if (isNew) setSignupCounts(c => ({ ...c, [signupModal.id]: (c[signupModal.id] ?? 0) + 1 }))
-      if (sp?.pix_key) {
-        const item = signupModal
-        const size = selectedSize
-        closeSignupModal()
-        setSignupSaving(false)
-        setPaymentModal({ item, size, details: pricedDetails })
-        return
-      }
-    }
-    closeSignupModal()
-    setSignupSaving(false)
-  }
-
-  function copyPix(key: string) {
-    navigator.clipboard.writeText(key)
-    setPixCopied(true)
-    setTimeout(() => setPixCopied(false), 2000)
-  }
-
-  function buildProofMessage(item: StoreItem, size: string, details: CollectiveDetails) {
-    const sp = sellerProfile(item)
-    const price = collectivePrice(details)
-    const depositAmt = price * (sp?.deposit_percent ?? 50) / 100
-    return [
-      `Ola! Estou enviando o comprovante do sinal referente ao meu pedido:`,
-      ``,
-      `Produto: ${item.name}`,
-      size ? `Tamanho: ${size}` : null,
-      `Modelo: ${details.helanca ? 'Helanca' : 'Moletom'} ${details.zipper ? 'com ziper' : 'fechado'}`,
-      `Bolso: ${details.pocket ? 'sim' : 'nao'}`,
-      `Gorro: ${details.hood ? 'sim' : 'nao'}`,
-      `Valor enviado: ${fmtPrice(depositAmt)} (${sp?.deposit_percent ?? 50}% de ${fmtPrice(price)})`,
-      userName ? `Nome: ${userName}` : null,
-    ].filter(Boolean).join('\n')
-  }
-
-  
-
   return (
     <div className="relative px-4 md:px-6 py-8 w-full max-w-5xl mx-auto">
 
@@ -384,10 +285,10 @@ export default function LojaPage() {
               const depositAmt = item.price * (sp?.deposit_percent ?? 50) / 100
 
               return (
-                <div key={item.id} className="flex flex-col rounded-2xl border border-amber-200 bg-amber-50/40 dark:bg-zinc-900 dark:border-amber-900/40 overflow-hidden">
-                  <Link href={`/loja/${item.id}`} className="relative block aspect-square bg-amber-50 dark:bg-zinc-800">
-                    {item.image_url ? <Image src={item.image_url} alt={item.name} fill className="object-cover" /> : <div className="flex h-full items-center justify-center text-amber-200"><IconBag size={36} /></div>}
-                    <span className="absolute top-2 left-2 rounded-full bg-amber-500 px-2 py-0.5 text-[9px] font-bold text-white">Compra coletiva</span>
+                <div key={item.id} className="flex flex-col rounded-2xl border border-zinc-100 bg-white dark:bg-zinc-900 dark:border-zinc-800 overflow-hidden transition hover:shadow-md hover:border-zinc-200">
+                  <Link href={`/loja/${item.id}`} className="relative block aspect-square bg-zinc-50 dark:bg-zinc-800">
+                    {item.image_url ? <Image src={item.image_url} alt={item.name} fill className="object-cover" /> : <div className="flex h-full items-center justify-center text-zinc-200 dark:text-zinc-700"><IconBag size={36} /></div>}
+                    <span className="absolute top-2 left-2 rounded-full px-2 py-0.5 text-[9px] font-bold text-white" style={{ backgroundColor: '#2F9E41' }}>Compra coletiva</span>
                     {item.category && <span className="absolute top-2 right-2 rounded-full bg-white/90 dark:bg-zinc-900/90 px-2 py-0.5 text-[10px] font-semibold text-zinc-500 backdrop-blur-sm">{item.category}</span>}
                   </Link>
                   <div className="flex flex-col gap-2 p-3 flex-1">
@@ -410,7 +311,7 @@ export default function LojaPage() {
                         <span>min. {item.min_quantity}</span>
                       </div>
                       <div className="h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-700">
-                        <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, backgroundColor: reached ? '#2F9E41' : '#f59e0b' }} />
+                        <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, backgroundColor: '#2F9E41' }} />
                       </div>
                       {reached && <p className="text-[10px] font-semibold mt-0.5" style={{ color: '#2F9E41' }}>Meta atingida!</p>}
                     </div>
@@ -418,31 +319,31 @@ export default function LojaPage() {
                     
                     <div className="mt-auto pt-1">
                       {!user ? (
-                        <Link href="/login" className="block text-center w-full rounded-lg py-1.5 text-[11px] font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 transition">
+                        <Link href="/login" className="block text-center w-full rounded-lg border border-zinc-200 py-1.5 text-[11px] font-semibold text-zinc-600 hover:bg-zinc-50 transition">
                           Entre para participar
                         </Link>
                       ) : mySignup ? (
                         <div className="flex flex-col gap-1.5">
                           {mySignup.status === 'awaiting_payment' ? (
                             <>
-                              <p className="text-[10px] font-semibold text-amber-600">Aguardando confirmacao do PIX</p>
+                              <p className="text-[10px] font-semibold text-zinc-500">Aguardando confirmação do PIX</p>
                               {sp?.pix_key && (
-                                <button onClick={() => setPaymentModal({ item, size: mySignup.size, details: mySignup.details ?? DEFAULT_COLLECTIVE_DETAILS })} className="w-full rounded-lg py-1.5 text-[10px] font-semibold text-amber-700 border border-amber-200 bg-amber-50 hover:bg-amber-100 transition">
-                                  Ver instrucoes de pagamento
-                                </button>
+                                <Link href={`/loja/${item.id}`} className="block w-full rounded-lg border py-1.5 text-center text-[10px] font-semibold transition hover:opacity-90" style={{ borderColor: '#2F9E41', color: '#2F9E41' }}>
+                                  Ver instruções de pagamento
+                                </Link>
                               )}
                             </>
                           ) : (
                             <p className="text-[11px] font-semibold text-green-700">Inscrito{mySignup.size ? ` - ${mySignup.size}` : ''}</p>
                           )}
-                          <button onClick={() => openSignupModal(item)} className="w-full rounded-lg py-1 text-[10px] font-semibold text-zinc-600 border border-zinc-200 hover:bg-zinc-50 transition">
-                            Alterar tamanho
-                          </button>
+                          <Link href={`/loja/${item.id}`} className="block w-full rounded-lg py-1 text-center text-[10px] font-semibold text-zinc-600 border border-zinc-200 hover:bg-zinc-50 transition">
+                            Alterar inscrição
+                          </Link>
                         </div>
                       ) : (
-                        <button onClick={() => openSignupModal(item)} className="w-full rounded-lg py-1.5 text-[11px] font-semibold text-white transition hover:opacity-90" style={{ backgroundColor: '#f59e0b' }}>
+                        <Link href={`/loja/${item.id}`} className="block w-full rounded-lg py-1.5 text-center text-[11px] font-semibold text-white transition hover:opacity-90" style={{ backgroundColor: '#2F9E41' }}>
                           Quero participar
-                        </button>
+                        </Link>
                       )}
                     </div>
                   </div>
@@ -486,7 +387,7 @@ export default function LojaPage() {
       )}
 
     
-      {(cartOpen || !!signupModal || !!paymentModal || !!checkoutGroups) && (
+      {(cartOpen || !!checkoutGroups) && (
         <div className="fixed inset-0 z-40 bg-black/40" />
       )}
 
@@ -600,131 +501,6 @@ export default function LojaPage() {
         </div>
       )}
 
- 
-      {signupModal && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
-          <div ref={signupModalRef} className="w-full max-w-sm rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl p-6">
-            <div className="flex items-start gap-3 mb-5">
-              {signupModal.image_url && (
-                <div className="relative h-14 w-14 shrink-0 rounded-xl overflow-hidden">
-                  <Image src={signupModal.image_url} alt={signupModal.name} fill className="object-cover" />
-                </div>
-              )}
-              <div>
-                <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100">{signupModal.name}</h3>
-                <p className="text-sm font-bold mt-0.5" style={{ color: '#2F9E41' }}>{fmtPrice(collectivePrice(collectiveDetails))}</p>
-                {sellerProfile(signupModal)?.pix_key && (
-                  <p className="text-xs text-zinc-400 mt-0.5">
-                    Sinal: {fmtPrice(collectivePrice(collectiveDetails) * (sellerProfile(signupModal)?.deposit_percent ?? 50) / 100)} via PIX
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
-              <p className="font-bold">
-                Prazo: {signupModal.collective_deadline ? `ate ${new Date(`${signupModal.collective_deadline}T00:00:00`).toLocaleDateString('pt-BR')}` : 'definido pelo responsavel'}
-              </p>
-              <p>Inscricao sem pagar metade do valor sera desconsiderada. Envie o comprovante para o WhatsApp cadastrado.</p>
-              <p>Segunda parcela somente quando receber o agasalho. Nao ha envio pelo correio.</p>
-            </div>
-
-            <div className="mb-5 grid gap-3 sm:grid-cols-2">
-              <ChoiceToggle label="Com ziper?" value={collectiveDetails.zipper} onChange={zipper => setCollectiveDetails(d => ({ ...d, zipper }))} />
-              <ChoiceToggle label="Helanca?" value={collectiveDetails.helanca} onChange={helanca => setCollectiveDetails(d => ({ ...d, helanca }))} />
-              <ChoiceToggle label="Com bolso?" value={collectiveDetails.pocket} onChange={pocket => setCollectiveDetails(d => ({ ...d, pocket }))} />
-              <ChoiceToggle label="Com gorro?" value={collectiveDetails.hood} onChange={hood => setCollectiveDetails(d => ({ ...d, hood }))} />
-            </div>
-
-            {(signupModal.sizes ?? []).length > 0 && (
-              <div className="mb-5">
-                <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">Escolha o tamanho</p>
-                <div className="flex flex-wrap gap-2">
-                  {(signupModal.sizes ?? []).map(size => (
-                    <button key={size} onClick={() => setSelectedSize(size)}
-                      className={`rounded-xl border px-4 py-2 text-sm font-bold transition ${selectedSize === size ? 'border-transparent text-white' : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300'}`}
-                      style={selectedSize === size ? { backgroundColor: '#2F9E41' } : {}}>
-                      {size}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="flex gap-2">
-              <button onClick={submitSignup} disabled={signupSaving || ((signupModal.sizes ?? []).length > 0 && !selectedSize)}
-                className="flex-1 rounded-xl py-3 text-sm font-bold text-white disabled:opacity-50 transition hover:opacity-90" style={{ backgroundColor: '#2F9E41' }}>
-                {signupSaving ? 'Salvando...' : mySignups[signupModal.id] ? 'Salvar alteração' : 'Confirmar inscrição'}
-              </button>
-              <button onClick={closeSignupModal} className="rounded-xl border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-    
-      {paymentModal && (() => {
-        const sp = sellerProfile(paymentModal.item)
-        const price = collectivePrice(paymentModal.details)
-        const depositAmt = price * (sp?.deposit_percent ?? 50) / 100
-        return (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
-            <div ref={paymentModalRef} className="w-full max-w-sm rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl p-6">
-              <div className="text-center mb-5">
-                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-50">
-                  <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#2F9E41" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                </div>
-                <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100">Inscrição registrada!</h3>
-                <p className="text-sm text-zinc-500 mt-1">Envie o sinal via PIX para confirmar sua vaga.</p>
-              </div>
-
-              <div className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/20 p-4 mb-4 text-center">
-                <p className="text-xs font-semibold text-amber-600 mb-1">
-                  Valor do sinal ({sp?.deposit_percent ?? 50}% de {fmtPrice(price)})
-                </p>
-                <p className="text-2xl font-black text-amber-700">{fmtPrice(depositAmt)}</p>
-                {paymentModal.size && <p className="text-xs text-amber-600 mt-1">Tamanho: <strong>{paymentModal.size}</strong></p>}
-                <p className="text-xs text-amber-600 mt-1">
-                  {paymentModal.details.helanca ? 'Helanca' : 'Moletom'} {paymentModal.details.zipper ? 'com ziper' : 'fechado'} · {paymentModal.details.pocket ? 'com bolso' : 'sem bolso'} · {paymentModal.details.hood ? 'com gorro' : 'sem gorro'}
-                </p>
-              </div>
-
-              {sp?.pix_key && (
-                <div className="mb-4">
-                  <p className="text-xs font-semibold text-zinc-500 mb-1.5">Chave PIX</p>
-                  <div className="flex items-center gap-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2.5">
-                    <p className="flex-1 text-sm font-mono text-zinc-900 dark:text-zinc-100 break-all">{sp.pix_key}</p>
-                    <button onClick={() => copyPix(sp!.pix_key!)}
-                      className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold text-white transition hover:opacity-90" style={{ backgroundColor: '#2F9E41' }}>
-                      {pixCopied ? '✓ Copiado' : 'Copiar'}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {sp?.whatsapp && (
-                <button
-                  onClick={() => {
-                    const msg = buildProofMessage(paymentModal.item, paymentModal.size, paymentModal.details)
-                    window.location.href = `https://wa.me/${sp!.whatsapp!.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`
-                  }}
-                  className="w-full rounded-xl py-3 text-sm font-bold text-white flex items-center justify-center gap-2 mb-3 hover:opacity-90 transition"
-                  style={{ backgroundColor: '#25D366' }}>
-                  <IconWhatsApp />
-                  Enviar comprovante via WhatsApp
-                </button>
-              )}
-
-              <button onClick={() => setPaymentModal(null)} className="w-full text-center text-sm text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition py-1">Fechar</button>
-              <p className="text-[11px] text-zinc-400 text-center mt-2">
-                Sua inscrição será confirmada após verificação do pagamento pelo responsável.
-              </p>
-            </div>
-          </div>
-        )
-      })()}
     </div>
   )
 }
@@ -756,30 +532,6 @@ function IconCart({ size = 18 }: { size?: number }) {
       <circle cx={19} cy={21} r={1} />
       <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h8.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
     </svg>
-  )
-}
-
-function ChoiceToggle({ label, value, onChange }: { label: string; value: boolean; onChange: (value: boolean) => void }) {
-  return (
-    <div>
-      <p className="mb-1 text-xs font-semibold text-zinc-500">{label}</p>
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={() => onChange(true)}
-          className={`rounded-lg border px-3 py-2 text-xs font-bold transition ${value ? 'border-amber-500 bg-amber-100 text-amber-800' : 'border-zinc-200 bg-white text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900'}`}
-        >
-          SIM
-        </button>
-        <button
-          type="button"
-          onClick={() => onChange(false)}
-          className={`rounded-lg border px-3 py-2 text-xs font-bold transition ${!value ? 'border-amber-500 bg-amber-100 text-amber-800' : 'border-zinc-200 bg-white text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900'}`}
-        >
-          NAO
-        </button>
-      </div>
-    </div>
   )
 }
 
