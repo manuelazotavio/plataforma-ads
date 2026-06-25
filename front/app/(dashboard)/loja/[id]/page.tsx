@@ -42,9 +42,9 @@ const DEFAULT_COLLECTIVE_DETAILS: CollectiveDetails = {
 
 const COLLECTIVE_PRICE_ROWS = [
   { label: 'Helanca fechado', price: 155 },
-  { label: 'Helanca ziper', price: 165 },
+  { label: 'Helanca zíper', price: 165 },
   { label: 'Moletom fechado', price: 165 },
-  { label: 'Moletom ziper', price: 175 },
+  { label: 'Moletom zíper', price: 175 },
 ]
 
 function collectivePrice(details: Pick<CollectiveDetails, 'zipper' | 'helanca'>) {
@@ -53,7 +53,7 @@ function collectivePrice(details: Pick<CollectiveDetails, 'zipper' | 'helanca'>)
 }
 
 function fmtPrice(v: number) {
-  return v === 0 ? 'Gratis' : `R$ ${v.toFixed(2).replace('.', ',')}`
+  return v === 0 ? 'Grátis' : `R$ ${v.toFixed(2).replace('.', ',')}`
 }
 
 function sellerProfile(item: StoreItem) {
@@ -191,7 +191,7 @@ export default function LojaProdutoPage() {
     if (!error) {
       setMySignup({ size: selectedSize, status: nextStatus, details: pricedCollectiveDetails })
       if (isNew) setSignupCount(c => c + 1)
-      setMessage(sp?.pix_key ? 'Inscricao salva. Envie o sinal pelo PIX para confirmar.' : 'Inscricao salva.')
+      setMessage(sp?.pix_key ? 'Inscrição salva. Envie o sinal pelo PIX para confirmar.' : 'Inscrição salva.')
     }
     setSignupSaving(false)
   }
@@ -201,7 +201,7 @@ export default function LojaProdutoPage() {
     await supabase.from('store_signups').update({ status: 'cancelled' }).eq('user_id', user.id).eq('item_id', item.id)
     setMySignup(null)
     setSignupCount(c => Math.max(0, c - 1))
-    setMessage('Inscricao cancelada.')
+    setMessage('Inscrição cancelada.')
   }
 
   function sendProof() {
@@ -211,9 +211,9 @@ export default function LojaProdutoPage() {
       '',
       `Produto: ${item.name}`,
       selectedSize ? `Tamanho: ${selectedSize}` : null,
-      `Modelo: ${pricedCollectiveDetails.helanca ? 'Helanca' : 'Moletom'} ${pricedCollectiveDetails.zipper ? 'com ziper' : 'fechado'}`,
-      `Bolso: ${pricedCollectiveDetails.pocket ? 'sim' : 'nao'}`,
-      `Gorro: ${pricedCollectiveDetails.hood ? 'sim' : 'nao'}`,
+      `Modelo: ${pricedCollectiveDetails.helanca ? 'Helanca' : 'Moletom'} ${pricedCollectiveDetails.zipper ? 'com zíper' : 'fechado'}`,
+      `Bolso: ${pricedCollectiveDetails.pocket ? 'sim' : 'não'}`,
+      `Gorro: ${pricedCollectiveDetails.hood ? 'sim' : 'não'}`,
       `Valor enviado: ${fmtPrice(depositAmt)} (${sp.deposit_percent ?? 50}% de ${fmtPrice(signupPrice)})`,
       userName ? `Nome: ${userName}` : null,
     ].filter(Boolean).join('\n')
@@ -291,7 +291,7 @@ export default function LojaProdutoPage() {
 
           {item.description && (
             <div>
-              <h2 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">Descricao</h2>
+              <h2 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">Descrição</h2>
               <p className="mt-2 whitespace-pre-line text-sm leading-6 text-zinc-600 dark:text-zinc-300">{item.description}</p>
             </div>
           )}
@@ -322,63 +322,71 @@ export default function LojaProdutoPage() {
               )}
             </div>
           ) : (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50/40 p-4 dark:border-amber-900/40 dark:bg-zinc-900">
+            <div className="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
               <div className="mb-3 flex justify-between text-xs text-zinc-500">
                 <span>{signupCount} inscrito{signupCount !== 1 ? 's' : ''}</span>
                 <span>min. {item.min_quantity}</span>
               </div>
               <div className="h-2 rounded-full bg-zinc-200 dark:bg-zinc-700">
-                <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, backgroundColor: reached ? '#2F9E41' : '#f59e0b' }} />
+                <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, backgroundColor: '#2F9E41' }} />
               </div>
               {reached && <p className="mt-2 text-xs font-semibold" style={{ color: '#2F9E41' }}>Meta atingida!</p>}
 
-              <div className="mt-4 rounded-xl border border-amber-200 bg-white p-3 text-sm dark:border-amber-900/40 dark:bg-zinc-950">
-                <p className="font-bold text-zinc-900 dark:text-zinc-100">
-                  Prazo: {item.collective_deadline ? `ate ${new Date(`${item.collective_deadline}T00:00:00`).toLocaleDateString('pt-BR')}` : 'definido pelo responsavel'}
+              <div className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm dark:border-zinc-800 dark:bg-zinc-950">
+                <h2 className="font-bold text-zinc-900 dark:text-zinc-100">Leia com atenção</h2>
+                <p className="mt-1 text-xs font-semibold text-zinc-500">
+                  Prazo para dar entrada: {item.collective_deadline ? `até ${new Date(`${item.collective_deadline}T00:00:00`).toLocaleDateString('pt-BR')}` : 'será definido pelo responsável'}
                 </p>
-                <ul className="mt-2 list-disc space-y-1 pl-4 text-xs leading-5 text-zinc-600 dark:text-zinc-300">
-                  <li>Inscricao sem pagamento de metade do valor sera desconsiderada.</li>
-                  <li>Envie o comprovante para o WhatsApp cadastrado do vendedor.</li>
-                  <li>A segunda parcela sera cobrada somente quando receber o agasalho.</li>
-                  <li>O prazo geralmente e de dois meses. A chegada sera avisada nos grupos e por e-mail.</li>
-                  <li>Helanca e um tecido mais liso, leve e menos quente do que moletom.</li>
-                  <li>Nao ha envio pelo correio.</li>
+                <ul className="mt-3 list-disc space-y-1.5 pl-4 text-xs leading-5 text-zinc-600 dark:text-zinc-300">
+                  <li>Para sua inscrição valer, pague metade do valor como entrada e envie o comprovante pelo WhatsApp cadastrado.</li>
+                  <li>A segunda parcela será combinada somente quando o agasalho chegar.</li>
+                  <li>O prazo costuma ser de aproximadamente dois meses. Quando chegar, avisaremos nos grupos e por e-mail.</li>
+                  <li>Helanca é um tecido mais liso, mais leve e menos quente que moletom.</li>
+                  <li>Não fazemos envio pelo correio; a retirada será combinada no campus.</li>
                 </ul>
               </div>
 
-              <div className="mt-4 overflow-hidden rounded-xl border border-amber-200 dark:border-amber-900/40">
+              <div className="mt-4 overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800">
                 {COLLECTIVE_PRICE_ROWS.map(row => (
-                  <div key={row.label} className="flex items-center justify-between border-b border-amber-100 bg-white px-3 py-2 text-sm last:border-b-0 dark:border-zinc-800 dark:bg-zinc-950">
+                  <div key={row.label} className="flex items-center justify-between border-b border-zinc-100 bg-white px-3 py-2 text-sm last:border-b-0 dark:border-zinc-800 dark:bg-zinc-950">
                     <span className="font-semibold text-zinc-700 dark:text-zinc-200">{row.label}</span>
                     <span className="font-bold text-zinc-900 dark:text-zinc-100">{fmtPrice(row.price)}</span>
                   </div>
                 ))}
               </div>
 
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <ChoiceToggle
-                  label="Com ziper?"
+              <div className="mt-4 flex flex-col gap-3">
+                <RadioChoice
+                  label="Com zíper?"
                   value={collectiveDetails.zipper}
+                  yesLabel="Sim, com zíper"
+                  noLabel="Não, fechado"
                   onChange={zipper => setCollectiveDetails(d => ({ ...d, zipper }))}
                 />
-                <ChoiceToggle
+                <RadioChoice
                   label="Helanca?"
                   value={collectiveDetails.helanca}
+                  yesLabel="Sim, helanca"
+                  noLabel="Não, moletom"
                   onChange={helanca => setCollectiveDetails(d => ({ ...d, helanca }))}
                 />
-                <ChoiceToggle
+                <RadioChoice
                   label="Com bolso?"
                   value={collectiveDetails.pocket}
+                  yesLabel="Sim, com bolso"
+                  noLabel="Não, sem bolso"
                   onChange={pocket => setCollectiveDetails(d => ({ ...d, pocket }))}
                 />
-                <ChoiceToggle
+                <RadioChoice
                   label="Com gorro?"
                   value={collectiveDetails.hood}
+                  yesLabel="Sim, com gorro"
+                  noLabel="Não, sem gorro"
                   onChange={hood => setCollectiveDetails(d => ({ ...d, hood }))}
                 />
               </div>
 
-              <div className="mt-4 flex items-center justify-between rounded-xl bg-amber-100 px-3 py-2 text-sm text-amber-900">
+              <div className="mt-4 flex items-center justify-between rounded-xl bg-zinc-100 px-3 py-2 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100">
                 <span className="font-semibold">Valor escolhido</span>
                 <span className="font-bold">{fmtPrice(signupPrice)}</span>
               </div>
@@ -388,7 +396,7 @@ export default function LojaProdutoPage() {
                   <label className="mb-2 block text-sm font-semibold text-zinc-700 dark:text-zinc-300">Tamanho</label>
                   <div className="flex flex-wrap gap-2">
                     {item.sizes.map(size => (
-                      <button key={size} onClick={() => setSelectedSize(size)} className={`rounded-lg border px-3 py-1.5 text-sm font-semibold transition ${selectedSize === size ? 'border-amber-500 bg-amber-100 text-amber-800' : 'border-zinc-200 bg-white text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900'}`}>
+                      <button key={size} onClick={() => setSelectedSize(size)} className={`rounded-lg border px-3 py-1.5 text-sm font-semibold transition ${selectedSize === size ? 'border-[#2F9E41] bg-[#2F9E41]/10 text-[#2F9E41]' : 'border-zinc-200 bg-white text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900'}`}>
                         {size}
                       </button>
                     ))}
@@ -398,33 +406,33 @@ export default function LojaProdutoPage() {
 
               <div className="mt-4">
                 {!user ? (
-                  <Link href="/login" className="block w-full rounded-xl py-3 text-center text-sm font-bold text-white" style={{ backgroundColor: '#f59e0b' }}>
+                  <Link href="/login" className="block w-full rounded-xl py-3 text-center text-sm font-bold text-white" style={{ backgroundColor: '#2F9E41' }}>
                     Entre para participar
                   </Link>
                 ) : mySignup ? (
                   <div className="flex flex-col gap-2">
-                    <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Voce esta inscrito{mySignup.size ? ` - ${mySignup.size}` : ''}.</p>
-                    <div className="flex gap-2">
+                    <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Você está inscrito{mySignup.size ? ` — ${mySignup.size}` : ''}.</p>
+                    <div className="grid gap-2 sm:grid-cols-2">
                       <button onClick={submitSignup} disabled={signupSaving} className="flex-1 rounded-xl border border-zinc-200 py-2 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800">
-                        Atualizar
+                        Atualizar inscrição
                       </button>
-                      <button onClick={cancelSignup} className="rounded-xl border border-red-100 px-4 py-2 text-sm font-semibold text-red-500 transition hover:bg-red-50">
-                        Cancelar
+                      <button onClick={cancelSignup} className="rounded-xl border border-red-100 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50">
+                        Cancelar inscrição
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <button onClick={submitSignup} disabled={signupSaving} className="w-full rounded-xl py-3 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: '#f59e0b' }}>
+                  <button onClick={submitSignup} disabled={signupSaving} className="w-full rounded-xl py-3 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: '#2F9E41' }}>
                     {signupSaving ? 'Salvando...' : 'Quero participar'}
                   </button>
                 )}
               </div>
 
               {sp?.pix_key && mySignup && (
-                <div className="mt-4 rounded-xl border border-amber-200 bg-white p-3 dark:border-amber-900/40 dark:bg-zinc-950">
+                <div className="mt-4 rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950">
                   <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">Pagamento do sinal</p>
-                  <p className="mt-1 text-xs text-zinc-500">Envie {fmtPrice(depositAmt)} ({sp.deposit_percent ?? 50}% do valor) para confirmar sua participacao.</p>
-                  <button onClick={() => copyPix(sp.pix_key!)} className="mt-3 w-full rounded-lg border border-amber-200 px-3 py-2 text-left text-xs font-semibold text-zinc-700 transition hover:bg-amber-50 dark:border-amber-900/40 dark:text-zinc-200">
+                  <p className="mt-1 text-xs text-zinc-500">Envie {fmtPrice(depositAmt)} ({sp.deposit_percent ?? 50}% do valor) para confirmar sua participação.</p>
+                  <button onClick={() => copyPix(sp.pix_key!)} className="mt-3 w-full rounded-lg border border-zinc-200 px-3 py-2 text-left text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-800 dark:text-zinc-200">
                     PIX: {pixCopied ? 'Copiado!' : sp.pix_key}
                   </button>
                   {sp.whatsapp && (
@@ -464,27 +472,43 @@ function IconUser() {
   )
 }
 
-function ChoiceToggle({ label, value, onChange }: { label: string; value: boolean; onChange: (value: boolean) => void }) {
+function RadioChoice({
+  label,
+  value,
+  yesLabel,
+  noLabel,
+  onChange,
+}: {
+  label: string
+  value: boolean
+  yesLabel: string
+  noLabel: string
+  onChange: (value: boolean) => void
+}) {
   return (
-    <div>
-      <p className="mb-1 text-xs font-semibold text-zinc-500">{label}</p>
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={() => onChange(true)}
-          className={`rounded-lg border px-3 py-2 text-xs font-bold transition ${value ? 'border-amber-500 bg-amber-100 text-amber-800' : 'border-zinc-200 bg-white text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900'}`}
-        >
-          SIM
-        </button>
-        <button
-          type="button"
-          onClick={() => onChange(false)}
-          className={`rounded-lg border px-3 py-2 text-xs font-bold transition ${!value ? 'border-amber-500 bg-amber-100 text-amber-800' : 'border-zinc-200 bg-white text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900'}`}
-        >
-          NAO
-        </button>
+    <fieldset className="rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950">
+      <legend className="px-1 text-sm font-semibold text-zinc-700 dark:text-zinc-300">{label}</legend>
+      <div className="mt-2 flex flex-col gap-2">
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
+          <input
+            type="radio"
+            checked={value}
+            onChange={() => onChange(true)}
+            className="h-4 w-4 accent-[#2F9E41]"
+          />
+          {yesLabel}
+        </label>
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
+          <input
+            type="radio"
+            checked={!value}
+            onChange={() => onChange(false)}
+            className="h-4 w-4 accent-[#2F9E41]"
+          />
+          {noLabel}
+        </label>
       </div>
-    </div>
+    </fieldset>
   )
 }
 

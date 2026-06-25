@@ -45,7 +45,7 @@ function collectivePrice(details: Pick<CollectiveDetails, 'zipper' | 'helanca'>)
 
 
 function fmtPrice(v: number) {
-  return v === 0 ? 'GrÃ¡tis' : `R$ ${v.toFixed(2).replace('.', ',')}`
+  return v === 0 ? 'Grátis' : `R$ ${v.toFixed(2).replace('.', ',')}`
 }
 
 function sellerProfile(item: StoreItem) {
@@ -228,8 +228,8 @@ export default function LojaPage() {
       const whatsapp = sp?.whatsapp ?? null
       const sellerName = groupItems[0].seller?.name ?? 'Vendedor'
       const total = groupItems.reduce((s, i) => s + i.price * i.qty, 0)
-      const lines = groupItems.map(i => `â€¢ ${i.qty}x ${i.name} â€” ${fmtPrice(i.price)}`)
-      const msg = `OlÃ¡! Gostaria de fazer um pedido na Loja ADS Conecta:\n\n${lines.join('\n')}\n\n*Total: ${fmtPrice(total)}*`
+      const lines = groupItems.map(i => `• ${i.qty}x ${i.name} — ${fmtPrice(i.price)}`)
+      const msg = `Olá! Gostaria de fazer um pedido na Loja ADS Conecta:\n\n${lines.join('\n')}\n\n*Total: ${fmtPrice(total)}*`
       whatsappGroups.push({ sellerName, whatsapp, msg, total })
     }
 
@@ -507,7 +507,7 @@ export default function LojaPage() {
         {cart.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center px-6">
             <div className="text-zinc-200 dark:text-zinc-700"><IconBag size={48} /></div>
-            <p className="text-sm text-zinc-400">Seu carrinho estÃ¡ vazio.</p>
+            <p className="text-sm text-zinc-400">Seu carrinho está vazio.</p>
             <button onClick={() => setCartOpen(false)} className="text-sm font-semibold" style={{ color: '#2F9E41' }}>Explorar produtos</button>
           </div>
         ) : (
@@ -540,7 +540,7 @@ export default function LojaPage() {
              
               {new Set(cart.map(i => i.seller_id)).size > 1 && (
                 <p className="text-xs text-zinc-500 bg-zinc-50 dark:bg-zinc-800 rounded-lg px-3 py-2">
-                  Seu carrinho tem itens de {new Set(cart.map(i => i.seller_id)).size} vendedores diferentes. VocÃª enviarÃ¡ um WhatsApp para cada um.
+                  Seu carrinho tem itens de {new Set(cart.map(i => i.seller_id)).size} vendedores diferentes. Você enviará um WhatsApp para cada um.
                 </p>
               )}
               <div className="flex items-center justify-between">
@@ -570,7 +570,7 @@ export default function LojaPage() {
           <div ref={checkoutModalRef} className="w-full max-w-sm rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl p-6">
             <div className="text-center mb-5">
               <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100">Enviar pedidos</h3>
-              <p className="text-sm text-zinc-500 mt-1">Toque em cada botÃ£o para enviar o pedido ao vendedor correspondente.</p>
+              <p className="text-sm text-zinc-500 mt-1">Toque em cada botão para enviar o pedido ao vendedor correspondente.</p>
             </div>
             <div className="flex flex-col gap-3">
               {checkoutGroups.map((g, i) => (
@@ -654,7 +654,7 @@ export default function LojaPage() {
             <div className="flex gap-2">
               <button onClick={submitSignup} disabled={signupSaving || ((signupModal.sizes ?? []).length > 0 && !selectedSize)}
                 className="flex-1 rounded-xl py-3 text-sm font-bold text-white disabled:opacity-50 transition hover:opacity-90" style={{ backgroundColor: '#2F9E41' }}>
-                {signupSaving ? 'Salvando...' : mySignups[signupModal.id] ? 'Salvar alteraÃ§Ã£o' : 'Confirmar inscriÃ§Ã£o'}
+                {signupSaving ? 'Salvando...' : mySignups[signupModal.id] ? 'Salvar alteração' : 'Confirmar inscrição'}
               </button>
               <button onClick={closeSignupModal} className="rounded-xl border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
                 Cancelar
@@ -676,7 +676,7 @@ export default function LojaPage() {
                 <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-50">
                   <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="#2F9E41" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
-                <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100">InscriÃ§Ã£o registrada!</h3>
+                <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100">Inscrição registrada!</h3>
                 <p className="text-sm text-zinc-500 mt-1">Envie o sinal via PIX para confirmar sua vaga.</p>
               </div>
 
@@ -698,7 +698,7 @@ export default function LojaPage() {
                     <p className="flex-1 text-sm font-mono text-zinc-900 dark:text-zinc-100 break-all">{sp.pix_key}</p>
                     <button onClick={() => copyPix(sp!.pix_key!)}
                       className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold text-white transition hover:opacity-90" style={{ backgroundColor: '#2F9E41' }}>
-                      {pixCopied ? 'âœ“ Copiado' : 'Copiar'}
+                      {pixCopied ? '✓ Copiado' : 'Copiar'}
                     </button>
                   </div>
                 </div>
@@ -719,7 +719,7 @@ export default function LojaPage() {
 
               <button onClick={() => setPaymentModal(null)} className="w-full text-center text-sm text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition py-1">Fechar</button>
               <p className="text-[11px] text-zinc-400 text-center mt-2">
-                Sua inscriÃ§Ã£o serÃ¡ confirmada apÃ³s verificaÃ§Ã£o do pagamento pelo responsÃ¡vel.
+                Sua inscrição será confirmada após verificação do pagamento pelo responsável.
               </p>
             </div>
           </div>
