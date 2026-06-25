@@ -131,7 +131,7 @@ export default function AccessibilityControls() {
           aria-label="Traduzir a página em Libras"
           title="Traduzir em Libras"
         >
-          <Image src="/libras.png" alt="" width={32} height={32} className="size-8 object-cover" />
+          <Image src="/libras.png" alt="" width={32} height={32} className="size-8 rounded-lg object-cover" />
         </button>
         <button
           type="button"
@@ -141,7 +141,7 @@ export default function AccessibilityControls() {
           aria-expanded={isOpen}
           title="Acessibilidade"
         >
-          <Image src="/acessibilidade.png" alt="" width={32} height={32} className="size-8 object-cover" />
+          <Image src="/acessibilidade.png" alt="" width={32} height={32} className="size-8 rounded-lg object-cover" />
         </button>
       </span>
 
