@@ -25,7 +25,7 @@ export default async function ForumPage({
   const now = new Date()
   const startOfWeek = new Date(now)
   startOfWeek.setUTCHours(0, 0, 0, 0)
-  startOfWeek.setUTCDate(now.getUTCDate() - ((now.getUTCDay() + 6) % 7)) // segunda-feira
+  startOfWeek.setUTCDate(now.getUTCDate() - ((now.getUTCDay() + 6) % 7)) 
   const weekAgo = startOfWeek.toISOString()
 
   const [{ data: categories }, { data: topics }, { data: weeklyVotes }] = await Promise.all([

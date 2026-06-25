@@ -7,7 +7,7 @@ import { LoadingState } from '@/app/components/LoadingScreen'
 import { useImageCropper } from '@/app/components/ImageCropper'
 import UserAvatar from '@/app/components/UserAvatar'
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+
 
 type SellerProfile = {
   user_id: string
@@ -60,7 +60,6 @@ type StoreOrder = {
   users: { id: string; name: string; avatar_url: string | null } | null
 }
 
-// ─── Constants ───────────────────────────────────────────────────────────────
 
 const CATEGORIES = ['Vestuário', 'Papelaria', 'Acessórios', 'Outros']
 const SIZES = ['PP', 'P', 'M', 'G', 'GG', 'XGG']
@@ -78,7 +77,7 @@ function fmtPrice(price: number) {
   return price === 0 ? 'Grátis' : `R$ ${price.toFixed(2).replace('.', ',')}`
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────
+
 
 export default function AdminLojaPage() {
   const { cropImage, cropperNode } = useImageCropper('1:1')
@@ -86,7 +85,7 @@ export default function AdminLojaPage() {
 
   const [tab, setTab] = useState<'produtos' | 'pedidos' | 'inscricoes' | 'vendedores'>('produtos')
 
-  // Products
+
   const [items, setItems] = useState<StoreItem[]>([])
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState({
@@ -99,17 +98,17 @@ export default function AdminLojaPage() {
   const [error, setError] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
 
-  // Orders
+ 
   const [orders, setOrders] = useState<StoreOrder[]>([])
   const [ordersLoaded, setOrdersLoaded] = useState(false)
 
-  // Signups
+
   const [selectedItemId, setSelectedItemId] = useState('')
   const [signups, setSignups] = useState<StoreSignup[]>([])
   const [signupsLoading, setSignupsLoading] = useState(false)
   const [closingBatch, setClosingBatch] = useState(false)
 
-  // Sellers
+ 
   const [sellers, setSellers] = useState<SellerProfile[]>([])
   const [allUsers, setAllUsers] = useState<{ id: string; name: string; avatar_url: string | null }[]>([])
   const [sellerForm, setSellerForm] = useState({ userId: '', whatsapp: '', pix_key: '', deposit_percent: '50' })
@@ -119,7 +118,6 @@ export default function AdminLojaPage() {
   const [userSearch, setUserSearch] = useState('')
   const [sellersLoaded, setSellersLoaded] = useState(false)
 
-  // ─── Load ──────────────────────────────────────────────────────────────────
 
   async function loadItems() {
     const { data } = await supabase
@@ -174,13 +172,13 @@ export default function AdminLojaPage() {
       const first = items.find(i => i.type === 'collective')
       if (first && !selectedItemId) setSelectedItemId(first.id)
     }
-  }, [tab, items]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [tab, items]) 
 
   useEffect(() => {
     if (selectedItemId) void loadSignups(selectedItemId)
   }, [selectedItemId])
 
-  // ─── Products ──────────────────────────────────────────────────────────────
+  
 
   async function uploadImage(file: File) {
     setUploading(true); setError(null)
@@ -255,14 +253,13 @@ export default function AdminLojaPage() {
     setItems(prev => prev.filter(i => i.id !== id))
   }
 
-  // ─── Orders ────────────────────────────────────────────────────────────────
-
+  
   async function updateOrderStatus(id: string, status: string) {
     await supabase.from('store_orders').update({ status }).eq('id', id)
     setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o))
   }
 
-  // ─── Signups ───────────────────────────────────────────────────────────────
+
 
   async function confirmPayment(signupId: string) {
     await supabase.from('store_signups').update({ status: 'active' }).eq('id', signupId)
@@ -278,8 +275,7 @@ export default function AdminLojaPage() {
     setClosingBatch(false)
   }
 
-  // ─── Sellers ───────────────────────────────────────────────────────────────
-
+  
   function startEditSeller(s: SellerProfile) {
     setSellerEditId(s.user_id)
     setSellerForm({ userId: s.user_id, whatsapp: s.whatsapp ?? '', pix_key: s.pix_key ?? '', deposit_percent: String(s.deposit_percent) })
@@ -313,7 +309,7 @@ export default function AdminLojaPage() {
     setSellers(prev => prev.filter(s => s.user_id !== userId))
   }
 
-  // ─── Derived ───────────────────────────────────────────────────────────────
+ 
 
   const collectiveItems = items.filter(i => i.type === 'collective')
   const activeSignups = signups.filter(s => s.status === 'active' || s.status === 'awaiting_payment')
@@ -334,7 +330,7 @@ export default function AdminLojaPage() {
 
   if (loading) return <LoadingState message="Carregando loja" />
 
-  // ─── Render ────────────────────────────────────────────────────────────────
+  
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -357,7 +353,7 @@ export default function AdminLojaPage() {
         ))}
       </div>
 
-      {/* ── Produtos ── */}
+    
       {tab === 'produtos' && (
         <div>
           <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 mb-8">
@@ -366,7 +362,7 @@ export default function AdminLojaPage() {
             </h2>
 
             <div className="flex gap-5">
-              {/* Image */}
+           
               <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading}
                 className="relative h-24 w-24 shrink-0 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 overflow-hidden bg-zinc-50 dark:bg-zinc-800 hover:border-zinc-400 transition disabled:opacity-50">
                 {form.image_url
@@ -379,7 +375,7 @@ export default function AdminLojaPage() {
               </button>
 
               <div className="flex-1 grid gap-3">
-                {/* Row 1 */}
+               
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
                     <label className="text-xs font-medium text-zinc-500 mb-1 block">Nome *</label>
@@ -391,7 +387,7 @@ export default function AdminLojaPage() {
                   </div>
                 </div>
 
-                {/* Row 2 */}
+              
                 <div className="grid gap-3 sm:grid-cols-3">
                   <div>
                     <label className="text-xs font-medium text-zinc-500 mb-1 block">Categoria</label>
@@ -423,7 +419,6 @@ export default function AdminLojaPage() {
                   </div>
                 </div>
 
-                {/* Collective options */}
                 {form.type === 'collective' && (
                   <div className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900/40 p-4 flex flex-col gap-3">
                     <div>
@@ -455,7 +450,7 @@ export default function AdminLojaPage() {
                   </div>
                 )}
 
-                {/* Description */}
+                
                 <div>
                   <label className="text-xs font-medium text-zinc-500 mb-1 block">Descrição</label>
                   <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className={`${inputCls} resize-none`} rows={2} placeholder="Detalhes do produto..." />
@@ -476,7 +471,7 @@ export default function AdminLojaPage() {
             </div>
           </div>
 
-          {/* Products list */}
+         
           {items.length === 0 ? (
             <p className="text-center text-sm text-zinc-400 py-12">Nenhum produto cadastrado ainda.</p>
           ) : (
@@ -520,7 +515,7 @@ export default function AdminLojaPage() {
         </div>
       )}
 
-      {/* ── Pedidos ── */}
+ 
       {tab === 'pedidos' && (
         <div>
           {!ordersLoaded ? (
@@ -564,7 +559,7 @@ export default function AdminLojaPage() {
         </div>
       )}
 
-      {/* ── Inscrições ── */}
+
       {tab === 'inscricoes' && (
         <div>
           {collectiveItems.length === 0 ? (
@@ -649,17 +644,16 @@ export default function AdminLojaPage() {
         </div>
       )}
 
-      {/* ── Vendedores ── */}
       {tab === 'vendedores' && (
         <div>
-          {/* Form */}
+        
           <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 mb-8">
             <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
               {sellerEditId ? 'Editar vendedor' : 'Adicionar vendedor'}
             </h2>
 
             <div className="grid gap-4">
-              {/* User picker — only when adding */}
+             
               {!sellerEditId ? (
                 <div>
                   <label className="text-xs font-medium text-zinc-500 mb-1 block">Usuário *</label>
@@ -722,7 +716,7 @@ export default function AdminLojaPage() {
             </div>
           </div>
 
-          {/* Sellers list */}
+         
           {!sellersLoaded ? (
             <p className="text-sm text-zinc-400 text-center py-8">Carregando...</p>
           ) : sellers.length === 0 ? (

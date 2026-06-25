@@ -41,7 +41,7 @@ export default function AccessibilityControls() {
         const saved = localStorage.getItem(STORAGE_KEY)
         if (saved) setSettings({ ...DEFAULT_SETTINGS, ...JSON.parse(saved) })
       } catch {
-        // Mantém as configurações padrão quando o armazenamento não está disponível.
+       
       } finally {
         settingsLoaded.current = true
       }

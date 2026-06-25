@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '@/app/lib/supabase'
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+
 
 type SellerData = {
   id: string
@@ -33,7 +33,7 @@ type CartItem = StoreItem & { qty: number }
 type MySignup = { size: string; status: string }
 type CheckoutGroup = { sellerName: string; whatsapp: string | null; msg: string; total: number }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+
 
 function fmtPrice(v: number) {
   return v === 0 ? 'Grátis' : `R$ ${v.toFixed(2).replace('.', ',')}`
@@ -43,7 +43,14 @@ function sellerProfile(item: StoreItem) {
   return item.seller?.store_seller_profiles?.[0] ?? null
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────
+function openWhatsAppGroup(group: CheckoutGroup) {
+  const phone = group.whatsapp?.replace(/\D/g, '')
+  if (!phone) return false
+  window.location.href = `https://wa.me/${phone}?text=${encodeURIComponent(group.msg)}`
+  return true
+}
+
+
 
 export default function LojaPage() {
   const [items, setItems] = useState<StoreItem[]>([])
@@ -51,7 +58,7 @@ export default function LojaPage() {
   const [user, setUser] = useState<User | null>(null)
   const [userName, setUserName] = useState('')
 
-  // Collective
+  
   const [signupCounts, setSignupCounts] = useState<Record<string, number>>({})
   const [mySignups, setMySignups] = useState<Record<string, MySignup>>({})
   const [signupModal, setSignupModal] = useState<StoreItem | null>(null)
@@ -60,13 +67,13 @@ export default function LojaPage() {
   const [paymentModal, setPaymentModal] = useState<{ item: StoreItem; size: string } | null>(null)
   const [pixCopied, setPixCopied] = useState(false)
 
-  // Cart
+
   const [cart, setCart] = useState<CartItem[]>([])
   const [cartOpen, setCartOpen] = useState(false)
   const [orderSaving, setOrderSaving] = useState(false)
   const [checkoutGroups, setCheckoutGroups] = useState<CheckoutGroup[] | null>(null)
 
-  // Filters
+ 
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
 
@@ -75,7 +82,17 @@ export default function LojaPage() {
   const paymentModalRef = useRef<HTMLDivElement>(null)
   const checkoutModalRef = useRef<HTMLDivElement>(null)
 
-  // ─── Init ──────────────────────────────────────────────────────────────────
+  const closeSignupModal = useCallback(() => {
+    setSignupModal(null)
+    setSelectedSize('')
+  }, [])
+
+  useEffect(() => {
+    if (checkoutGroups?.length !== 1) return
+    openWhatsAppGroup(checkoutGroups[0])
+  }, [checkoutGroups])
+
+  
 
   useEffect(() => {
     async function init() {
@@ -131,9 +148,9 @@ export default function LojaPage() {
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
-  }, [cartOpen, signupModal, paymentModal, checkoutGroups]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [cartOpen, signupModal, paymentModal, checkoutGroups, closeSignupModal])
 
-  // ─── Filters ───────────────────────────────────────────────────────────────
+  
 
   const categories = useMemo(() => {
     const set = new Set(items.map(i => i.category).filter(Boolean) as string[])
@@ -149,7 +166,7 @@ export default function LojaPage() {
     })
   }, [items, search, activeCategory])
 
-  // ─── Cart ──────────────────────────────────────────────────────────────────
+  
 
   function addToCart(item: StoreItem) {
     setCart(prev => {
@@ -173,8 +190,9 @@ export default function LojaPage() {
   async function placeOrder() {
     if (!user) return
     setOrderSaving(true)
+    setCheckoutGroups(null)
 
-    // Group cart items by seller
+    
     const groups = new Map<string, CartItem[]>()
     for (const item of cart) {
       const key = item.seller_id ?? '__none__'
@@ -182,7 +200,7 @@ export default function LojaPage() {
       groups.get(key)!.push(item)
     }
 
-    // Save all orders to DB (fire and forget)
+    
     for (const [, groupItems] of groups) {
       const total = groupItems.reduce((s, i) => s + i.price * i.qty, 0)
       supabase.from('store_orders').insert({
@@ -192,7 +210,7 @@ export default function LojaPage() {
       })
     }
 
-    // Build WhatsApp groups
+    
     const whatsappGroups: CheckoutGroup[] = []
     for (const [, groupItems] of groups) {
       const sp = sellerProfile(groupItems[0])
@@ -208,24 +226,19 @@ export default function LojaPage() {
     setCartOpen(false)
     setOrderSaving(false)
 
-    if (whatsappGroups.length === 1 && whatsappGroups[0].whatsapp) {
-      window.location.href = `https://wa.me/${whatsappGroups[0].whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(whatsappGroups[0].msg)}`
+    if (whatsappGroups.length === 1 && openWhatsAppGroup(whatsappGroups[0])) {
+      setCheckoutGroups(null)
     } else {
       setCheckoutGroups(whatsappGroups)
     }
   }
 
-  // ─── Collective ────────────────────────────────────────────────────────────
+ 
 
   function openSignupModal(item: StoreItem) {
     if (!user) return
     setSignupModal(item)
     setSelectedSize(mySignups[item.id]?.size ?? (item.sizes?.[0] ?? ''))
-  }
-
-  function closeSignupModal() {
-    setSignupModal(null)
-    setSelectedSize('')
   }
 
   async function submitSignup() {
@@ -279,12 +292,12 @@ export default function LojaPage() {
     ].filter(Boolean).join('\n')
   }
 
-  // ─── Render ────────────────────────────────────────────────────────────────
+  
 
   return (
     <div className="relative px-4 md:px-6 py-8 w-full max-w-5xl mx-auto">
 
-      {/* Header */}
+     
       <div className="mb-6 flex items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Loja</h1>
@@ -302,7 +315,7 @@ export default function LojaPage() {
         </button>
       </div>
 
-      {/* Search + categories */}
+      
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><circle cx={11} cy={11} r={8}/><path d="m21 21-4.35-4.35"/></svg>
@@ -319,7 +332,7 @@ export default function LojaPage() {
         )}
       </div>
 
-      {/* Grid */}
+   
       {loading ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
@@ -371,7 +384,7 @@ export default function LojaPage() {
                       </p>
                     )}
 
-                    {/* Progress bar */}
+                 
                     <div>
                       <div className="flex justify-between text-[10px] text-zinc-500 mb-1">
                         <span>{count} inscrito{count !== 1 ? 's' : ''}</span>
@@ -383,7 +396,7 @@ export default function LojaPage() {
                       {reached && <p className="text-[10px] font-semibold mt-0.5" style={{ color: '#2F9E41' }}>Meta atingida!</p>}
                     </div>
 
-                    {/* CTA */}
+                    
                     <div className="mt-auto pt-1">
                       {!user ? (
                         <Link href="/login" className="block text-center w-full rounded-lg py-1.5 text-[11px] font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 transition">
@@ -423,7 +436,7 @@ export default function LojaPage() {
               )
             }
 
-            // Normal item
+            
             const inCart = cart.find(c => c.id === item.id)
             return (
               <div key={item.id} className="group flex flex-col rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden transition hover:shadow-md hover:border-zinc-200">
@@ -462,12 +475,12 @@ export default function LojaPage() {
         </div>
       )}
 
-      {/* Backdrop */}
+    
       {(cartOpen || !!signupModal || !!paymentModal || !!checkoutGroups) && (
         <div className="fixed inset-0 z-40 bg-black/40" />
       )}
 
-      {/* ── Cart drawer ── */}
+     
       <div ref={drawerRef}
         className={`fixed top-0 right-0 z-50 h-full w-full max-w-sm bg-white dark:bg-zinc-900 shadow-2xl flex flex-col transition-transform duration-300 ${cartOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 px-5 py-4">
@@ -514,7 +527,7 @@ export default function LojaPage() {
               ))}
             </div>
             <div className="border-t border-zinc-100 dark:border-zinc-800 px-5 py-4 flex flex-col gap-3">
-              {/* Multi-seller notice */}
+             
               {new Set(cart.map(i => i.seller_id)).size > 1 && (
                 <p className="text-xs text-zinc-500 bg-zinc-50 dark:bg-zinc-800 rounded-lg px-3 py-2">
                   Seu carrinho tem itens de {new Set(cart.map(i => i.seller_id)).size} vendedores diferentes. Você enviará um WhatsApp para cada um.
@@ -541,8 +554,8 @@ export default function LojaPage() {
         )}
       </div>
 
-      {/* ── Checkout multi-vendedor ── */}
-      {checkoutGroups && (
+     
+      {checkoutGroups && !(checkoutGroups.length === 1 && checkoutGroups[0].whatsapp?.replace(/\D/g, '')) && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
           <div ref={checkoutModalRef} className="w-full max-w-sm rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl p-6">
             <div className="text-center mb-5">
@@ -558,7 +571,7 @@ export default function LojaPage() {
                   </div>
                   {g.whatsapp ? (
                     <button
-                      onClick={() => { window.location.href = `https://wa.me/${g.whatsapp!.replace(/\D/g, '')}?text=${encodeURIComponent(g.msg)}` }}
+                      onClick={() => { openWhatsAppGroup(g) }}
                       className="w-full rounded-xl py-2.5 text-sm font-bold text-white flex items-center justify-center gap-2 hover:opacity-90 transition"
                       style={{ backgroundColor: '#25D366' }}>
                       <IconWhatsApp />
@@ -577,7 +590,7 @@ export default function LojaPage() {
         </div>
       )}
 
-      {/* ── Signup modal ── */}
+ 
       {signupModal && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
           <div ref={signupModalRef} className="w-full max-w-sm rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl p-6">
@@ -626,7 +639,7 @@ export default function LojaPage() {
         </div>
       )}
 
-      {/* ── Payment modal ── */}
+    
       {paymentModal && (() => {
         const sp = sellerProfile(paymentModal.item)
         const depositAmt = paymentModal.item.price * (sp?.deposit_percent ?? 50) / 100
@@ -687,7 +700,7 @@ export default function LojaPage() {
   )
 }
 
-// ─── UI helpers ──────────────────────────────────────────────────────────────
+
 
 function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
