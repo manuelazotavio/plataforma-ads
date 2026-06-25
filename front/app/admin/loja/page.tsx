@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 /* eslint-disable react-hooks/set-state-in-effect */
 
@@ -30,6 +30,7 @@ type StoreItem = {
   type: 'normal' | 'collective'
   min_quantity: number
   sizes: string[]
+  collective_deadline: string | null
   seller_id: string | null
   is_visible: boolean
   display_order: number
@@ -48,6 +49,7 @@ type StoreSignup = {
   item_id: string
   size: string | null
   status: string
+  details: Record<string, unknown> | null
   created_at: string
   users: { id: string; name: string; avatar_url: string | null } | null
 }
@@ -64,7 +66,7 @@ type StoreOrder = {
 }
 
 
-const CATEGORIES = ['Vestuário', 'Papelaria', 'Acessórios', 'Outros']
+const CATEGORIES = ['VestuÃ¡rio', 'Papelaria', 'AcessÃ³rios', 'Outros']
 const SIZES = ['PP', 'P', 'M', 'G', 'GG', 'XGG']
 
 const inputCls = 'w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-400 transition dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100'
@@ -83,7 +85,33 @@ const TYPE_OPTIONS = [
 const ORDER_STATUS_OPTIONS = Object.entries(ORDER_STATUS).map(([value, status]) => ({ value, label: status.label }))
 
 function fmtPrice(price: number) {
-  return price === 0 ? 'Grátis' : `R$ ${price.toFixed(2).replace('.', ',')}`
+  return price === 0 ? 'GrÃ¡tis' : `R$ ${price.toFixed(2).replace('.', ',')}`
+}
+
+function signupDetailsLabel(details: Record<string, unknown> | null) {
+  if (!details) return ''
+  const labels = [
+    details.helanca === true ? 'Helanca' : details.helanca === false ? 'Moletom' : null,
+    details.zipper === true ? 'com ziper' : details.zipper === false ? 'fechado' : null,
+    details.pocket === true ? 'com bolso' : details.pocket === false ? 'sem bolso' : null,
+    details.hood === true ? 'com gorro' : details.hood === false ? 'sem gorro' : null,
+    typeof details.price === 'number' ? fmtPrice(details.price) : null,
+  ].filter(Boolean)
+  return labels.join(' · ')
+}
+
+function csvCell(value: unknown) {
+  const text = value === null || value === undefined ? '' : String(value)
+  return `"${text.replace(/"/g, '""')}"`
+}
+
+function slugifyFileName(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase() || 'inscricoes'
 }
 
 
@@ -100,7 +128,7 @@ export default function AdminLojaPage() {
   const [form, setForm] = useState({
     name: '', description: '', price: '', image_url: '', category: '',
     type: 'normal' as 'normal' | 'collective', min_quantity: '10',
-    sizes: [] as string[], seller_id: '', is_visible: true,
+    sizes: [] as string[], collective_deadline: '', seller_id: '', is_visible: true,
   })
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -167,7 +195,7 @@ export default function AdminLojaPage() {
     setSignupsError(null)
     const { data, error } = await supabase
       .from('store_signups')
-      .select('id, user_id, item_id, size, status, created_at')
+      .select('id, user_id, item_id, size, status, details, created_at')
       .eq('item_id', itemId)
       .order('created_at', { ascending: false })
     if (error) {
@@ -223,7 +251,7 @@ export default function AdminLojaPage() {
   }
 
   async function save() {
-    if (!form.name.trim()) { setError('Nome obrigatório'); return }
+    if (!form.name.trim()) { setError('Nome obrigatÃ³rio'); return }
     const price = parseFloat(form.price.replace(',', '.')) || 0
     const payload = {
       name: form.name.trim(),
@@ -234,6 +262,7 @@ export default function AdminLojaPage() {
       type: form.type,
       min_quantity: parseInt(form.min_quantity) || 10,
       sizes: form.type === 'collective' ? form.sizes : [],
+      collective_deadline: form.type === 'collective' && form.collective_deadline ? form.collective_deadline : null,
       seller_id: form.seller_id || null,
       is_visible: form.is_visible,
     }
@@ -252,13 +281,13 @@ export default function AdminLojaPage() {
   }
 
   function resetForm() {
-    setForm({ name: '', description: '', price: '', image_url: '', category: '', type: 'normal', min_quantity: '10', sizes: [], seller_id: '', is_visible: true })
+    setForm({ name: '', description: '', price: '', image_url: '', category: '', type: 'normal', min_quantity: '10', sizes: [], collective_deadline: '', seller_id: '', is_visible: true })
     setEditingId(null); setError(null)
     setProductModalOpen(false)
   }
 
   function openNewProductModal() {
-    setForm({ name: '', description: '', price: '', image_url: '', category: '', type: 'normal', min_quantity: '10', sizes: [], seller_id: '', is_visible: true })
+    setForm({ name: '', description: '', price: '', image_url: '', category: '', type: 'normal', min_quantity: '10', sizes: [], collective_deadline: '', seller_id: '', is_visible: true })
     setEditingId(null)
     setError(null)
     setProductModalOpen(true)
@@ -270,6 +299,7 @@ export default function AdminLojaPage() {
       name: item.name, description: item.description ?? '', price: item.price.toFixed(2),
       image_url: item.image_url ?? '', category: item.category ?? '',
       type: item.type, min_quantity: String(item.min_quantity), sizes: item.sizes ?? [],
+      collective_deadline: item.collective_deadline ?? '',
       seller_id: item.seller_id ?? '', is_visible: item.is_visible,
     })
     setError(null)
@@ -306,11 +336,44 @@ export default function AdminLojaPage() {
 
   async function closeBatch() {
     if (!selectedItemId) return
-    if (!window.confirm('Fechar este lote? Todos os inscritos serão marcados como confirmados.')) return
+    if (!window.confirm('Fechar este lote? Todos os inscritos serÃ£o marcados como confirmados.')) return
     setClosingBatch(true)
     await supabase.from('store_signups').update({ status: 'confirmed' }).eq('item_id', selectedItemId).eq('status', 'active')
     await loadSignups(selectedItemId)
     setClosingBatch(false)
+  }
+
+  function exportSignupsCsv() {
+    if (!selectedItem || signups.length === 0) return
+
+    const headers = ['Produto', 'Aluno', 'Usuario ID', 'Tamanho', 'Tecido', 'Ziper', 'Bolso', 'Gorro', 'Preco', 'Status', 'Data']
+    const rows = signups.map(s => {
+      const details = s.details ?? {}
+      return [
+        selectedItem.name,
+        s.users?.name ?? '',
+        s.user_id,
+        s.size ?? '',
+        details.helanca === true ? 'Helanca' : details.helanca === false ? 'Moletom' : '',
+        details.zipper === true ? 'Sim' : details.zipper === false ? 'Nao' : '',
+        details.pocket === true ? 'Sim' : details.pocket === false ? 'Nao' : '',
+        details.hood === true ? 'Sim' : details.hood === false ? 'Nao' : '',
+        typeof details.price === 'number' ? details.price.toFixed(2).replace('.', ',') : '',
+        s.status,
+        new Date(s.created_at).toLocaleString('pt-BR'),
+      ]
+    })
+
+    const csv = [headers, ...rows].map(row => row.map(csvCell).join(';')).join('\r\n')
+    const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${slugifyFileName(selectedItem.name)}-inscricoes.csv`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
   }
 
   
@@ -326,8 +389,8 @@ export default function AdminLojaPage() {
   }
 
   async function saveSeller() {
-    if (!sellerForm.userId) { setSellerError('Selecione um usuário'); return }
-    if (!sellerForm.whatsapp.trim()) { setSellerError('WhatsApp obrigatório'); return }
+    if (!sellerForm.userId) { setSellerError('Selecione um usuÃ¡rio'); return }
+    if (!sellerForm.whatsapp.trim()) { setSellerError('WhatsApp obrigatÃ³rio'); return }
     setSellerSaving(true); setSellerError(null)
     const { error: e } = await supabase.from('store_seller_profiles').upsert({
       user_id: sellerForm.userId,
@@ -342,7 +405,7 @@ export default function AdminLojaPage() {
   }
 
   async function deleteSeller(userId: string) {
-    if (!window.confirm('Remover este vendedor? Os produtos vinculados perderão o vendedor.')) return
+    if (!window.confirm('Remover este vendedor? Os produtos vinculados perderÃ£o o vendedor.')) return
     await supabase.from('store_seller_profiles').delete().eq('user_id', userId)
     setSellers(prev => prev.filter(s => s.user_id !== userId))
   }
@@ -362,7 +425,7 @@ export default function AdminLojaPage() {
   const TABS = [
     { id: 'produtos',    label: 'Produtos' },
     { id: 'pedidos',     label: 'Pedidos' },
-    { id: 'inscricoes',  label: 'Inscrições' },
+    { id: 'inscricoes',  label: 'InscriÃ§Ãµes' },
     { id: 'vendedores',  label: 'Vendedores' },
   ] as const
 
@@ -434,7 +497,7 @@ export default function AdminLojaPage() {
                     <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className={inputCls} placeholder="Nome do produto" />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-zinc-500 mb-1 block">Preço (R$)</label>
+                    <label className="text-xs font-medium text-zinc-500 mb-1 block">PreÃ§o (R$)</label>
                     <input value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} className={inputCls} placeholder="0,00" inputMode="decimal" />
                   </div>
                 </div>
@@ -476,12 +539,18 @@ export default function AdminLojaPage() {
 
                 {form.type === 'collective' && (
                   <div className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900/40 p-4 flex flex-col gap-3">
-                    <div>
-                      <label className="text-xs font-medium text-amber-700 mb-1 block">Mínimo de inscrições</label>
-                      <input value={form.min_quantity} onChange={e => setForm(f => ({ ...f, min_quantity: e.target.value }))} className={inputCls} type="number" min={1} placeholder="10" />
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className="text-xs font-medium text-amber-700 mb-1 block">Minimo de inscricoes</label>
+                        <input value={form.min_quantity} onChange={e => setForm(f => ({ ...f, min_quantity: e.target.value }))} className={inputCls} type="number" min={1} placeholder="10" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-amber-700 mb-1 block">Prazo para entrada</label>
+                        <input value={form.collective_deadline} onChange={e => setForm(f => ({ ...f, collective_deadline: e.target.value }))} className={inputCls} type="date" />
+                      </div>
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-amber-700 mb-2 block">Tamanhos disponíveis</label>
+                      <label className="text-xs font-medium text-amber-700 mb-2 block">Tamanhos disponÃ­veis</label>
                       <div className="flex flex-wrap gap-2">
                         {SIZES.map(size => (
                           <button key={size} type="button" onClick={() => toggleSize(size)}
@@ -496,9 +565,9 @@ export default function AdminLojaPage() {
                       if (!sp) return null
                       return (
                         <p className="text-xs text-amber-700 bg-amber-100 rounded-lg px-3 py-2">
-                          PIX e WhatsApp virão do vendedor <strong>{sp.users?.name}</strong>.
-                          {!sp.pix_key && ' ⚠️ Vendedor sem chave PIX cadastrada.'}
-                          {!sp.whatsapp && ' ⚠️ Vendedor sem WhatsApp cadastrado.'}
+                          PIX e WhatsApp virÃ£o do vendedor <strong>{sp.users?.name}</strong>.
+                          {!sp.pix_key && ' âš ï¸ Vendedor sem chave PIX cadastrada.'}
+                          {!sp.whatsapp && ' âš ï¸ Vendedor sem WhatsApp cadastrado.'}
                         </p>
                       )
                     })()}
@@ -507,7 +576,7 @@ export default function AdminLojaPage() {
 
                 
                 <div>
-                  <label className="text-xs font-medium text-zinc-500 mb-1 block">Descrição</label>
+                  <label className="text-xs font-medium text-zinc-500 mb-1 block">DescriÃ§Ã£o</label>
                   <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className={`${inputCls} resize-none`} rows={2} placeholder="Detalhes do produto..." />
                 </div>
               </div>
@@ -518,7 +587,7 @@ export default function AdminLojaPage() {
             <div className="mt-4 flex gap-2">
               <button onClick={save} disabled={saving || uploading}
                 className="rounded-lg px-5 py-2 text-sm font-medium text-white disabled:opacity-50 transition hover:opacity-90" style={{ backgroundColor: '#2F9E41' }}>
-                {saving ? 'Salvando...' : editingId ? 'Salvar alterações' : 'Adicionar produto'}
+                {saving ? 'Salvando...' : editingId ? 'Salvar alteraÃ§Ãµes' : 'Adicionar produto'}
               </button>
               <button onClick={resetForm} className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">Cancelar</button>
                 </div>
@@ -549,7 +618,7 @@ export default function AdminLojaPage() {
                           <span className="shrink-0 flex items-center gap-1 text-[10px] text-zinc-400">
                             <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx={12} cy={7} r={4}/></svg>
                             {item.seller.name}
-                            {sp && !sp.whatsapp && <span className="text-amber-500" title="Sem WhatsApp">⚠</span>}
+                            {sp && !sp.whatsapp && <span className="text-amber-500" title="Sem WhatsApp">âš </span>}
                           </span>
                         )}
                       </div>
@@ -588,7 +657,7 @@ export default function AdminLojaPage() {
                       <div className="flex items-center gap-2.5">
                         <UserAvatar src={u?.avatar_url} name={u?.name ?? '?'} className="h-8 w-8 shrink-0" />
                         <div>
-                          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{u?.name ?? 'Usuário removido'}</p>
+                          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{u?.name ?? 'UsuÃ¡rio removido'}</p>
                           <p className="text-xs text-zinc-400">{new Date(order.created_at).toLocaleString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
                         </div>
                       </div>
@@ -604,7 +673,7 @@ export default function AdminLojaPage() {
                     </div>
                     <div className="flex flex-col gap-1 mb-2">
                       {(order.items as OrderItem[]).map((it, i) => (
-                        <p key={i} className="text-xs text-zinc-600 dark:text-zinc-400">• {it.qty}x {it.name} — {fmtPrice(it.price)}</p>
+                        <p key={i} className="text-xs text-zinc-600 dark:text-zinc-400">â€¢ {it.qty}x {it.name} â€” {fmtPrice(it.price)}</p>
                       ))}
                     </div>
                     <p className="text-sm font-bold" style={{ color: '#2F9E41' }}>Total: {fmtPrice(order.total)}</p>
@@ -633,14 +702,20 @@ export default function AdminLojaPage() {
                 {selectedItem && (
                   <span className="text-sm text-zinc-500">
                     Meta: <strong className="text-zinc-900 dark:text-zinc-100">{selectedItem.min_quantity}</strong>
-                    {' '}— Inscritos: <strong style={{ color: activeSignups.length >= selectedItem.min_quantity ? '#2F9E41' : '#f59e0b' }}>{activeSignups.length}</strong>
+                    {' '}â€” Inscritos: <strong style={{ color: activeSignups.length >= selectedItem.min_quantity ? '#2F9E41' : '#f59e0b' }}>{activeSignups.length}</strong>
                     {awaitingPayment.length > 0 && <span className="ml-2 text-amber-600">({awaitingPayment.length} aguardando PIX)</span>}
                   </span>
                 )}
-                <button onClick={closeBatch} disabled={closingBatch || activeSignups.length === 0}
-                  className="ml-auto rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-40 transition hover:opacity-90" style={{ backgroundColor: '#2F9E41' }}>
-                  {closingBatch ? 'Fechando...' : 'Fechar lote'}
-                </button>
+                <div className="ml-auto flex gap-2">
+                  <button onClick={exportSignupsCsv} disabled={signups.length === 0}
+                    className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-2 text-sm font-semibold text-zinc-600 dark:text-zinc-300 disabled:opacity-40 transition hover:bg-zinc-50 dark:hover:bg-zinc-800">
+                    Exportar CSV
+                  </button>
+                  <button onClick={closeBatch} disabled={closingBatch || activeSignups.length === 0}
+                    className="rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-40 transition hover:opacity-90" style={{ backgroundColor: '#2F9E41' }}>
+                    {closingBatch ? 'Fechando...' : 'Fechar lote'}
+                  </button>
+                </div>
               </div>
 
               {signupsLoading ? (
@@ -648,7 +723,7 @@ export default function AdminLojaPage() {
               ) : signupsError ? (
                 <p className="text-sm text-red-500 text-center py-12">Erro ao carregar inscricoes: {signupsError}</p>
               ) : signups.length === 0 ? (
-                <p className="text-sm text-zinc-400 text-center py-12">Nenhuma inscrição ainda.</p>
+                <p className="text-sm text-zinc-400 text-center py-12">Nenhuma inscriÃ§Ã£o ainda.</p>
               ) : (
                 <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
                   <table className="w-full text-sm">
@@ -669,10 +744,15 @@ export default function AdminLojaPage() {
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2">
                                 <UserAvatar src={u?.avatar_url} name={u?.name ?? '?'} className="h-7 w-7 shrink-0" />
-                                <span className="font-medium text-zinc-900 dark:text-zinc-100">{u?.name ?? '—'}</span>
+                                <span className="font-medium text-zinc-900 dark:text-zinc-100">{u?.name ?? 'â€”'}</span>
                               </div>
                             </td>
-                            <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300 font-semibold">{s.size ?? '—'}</td>
+                            <td className="px-4 py-3">
+                              <p className="font-semibold text-zinc-700 dark:text-zinc-300">{s.size ?? '—'}</p>
+                              {signupDetailsLabel(s.details) && (
+                                <p className="mt-0.5 max-w-xs text-xs text-zinc-400">{signupDetailsLabel(s.details)}</p>
+                              )}
+                            </td>
                             <td className="px-4 py-3 text-zinc-400 text-xs">{new Date(s.created_at).toLocaleDateString('pt-BR')}</td>
                             <td className="px-4 py-3">
                               <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold border ${
@@ -718,13 +798,13 @@ export default function AdminLojaPage() {
              
               {!sellerEditId ? (
                 <div>
-                  <label className="text-xs font-medium text-zinc-500 mb-1 block">Usuário *</label>
+                  <label className="text-xs font-medium text-zinc-500 mb-1 block">UsuÃ¡rio *</label>
                   <div className="flex flex-col gap-2">
                     <input value={userSearch} onChange={e => setUserSearch(e.target.value)} placeholder="Buscar por nome..." className={inputCls} />
                     {userSearch.trim().length > 0 && (
                       <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 overflow-hidden max-h-48 overflow-y-auto">
                         {availableUsers.length === 0 ? (
-                          <p className="px-4 py-3 text-sm text-zinc-400">Nenhum usuário encontrado.</p>
+                          <p className="px-4 py-3 text-sm text-zinc-400">Nenhum usuÃ¡rio encontrado.</p>
                         ) : availableUsers.slice(0, 8).map(u => (
                           <button key={u.id} type="button" onClick={() => { setSellerForm(f => ({ ...f, userId: u.id })); setUserSearch(u.name) }}
                             className={`flex w-full items-center gap-3 px-4 py-2.5 text-sm text-left hover:bg-zinc-50 dark:hover:bg-zinc-800 transition ${sellerForm.userId === u.id ? 'bg-zinc-50 dark:bg-zinc-800' : ''}`}>
@@ -736,7 +816,7 @@ export default function AdminLojaPage() {
                       </div>
                     )}
                     {sellerForm.userId && !userSearch.trim() && (
-                      <p className="text-xs text-zinc-400">Usuário selecionado: <strong className="text-zinc-700 dark:text-zinc-300">{allUsers.find(u => u.id === sellerForm.userId)?.name}</strong></p>
+                      <p className="text-xs text-zinc-400">UsuÃ¡rio selecionado: <strong className="text-zinc-700 dark:text-zinc-300">{allUsers.find(u => u.id === sellerForm.userId)?.name}</strong></p>
                     )}
                   </div>
                 </div>
@@ -751,7 +831,7 @@ export default function AdminLojaPage() {
                 <div>
                   <label className="text-xs font-medium text-zinc-500 mb-1 block">WhatsApp *</label>
                   <input value={sellerForm.whatsapp} onChange={e => setSellerForm(f => ({ ...f, whatsapp: e.target.value }))} className={inputCls} placeholder="5511999999999" inputMode="numeric" />
-                  <p className="text-[10px] text-zinc-400 mt-1">Com DDI e DDD, sem espaços</p>
+                  <p className="text-[10px] text-zinc-400 mt-1">Com DDI e DDD, sem espaÃ§os</p>
                 </div>
                 <div>
                   <label className="text-xs font-medium text-zinc-500 mb-1 block">Chave PIX</label>
@@ -770,7 +850,7 @@ export default function AdminLojaPage() {
             <div className="mt-4 flex gap-2">
               <button onClick={saveSeller} disabled={sellerSaving || !sellerForm.userId}
                 className="rounded-lg px-5 py-2 text-sm font-medium text-white disabled:opacity-50 transition hover:opacity-90" style={{ backgroundColor: '#2F9E41' }}>
-                {sellerSaving ? 'Salvando...' : sellerEditId ? 'Salvar alterações' : 'Adicionar vendedor'}
+                {sellerSaving ? 'Salvando...' : sellerEditId ? 'Salvar alteraÃ§Ãµes' : 'Adicionar vendedor'}
               </button>
               {sellerEditId && (
                 <button onClick={resetSellerForm} className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">Cancelar</button>
@@ -796,10 +876,10 @@ export default function AdminLojaPage() {
                           <svg width={11} height={11} viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
                           {s.whatsapp}
                         </span>
-                      ) : <span className="text-amber-500">⚠ Sem WhatsApp</span>}
+                      ) : <span className="text-amber-500">âš  Sem WhatsApp</span>}
                       {s.pix_key ? (
                         <span>PIX: {s.pix_key}</span>
-                      ) : <span className="text-amber-500">⚠ Sem PIX</span>}
+                      ) : <span className="text-amber-500">âš  Sem PIX</span>}
                       <span>Sinal: {s.deposit_percent}%</span>
                       <span className="text-zinc-400">{items.filter(i => i.seller_id === s.user_id).length} produto(s)</span>
                     </div>
@@ -817,3 +897,4 @@ export default function AdminLojaPage() {
     </div>
   )
 }
+

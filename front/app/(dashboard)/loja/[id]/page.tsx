@@ -24,11 +24,33 @@ type StoreItem = {
   type: 'normal' | 'collective'
   min_quantity: number
   sizes: string[]
+  collective_deadline: string | null
   seller_id: string | null
   seller: SellerData | null
 }
 
-type MySignup = { size: string; status: string }
+type CollectiveDetails = { zipper: boolean; helanca: boolean; pocket: boolean; hood: boolean; price: number }
+type MySignup = { size: string; status: string; details?: CollectiveDetails | null }
+
+const DEFAULT_COLLECTIVE_DETAILS: CollectiveDetails = {
+  zipper: false,
+  helanca: true,
+  pocket: true,
+  hood: true,
+  price: 155,
+}
+
+const COLLECTIVE_PRICE_ROWS = [
+  { label: 'Helanca fechado', price: 155 },
+  { label: 'Helanca ziper', price: 165 },
+  { label: 'Moletom fechado', price: 165 },
+  { label: 'Moletom ziper', price: 175 },
+]
+
+function collectivePrice(details: Pick<CollectiveDetails, 'zipper' | 'helanca'>) {
+  if (details.helanca) return details.zipper ? 165 : 155
+  return details.zipper ? 175 : 165
+}
 
 function fmtPrice(v: number) {
   return v === 0 ? 'Gratis' : `R$ ${v.toFixed(2).replace('.', ',')}`
@@ -55,6 +77,7 @@ export default function LojaProdutoPage() {
   const [signupCount, setSignupCount] = useState(0)
   const [mySignup, setMySignup] = useState<MySignup | null>(null)
   const [selectedSize, setSelectedSize] = useState('')
+  const [collectiveDetails, setCollectiveDetails] = useState<CollectiveDetails>(DEFAULT_COLLECTIVE_DETAILS)
   const [signupSaving, setSignupSaving] = useState(false)
   const [pixCopied, setPixCopied] = useState(false)
   const [message, setMessage] = useState('')
@@ -67,7 +90,7 @@ export default function LojaProdutoPage() {
         { data: { user: authUser } },
       ] = await Promise.all([
         supabase.from('store_items')
-          .select('id, name, description, price, image_url, category, type, min_quantity, sizes, seller_id, seller:users!seller_id(id, name, avatar_url, store_seller_profiles(whatsapp, pix_key, deposit_percent))')
+          .select('id, name, description, price, image_url, category, type, min_quantity, sizes, collective_deadline, seller_id, seller:users!seller_id(id, name, avatar_url, store_seller_profiles(whatsapp, pix_key, deposit_percent))')
           .eq('id', itemId)
           .eq('is_visible', true)
           .maybeSingle(),
@@ -88,12 +111,14 @@ export default function LojaProdutoPage() {
         const [{ data: signups }, { data: mine }] = await Promise.all([
           supabase.from('store_signups').select('item_id').eq('item_id', loadedItem.id).neq('status', 'cancelled'),
           authUser
-            ? supabase.from('store_signups').select('size, status').eq('item_id', loadedItem.id).eq('user_id', authUser.id).neq('status', 'cancelled').maybeSingle()
-            : Promise.resolve({ data: null as { size: string | null; status: string } | null }),
+            ? supabase.from('store_signups').select('size, status, details').eq('item_id', loadedItem.id).eq('user_id', authUser.id).neq('status', 'cancelled').maybeSingle()
+            : Promise.resolve({ data: null as { size: string | null; status: string; details: CollectiveDetails | null } | null }),
         ])
         setSignupCount((signups ?? []).length)
-        setMySignup(mine ? { size: mine.size ?? '', status: mine.status } : null)
+        const mineDetails = mine?.details ? { ...DEFAULT_COLLECTIVE_DETAILS, ...mine.details, price: collectivePrice(mine.details) } : null
+        setMySignup(mine ? { size: mine.size ?? '', status: mine.status, details: mineDetails } : null)
         if (mine?.size) setSelectedSize(mine.size)
+        if (mineDetails) setCollectiveDetails(mineDetails)
       }
 
       setLoading(false)
@@ -103,7 +128,9 @@ export default function LojaProdutoPage() {
   }, [itemId])
 
   const sp = item ? sellerProfile(item) : null
-  const depositAmt = item ? item.price * (sp?.deposit_percent ?? 50) / 100 : 0
+  const pricedCollectiveDetails = { ...collectiveDetails, price: collectivePrice(collectiveDetails) }
+  const signupPrice = item?.type === 'collective' ? pricedCollectiveDetails.price : (item?.price ?? 0)
+  const depositAmt = signupPrice * (sp?.deposit_percent ?? 50) / 100
   const progress = item?.type === 'collective' ? Math.min(100, (signupCount / item.min_quantity) * 100) : 0
   const reached = item?.type === 'collective' ? signupCount >= item.min_quantity : false
 
@@ -150,19 +177,19 @@ export default function LojaProdutoPage() {
     const isNew = !mySignup
     let nextStatus = sp?.pix_key ? 'awaiting_payment' : 'active'
     let { error } = await supabase.from('store_signups').upsert(
-      { user_id: user.id, item_id: item.id, size: selectedSize || null, status: nextStatus },
+      { user_id: user.id, item_id: item.id, size: selectedSize || null, details: pricedCollectiveDetails, status: nextStatus },
       { onConflict: 'user_id,item_id' }
     )
     if (error && nextStatus === 'awaiting_payment') {
       nextStatus = 'active'
       const retry = await supabase.from('store_signups').upsert(
-        { user_id: user.id, item_id: item.id, size: selectedSize || null, status: nextStatus },
+        { user_id: user.id, item_id: item.id, size: selectedSize || null, details: pricedCollectiveDetails, status: nextStatus },
         { onConflict: 'user_id,item_id' }
       )
       error = retry.error
     }
     if (!error) {
-      setMySignup({ size: selectedSize, status: nextStatus })
+      setMySignup({ size: selectedSize, status: nextStatus, details: pricedCollectiveDetails })
       if (isNew) setSignupCount(c => c + 1)
       setMessage(sp?.pix_key ? 'Inscricao salva. Envie o sinal pelo PIX para confirmar.' : 'Inscricao salva.')
     }
@@ -184,7 +211,10 @@ export default function LojaProdutoPage() {
       '',
       `Produto: ${item.name}`,
       selectedSize ? `Tamanho: ${selectedSize}` : null,
-      `Valor enviado: ${fmtPrice(depositAmt)} (${sp.deposit_percent ?? 50}% de ${fmtPrice(item.price)})`,
+      `Modelo: ${pricedCollectiveDetails.helanca ? 'Helanca' : 'Moletom'} ${pricedCollectiveDetails.zipper ? 'com ziper' : 'fechado'}`,
+      `Bolso: ${pricedCollectiveDetails.pocket ? 'sim' : 'nao'}`,
+      `Gorro: ${pricedCollectiveDetails.hood ? 'sim' : 'nao'}`,
+      `Valor enviado: ${fmtPrice(depositAmt)} (${sp.deposit_percent ?? 50}% de ${fmtPrice(signupPrice)})`,
       userName ? `Nome: ${userName}` : null,
     ].filter(Boolean).join('\n')
     window.location.href = whatsappUrl(sp.whatsapp, msg)
@@ -302,6 +332,57 @@ export default function LojaProdutoPage() {
               </div>
               {reached && <p className="mt-2 text-xs font-semibold" style={{ color: '#2F9E41' }}>Meta atingida!</p>}
 
+              <div className="mt-4 rounded-xl border border-amber-200 bg-white p-3 text-sm dark:border-amber-900/40 dark:bg-zinc-950">
+                <p className="font-bold text-zinc-900 dark:text-zinc-100">
+                  Prazo: {item.collective_deadline ? `ate ${new Date(`${item.collective_deadline}T00:00:00`).toLocaleDateString('pt-BR')}` : 'definido pelo responsavel'}
+                </p>
+                <ul className="mt-2 list-disc space-y-1 pl-4 text-xs leading-5 text-zinc-600 dark:text-zinc-300">
+                  <li>Inscricao sem pagamento de metade do valor sera desconsiderada.</li>
+                  <li>Envie o comprovante para o WhatsApp cadastrado do vendedor.</li>
+                  <li>A segunda parcela sera cobrada somente quando receber o agasalho.</li>
+                  <li>O prazo geralmente e de dois meses. A chegada sera avisada nos grupos e por e-mail.</li>
+                  <li>Helanca e um tecido mais liso, leve e menos quente do que moletom.</li>
+                  <li>Nao ha envio pelo correio.</li>
+                </ul>
+              </div>
+
+              <div className="mt-4 overflow-hidden rounded-xl border border-amber-200 dark:border-amber-900/40">
+                {COLLECTIVE_PRICE_ROWS.map(row => (
+                  <div key={row.label} className="flex items-center justify-between border-b border-amber-100 bg-white px-3 py-2 text-sm last:border-b-0 dark:border-zinc-800 dark:bg-zinc-950">
+                    <span className="font-semibold text-zinc-700 dark:text-zinc-200">{row.label}</span>
+                    <span className="font-bold text-zinc-900 dark:text-zinc-100">{fmtPrice(row.price)}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <ChoiceToggle
+                  label="Com ziper?"
+                  value={collectiveDetails.zipper}
+                  onChange={zipper => setCollectiveDetails(d => ({ ...d, zipper }))}
+                />
+                <ChoiceToggle
+                  label="Helanca?"
+                  value={collectiveDetails.helanca}
+                  onChange={helanca => setCollectiveDetails(d => ({ ...d, helanca }))}
+                />
+                <ChoiceToggle
+                  label="Com bolso?"
+                  value={collectiveDetails.pocket}
+                  onChange={pocket => setCollectiveDetails(d => ({ ...d, pocket }))}
+                />
+                <ChoiceToggle
+                  label="Com gorro?"
+                  value={collectiveDetails.hood}
+                  onChange={hood => setCollectiveDetails(d => ({ ...d, hood }))}
+                />
+              </div>
+
+              <div className="mt-4 flex items-center justify-between rounded-xl bg-amber-100 px-3 py-2 text-sm text-amber-900">
+                <span className="font-semibold">Valor escolhido</span>
+                <span className="font-bold">{fmtPrice(signupPrice)}</span>
+              </div>
+
               {item.sizes.length > 0 && (
                 <div className="mt-4">
                   <label className="mb-2 block text-sm font-semibold text-zinc-700 dark:text-zinc-300">Tamanho</label>
@@ -380,6 +461,30 @@ function IconUser() {
       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
       <circle cx={12} cy={7} r={4} />
     </svg>
+  )
+}
+
+function ChoiceToggle({ label, value, onChange }: { label: string; value: boolean; onChange: (value: boolean) => void }) {
+  return (
+    <div>
+      <p className="mb-1 text-xs font-semibold text-zinc-500">{label}</p>
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={() => onChange(true)}
+          className={`rounded-lg border px-3 py-2 text-xs font-bold transition ${value ? 'border-amber-500 bg-amber-100 text-amber-800' : 'border-zinc-200 bg-white text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900'}`}
+        >
+          SIM
+        </button>
+        <button
+          type="button"
+          onClick={() => onChange(false)}
+          className={`rounded-lg border px-3 py-2 text-xs font-bold transition ${!value ? 'border-amber-500 bg-amber-100 text-amber-800' : 'border-zinc-200 bg-white text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900'}`}
+        >
+          NAO
+        </button>
+      </div>
+    </div>
   )
 }
 
