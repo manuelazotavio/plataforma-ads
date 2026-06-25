@@ -8,6 +8,7 @@ import { supabase } from '@/app/lib/supabase'
 import { LoadingState } from '@/app/components/LoadingScreen'
 import { useImageCropper } from '@/app/components/ImageCropper'
 import UserAvatar from '@/app/components/UserAvatar'
+import Select from '@/app/components/Select'
 
 
 
@@ -74,6 +75,12 @@ const ORDER_STATUS: Record<string, { label: string; color: string }> = {
   delivered: { label: 'Entregue',   color: 'bg-green-50 text-green-700 border-green-200' },
   cancelled: { label: 'Cancelado',  color: 'bg-red-50 text-red-600 border-red-200' },
 }
+const CATEGORY_OPTIONS = CATEGORIES.map(c => ({ value: c, label: c }))
+const TYPE_OPTIONS = [
+  { value: 'normal', label: 'Normal' },
+  { value: 'collective', label: 'Compra coletiva' },
+]
+const ORDER_STATUS_OPTIONS = Object.entries(ORDER_STATUS).map(([value, status]) => ({ value, label: status.label }))
 
 function fmtPrice(price: number) {
   return price === 0 ? 'Grátis' : `R$ ${price.toFixed(2).replace('.', ',')}`
@@ -99,6 +106,7 @@ export default function AdminLojaPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [productModalOpen, setProductModalOpen] = useState(false)
 
  
   const [orders, setOrders] = useState<StoreOrder[]>([])
@@ -246,6 +254,14 @@ export default function AdminLojaPage() {
   function resetForm() {
     setForm({ name: '', description: '', price: '', image_url: '', category: '', type: 'normal', min_quantity: '10', sizes: [], seller_id: '', is_visible: true })
     setEditingId(null); setError(null)
+    setProductModalOpen(false)
+  }
+
+  function openNewProductModal() {
+    setForm({ name: '', description: '', price: '', image_url: '', category: '', type: 'normal', min_quantity: '10', sizes: [], seller_id: '', is_visible: true })
+    setEditingId(null)
+    setError(null)
+    setProductModalOpen(true)
   }
 
   function startEdit(item: StoreItem) {
@@ -256,7 +272,8 @@ export default function AdminLojaPage() {
       type: item.type, min_quantity: String(item.min_quantity), sizes: item.sizes ?? [],
       seller_id: item.seller_id ?? '', is_visible: item.is_visible,
     })
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    setError(null)
+    setProductModalOpen(true)
   }
 
   function toggleSize(size: string) {
@@ -377,10 +394,24 @@ export default function AdminLojaPage() {
     
       {tab === 'produtos' && (
         <div>
-          <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 mb-8">
-            <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
-              {editingId ? 'Editar produto' : 'Novo produto'}
-            </h2>
+          <div className="mb-6 flex justify-end">
+            <button onClick={openNewProductModal} className="rounded-lg px-5 py-2 text-sm font-semibold text-white transition hover:opacity-90" style={{ backgroundColor: '#2F9E41' }}>
+              Adicionar produto
+            </button>
+          </div>
+
+          {productModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
+              <button type="button" aria-label="Fechar modal" onClick={resetForm} className="absolute inset-0 bg-black/40" />
+              <div className="relative z-10 w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-2xl">
+                <div className="mb-4 flex items-center justify-between gap-4">
+                  <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                    {editingId ? 'Editar produto' : 'Novo produto'}
+                  </h2>
+                  <button onClick={resetForm} className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition" aria-label="Fechar">
+                    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><line x1={18} y1={6} x2={6} y2={18}/><line x1={6} y1={6} x2={18} y2={18}/></svg>
+                  </button>
+                </div>
 
             <div className="flex gap-5">
            
@@ -412,26 +443,29 @@ export default function AdminLojaPage() {
                 <div className="grid gap-3 sm:grid-cols-3">
                   <div>
                     <label className="text-xs font-medium text-zinc-500 mb-1 block">Categoria</label>
-                    <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} className={inputCls}>
-                      <option value="">Sem categoria</option>
-                      {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
+                    <Select
+                      value={form.category}
+                      onChange={value => setForm(f => ({ ...f, category: value }))}
+                      options={CATEGORY_OPTIONS}
+                      placeholder="Sem categoria"
+                    />
                   </div>
                   <div>
                     <label className="text-xs font-medium text-zinc-500 mb-1 block">Tipo</label>
-                    <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value as 'normal' | 'collective' }))} className={inputCls}>
-                      <option value="normal">Normal</option>
-                      <option value="collective">Compra coletiva</option>
-                    </select>
+                    <Select
+                      value={form.type}
+                      onChange={value => setForm(f => ({ ...f, type: value as 'normal' | 'collective' }))}
+                      options={TYPE_OPTIONS}
+                    />
                   </div>
                   <div>
                     <label className="text-xs font-medium text-zinc-500 mb-1 block">Vendedor</label>
-                    <select value={form.seller_id} onChange={e => setForm(f => ({ ...f, seller_id: e.target.value }))} className={inputCls}>
-                      <option value="">Sem vendedor</option>
-                      {sellers.map(s => (
-                        <option key={s.user_id} value={s.user_id}>{s.users?.name ?? s.user_id}</option>
-                      ))}
-                    </select>
+                    <Select
+                      value={form.seller_id}
+                      onChange={value => setForm(f => ({ ...f, seller_id: value }))}
+                      options={sellers.map(s => ({ value: s.user_id, label: s.users?.name ?? s.user_id }))}
+                      placeholder="Sem vendedor"
+                    />
                     {sellers.length === 0 && (
                       <p className="text-[10px] text-zinc-400 mt-1">
                         Cadastre vendedores na aba <button type="button" onClick={() => setTab('vendedores')} className="underline">Vendedores</button>
@@ -486,11 +520,11 @@ export default function AdminLojaPage() {
                 className="rounded-lg px-5 py-2 text-sm font-medium text-white disabled:opacity-50 transition hover:opacity-90" style={{ backgroundColor: '#2F9E41' }}>
                 {saving ? 'Salvando...' : editingId ? 'Salvar alterações' : 'Adicionar produto'}
               </button>
-              {editingId && (
-                <button onClick={resetForm} className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">Cancelar</button>
-              )}
+              <button onClick={resetForm} className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">Cancelar</button>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
 
          
           {items.length === 0 ? (
@@ -560,10 +594,12 @@ export default function AdminLojaPage() {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <span className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${st.color}`}>{st.label}</span>
-                        <select value={order.status} onChange={e => updateOrderStatus(order.id, e.target.value)}
-                          className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-2 py-1 text-xs text-zinc-600 dark:text-zinc-400 outline-none bg-white dark:bg-zinc-900">
-                          {Object.entries(ORDER_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                        </select>
+                        <Select
+                          value={order.status}
+                          onChange={value => { void updateOrderStatus(order.id, value) }}
+                          options={ORDER_STATUS_OPTIONS}
+                          className="w-36"
+                        />
                       </div>
                     </div>
                     <div className="flex flex-col gap-1 mb-2">
@@ -588,9 +624,12 @@ export default function AdminLojaPage() {
           ) : (
             <div>
               <div className="flex flex-wrap items-center gap-3 mb-6">
-                <select value={selectedItemId} onChange={e => setSelectedItemId(e.target.value)} className={`${inputCls} max-w-xs`}>
-                  {collectiveItems.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
-                </select>
+                <Select
+                  value={selectedItemId}
+                  onChange={setSelectedItemId}
+                  options={collectiveItems.map(i => ({ value: i.id, label: i.name }))}
+                  className="w-full max-w-xs"
+                />
                 {selectedItem && (
                   <span className="text-sm text-zinc-500">
                     Meta: <strong className="text-zinc-900 dark:text-zinc-100">{selectedItem.min_quantity}</strong>
