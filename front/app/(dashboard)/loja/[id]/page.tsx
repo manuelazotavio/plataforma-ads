@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
@@ -239,7 +239,7 @@ export default function LojaProdutoPage() {
   if (!item) {
     return (
       <div className="px-4 md:px-6 py-16 w-full max-w-3xl mx-auto text-center">
-        <p className="text-sm text-zinc-400">Produto nao encontrado.</p>
+        <p className="text-sm text-zinc-400">Produto não encontrado.</p>
         <Link href="/loja" className="mt-4 inline-flex rounded-xl px-4 py-2 text-sm font-bold text-white" style={{ backgroundColor: '#2F9E41' }}>
           Voltar para loja
         </Link>
@@ -250,7 +250,7 @@ export default function LojaProdutoPage() {
   return (
     <div className="px-4 md:px-6 py-8 w-full max-w-5xl mx-auto">
       <Link href="/loja" className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition">
-        <span aria-hidden>←</span>
+        <IconArrowLeft />
         Voltar para loja
       </Link>
 
@@ -264,7 +264,7 @@ export default function LojaProdutoPage() {
             </div>
           )}
           {item.type === 'collective' && (
-            <span className="absolute left-3 top-3 rounded-full bg-amber-500 px-3 py-1 text-xs font-bold text-white">Compra coletiva</span>
+            <span className="absolute left-3 top-3 rounded-full px-3 py-1 text-xs font-bold text-white" style={{ backgroundColor: '#2F9E41' }}>Compra coletiva</span>
           )}
           {item.category && (
             <span className="absolute right-3 top-3 rounded-full bg-white/90 dark:bg-zinc-900/90 px-3 py-1 text-xs font-semibold text-zinc-500 backdrop-blur-sm">{item.category}</span>
@@ -411,7 +411,7 @@ export default function LojaProdutoPage() {
                   </Link>
                 ) : mySignup ? (
                   <div className="flex flex-col gap-2">
-                    <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Você está inscrito{mySignup.size ? ` — ${mySignup.size}` : ''}.</p>
+                    <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Você está inscrito{mySignup.size ? ` - ${mySignup.size}` : ''}.</p>
                     <div className="grid gap-2 sm:grid-cols-2">
                       <button onClick={submitSignup} disabled={signupSaving} className="flex-1 rounded-xl border border-zinc-200 py-2 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800">
                         Atualizar inscrição
@@ -468,6 +468,15 @@ function IconUser() {
     <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
       <circle cx={12} cy={7} r={4} />
+    </svg>
+  )
+}
+
+function IconArrowLeft() {
+  return (
+    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.25} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M19 12H5" />
+      <path d="m12 19-7-7 7-7" />
     </svg>
   )
 }
