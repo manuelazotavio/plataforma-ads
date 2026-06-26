@@ -54,14 +54,26 @@ const STEP_LABELS = [
   'Sobre o Curso',
 ]
 
+type WeeklyMission = {
+  id: string
+  title: string
+  xp_reward: number
+  target_count: number
+}
+
+type WeeklySetMissionRow = {
+  missions: WeeklyMission | null
+}
+
 export default function OnboardingPage() {
   const router = useRouter()
   const [userId, setUserId] = useState<string | null>(null)
+  const [professorId, setProfessorId] = useState<string | null>(null)
   const [isProfessor, setIsProfessor] = useState(false)
   const [step, setStep] = useState(0)
   const [saving, setSaving] = useState(false)
 
-  const [weeklyMissions, setWeeklyMissions] = useState<{ id: string; title: string; xp_reward: number; target_count: number }[]>([])
+  const [weeklyMissions, setWeeklyMissions] = useState<WeeklyMission[]>([])
   const [weeklyBonusXp, setWeeklyBonusXp] = useState(0)
 
   const [skills, setSkills] = useState<string[]>([])
@@ -96,6 +108,7 @@ export default function OnboardingPage() {
       ])
 
       setIsProfessor(profile?.role === 'professor' || Boolean(professorProfile))
+      setProfessorId(professorProfile?.id ?? null)
       setAreas(splitPreferredAreas(profile?.preferred_area))
       if (profile?.bio) setBio(profile.bio)
       if (profile?.linkedin_url) setLinkedin(profile.linkedin_url)
@@ -133,7 +146,9 @@ export default function OnboardingPage() {
         .eq('is_active', true)
         .single()
       if (data) {
-        setWeeklyMissions((data.weekly_set_missions as any[]).map((w: any) => w.missions).filter(Boolean))
+        setWeeklyMissions(((data.weekly_set_missions ?? []) as WeeklySetMissionRow[])
+          .map((w) => w.missions)
+          .filter((mission): mission is WeeklyMission => Boolean(mission)))
         setWeeklyBonusXp(data.bonus_xp ?? 0)
       }
     }
@@ -225,13 +240,24 @@ export default function OnboardingPage() {
     }
 
     if (step === 1) {
-      await supabase.from('users').update({
+      const profileUpdate = {
         bio: bio || null,
         linkedin_url: linkedin || null,
         github_url: github || null,
         avatar_url: avatar || null,
         onboarding_step: 2,
-      }).eq('id', userId)
+      }
+
+      await supabase.from('users').update(profileUpdate).eq('id', userId)
+
+      if (isProfessor && professorId) {
+        await supabase.from('professors').update({
+          bio: profileUpdate.bio,
+          linkedin: profileUpdate.linkedin_url,
+          avatar_url: profileUpdate.avatar_url,
+          updated_at: new Date().toISOString(),
+        }).eq('id', professorId)
+      }
     }
 
     if (step > 1 && step < TOTAL - 1) {

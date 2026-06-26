@@ -24,6 +24,7 @@ type Professor = {
   is_active: boolean
   display_order: number
   user_id: string | null
+  photo_credit_user_id: string | null
 }
 
 type UserOption = {
@@ -80,6 +81,10 @@ export default function AdminCorpoDocentePage() {
   const [selectedUserId, setSelectedUserId] = useState('')
   const [linkSaving, setLinkSaving] = useState(false)
   const [linkError, setLinkError] = useState<string | null>(null)
+  const [photoCreditFormId, setPhotoCreditFormId] = useState<string | null>(null)
+  const [selectedPhotoCreditUserId, setSelectedPhotoCreditUserId] = useState('')
+  const [photoCreditSaving, setPhotoCreditSaving] = useState(false)
+  const [photoCreditError, setPhotoCreditError] = useState<string | null>(null)
 
   async function loadProfessors() {
     const { data } = await supabase
@@ -349,6 +354,39 @@ export default function AdminCorpoDocentePage() {
 
     setProfessors((prev) => prev.map((p) => p.id === profId ? { ...p, user_id: null } : p))
     setLinkSaving(false)
+  }
+
+  async function linkPhotoCredit(profId: string) {
+    if (!selectedPhotoCreditUserId) {
+      setPhotoCreditError('Selecione um usuário.')
+      return
+    }
+    setPhotoCreditSaving(true)
+    setPhotoCreditError(null)
+    const { error } = await supabase
+      .from('professors')
+      .update({ photo_credit_user_id: selectedPhotoCreditUserId, updated_at: new Date().toISOString() })
+      .eq('id', profId)
+    if (error) {
+      setPhotoCreditError('Erro ao vincular fotógrafo: ' + error.message)
+      setPhotoCreditSaving(false)
+      return
+    }
+    setProfessors((prev) => prev.map((p) => p.id === profId ? { ...p, photo_credit_user_id: selectedPhotoCreditUserId } : p))
+    setPhotoCreditFormId(null)
+    setSelectedPhotoCreditUserId('')
+    setPhotoCreditSaving(false)
+  }
+
+  async function unlinkPhotoCredit(profId: string) {
+    if (!(await confirm({ message: 'Remover o crédito de foto?', confirmLabel: 'Remover' }))) return
+    setPhotoCreditSaving(true)
+    const { error } = await supabase
+      .from('professors')
+      .update({ photo_credit_user_id: null, updated_at: new Date().toISOString() })
+      .eq('id', profId)
+    if (!error) setProfessors((prev) => prev.map((p) => p.id === profId ? { ...p, photo_credit_user_id: null } : p))
+    setPhotoCreditSaving(false)
   }
 
   function getLinkedUser(userId: string | null) {
@@ -660,6 +698,45 @@ export default function AdminCorpoDocentePage() {
                           Vincular usuário existente
                         </button>
                       </div>
+                    )}
+
+                    {photoCreditFormId === prof.id ? (
+                      <div className="flex flex-col gap-2">
+                        <p className="text-xs font-medium text-zinc-700">Fotógrafo da foto de perfil</p>
+                        <Select
+                          value={selectedPhotoCreditUserId}
+                          onChange={setSelectedPhotoCreditUserId}
+                          options={userOptions.map((u) => ({ value: u.id, label: `${u.name || u.email} (${u.email})` }))}
+                          placeholder="Selecione o fotógrafo"
+                        />
+                        {photoCreditError && <p className="text-xs text-red-600">{photoCreditError}</p>}
+                        <div className="flex gap-2">
+                          <button onClick={() => linkPhotoCredit(prof.id)} disabled={photoCreditSaving} className="rounded-lg bg-[#2F9E41] px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50 transition">
+                            {photoCreditSaving ? 'Salvando...' : 'Salvar fotógrafo'}
+                          </button>
+                          <button onClick={() => { setPhotoCreditFormId(null); setSelectedPhotoCreditUserId(''); setPhotoCreditError(null) }} className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition">
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    ) : prof.photo_credit_user_id ? (
+                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+                        <span className="text-xs text-zinc-500">
+                          Foto por: <span className="font-medium text-zinc-700">{getLinkedUser(prof.photo_credit_user_id)?.name ?? prof.photo_credit_user_id}</span>
+                        </span>
+                        <div className="flex gap-1.5">
+                          <button onClick={() => { setPhotoCreditFormId(prof.id); setSelectedPhotoCreditUserId(prof.photo_credit_user_id ?? ''); setPhotoCreditError(null) }} className="text-xs text-zinc-400 hover:text-zinc-700 transition">
+                            Trocar
+                          </button>
+                          <button onClick={() => unlinkPhotoCredit(prof.id)} disabled={photoCreditSaving} className="text-xs text-zinc-400 hover:text-red-600 disabled:opacity-50 transition">
+                            Remover
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button onClick={() => { setPhotoCreditFormId(prof.id); setSelectedPhotoCreditUserId(''); setPhotoCreditError(null) }} className="self-start rounded-lg border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-500 hover:bg-zinc-50 transition">
+                        Vincular fotógrafo
+                      </button>
                     )}
 
                     <div className="flex justify-end gap-2">

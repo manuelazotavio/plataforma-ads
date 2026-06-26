@@ -17,6 +17,8 @@ type Professor = {
   whatsapp: string | null
   linkedin: string | null
   cnpq: string | null
+  photo_credit_user_id: string | null
+  photo_credit_user: { id: string; name: string } | null
 }
 
 type Discipline = {
@@ -268,13 +270,24 @@ function ProfessorDetailsModal({
         </button>
 
         <div className="flex items-start gap-4 pr-8">
-          <div className="relative h-36 w-26 shrink-0 overflow-hidden rounded-2xl bg-zinc-100 dark:bg-zinc-800">
-            {professor.avatar_url ? (
-              <Image src={professor.avatar_url} alt={professor.name} fill className="object-cover" />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-4xl font-black text-zinc-300 dark:text-zinc-600">
-                {professor.name.charAt(0).toUpperCase()}
-              </div>
+          <div className="flex shrink-0 flex-col items-center gap-1">
+            <div className="relative h-36 w-26 overflow-hidden rounded-2xl bg-zinc-100 dark:bg-zinc-800">
+              {professor.avatar_url ? (
+                <Image src={professor.avatar_url} alt={professor.name} fill className="object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-4xl font-black text-zinc-300 dark:text-zinc-600">
+                  {professor.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
+            {professor.photo_credit_user && (
+              <a
+                href={`/usuarios/${professor.photo_credit_user.id}`}
+                className="text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Foto: {professor.photo_credit_user.name}
+              </a>
             )}
           </div>
 

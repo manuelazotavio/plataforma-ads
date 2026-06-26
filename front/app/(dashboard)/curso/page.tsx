@@ -24,6 +24,31 @@ import {
   InfoCard,
 } from '@/app/lib/courseSettings'
 
+type ProfessorRecord = {
+  id: string
+  user_id: string | null
+  name: string
+  avatar_url: string | null
+  bio: string | null
+  cargo: string | null
+  years_at_if: number | null
+  email: string | null
+  whatsapp: string | null
+  linkedin: string | null
+  cnpq: string | null
+  photo_credit_user_id: string | null
+  photo_credit_user: { id: string; name: string } | null
+}
+
+type UserProfileFallback = {
+  id: string
+  name: string | null
+  email: string | null
+  avatar_url: string | null
+  bio: string | null
+  linkedin_url: string | null
+}
+
 export default async function CursoPage({
   searchParams,
 }: {
@@ -35,7 +60,7 @@ export default async function CursoPage({
   const [{ data: professors }, { data: rawSubjects, error: subjectsError }, { data: courseSettings }, { data: versions }, { data: ppcDocs }, { data: equivalencyGroups }] = await Promise.all([
     supabase
       .from('professors')
-      .select('id, user_id, name, avatar_url, bio, cargo, years_at_if, email, whatsapp, linkedin, cnpq')
+      .select('id, user_id, name, avatar_url, bio, cargo, years_at_if, email, whatsapp, linkedin, cnpq, photo_credit_user_id, photo_credit_user:photo_credit_user_id(id, name)')
       .eq('is_active', true)
       .order('display_order', { ascending: true }),
     supabase
@@ -61,6 +86,35 @@ export default async function CursoPage({
       .from('curriculum_equivalency_groups')
       .select('id, note, from_subject_id, curriculum_equivalency_members(id, to_subject_id)'),
   ])
+
+  const professorList = (professors ?? []) as ProfessorRecord[]
+  const professorUserIds = professorList
+    .map((professor) => professor.user_id)
+    .filter((id): id is string => Boolean(id))
+
+  const { data: professorUsers } = professorUserIds.length > 0
+    ? await supabase
+      .from('users')
+      .select('id, name, email, avatar_url, bio, linkedin_url')
+      .in('id', professorUserIds)
+    : { data: [] }
+
+  const professorUserById = new Map(
+    ((professorUsers ?? []) as UserProfileFallback[]).map((user) => [user.id, user])
+  )
+
+  const syncedProfessors = professorList.map((professor) => {
+    const userProfile = professor.user_id ? professorUserById.get(professor.user_id) : null
+
+    return {
+      ...professor,
+      name: professor.name || userProfile?.name || '',
+      email: professor.email || userProfile?.email || null,
+      avatar_url: professor.avatar_url || userProfile?.avatar_url || null,
+      bio: professor.bio || userProfile?.bio || null,
+      linkedin: professor.linkedin || userProfile?.linkedin_url || null,
+    }
+  })
 
   const subjects = rawSubjects as SubjectWithVersion[] | null
   const allVersions = (versions ?? []) as { id: string; name: string; year: number; is_current: boolean }[]
@@ -180,12 +234,12 @@ export default async function CursoPage({
 
       <section id="professores" className="scroll-mt-24">
         <SectionTitle>Professores</SectionTitle>
-        {!professors || professors.length === 0 ? (
+        {syncedProfessors.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-zinc-200 p-10 text-center">
             <p className="text-sm text-zinc-400">Nenhum professor cadastrado ainda.</p>
           </div>
         ) : (
-          <ProfessorsSection professors={professors} initialProfessorId={initialProfessorId} />
+          <ProfessorsSection professors={syncedProfessors} initialProfessorId={initialProfessorId} />
         )}
       </section>
 
