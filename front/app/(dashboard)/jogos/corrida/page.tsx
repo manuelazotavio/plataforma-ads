@@ -12,8 +12,8 @@ const GROUND = 278
 const CAT_W = 110
 const CAT_H = 110
 const CAT_X = 80
-const GRAVITY = 0.20
-const JUMP_V = -8
+const GRAVITY = 0.38
+const JUMP_V = -11
 const BASE_SPEED = 3
 const CAT_FOOT = 31
 
@@ -550,8 +550,12 @@ export default function CorridaPage() {
       }
       if (e.code === 'ArrowDown') {
         e.preventDefault()
-        if (phaseRef.current === 'playing' && groundedRef.current) {
-          crouchRef.current = true
+        if (phaseRef.current === 'playing') {
+          if (!groundedRef.current) {
+            catVYRef.current = 10  // queda imediata no ar
+          } else {
+            crouchRef.current = true
+          }
         }
       }
     }
@@ -616,7 +620,10 @@ export default function CorridaPage() {
       <div className="mt-2 shrink-0 flex items-center justify-center gap-3 md:hidden">
         <button
           type="button"
-          onPointerDown={() => { if (phaseRef.current === 'playing' && groundedRef.current) crouchRef.current = true }}
+          onPointerDown={() => {
+            if (phaseRef.current !== 'playing') return
+            if (!groundedRef.current) { catVYRef.current = 10 } else { crouchRef.current = true }
+          }}
           onPointerUp={() => { crouchRef.current = false }}
           onPointerLeave={() => { crouchRef.current = false }}
           style={{ touchAction: 'manipulation' }}
