@@ -81,12 +81,16 @@ export default function AdminEventosPage() {
 
   useEffect(() => {
     const q = speakerQuery.trim()
-    if (q.length < 2) { setSpeakerResults([]); return }
     const timeout = setTimeout(async () => {
+      if (q.length < 2) {
+        setSpeakerResults([])
+        setShowSpeakerDrop(false)
+        return
+      }
       const { data } = await supabase.from('users').select('id, name, avatar_url').ilike('name', `%${q}%`).limit(5)
       setSpeakerResults((data as UserResult[]) ?? [])
       setShowSpeakerDrop(true)
-    }, 300)
+    }, q.length < 2 ? 0 : 300)
     return () => clearTimeout(timeout)
   }, [speakerQuery])
 
@@ -217,6 +221,13 @@ export default function AdminEventosPage() {
           >
             <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h16M4 10h16M4 14h10M4 18h6"/></svg>
             Categorias
+          </Link>
+          <Link
+            href="/admin/eventos/contribuintes"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50 sm:flex-none"
+          >
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-8 0v2"/><circle cx={12} cy={7} r={4}/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M2 21v-2a4 4 0 0 1 3-3.87"/></svg>
+            Contribuintes
           </Link>
           <button
             onClick={openCreate}
@@ -563,6 +574,12 @@ export default function AdminEventosPage() {
                 >
                   Editar
                 </button>
+                <Link
+                  href={`/admin/eventos/contribuintes?event=${event.id}`}
+                  className="rounded-lg border border-zinc-200 px-3 py-1.5 text-center text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition"
+                >
+                  Contribuintes
+                </Link>
                 <button
                   onClick={() => toggleField(event.id, 'registration_open', !event.registration_open)}
                   className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition"

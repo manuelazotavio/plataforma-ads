@@ -21,9 +21,15 @@ export default async function EventoPage({ params, searchParams }: { params: Pro
   const backHref = from === 'calendario' ? '/calendario' : '/eventos'
   const backLabel = from === 'calendario' ? 'Calendário' : 'Eventos'
 
-  const [{ data: event }, { data: categoriesData }] = await Promise.all([
+  const [{ data: event }, { data: categoriesData }, { data: contributorsData }] = await Promise.all([
     supabase.from('events').select('*, speaker:speaker_user_id(id, name, avatar_url)').eq('id', id).single(),
     supabase.from('event_categories').select('value, label'),
+    supabase
+      .from('event_contributors')
+      .select('id, name')
+      .eq('event_id', id)
+      .order('display_order')
+      .order('created_at'),
   ])
 
   const categoryLabel: Record<string, string> = Object.fromEntries(
@@ -31,6 +37,8 @@ export default async function EventoPage({ params, searchParams }: { params: Pro
   )
 
   if (!event) notFound()
+
+  const contributors = (contributorsData ?? []) as { id: string; name: string }[]
 
   const { data: relatedProjects } = await supabase
     .from('projects')
@@ -196,6 +204,22 @@ export default async function EventoPage({ params, searchParams }: { params: Pro
             Ver todos
             <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
           </Link>
+        </section>
+      )}
+
+      {contributors.length > 0 && (
+        <section className="mb-12 rounded-2xl border border-zinc-200 bg-white p-5">
+          <div className="mb-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-[#2F9E41]">Contribuintes</p>
+            <h2 className="mt-1 text-lg font-bold text-zinc-900">Quem apoiou este hackathon</h2>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {contributors.map((contributor) => (
+              <span key={contributor.id} className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-sm font-medium text-zinc-700">
+                {contributor.name}
+              </span>
+            ))}
+          </div>
         </section>
       )}
 

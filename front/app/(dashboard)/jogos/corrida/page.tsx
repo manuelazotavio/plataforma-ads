@@ -10,12 +10,12 @@ const W = 800
 const H = 340
 const GROUND = 278
 const CAT_W = 110
-const CAT_H = 80
+const CAT_H = 110
 const CAT_X = 80
 const GRAVITY = 0.20
 const JUMP_V = -8
 const BASE_SPEED = 3
-const CAT_FOOT = 22  
+const CAT_FOOT = 31
 
 type Phase = 'idle' | 'playing' | 'dead'
 type Obs = { x: number; w: number; h: number; count: number; flying?: boolean; fy?: number; cw?: number; ch?: number }
@@ -64,6 +64,7 @@ export default function CorridaPage() {
   const speedRef    = useRef(BASE_SPEED)
   const tickRef     = useRef(0)
   const walkRef     = useRef(0)
+  const crouchRef   = useRef(false)
   const rafRef      = useRef<number | undefined>(undefined)
   const imgsRef     = useRef<Partial<Record<string, HTMLImageElement>>>({})
   const bgRef       = useRef({ building: 0, cloud: 0, bush: 0 })
@@ -75,6 +76,7 @@ export default function CorridaPage() {
       catYRef.current     = GROUND - CAT_H + CAT_FOOT
       catVYRef.current    = JUMP_V
       groundedRef.current = false
+      crouchRef.current   = false
       obsRef.current      = []
       scoreRef.current    = 0
       speedRef.current    = BASE_SPEED
@@ -88,6 +90,7 @@ export default function CorridaPage() {
       catYRef.current     = GROUND - CAT_H + CAT_FOOT
       catVYRef.current    = 0
       groundedRef.current = true
+      crouchRef.current   = false
       obsRef.current      = []
       scoreRef.current    = 0
       speedRef.current    = BASE_SPEED
@@ -95,7 +98,7 @@ export default function CorridaPage() {
       milestoneRef.current = 0
       return
     }
-    if (p === 'playing' && groundedRef.current) {
+    if (p === 'playing' && groundedRef.current && !crouchRef.current) {
       catVYRef.current    = JUMP_V
       groundedRef.current = false
       playJump()
@@ -110,6 +113,7 @@ export default function CorridaPage() {
       ['cacto',      '/games/cacto.png'],
       ['borboleta1', '/games/borboleta1.png'],
       ['borboleta2', '/games/borboleta2.png'],
+      ['down',       '/games/cat-down.png'],
     ]
     srcs.forEach(([key, src]) => {
       const img = new Image()
@@ -184,9 +188,13 @@ export default function CorridaPage() {
     const CACTUS_H    = 64   
     const CACTUS_FOOT = 16  
 
-    const BUTTERFLY_W  = 56  
+    const BUTTERFLY_W  = 56
     const BUTTERFLY_H  = 36
-    const BUTTERFLY_FY = GROUND - 58  
+    const BUTTERFLY_FY = GROUND - 90
+
+    const CAT_CROUCH_W    = CAT_W    // mesma sprite, hitbox interno diferente
+    const CAT_CROUCH_H    = CAT_H
+    const CAT_CROUCH_FOOT = CAT_FOOT
 
     
     const building = (() => {
@@ -346,17 +354,30 @@ export default function CorridaPage() {
     }
 
     function drawCat() {
-      const jumping = !groundedRef.current
+      const jumping   = !groundedRef.current
+      const crouching = crouchRef.current && groundedRef.current
       let key = 'idle'
-      if (!jumping && phaseRef.current === 'playing') {
+      if (crouching) {
+        key = 'down'
+      } else if (!jumping && phaseRef.current === 'playing') {
         key = walkRef.current < 2 ? 'walk1' : 'walk2'
       }
       const i = img(key) ?? img('idle')
-      if (i) {
-        ctx.drawImage(i, CAT_X, catYRef.current, CAT_W, CAT_H)
+      if (crouching) {
+        const drawY = GROUND - CAT_CROUCH_H + CAT_CROUCH_FOOT
+        if (i) {
+          ctx.drawImage(i, CAT_X, drawY, CAT_CROUCH_W, CAT_CROUCH_H)
+        } else {
+          ctx.fillStyle = '#3f3f46'
+          ctx.fillRect(CAT_X, drawY, CAT_CROUCH_W, CAT_CROUCH_H)
+        }
       } else {
-        ctx.fillStyle = '#3f3f46'
-        ctx.fillRect(CAT_X, catYRef.current, CAT_W, CAT_H)
+        if (i) {
+          ctx.drawImage(i, CAT_X, catYRef.current, CAT_W, CAT_H)
+        } else {
+          ctx.fillStyle = '#3f3f46'
+          ctx.fillRect(CAT_X, catYRef.current, CAT_W, CAT_H)
+        }
       }
     }
 
@@ -463,14 +484,17 @@ export default function CorridaPage() {
 
      
         for (const o of obsRef.current) {
-          const catTop = catYRef.current + 16
-          const catBot = catYRef.current + CAT_H - 16
+          const crouching = crouchRef.current && groundedRef.current
+          const effY   = catYRef.current
+          const catTop = effY + (crouching ? 44 : 16)
+          const catBot = effY + CAT_H - (crouching ? 8 : 16)
+          const hSide  = 30
           const hitV = o.flying
             ? catTop < (o.fy ?? BUTTERFLY_FY) + BUTTERFLY_H && catBot > (o.fy ?? BUTTERFLY_FY)
             : catTop < GROUND && catBot > GROUND - o.h
           if (
-            CAT_X + 30         < o.x + o.w - 8 &&
-            CAT_X + CAT_W - 30 > o.x + 8       &&
+            CAT_X + hSide          < o.x + o.w - 8 &&
+            CAT_X + CAT_W - hSide  > o.x + 8       &&
             hitV
           ) {
             phaseRef.current = 'dead'
@@ -524,9 +548,24 @@ export default function CorridaPage() {
         e.preventDefault()
         action()
       }
+      if (e.code === 'ArrowDown') {
+        e.preventDefault()
+        if (phaseRef.current === 'playing' && groundedRef.current) {
+          crouchRef.current = true
+        }
+      }
+    }
+    function onKeyUp(e: KeyboardEvent) {
+      if (e.code === 'ArrowDown') {
+        crouchRef.current = false
+      }
     }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    window.addEventListener('keyup', onKeyUp)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      window.removeEventListener('keyup', onKeyUp)
+    }
   }, [action])
 
   return (
@@ -574,12 +613,26 @@ export default function CorridaPage() {
       </div>
 
    
-      <div className="mt-2 shrink-0 flex items-center justify-center md:hidden">
+      <div className="mt-2 shrink-0 flex items-center justify-center gap-3 md:hidden">
+        <button
+          type="button"
+          onPointerDown={() => { if (phaseRef.current === 'playing' && groundedRef.current) crouchRef.current = true }}
+          onPointerUp={() => { crouchRef.current = false }}
+          onPointerLeave={() => { crouchRef.current = false }}
+          style={{ touchAction: 'manipulation' }}
+          className="flex h-12 w-36 select-none items-center justify-center gap-2 rounded-2xl border-2 border-zinc-300 bg-zinc-100 text-sm font-bold text-zinc-600 active:scale-95 active:bg-zinc-200 transition-transform dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+          aria-label="Abaixar"
+        >
+          <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 5v14M5 12l7 7 7-7" />
+          </svg>
+          Abaixar
+        </button>
         <button
           type="button"
           onClick={action}
           style={{ touchAction: 'manipulation' }}
-          className="flex h-12 w-44 select-none items-center justify-center gap-2 rounded-2xl border-2 border-zinc-300 bg-zinc-100 text-sm font-bold text-zinc-600 active:scale-95 active:bg-zinc-200 transition-transform dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+          className="flex h-12 w-36 select-none items-center justify-center gap-2 rounded-2xl border-2 border-zinc-300 bg-zinc-100 text-sm font-bold text-zinc-600 active:scale-95 active:bg-zinc-200 transition-transform dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
           aria-label="Pular"
         >
           <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
@@ -590,7 +643,7 @@ export default function CorridaPage() {
       </div>
 
       <p className="mt-2 shrink-0 text-center text-xs text-zinc-400 hidden md:block">
-        Espaço · ↑ · Toque para pular
+        ↑ Pular · ↓ Abaixar
       </p>
     </div>
   )
