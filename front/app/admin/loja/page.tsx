@@ -113,7 +113,7 @@ export default function AdminLojaPage() {
   const { cropImage, cropperNode } = useImageCropper('1:1')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const [tab, setTab] = useState<'produtos' | 'pedidos' | 'inscricoes' | 'vendedores'>('produtos')
+  const [tab, setTab] = useState<'produtos' | 'pedidos' | 'inscricoes' | 'responsaveis'>('produtos')
 
 
   const [items, setItems] = useState<StoreItem[]>([])
@@ -443,7 +443,7 @@ export default function AdminLojaPage() {
   }
 
   async function deleteSeller(userId: string) {
-    if (!window.confirm('Remover este vendedor? Os produtos vinculados perderão o vendedor.')) return
+    if (!window.confirm('Remover este responsável? Os produtos vinculados perderão o responsável.')) return
     await supabase.from('store_seller_profiles').delete().eq('user_id', userId)
     setSellers(prev => prev.filter(s => s.user_id !== userId))
   }
@@ -464,7 +464,7 @@ export default function AdminLojaPage() {
     { id: 'produtos',    label: 'Produtos' },
     { id: 'pedidos',     label: 'Pedidos' },
     { id: 'inscricoes',  label: 'Inscrições' },
-    { id: 'vendedores',  label: 'Vendedores' },
+    { id: 'responsaveis',  label: 'Responsáveis' },
   ] as const
 
   if (loading) return <LoadingState message="Carregando loja" />
@@ -480,7 +480,7 @@ export default function AdminLojaPage() {
 
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">Loja</h1>
-        <p className="text-sm text-zinc-500 mt-0.5">Gerencie produtos, pedidos e vendedores</p>
+        <p className="text-sm text-zinc-500 mt-0.5">Gerencie produtos, pedidos e responsáveis</p>
       </div>
 
       <div className="flex gap-1 border-b border-zinc-200 dark:border-zinc-800 mb-8">
@@ -560,16 +560,16 @@ export default function AdminLojaPage() {
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-zinc-500 mb-1 block">Vendedor</label>
+                    <label className="text-xs font-medium text-zinc-500 mb-1 block">Responsável</label>
                     <Select
                       value={form.seller_id}
                       onChange={value => setForm(f => ({ ...f, seller_id: value }))}
                       options={sellers.map(s => ({ value: s.user_id, label: s.users?.name ?? s.user_id }))}
-                      placeholder="Sem vendedor"
+                      placeholder="Sem responsável"
                     />
                     {sellers.length === 0 && (
                       <p className="text-[10px] text-zinc-400 mt-1">
-                        Cadastre vendedores na aba <button type="button" onClick={() => setTab('vendedores')} className="underline">Vendedores</button>
+                        Cadastre responsáveis na aba <button type="button" onClick={() => setTab('responsaveis')} className="underline">Responsáveis</button>
                       </p>
                     )}
                   </div>
@@ -603,9 +603,9 @@ export default function AdminLojaPage() {
                       if (!sp) return null
                       return (
                         <p className="text-xs text-amber-700 bg-amber-100 rounded-lg px-3 py-2">
-                          PIX e WhatsApp virão do vendedor <strong>{sp.users?.name}</strong>.
-                          {!sp.pix_key && ' ⚠️ Vendedor sem chave PIX cadastrada.'}
-                          {!sp.whatsapp && ' ⚠️ Vendedor sem WhatsApp cadastrado.'}
+                          PIX e WhatsApp virão do responsável <strong>{sp.users?.name}</strong>.
+                          {!sp.pix_key && ' ⚠️ Responsável sem chave PIX cadastrada.'}
+                          {!sp.whatsapp && ' ⚠️ Responsável sem WhatsApp cadastrado.'}
                         </p>
                       )
                     })()}
@@ -824,12 +824,12 @@ export default function AdminLojaPage() {
         </div>
       )}
 
-      {tab === 'vendedores' && (
+      {tab === 'responsaveis' && (
         <div>
         
           <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 mb-8">
             <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
-              {sellerEditId ? 'Editar vendedor' : 'Adicionar vendedor'}
+              {sellerEditId ? 'Editar responsável' : 'Adicionar responsável'}
             </h2>
 
             <div className="grid gap-4">
@@ -888,7 +888,7 @@ export default function AdminLojaPage() {
             <div className="mt-4 flex gap-2">
               <button onClick={saveSeller} disabled={sellerSaving || !sellerForm.userId}
                 className="rounded-lg px-5 py-2 text-sm font-medium text-white disabled:opacity-50 transition hover:opacity-90" style={{ backgroundColor: '#2F9E41' }}>
-                {sellerSaving ? 'Salvando...' : sellerEditId ? 'Salvar alterações' : 'Adicionar vendedor'}
+                {sellerSaving ? 'Salvando...' : sellerEditId ? 'Salvar alterações' : 'Adicionar responsável'}
               </button>
               {sellerEditId && (
                 <button onClick={resetSellerForm} className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">Cancelar</button>
@@ -900,7 +900,7 @@ export default function AdminLojaPage() {
           {!sellersLoaded ? (
             <p className="text-sm text-zinc-400 text-center py-8">Carregando...</p>
           ) : sellers.length === 0 ? (
-            <p className="text-sm text-zinc-400 text-center py-12">Nenhum vendedor cadastrado ainda.</p>
+            <p className="text-sm text-zinc-400 text-center py-12">Nenhum responsável cadastrado ainda.</p>
           ) : (
             <div className="flex flex-col gap-3">
               {sellers.map(s => (

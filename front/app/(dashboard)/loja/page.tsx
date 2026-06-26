@@ -196,7 +196,7 @@ export default function LojaPage() {
     for (const [, groupItems] of groups) {
       const sp = sellerProfile(groupItems[0])
       const whatsapp = sp?.whatsapp ?? null
-      const sellerName = groupItems[0].seller?.name ?? 'Vendedor'
+      const sellerName = groupItems[0].seller?.name ?? 'Responsável'
       const total = groupItems.reduce((s, i) => s + i.price * i.qty, 0)
       const lines = groupItems.map(i => `• ${i.qty}x ${i.name} — ${fmtPrice(i.price)}`)
       const msg = `Olá! Gostaria de fazer um pedido na Loja ADS Conecta:\n\n${lines.join('\n')}\n\n*Total: ${fmtPrice(total)}*`
@@ -237,7 +237,7 @@ export default function LojaPage() {
 
       
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
+        <div className="relative flex-1 min-w-50 max-w-sm">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><circle cx={11} cy={11} r={8}/><path d="m21 21-4.35-4.35"/></svg>
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar produto..."
             className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 pl-9 pr-4 py-2.5 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-zinc-400 transition placeholder:text-zinc-400" />
@@ -430,7 +430,7 @@ export default function LojaPage() {
                     </button>
                     <div className="flex items-center gap-2">
                       <button onClick={() => changeQty(item.id, -1)} className="flex h-6 w-6 items-center justify-center rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:bg-zinc-50 transition text-sm font-bold">-</button>
-                      <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100 min-w-[16px] text-center">{item.qty}</span>
+                      <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100 min-w-4 text-center">{item.qty}</span>
                       <button onClick={() => changeQty(item.id, 1)} className="flex h-6 w-6 items-center justify-center rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:bg-zinc-50 transition text-sm font-bold">+</button>
                     </div>
                   </div>
@@ -441,7 +441,7 @@ export default function LojaPage() {
              
               {new Set(cart.map(i => i.seller_id)).size > 1 && (
                 <p className="text-xs text-zinc-500 bg-zinc-50 dark:bg-zinc-800 rounded-lg px-3 py-2">
-                  Seu carrinho tem itens de {new Set(cart.map(i => i.seller_id)).size} vendedores diferentes. Você enviará um WhatsApp para cada um.
+                  Seu carrinho tem itens de {new Set(cart.map(i => i.seller_id)).size} responsáveis diferentes. Você enviará um WhatsApp para cada um.
                 </p>
               )}
               <div className="flex items-center justify-between">
@@ -471,7 +471,7 @@ export default function LojaPage() {
           <div ref={checkoutModalRef} className="w-full max-w-sm rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl p-6">
             <div className="text-center mb-5">
               <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100">Enviar pedidos</h3>
-              <p className="text-sm text-zinc-500 mt-1">Toque em cada botão para enviar o pedido ao vendedor correspondente.</p>
+              <p className="text-sm text-zinc-500 mt-1">Toque em cada botão para enviar o pedido ao responsável correspondente.</p>
             </div>
             <div className="flex flex-col gap-3">
               {checkoutGroups.map((g, i) => (
@@ -489,7 +489,7 @@ export default function LojaPage() {
                       Enviar para {g.sellerName}
                     </button>
                   ) : (
-                    <p className="text-xs text-center text-zinc-400">Vendedor sem WhatsApp cadastrado.</p>
+                    <p className="text-xs text-center text-zinc-400">Responsável sem WhatsApp cadastrado.</p>
                   )}
                 </div>
               ))}
