@@ -12,7 +12,7 @@ const GROUND = 278
 const CAT_W = 110
 const CAT_H = 110
 const CAT_X = 80
-const GRAVITY = 0.38
+const GRAVITY = 0.30
 const JUMP_V = -11
 const BASE_SPEED = 3
 const CAT_FOOT = 31
@@ -467,12 +467,12 @@ export default function CorridaPage() {
             obsRef.current.push({ x: W + 10, w: BUTTERFLY_W, h: BUTTERFLY_H, count: 1, flying: true, fy: BUTTERFLY_FY })
           } else {
            
-            const count = 1 + Math.floor(Math.random() * 2)
-            const SIZES = [{ cw: 62, ch: 68 }, { cw: 74, ch: 80 }, { cw: 86, ch: 92 }]
+            const count = Math.random() < 0.3 ? 2 : 1
+            const SIZES = [{ cw: 52, ch: 58 }, { cw: 62, ch: 68 }, { cw: 72, ch: 76 }]
             const { cw, ch } = SIZES[Math.floor(Math.random() * 3)]
             const step = Math.round(cw * 0.50)
             const w = cw + (count - 1) * step
-            obsRef.current.push({ x: W + 10, w, h: Math.round(ch * 0.75), count, cw, ch })
+            obsRef.current.push({ x: W + 10, w, h: Math.round(ch * 0.62), count, cw, ch })
           }
         }
 
@@ -488,7 +488,7 @@ export default function CorridaPage() {
           const effY   = catYRef.current
           const catTop = effY + (crouching ? 44 : 22)
           const catBot = effY + CAT_H - (crouching ? 12 : 22)
-          const hSide  = 40
+          const hSide  = 44
           const hitV = o.flying
             ? catTop < (o.fy ?? BUTTERFLY_FY) + BUTTERFLY_H && catBot > (o.fy ?? BUTTERFLY_FY)
             : catTop < GROUND && catBot > GROUND - o.h
