@@ -77,7 +77,7 @@ export default async function RankingPage({
 
         <RankingFilters />
 
-        <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-zinc-400">Corrida da Gata — Maior pontuação</p>
+        <p className="mb-4 text-xs font-semibold text-zinc-400">Corrida da Gata: Maior pontuação</p>
 
         {scores.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-zinc-200 p-16 text-center">

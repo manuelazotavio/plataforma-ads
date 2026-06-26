@@ -26,7 +26,7 @@ export default async function EventoPage({ params, searchParams }: { params: Pro
     supabase.from('event_categories').select('value, label'),
     supabase
       .from('event_contributors')
-      .select('id, name')
+      .select('id, name, user_id, user:user_id(id, name, avatar_url)')
       .eq('event_id', id)
       .order('display_order')
       .order('created_at'),
@@ -38,7 +38,12 @@ export default async function EventoPage({ params, searchParams }: { params: Pro
 
   if (!event) notFound()
 
-  const contributors = (contributorsData ?? []) as { id: string; name: string }[]
+  const contributors = (contributorsData ?? []) as unknown as {
+    id: string
+    name: string
+    user_id: string | null
+    user: { id: string; name: string; avatar_url: string | null } | null
+  }[]
 
   const { data: relatedProjects } = await supabase
     .from('projects')
@@ -170,7 +175,7 @@ export default async function EventoPage({ params, searchParams }: { params: Pro
       </div>
 
       
-      {relatedProjects && relatedProjects.length > 0 && (
+      {/* {relatedProjects && relatedProjects.length > 0 && (
         <section>
           <p className="text-xs font-semibold text-zinc-400 mb-5">
             Projetos desta categoria
@@ -205,19 +210,16 @@ export default async function EventoPage({ params, searchParams }: { params: Pro
             <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
           </Link>
         </section>
-      )}
+      )} */}
 
       {contributors.length > 0 && (
-        <section className="mb-12 rounded-2xl border border-zinc-200 bg-white p-5">
-          <div className="mb-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[#2F9E41]">Contribuintes</p>
-            <h2 className="mt-1 text-lg font-bold text-zinc-900">Quem apoiou este hackathon</h2>
+        <section className="mb-12">
+          <div className="mb-3">
+            <h2 className="mt-1 text-lg font-bold text-zinc-900">Apoiadores</h2>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="divide-y divide-zinc-100 border-y border-zinc-100">
             {contributors.map((contributor) => (
-              <span key={contributor.id} className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-sm font-medium text-zinc-700">
-                {contributor.name}
-              </span>
+              <ContributorRow key={contributor.id} contributor={contributor} />
             ))}
           </div>
         </section>
@@ -227,4 +229,37 @@ export default async function EventoPage({ params, searchParams }: { params: Pro
 
     </div>
   )
+}
+
+function ContributorRow({
+  contributor,
+}: {
+  contributor: {
+    name: string
+    user_id: string | null
+    user: { id: string; name: string; avatar_url: string | null } | null
+  }
+}) {
+  const content = (
+    <>
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-100 text-sm font-semibold text-zinc-500">
+        {contributor.user?.avatar_url ? (
+          <Image src={contributor.user.avatar_url} alt="" width={36} height={36} className="h-full w-full object-cover" />
+        ) : (
+          contributor.name.charAt(0).toUpperCase()
+        )}
+      </span>
+      <span className="min-w-0 flex-1 truncate text-sm font-semibold text-zinc-800">{contributor.name}</span>
+    </>
+  )
+
+  if (contributor.user_id) {
+    return (
+      <Link href={`/usuarios/${contributor.user_id}`} className="flex items-center gap-3 py-3 transition hover:text-[#2F9E41]">
+        {content}
+      </Link>
+    )
+  }
+
+  return <div className="flex items-center gap-3 py-3">{content}</div>
 }

@@ -1,11 +1,15 @@
 create table if not exists public.event_contributors (
   id uuid primary key default gen_random_uuid(),
   event_id uuid not null references public.events(id) on delete cascade,
+  user_id uuid references public.users(id) on delete set null,
   name text not null,
   display_order integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.event_contributors
+  add column if not exists user_id uuid references public.users(id) on delete set null;
 
 create index if not exists event_contributors_event_idx
   on public.event_contributors (event_id, display_order, created_at);

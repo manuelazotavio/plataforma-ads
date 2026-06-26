@@ -437,7 +437,7 @@ export default function CorridaPage() {
       if (p === 'playing') {
         tickRef.current++
         scoreRef.current += 0.1
-        speedRef.current  = Math.min(14, BASE_SPEED + scoreRef.current * 0.018)
+        speedRef.current  = Math.min(14, BASE_SPEED + scoreRef.current * 0.008)
 
        
         const milestone = Math.floor(scoreRef.current / 100)
@@ -486,9 +486,9 @@ export default function CorridaPage() {
         for (const o of obsRef.current) {
           const crouching = crouchRef.current && groundedRef.current
           const effY   = catYRef.current
-          const catTop = effY + (crouching ? 44 : 16)
-          const catBot = effY + CAT_H - (crouching ? 8 : 16)
-          const hSide  = 30
+          const catTop = effY + (crouching ? 44 : 22)
+          const catBot = effY + CAT_H - (crouching ? 12 : 22)
+          const hSide  = 40
           const hitV = o.flying
             ? catTop < (o.fy ?? BUTTERFLY_FY) + BUTTERFLY_H && catBot > (o.fy ?? BUTTERFLY_FY)
             : catTop < GROUND && catBot > GROUND - o.h
