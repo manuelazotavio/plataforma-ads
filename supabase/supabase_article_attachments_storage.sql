@@ -1,6 +1,4 @@
--- Libera upload/leitura/edição/remoção de anexos no bucket forum-media.
--- Artigos: articles/{user_id}/arquivo.ext
--- Tópicos: forum/{user_id}/arquivo.ext
+
 
 insert into storage.buckets (id, name, public)
 values ('forum-media', 'forum-media', true)

@@ -138,7 +138,10 @@ export default function LojaProdutoPage() {
 
   const sp = item ? sellerProfile(item) : null
   const hasCustomFields = !!(item?.collective_fields?.length)
-  const pricedCollectiveDetails = { ...collectiveDetails, price: collectivePrice(collectiveDetails) }
+  const pricedCollectiveDetails = useMemo(
+    () => ({ ...collectiveDetails, price: collectivePrice(collectiveDetails) }),
+    [collectiveDetails]
+  )
   const signupPrice = item?.type === 'collective'
     ? (hasCustomFields ? item.price : pricedCollectiveDetails.price)
     : (item?.price ?? 0)
@@ -157,6 +160,28 @@ export default function LojaProdutoPage() {
       userName ? `*Nome:* ${userName}` : null,
     ].filter(Boolean).join('\n')
   }, [item, qty, userName])
+
+  const proofMessage = useMemo(() => {
+    if (!item) return ''
+    const customFieldLines = item.collective_fields?.map((field) => {
+      const value = customDetails[field.key]
+      return `${field.label}: ${typeof value === 'boolean' ? (value ? 'sim' : 'não') : value || '-'}`
+    }) ?? []
+
+    return [
+      'Ola! Estou enviando o comprovante do sinal referente ao meu pedido:',
+      '',
+      `Produto: ${item.name}`,
+      selectedSize ? `Tamanho: ${selectedSize}` : null,
+      hasCustomFields ? customFieldLines : [
+        `Modelo: ${pricedCollectiveDetails.helanca ? 'Helanca' : 'Moletom'} ${pricedCollectiveDetails.zipper ? 'com zíper' : 'fechado'}`,
+        `Bolso: ${pricedCollectiveDetails.pocket ? 'sim' : 'não'}`,
+        `Gorro: ${pricedCollectiveDetails.hood ? 'sim' : 'não'}`,
+      ],
+      `Valor enviado: ${fmtPrice(depositAmt)} (${sp?.deposit_percent ?? 50}% de ${fmtPrice(signupPrice)})`,
+      userName ? `Nome: ${userName}` : null,
+    ].flat().filter(Boolean).join('\n')
+  }, [customDetails, depositAmt, hasCustomFields, item, pricedCollectiveDetails, selectedSize, signupPrice, sp?.deposit_percent, userName])
 
   function copyPix(key: string) {
     navigator.clipboard.writeText(key)
@@ -204,7 +229,7 @@ export default function LojaProdutoPage() {
     if (!error) {
       setMySignup({ size: selectedSize, status: nextStatus, details })
       if (isNew) setSignupCount(c => c + 1)
-      setMessage(sp?.pix_key ? 'Inscrição salva. Envie o sinal pelo PIX para confirmar.' : 'Inscrição salva.')
+      setMessage(sp?.pix_key && sp.whatsapp ? 'Inscrição salva. Envie o comprovante pelo WhatsApp do vendedor para confirmar.' : sp?.pix_key ? 'Inscrição salva. Envie o sinal pelo PIX para confirmar.' : 'Inscrição salva.')
     }
     setSignupSaving(false)
   }
@@ -219,18 +244,7 @@ export default function LojaProdutoPage() {
 
   function sendProof() {
     if (!item || !sp?.whatsapp) return
-    const msg = [
-      'Ola! Estou enviando o comprovante do sinal referente ao meu pedido:',
-      '',
-      `Produto: ${item.name}`,
-      selectedSize ? `Tamanho: ${selectedSize}` : null,
-      `Modelo: ${pricedCollectiveDetails.helanca ? 'Helanca' : 'Moletom'} ${pricedCollectiveDetails.zipper ? 'com zíper' : 'fechado'}`,
-      `Bolso: ${pricedCollectiveDetails.pocket ? 'sim' : 'não'}`,
-      `Gorro: ${pricedCollectiveDetails.hood ? 'sim' : 'não'}`,
-      `Valor enviado: ${fmtPrice(depositAmt)} (${sp.deposit_percent ?? 50}% de ${fmtPrice(signupPrice)})`,
-      userName ? `Nome: ${userName}` : null,
-    ].filter(Boolean).join('\n')
-    window.location.href = whatsappUrl(sp.whatsapp, msg)
+    window.location.href = whatsappUrl(sp.whatsapp, proofMessage)
   }
 
   if (loading) {
@@ -482,6 +496,22 @@ export default function LojaProdutoPage() {
                   </button>
                 )}
               </div>
+
+              {sp?.pix_key && sp.whatsapp && mySignup && (
+                <div className="mt-4 rounded-xl border border-green-200 bg-green-50 p-3">
+                  <p className="text-sm font-bold text-green-800">Envie o comprovante pelo WhatsApp</p>
+                  <p className="mt-1 text-xs leading-relaxed text-green-700">
+                    Depois de pagar o sinal, mande o comprovante para {item.seller?.name ?? 'o vendedor'} usando a mensagem abaixo.
+                  </p>
+                  <div className="mt-3 rounded-lg border border-green-200 bg-white p-2 text-[11px] leading-relaxed text-zinc-600 whitespace-pre-wrap">
+                    {proofMessage}
+                  </div>
+                  <button onClick={sendProof} className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg py-2 text-xs font-bold text-white" style={{ backgroundColor: '#25D366' }}>
+                    <IconWhatsApp />
+                    Abrir WhatsApp do vendedor
+                  </button>
+                </div>
+              )}
 
               {sp?.pix_key && mySignup && (
                 <div className="mt-4 rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950">

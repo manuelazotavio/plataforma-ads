@@ -51,8 +51,8 @@ async function computeProgress(userId: string, weekStart: Date, missions: Missio
     { count: projects },
     { count: articles },
   ] = await Promise.all([
-    supabase.from('forum_topic_votes').select('*', { count: 'exact', head: true }).eq('user_id', userId).gte('created_at', ws).lt('created_at', we),
-    supabase.from('forum_reply_votes').select('*', { count: 'exact', head: true }).eq('user_id', userId).gte('created_at', ws).lt('created_at', we),
+    supabase.from('forum_topic_votes').select('*', { count: 'exact', head: true }).eq('user_id', userId).eq('is_voted', true).gte('created_at', ws).lt('created_at', we),
+    supabase.from('forum_reply_votes').select('*', { count: 'exact', head: true }).eq('user_id', userId).eq('is_voted', true).gte('created_at', ws).lt('created_at', we),
     supabase.from('project_comments').select('*', { count: 'exact', head: true }).eq('user_id', userId).gte('created_at', ws).lt('created_at', we),
     supabase.from('article_comments').select('*', { count: 'exact', head: true }).eq('user_id', userId).gte('created_at', ws).lt('created_at', we),
     supabase.from('forum_replies').select('*', { count: 'exact', head: true }).eq('user_id', userId).gte('created_at', ws).lt('created_at', we),

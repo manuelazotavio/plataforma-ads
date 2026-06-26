@@ -1,4 +1,4 @@
--- Consolida nomes equivalentes sem perder as tags já usadas pelos projetos.
+
 do $$
 declare
   item text[];

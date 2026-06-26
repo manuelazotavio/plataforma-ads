@@ -29,9 +29,7 @@ BEGIN
   END LOOP;
 END; $$;
 
--- 4. Triggers
 
--- Forum topics (mention in topic body)
 CREATE OR REPLACE FUNCTION notify_mention_forum_topic()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN

@@ -573,11 +573,13 @@ export default function ForumTopicPage() {
             .from('forum_reply_votes')
             .select('reply_id, user_id')
             .in('reply_id', loadedReplies.map(r => r.id))
+            .eq('is_voted', true)
         : Promise.resolve({ data: [] as { reply_id: string; user_id: string }[] }),
       supabase
         .from('forum_topic_votes')
         .select('user_id')
-        .eq('topic_id', id),
+        .eq('topic_id', id)
+        .eq('is_voted', true),
     ])
 
     const voterIds = [...new Set([
@@ -613,9 +615,9 @@ export default function ForumTopicPage() {
     const voter = currentUserProfile ?? { id: currentUserId, name: 'Você', avatar_url: null, selected_mascot: null }
     setTopicVoters(prev => voted ? prev.filter(item => item.id !== currentUserId) : [...prev, voter])
     if (voted) {
-      await supabase.from('forum_topic_votes').delete().eq('topic_id', id).eq('user_id', currentUserId)
+      await supabase.from('forum_topic_votes').update({ is_voted: false }).eq('topic_id', id).eq('user_id', currentUserId)
     } else {
-      await supabase.from('forum_topic_votes').insert({ topic_id: id, user_id: currentUserId })
+      await supabase.from('forum_topic_votes').upsert({ topic_id: id, user_id: currentUserId, is_voted: true }, { onConflict: 'user_id,topic_id' })
     }
   }
 
@@ -632,9 +634,9 @@ export default function ForumTopicPage() {
         : [...(prev[replyId] ?? []), voter],
     }))
     if (voted) {
-      await supabase.from('forum_reply_votes').delete().eq('reply_id', replyId).eq('user_id', currentUserId)
+      await supabase.from('forum_reply_votes').update({ is_voted: false }).eq('reply_id', replyId).eq('user_id', currentUserId)
     } else {
-      await supabase.from('forum_reply_votes').insert({ reply_id: replyId, user_id: currentUserId })
+      await supabase.from('forum_reply_votes').upsert({ reply_id: replyId, user_id: currentUserId, is_voted: true }, { onConflict: 'user_id,reply_id' })
     }
   }
 
