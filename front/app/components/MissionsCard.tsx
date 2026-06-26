@@ -223,7 +223,7 @@ export default function MissionsCard() {
           return (
             <div key={m.id} className={`rounded-xl p-3 transition ${done ? 'bg-green-50' : 'bg-zinc-50'}`}>
               <div className="flex items-start justify-between gap-2 mb-2">
-                <div className="flex items-center gap-2 min-w-0">
+                <div className="flex min-w-0 flex-1 items-start gap-2">
                   {done ? (
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: '#2F9E41' }}>
                       <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
@@ -231,7 +231,7 @@ export default function MissionsCard() {
                   ) : (
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-zinc-300" />
                   )}
-                  <span className={`text-sm font-medium truncate ${done ? 'text-zinc-500 line-through' : 'text-zinc-800'}`}>{m.title}</span>
+                  <span className={`min-w-0 flex-1 break-words text-sm font-medium leading-snug ${done ? 'text-zinc-500 line-through' : 'text-zinc-800'}`}>{m.title}</span>
                 </div>
                 <span className="shrink-0 text-xs font-semibold" style={{ color: done ? '#2F9E41' : '#a1a1aa' }}>
                   {claimed ? '✓ ' : ''}{m.xp_reward} XP

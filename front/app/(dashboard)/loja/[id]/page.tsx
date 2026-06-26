@@ -26,19 +26,18 @@ type StoreItem = {
   min_quantity: number
   sizes: string[]
   collective_deadline: string | null
+  collective_fields: CollectiveField[] | null
+  collective_info: string | null
   seller_id: string | null
   seller: SellerData | null
 }
 
+type CollectiveField = { key: string; label: string; type: 'boolean' | 'select'; options?: string[] }
 type CollectiveDetails = { zipper: boolean; helanca: boolean; pocket: boolean; hood: boolean; price: number }
-type MySignup = { size: string; status: string; details?: CollectiveDetails | null }
+type MySignup = { size: string; status: string; details?: Record<string, unknown> | null }
 
 const DEFAULT_COLLECTIVE_DETAILS: CollectiveDetails = {
-  zipper: false,
-  helanca: true,
-  pocket: true,
-  hood: true,
-  price: 155,
+  zipper: false, helanca: true, pocket: true, hood: true, price: 155,
 }
 
 const COLLECTIVE_PRICE_ROWS = [
@@ -80,6 +79,7 @@ export default function LojaProdutoPage() {
   const [mySignup, setMySignup] = useState<MySignup | null>(null)
   const [selectedSize, setSelectedSize] = useState('')
   const [collectiveDetails, setCollectiveDetails] = useState<CollectiveDetails>(DEFAULT_COLLECTIVE_DETAILS)
+  const [customDetails, setCustomDetails] = useState<Record<string, string | boolean>>({})
   const [signupSaving, setSignupSaving] = useState(false)
   const [pixCopied, setPixCopied] = useState(false)
   const [message, setMessage] = useState('')
@@ -92,7 +92,7 @@ export default function LojaProdutoPage() {
         { data: { user: authUser } },
       ] = await Promise.all([
         supabase.from('store_items')
-          .select('id, name, description, price, image_url, images, category, type, min_quantity, sizes, collective_deadline, seller_id, seller:users!seller_id(id, name, avatar_url, store_seller_profiles(whatsapp, pix_key, deposit_percent))')
+          .select('id, name, description, price, image_url, images, category, type, min_quantity, sizes, collective_deadline, collective_fields, collective_info, seller_id, seller:users!seller_id(id, name, avatar_url, store_seller_profiles(whatsapp, pix_key, deposit_percent))')
           .eq('id', itemId)
           .eq('is_visible', true)
           .maybeSingle(),
@@ -103,6 +103,13 @@ export default function LojaProdutoPage() {
       setItem(loadedItem)
       setUser(authUser)
       setSelectedSize(loadedItem?.sizes?.[0] ?? '')
+      if (loadedItem?.collective_fields?.length) {
+        const defaults: Record<string, string | boolean> = {}
+        for (const f of loadedItem.collective_fields) {
+          defaults[f.key] = f.type === 'boolean' ? false : (f.options?.[0] ?? '')
+        }
+        setCustomDetails(defaults)
+      }
 
       if (authUser) {
         supabase.from('users').select('name').eq('id', authUser.id).maybeSingle()
@@ -130,8 +137,11 @@ export default function LojaProdutoPage() {
   }, [itemId])
 
   const sp = item ? sellerProfile(item) : null
+  const hasCustomFields = !!(item?.collective_fields?.length)
   const pricedCollectiveDetails = { ...collectiveDetails, price: collectivePrice(collectiveDetails) }
-  const signupPrice = item?.type === 'collective' ? pricedCollectiveDetails.price : (item?.price ?? 0)
+  const signupPrice = item?.type === 'collective'
+    ? (hasCustomFields ? item.price : pricedCollectiveDetails.price)
+    : (item?.price ?? 0)
   const depositAmt = signupPrice * (sp?.deposit_percent ?? 50) / 100
   const progress = item?.type === 'collective' ? Math.min(100, (signupCount / item.min_quantity) * 100) : 0
   const reached = item?.type === 'collective' ? signupCount >= item.min_quantity : false
@@ -178,20 +188,21 @@ export default function LojaProdutoPage() {
     setSignupSaving(true)
     const isNew = !mySignup
     let nextStatus = sp?.pix_key ? 'awaiting_payment' : 'active'
+    const details = hasCustomFields ? customDetails : pricedCollectiveDetails
     let { error } = await supabase.from('store_signups').upsert(
-      { user_id: user.id, item_id: item.id, size: selectedSize || null, details: pricedCollectiveDetails, status: nextStatus },
+      { user_id: user.id, item_id: item.id, size: selectedSize || null, details, status: nextStatus },
       { onConflict: 'user_id,item_id' }
     )
     if (error && nextStatus === 'awaiting_payment') {
       nextStatus = 'active'
       const retry = await supabase.from('store_signups').upsert(
-        { user_id: user.id, item_id: item.id, size: selectedSize || null, details: pricedCollectiveDetails, status: nextStatus },
+        { user_id: user.id, item_id: item.id, size: selectedSize || null, details, status: nextStatus },
         { onConflict: 'user_id,item_id' }
       )
       error = retry.error
     }
     if (!error) {
-      setMySignup({ size: selectedSize, status: nextStatus, details: pricedCollectiveDetails })
+      setMySignup({ size: selectedSize, status: nextStatus, details })
       if (isNew) setSignupCount(c => c + 1)
       setMessage(sp?.pix_key ? 'Inscrição salva. Envie o sinal pelo PIX para confirmar.' : 'Inscrição salva.')
     }
@@ -358,64 +369,82 @@ export default function LojaProdutoPage() {
               </div>
               {reached && <p className="mt-2 text-xs font-semibold" style={{ color: '#2F9E41' }}>Meta atingida!</p>}
 
-              <div className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm dark:border-zinc-800 dark:bg-zinc-950">
-                <h2 className="font-bold text-zinc-900 dark:text-zinc-100">Leia com atenção</h2>
-                <p className="mt-1 text-xs font-semibold text-zinc-500">
-                  Prazo para dar entrada: {item.collective_deadline ? `até ${new Date(`${item.collective_deadline}T00:00:00`).toLocaleDateString('pt-BR')}` : 'será definido pelo responsável'}
-                </p>
-                <ul className="mt-3 list-disc space-y-1.5 pl-4 text-xs leading-5 text-zinc-600 dark:text-zinc-300">
-                  <li>Para sua inscrição valer, pague metade do valor como entrada e envie o comprovante pelo WhatsApp cadastrado.</li>
-                  <li>A segunda parcela será combinada somente quando o agasalho chegar.</li>
-                  <li>O prazo costuma ser de aproximadamente dois meses. Quando chegar, avisaremos nos grupos e por e-mail.</li>
-                  <li>Helanca é um tecido mais liso, mais leve e menos quente que moletom.</li>
-                  <li>Não fazemos envio pelo correio; a retirada será combinada no campus.</li>
-                </ul>
-              </div>
+              {(item.collective_info || !hasCustomFields) && (
+                <div className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm dark:border-zinc-800 dark:bg-zinc-950">
+                  <h2 className="font-bold text-zinc-900 dark:text-zinc-100">Leia com atenção</h2>
+                  <p className="mt-1 text-xs font-semibold text-zinc-500">
+                    Prazo para dar entrada: {item.collective_deadline ? `até ${new Date(`${item.collective_deadline}T00:00:00`).toLocaleDateString('pt-BR')}` : 'será definido pelo responsável'}
+                  </p>
+                  {item.collective_info ? (
+                    <p className="mt-3 whitespace-pre-line text-xs leading-5 text-zinc-600 dark:text-zinc-300">{item.collective_info}</p>
+                  ) : (
+                    <ul className="mt-3 list-disc space-y-1.5 pl-4 text-xs leading-5 text-zinc-600 dark:text-zinc-300">
+                      <li>Para sua inscrição valer, pague metade do valor como entrada e envie o comprovante pelo WhatsApp cadastrado.</li>
+                      <li>A segunda parcela será combinada somente quando o agasalho chegar.</li>
+                      <li>O prazo costuma ser de aproximadamente dois meses. Quando chegar, avisaremos nos grupos e por e-mail.</li>
+                      <li>Helanca é um tecido mais liso, mais leve e menos quente que moletom.</li>
+                      <li>Não fazemos envio pelo correio; a retirada será combinada no campus.</li>
+                    </ul>
+                  )}
+                </div>
+              )}
 
-              <div className="mt-4 overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800">
-                {COLLECTIVE_PRICE_ROWS.map(row => (
-                  <div key={row.label} className="flex items-center justify-between border-b border-zinc-100 bg-white px-3 py-2 text-sm last:border-b-0 dark:border-zinc-800 dark:bg-zinc-950">
-                    <span className="font-semibold text-zinc-700 dark:text-zinc-200">{row.label}</span>
-                    <span className="font-bold text-zinc-900 dark:text-zinc-100">{fmtPrice(row.price)}</span>
+              {hasCustomFields ? (
+                <div className="mt-4 flex flex-col gap-3">
+                  {item.collective_fields!.map(field => (
+                    <div key={field.key}>
+                      <p className="mb-1.5 text-sm font-semibold text-zinc-700 dark:text-zinc-300">{field.label}</p>
+                      {field.type === 'boolean' ? (
+                        <RadioChoice
+                          label=""
+                          value={customDetails[field.key] === true}
+                          yesLabel="Sim"
+                          noLabel="Não"
+                          onChange={v => setCustomDetails(d => ({ ...d, [field.key]: v }))}
+                        />
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          {(field.options ?? []).map(opt => (
+                            <button
+                              key={opt}
+                              type="button"
+                              onClick={() => setCustomDetails(d => ({ ...d, [field.key]: opt }))}
+                              className={`rounded-lg border px-3 py-1.5 text-sm font-semibold transition ${customDetails[field.key] === opt ? 'border-[#2F9E41] bg-[#2F9E41]/10 text-[#2F9E41]' : 'border-zinc-200 bg-white text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900'}`}
+                            >
+                              {opt}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  <div className="mt-1 flex items-center justify-between rounded-xl bg-zinc-100 px-3 py-2 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100">
+                    <span className="font-semibold">Valor</span>
+                    <span className="font-bold">{fmtPrice(signupPrice)}</span>
                   </div>
-                ))}
-              </div>
-
-              <div className="mt-4 flex flex-col gap-3">
-                <RadioChoice
-                  label="Com zíper?"
-                  value={collectiveDetails.zipper}
-                  yesLabel="Sim, com zíper"
-                  noLabel="Não, fechado"
-                  onChange={zipper => setCollectiveDetails(d => ({ ...d, zipper }))}
-                />
-                <RadioChoice
-                  label="Helanca?"
-                  value={collectiveDetails.helanca}
-                  yesLabel="Sim, helanca"
-                  noLabel="Não, moletom"
-                  onChange={helanca => setCollectiveDetails(d => ({ ...d, helanca }))}
-                />
-                <RadioChoice
-                  label="Com bolso?"
-                  value={collectiveDetails.pocket}
-                  yesLabel="Sim, com bolso"
-                  noLabel="Não, sem bolso"
-                  onChange={pocket => setCollectiveDetails(d => ({ ...d, pocket }))}
-                />
-                <RadioChoice
-                  label="Com gorro?"
-                  value={collectiveDetails.hood}
-                  yesLabel="Sim, com gorro"
-                  noLabel="Não, sem gorro"
-                  onChange={hood => setCollectiveDetails(d => ({ ...d, hood }))}
-                />
-              </div>
-
-              <div className="mt-4 flex items-center justify-between rounded-xl bg-zinc-100 px-3 py-2 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100">
-                <span className="font-semibold">Valor escolhido</span>
-                <span className="font-bold">{fmtPrice(signupPrice)}</span>
-              </div>
+                </div>
+              ) : (
+                <>
+                  <div className="mt-4 overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800">
+                    {COLLECTIVE_PRICE_ROWS.map(row => (
+                      <div key={row.label} className="flex items-center justify-between border-b border-zinc-100 bg-white px-3 py-2 text-sm last:border-b-0 dark:border-zinc-800 dark:bg-zinc-950">
+                        <span className="font-semibold text-zinc-700 dark:text-zinc-200">{row.label}</span>
+                        <span className="font-bold text-zinc-900 dark:text-zinc-100">{fmtPrice(row.price)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-4 flex flex-col gap-3">
+                    <RadioChoice label="Com zíper?" value={collectiveDetails.zipper} yesLabel="Sim, com zíper" noLabel="Não, fechado" onChange={zipper => setCollectiveDetails(d => ({ ...d, zipper }))} />
+                    <RadioChoice label="Helanca?" value={collectiveDetails.helanca} yesLabel="Sim, helanca" noLabel="Não, moletom" onChange={helanca => setCollectiveDetails(d => ({ ...d, helanca }))} />
+                    <RadioChoice label="Com bolso?" value={collectiveDetails.pocket} yesLabel="Sim, com bolso" noLabel="Não, sem bolso" onChange={pocket => setCollectiveDetails(d => ({ ...d, pocket }))} />
+                    <RadioChoice label="Com gorro?" value={collectiveDetails.hood} yesLabel="Sim, com gorro" noLabel="Não, sem gorro" onChange={hood => setCollectiveDetails(d => ({ ...d, hood }))} />
+                  </div>
+                  <div className="mt-4 flex items-center justify-between rounded-xl bg-zinc-100 px-3 py-2 text-sm text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100">
+                    <span className="font-semibold">Valor escolhido</span>
+                    <span className="font-bold">{fmtPrice(signupPrice)}</span>
+                  </div>
+                </>
+              )}
 
               {item.sizes.length > 0 && (
                 <div className="mt-4">

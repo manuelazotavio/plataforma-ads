@@ -10,6 +10,13 @@ import Select from '@/app/components/Select'
 
 
 
+type CollectiveField = {
+  key: string
+  label: string
+  type: 'boolean' | 'select'
+  options?: string[]
+}
+
 type SellerProfile = {
   user_id: string
   whatsapp: string | null
@@ -30,6 +37,8 @@ type StoreItem = {
   min_quantity: number
   sizes: string[]
   collective_deadline: string | null
+  collective_fields: CollectiveField[] | null
+  collective_info: string | null
   seller_id: string | null
   is_visible: boolean
   display_order: number
@@ -122,7 +131,9 @@ export default function AdminLojaPage() {
   const [form, setForm] = useState({
     name: '', description: '', price: '', image_url: '', images: [] as string[], category: '',
     type: 'normal' as 'normal' | 'collective', min_quantity: '10',
-    sizes: [] as string[], collective_deadline: '', seller_id: '', is_visible: true,
+    sizes: [] as string[], collective_deadline: '',
+    collective_fields: [] as CollectiveField[], collective_info: '',
+    seller_id: '', is_visible: true,
   })
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -263,6 +274,10 @@ export default function AdminLojaPage() {
       min_quantity: parseInt(form.min_quantity) || 10,
       sizes: form.type === 'collective' ? form.sizes : [],
       collective_deadline: form.type === 'collective' && form.collective_deadline ? form.collective_deadline : null,
+      collective_fields: form.type === 'collective' && form.collective_fields.length > 0
+        ? form.collective_fields.map(f => ({ ...f, key: f.key || genFieldKey(f.label) }))
+        : null,
+      collective_info: form.type === 'collective' && form.collective_info.trim() ? form.collective_info.trim() : null,
       seller_id: form.seller_id || null,
       is_visible: form.is_visible,
     }
@@ -281,13 +296,13 @@ export default function AdminLojaPage() {
   }
 
   function resetForm() {
-    setForm({ name: '', description: '', price: '', image_url: '', images: [], category: '', type: 'normal', min_quantity: '10', sizes: [], collective_deadline: '', seller_id: '', is_visible: true })
+    setForm({ name: '', description: '', price: '', image_url: '', images: [], category: '', type: 'normal', min_quantity: '10', sizes: [], collective_deadline: '', collective_fields: [], collective_info: '', seller_id: '', is_visible: true })
     setEditingId(null); setError(null)
     setProductModalOpen(false)
   }
 
   function openNewProductModal() {
-    setForm({ name: '', description: '', price: '', image_url: '', images: [], category: '', type: 'normal', min_quantity: '10', sizes: [], collective_deadline: '', seller_id: '', is_visible: true })
+    setForm({ name: '', description: '', price: '', image_url: '', images: [], category: '', type: 'normal', min_quantity: '10', sizes: [], collective_deadline: '', collective_fields: [], collective_info: '', seller_id: '', is_visible: true })
     setEditingId(null)
     setError(null)
     setProductModalOpen(true)
@@ -301,6 +316,8 @@ export default function AdminLojaPage() {
       image_url: item.image_url ?? '', images, category: item.category ?? '',
       type: item.type, min_quantity: String(item.min_quantity), sizes: item.sizes ?? [],
       collective_deadline: item.collective_deadline ?? '',
+      collective_fields: item.collective_fields ?? [],
+      collective_info: item.collective_info ?? '',
       seller_id: item.seller_id ?? '', is_visible: item.is_visible,
     })
     setError(null)
@@ -309,6 +326,19 @@ export default function AdminLojaPage() {
 
   function toggleSize(size: string) {
     setForm(f => ({ ...f, sizes: f.sizes.includes(size) ? f.sizes.filter(s => s !== size) : [...f.sizes, size] }))
+  }
+
+  function genFieldKey(label: string) {
+    return label.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || `campo_${Date.now()}`
+  }
+  function addField() {
+    setForm(f => ({ ...f, collective_fields: [...f.collective_fields, { key: '', label: '', type: 'boolean' as const }] }))
+  }
+  function updateField(i: number, patch: Partial<CollectiveField>) {
+    setForm(f => ({ ...f, collective_fields: f.collective_fields.map((fd, idx) => idx === i ? { ...fd, ...patch } : fd) }))
+  }
+  function removeField(i: number) {
+    setForm(f => ({ ...f, collective_fields: f.collective_fields.filter((_, idx) => idx !== i) }))
   }
 
   async function toggleVisible(id: string, current: boolean) {
@@ -599,10 +629,10 @@ export default function AdminLojaPage() {
                 </div>
 
                 {form.type === 'collective' && (
-                  <div className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900/40 p-4 flex flex-col gap-3">
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900/40 p-4 flex flex-col gap-4">
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div>
-                        <label className="text-xs font-medium text-amber-700 mb-1 block">Minimo de inscricoes</label>
+                        <label className="text-xs font-medium text-amber-700 mb-1 block">Mínimo de inscrições</label>
                         <input value={form.min_quantity} onChange={e => setForm(f => ({ ...f, min_quantity: e.target.value }))} className={inputCls} type="number" min={1} placeholder="10" />
                       </div>
                       <div>
@@ -610,6 +640,7 @@ export default function AdminLojaPage() {
                         <input value={form.collective_deadline} onChange={e => setForm(f => ({ ...f, collective_deadline: e.target.value }))} className={inputCls} type="date" />
                       </div>
                     </div>
+
                     <div>
                       <label className="text-xs font-medium text-amber-700 mb-2 block">Tamanhos disponíveis</label>
                       <div className="flex flex-wrap gap-2">
@@ -621,6 +652,61 @@ export default function AdminLojaPage() {
                         ))}
                       </div>
                     </div>
+
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-medium text-amber-700">Perguntas personalizadas</label>
+                        <button type="button" onClick={addField} className="text-xs font-semibold text-amber-700 hover:text-amber-900 transition">+ Pergunta</button>
+                      </div>
+                      {form.collective_fields.length === 0 && (
+                        <p className="text-[11px] text-amber-600 italic">Nenhuma pergunta. Clique em &quot;+ Pergunta&quot; para adicionar (ex: tamanho de manga, cor, tipo de tecido…).</p>
+                      )}
+                      {form.collective_fields.map((field, i) => (
+                        <div key={i} className="flex items-start gap-2 rounded-lg border border-amber-200 bg-white dark:bg-zinc-900 p-2.5">
+                          <div className="flex flex-1 flex-col gap-1.5">
+                            <input
+                              value={field.label}
+                              onChange={e => updateField(i, { label: e.target.value, key: genFieldKey(e.target.value) })}
+                              className={inputCls}
+                              placeholder="Pergunta (ex: Com zíper?)"
+                            />
+                            <div className="flex flex-wrap gap-1.5">
+                              <select
+                                value={field.type}
+                                onChange={e => updateField(i, { type: e.target.value as 'boolean' | 'select', options: e.target.value === 'select' ? ['Opção 1', 'Opção 2'] : undefined })}
+                                className="rounded-lg border border-zinc-200 px-2 py-1.5 text-xs text-zinc-900 outline-none focus:border-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                              >
+                                <option value="boolean">Sim / Não</option>
+                                <option value="select">Múltiplas opções</option>
+                              </select>
+                              {field.type === 'select' && (
+                                <input
+                                  value={field.options?.join(', ') ?? ''}
+                                  onChange={e => updateField(i, { options: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
+                                  className={`${inputCls} flex-1 min-w-0`}
+                                  placeholder="Opções separadas por vírgula"
+                                />
+                              )}
+                            </div>
+                          </div>
+                          <button type="button" onClick={() => removeField(i)} className="mt-0.5 shrink-0 text-zinc-400 hover:text-red-500 transition" aria-label="Remover">
+                            <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><line x1={18} y1={6} x2={6} y2={18}/><line x1={6} y1={6} x2={18} y2={18}/></svg>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-medium text-amber-700 mb-1 block">Texto informativo (opcional)</label>
+                      <textarea
+                        value={form.collective_info}
+                        onChange={e => setForm(f => ({ ...f, collective_info: e.target.value }))}
+                        className={`${inputCls} resize-none`}
+                        rows={3}
+                        placeholder="Informações importantes para o comprador (prazos, políticas, detalhes do material…)"
+                      />
+                    </div>
+
                     {form.seller_id && (() => {
                       const sp = sellers.find(s => s.user_id === form.seller_id)
                       if (!sp) return null
