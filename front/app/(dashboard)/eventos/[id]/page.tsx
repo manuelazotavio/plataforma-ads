@@ -217,9 +217,9 @@ export default async function EventoPage({ params, searchParams }: { params: Pro
           <div className="mb-3">
             <h2 className="mt-1 text-lg font-bold text-zinc-900">Apoiadores</h2>
           </div>
-          <div className="divide-y divide-zinc-100 border-y border-zinc-100">
+          <div className="flex flex-wrap gap-3">
             {contributors.map((contributor) => (
-              <ContributorRow key={contributor.id} contributor={contributor} />
+              <ContributorBadge key={contributor.id} contributor={contributor} />
             ))}
           </div>
         </section>
@@ -231,7 +231,7 @@ export default async function EventoPage({ params, searchParams }: { params: Pro
   )
 }
 
-function ContributorRow({
+function ContributorBadge({
   contributor,
 }: {
   contributor: {
@@ -242,24 +242,22 @@ function ContributorRow({
 }) {
   const content = (
     <>
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-100 text-sm font-semibold text-zinc-500">
-        {contributor.user?.avatar_url ? (
-          <Image src={contributor.user.avatar_url} alt="" width={36} height={36} className="h-full w-full object-cover" />
-        ) : (
-          contributor.name.charAt(0).toUpperCase()
-        )}
-      </span>
-      <span className="min-w-0 flex-1 truncate text-sm font-semibold text-zinc-800">{contributor.name}</span>
+      {contributor.user?.avatar_url && (
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-zinc-100">
+          <Image src={contributor.user.avatar_url} alt="" width={24} height={24} className="h-full w-full object-cover" />
+        </span>
+      )}
+      <span className="truncate text-sm font-semibold text-zinc-800">{contributor.name}</span>
     </>
   )
 
   if (contributor.user_id) {
     return (
-      <Link href={`/usuarios/${contributor.user_id}`} className="flex items-center gap-3 py-3 transition hover:text-[#2F9E41]">
+      <Link href={`/usuarios/${contributor.user_id}`} className={`inline-flex max-w-full items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 py-1.5 pr-4 transition hover:border-[#2F9E41]/30 hover:bg-[#2F9E41]/5 ${contributor.user?.avatar_url ? 'pl-1.5' : 'pl-4'}`}>
         {content}
       </Link>
     )
   }
 
-  return <div className="flex items-center gap-3 py-3">{content}</div>
+  return <span className={`inline-flex max-w-full items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 py-1.5 pr-4 ${contributor.user?.avatar_url ? 'pl-1.5' : 'pl-4'}`}>{content}</span>
 }
