@@ -93,7 +93,7 @@ export default function AdminEventContributorsPage() {
         .ilike('name', `%${q}%`)
         .limit(8)
 
-      setUserResults((data ?? []) as UserResult[])
+      setUserResults(await withProfessorAvatarFallback((data ?? []) as UserResult[]))
       setShowUserDrop(true)
     }, q.length < 2 ? 0 : 250)
 
@@ -114,7 +114,16 @@ export default function AdminEventContributorsPage() {
       .order('display_order')
       .order('created_at')
 
-    setContributors((data ?? []) as unknown as Contributor[])
+    const rows = (data ?? []) as unknown as Contributor[]
+    const usersWithFallback = await withProfessorAvatarFallback(
+      rows.flatMap((row) => row.user ? [row.user] : [])
+    )
+    const avatarByUserId = new Map(usersWithFallback.map((user) => [user.id, user.avatar_url]))
+
+    setContributors(rows.map((row) => ({
+      ...row,
+      user: row.user ? { ...row.user, avatar_url: avatarByUserId.get(row.user.id) ?? row.user.avatar_url } : row.user,
+    })))
   }
 
   async function addContributor(user?: UserResult) {
@@ -328,6 +337,27 @@ function UserBubble({ name, avatarUrl }: { name: string; avatarUrl: string | nul
       )}
     </span>
   )
+}
+
+async function withProfessorAvatarFallback(users: UserResult[]) {
+  const idsWithoutAvatar = users.filter((user) => !user.avatar_url).map((user) => user.id)
+  if (idsWithoutAvatar.length === 0) return users
+
+  const { data } = await supabase
+    .from('professors')
+    .select('user_id, avatar_url')
+    .in('user_id', idsWithoutAvatar)
+
+  const professorAvatarByUserId = new Map(
+    ((data ?? []) as { user_id: string | null; avatar_url: string | null }[])
+      .filter((professor) => professor.user_id && professor.avatar_url)
+      .map((professor) => [professor.user_id!, professor.avatar_url])
+  )
+
+  return users.map((user) => ({
+    ...user,
+    avatar_url: user.avatar_url ?? professorAvatarByUserId.get(user.id) ?? null,
+  }))
 }
 
 function IconUpload() {

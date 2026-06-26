@@ -21,6 +21,7 @@ type StoreItem = {
   description: string | null
   price: number
   image_url: string | null
+  images: string[] | null
   category: string | null
   type: 'normal' | 'collective'
   min_quantity: number
@@ -89,7 +90,7 @@ export default function LojaPage() {
         { data: { user: authUser } },
       ] = await Promise.all([
         supabase.from('store_items')
-          .select('id, name, description, price, image_url, category, type, min_quantity, sizes, collective_deadline, seller_id, seller:users!seller_id(id, name, avatar_url, store_seller_profiles(whatsapp, pix_key, deposit_percent))')
+          .select('id, name, description, price, image_url, images, category, type, min_quantity, sizes, collective_deadline, seller_id, seller:users!seller_id(id, name, avatar_url, store_seller_profiles(whatsapp, pix_key, deposit_percent))')
           .eq('is_visible', true).order('display_order').order('created_at'),
         supabase.auth.getUser(),
       ])
@@ -287,7 +288,7 @@ export default function LojaPage() {
               return (
                 <div key={item.id} className="flex flex-col rounded-2xl border border-zinc-100 bg-white dark:bg-zinc-900 dark:border-zinc-800 overflow-hidden transition hover:shadow-md hover:border-zinc-200">
                   <Link href={`/loja/${item.id}`} className="relative block aspect-square bg-zinc-50 dark:bg-zinc-800">
-                    {item.image_url ? <Image src={item.image_url} alt={item.name} fill className="object-cover" /> : <div className="flex h-full items-center justify-center text-zinc-200 dark:text-zinc-700"><IconBag size={36} /></div>}
+                    {(() => { const s = item.images?.[0] ?? item.image_url; return s ? <Image src={s} alt={item.name} fill className="object-cover" /> : <div className="flex h-full items-center justify-center text-zinc-200 dark:text-zinc-700"><IconBag size={36} /></div> })()}
                     <span className="absolute top-2 left-2 rounded-full px-2 py-0.5 text-[9px] font-bold text-white" style={{ backgroundColor: '#2F9E41' }}>Compra coletiva</span>
                     {item.category && <span className="absolute top-2 right-2 rounded-full bg-white/90 dark:bg-zinc-900/90 px-2 py-0.5 text-[10px] font-semibold text-zinc-500 backdrop-blur-sm">{item.category}</span>}
                   </Link>
@@ -356,7 +357,7 @@ export default function LojaPage() {
             return (
               <div key={item.id} className="group flex flex-col rounded-2xl border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden transition hover:shadow-md hover:border-zinc-200">
                 <Link href={`/loja/${item.id}`} className="relative block aspect-square bg-zinc-50 dark:bg-zinc-800">
-                  {item.image_url ? <Image src={item.image_url} alt={item.name} fill className="object-cover" /> : <div className="flex h-full items-center justify-center text-zinc-200 dark:text-zinc-700"><IconBag size={36} /></div>}
+                  {(() => { const s = item.images?.[0] ?? item.image_url; return s ? <Image src={s} alt={item.name} fill className="object-cover" /> : <div className="flex h-full items-center justify-center text-zinc-200 dark:text-zinc-700"><IconBag size={36} /></div> })()}
                   {item.category && <span className="absolute top-2 left-2 rounded-full bg-white/90 dark:bg-zinc-900/90 px-2 py-0.5 text-[10px] font-semibold text-zinc-500 backdrop-blur-sm">{item.category}</span>}
                 </Link>
                 <div className="flex flex-col gap-1 p-3 flex-1">
@@ -417,7 +418,7 @@ export default function LojaPage() {
               {cart.map(item => (
                 <div key={item.id} className="flex gap-3">
                   <div className="relative h-16 w-16 shrink-0 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800">
-                    {item.image_url ? <Image src={item.image_url} alt={item.name} fill className="object-cover" /> : <div className="flex h-full items-center justify-center text-zinc-300"><IconBag size={22} /></div>}
+                    {(() => { const s = item.images?.[0] ?? item.image_url; return s ? <Image src={s} alt={item.name} fill className="object-cover" /> : <div className="flex h-full items-center justify-center text-zinc-300"><IconBag size={22} /></div> })()}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 leading-snug line-clamp-2">{item.name}</p>

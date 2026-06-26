@@ -35,7 +35,7 @@ Deno.serve(async (req: Request) => {
     if (callerProfile?.role !== 'admin') return json({ error: 'Acesso negado' }, 403)
 
     const { data: prof } = await adminClient
-      .from('professors').select('name, user_id').eq('id', professor_id).single()
+      .from('professors').select('name, user_id, avatar_url').eq('id', professor_id).single()
 
     if (!prof) return json({ error: 'Professor não encontrado' }, 404)
     if (prof.user_id) return json({ error: 'Este professor já possui acesso vinculado' }, 409)
@@ -55,6 +55,7 @@ Deno.serve(async (req: Request) => {
       email,
       password_hash: 'managed_by_supabase_auth',
       role: 'professor',
+      avatar_url: prof.avatar_url ?? null,
     })
     if (userError) {
       await adminClient.auth.admin.deleteUser(newUserId)

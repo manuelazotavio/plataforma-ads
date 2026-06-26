@@ -20,6 +20,7 @@ type StoreItem = {
   description: string | null
   price: number
   image_url: string | null
+  images: string[] | null
   category: string | null
   type: 'normal' | 'collective'
   min_quantity: number
@@ -69,6 +70,7 @@ export default function LojaProdutoPage() {
   const itemId = params.id
 
   const [item, setItem] = useState<StoreItem | null>(null)
+  const [selectedImg, setSelectedImg] = useState(0)
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<User | null>(null)
   const [userName, setUserName] = useState('')
@@ -90,7 +92,7 @@ export default function LojaProdutoPage() {
         { data: { user: authUser } },
       ] = await Promise.all([
         supabase.from('store_items')
-          .select('id, name, description, price, image_url, category, type, min_quantity, sizes, collective_deadline, seller_id, seller:users!seller_id(id, name, avatar_url, store_seller_profiles(whatsapp, pix_key, deposit_percent))')
+          .select('id, name, description, price, image_url, images, category, type, min_quantity, sizes, collective_deadline, seller_id, seller:users!seller_id(id, name, avatar_url, store_seller_profiles(whatsapp, pix_key, deposit_percent))')
           .eq('id', itemId)
           .eq('is_visible', true)
           .maybeSingle(),
@@ -255,20 +257,44 @@ export default function LojaProdutoPage() {
       </Link>
 
       <div className="grid gap-8 md:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
-        <div className="relative aspect-square overflow-hidden rounded-2xl bg-zinc-50 dark:bg-zinc-800">
-          {item.image_url ? (
-            <Image src={item.image_url} alt={item.name} fill className="object-cover" sizes="(min-width: 768px) 55vw, 100vw" priority />
-          ) : (
-            <div className="flex h-full items-center justify-center text-zinc-200 dark:text-zinc-700">
-              <IconBag size={64} />
-            </div>
-          )}
-          {item.type === 'collective' && (
-            <span className="absolute left-3 top-3 rounded-full px-3 py-1 text-xs font-bold text-white" style={{ backgroundColor: '#2F9E41' }}>Compra coletiva</span>
-          )}
-          {item.category && (
-            <span className="absolute right-3 top-3 rounded-full bg-white/90 dark:bg-zinc-900/90 px-3 py-1 text-xs font-semibold text-zinc-500 backdrop-blur-sm">{item.category}</span>
-          )}
+        <div>
+          <div className="relative aspect-square overflow-hidden rounded-2xl bg-zinc-50 dark:bg-zinc-800">
+            {(() => {
+              const allImgs = item.images?.length ? item.images : (item.image_url ? [item.image_url] : [])
+              const src = allImgs[selectedImg] ?? null
+              return src ? (
+                <Image src={src} alt={item.name} fill className="object-cover" sizes="(min-width: 768px) 55vw, 100vw" priority />
+              ) : (
+                <div className="flex h-full items-center justify-center text-zinc-200 dark:text-zinc-700">
+                  <IconBag size={64} />
+                </div>
+              )
+            })()}
+            {item.type === 'collective' && (
+              <span className="absolute left-3 top-3 rounded-full px-3 py-1 text-xs font-bold text-white" style={{ backgroundColor: '#2F9E41' }}>Compra coletiva</span>
+            )}
+            {item.category && (
+              <span className="absolute right-3 top-3 rounded-full bg-white/90 dark:bg-zinc-900/90 px-3 py-1 text-xs font-semibold text-zinc-500 backdrop-blur-sm">{item.category}</span>
+            )}
+          </div>
+          {(() => {
+            const allImgs = item.images?.length ? item.images : (item.image_url ? [item.image_url] : [])
+            if (allImgs.length <= 1) return null
+            return (
+              <div className="mt-3 flex gap-2 flex-wrap">
+                {allImgs.map((url, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setSelectedImg(i)}
+                    className={`relative h-16 w-16 overflow-hidden rounded-xl border-2 transition ${i === selectedImg ? 'border-[#2F9E41]' : 'border-transparent hover:border-zinc-300 dark:hover:border-zinc-600'}`}
+                  >
+                    <Image src={url} alt="" fill className="object-cover" />
+                  </button>
+                ))}
+              </div>
+            )
+          })()}
         </div>
 
         <section className="flex flex-col gap-5">

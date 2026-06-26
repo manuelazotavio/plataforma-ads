@@ -38,12 +38,37 @@ export default async function EventoPage({ params, searchParams }: { params: Pro
 
   if (!event) notFound()
 
-  const contributors = (contributorsData ?? []) as unknown as {
+  const rawContributors = (contributorsData ?? []) as unknown as {
     id: string
     name: string
     user_id: string | null
     user: { id: string; name: string; avatar_url: string | null } | null
   }[]
+
+  const contributorUserIdsWithoutAvatar = rawContributors
+    .filter((contributor) => contributor.user_id && !contributor.user?.avatar_url)
+    .map((contributor) => contributor.user_id!)
+
+  const { data: professorAvatarsData } = contributorUserIdsWithoutAvatar.length > 0
+    ? await supabase
+      .from('professors')
+      .select('user_id, avatar_url')
+      .in('user_id', contributorUserIdsWithoutAvatar)
+    : { data: [] }
+
+  const professorAvatarByUserId = new Map(
+    ((professorAvatarsData ?? []) as { user_id: string | null; avatar_url: string | null }[])
+      .filter((professor) => professor.user_id && professor.avatar_url)
+      .map((professor) => [professor.user_id!, professor.avatar_url])
+  )
+
+  const contributors = rawContributors.map((contributor) => ({
+    ...contributor,
+    user: contributor.user ? {
+      ...contributor.user,
+      avatar_url: contributor.user.avatar_url ?? professorAvatarByUserId.get(contributor.user.id) ?? null,
+    } : contributor.user,
+  }))
 
   const { data: relatedProjects } = await supabase
     .from('projects')
@@ -217,7 +242,7 @@ export default async function EventoPage({ params, searchParams }: { params: Pro
           <div className="mb-3">
             <h2 className="mt-1 text-lg font-bold text-zinc-900">Apoiadores</h2>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap items-start justify-start gap-3">
             {contributors.map((contributor) => (
               <ContributorBadge key={contributor.id} contributor={contributor} />
             ))}

@@ -24,6 +24,7 @@ type StoreItem = {
   description: string | null
   price: number
   image_url: string | null
+  images: string[] | null
   category: string | null
   type: 'normal' | 'collective'
   min_quantity: number
@@ -119,7 +120,7 @@ export default function AdminLojaPage() {
   const [items, setItems] = useState<StoreItem[]>([])
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState({
-    name: '', description: '', price: '', image_url: '', category: '',
+    name: '', description: '', price: '', image_url: '', images: [] as string[], category: '',
     type: 'normal' as 'normal' | 'collective', min_quantity: '10',
     sizes: [] as string[], collective_deadline: '', seller_id: '', is_visible: true,
   })
@@ -240,8 +241,12 @@ export default function AdminLojaPage() {
     const { error: upErr } = await supabase.storage.from('avatars').upload(path, cropped, { upsert: true })
     if (upErr) { setError('Erro ao enviar imagem: ' + upErr.message); setUploading(false); return }
     const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
-    setForm(f => ({ ...f, image_url: publicUrl }))
+    setForm(f => ({ ...f, images: [...f.images, publicUrl] }))
     setUploading(false)
+  }
+
+  function removeImage(index: number) {
+    setForm(f => ({ ...f, images: f.images.filter((_, i) => i !== index) }))
   }
 
   async function save() {
@@ -251,7 +256,8 @@ export default function AdminLojaPage() {
       name: form.name.trim(),
       description: form.description.trim() || null,
       price,
-      image_url: form.image_url || null,
+      image_url: form.images[0] ?? null,
+      images: form.images.length > 0 ? form.images : null,
       category: form.category || null,
       type: form.type,
       min_quantity: parseInt(form.min_quantity) || 10,
@@ -275,13 +281,13 @@ export default function AdminLojaPage() {
   }
 
   function resetForm() {
-    setForm({ name: '', description: '', price: '', image_url: '', category: '', type: 'normal', min_quantity: '10', sizes: [], collective_deadline: '', seller_id: '', is_visible: true })
+    setForm({ name: '', description: '', price: '', image_url: '', images: [], category: '', type: 'normal', min_quantity: '10', sizes: [], collective_deadline: '', seller_id: '', is_visible: true })
     setEditingId(null); setError(null)
     setProductModalOpen(false)
   }
 
   function openNewProductModal() {
-    setForm({ name: '', description: '', price: '', image_url: '', category: '', type: 'normal', min_quantity: '10', sizes: [], collective_deadline: '', seller_id: '', is_visible: true })
+    setForm({ name: '', description: '', price: '', image_url: '', images: [], category: '', type: 'normal', min_quantity: '10', sizes: [], collective_deadline: '', seller_id: '', is_visible: true })
     setEditingId(null)
     setError(null)
     setProductModalOpen(true)
@@ -289,9 +295,10 @@ export default function AdminLojaPage() {
 
   function startEdit(item: StoreItem) {
     setEditingId(item.id)
+    const images = item.images?.length ? item.images : (item.image_url ? [item.image_url] : [])
     setForm({
       name: item.name, description: item.description ?? '', price: item.price.toFixed(2),
-      image_url: item.image_url ?? '', category: item.category ?? '',
+      image_url: item.image_url ?? '', images, category: item.category ?? '',
       type: item.type, min_quantity: String(item.min_quantity), sizes: item.sizes ?? [],
       collective_deadline: item.collective_deadline ?? '',
       seller_id: item.seller_id ?? '', is_visible: item.is_visible,
@@ -514,21 +521,37 @@ export default function AdminLojaPage() {
                   </button>
                 </div>
 
-            <div className="flex gap-5">
-           
-              <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading}
-                className="relative h-24 w-24 shrink-0 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 overflow-hidden bg-zinc-50 dark:bg-zinc-800 hover:border-zinc-400 transition disabled:opacity-50">
-                {form.image_url
-                  ? <Image src={form.image_url} alt="" fill className="object-cover" />
-                  : <div className="flex h-full flex-col items-center justify-center gap-1 text-zinc-400">
-                      <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><path d="m21 15-5-5L5 21" /></svg>
-                      <span className="text-[10px] font-medium">{uploading ? 'Enviando...' : 'Foto'}</span>
-                    </div>
-                }
-              </button>
+            <div className="flex flex-col gap-3">
+              <label className="text-xs font-medium text-zinc-500">Fotos</label>
+              <div className="flex flex-wrap gap-2">
+                {form.images.map((url, i) => (
+                  <div key={i} className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700">
+                    <Image src={url} alt="" fill className="object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(i)}
+                      className="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 transition"
+                      aria-label="Remover foto"
+                    >
+                      <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round"><line x1={18} y1={6} x2={6} y2={18}/><line x1={6} y1={6} x2={18} y2={18}/></svg>
+                    </button>
+                  </div>
+                ))}
+                {form.images.length < 6 && (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="flex h-20 w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-zinc-300 bg-zinc-50 text-zinc-400 transition hover:border-zinc-400 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800"
+                  >
+                    <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><rect x={3} y={3} width={18} height={18} rx={2} /><circle cx={8.5} cy={8.5} r={1.5} /><path d="m21 15-5-5L5 21" /></svg>
+                    <span className="text-[10px] font-medium">{uploading ? 'Enviando…' : 'Adicionar'}</span>
+                  </button>
+                )}
+              </div>
+            </div>
 
-              <div className="flex-1 grid gap-3">
-               
+              <div className="grid gap-3">
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
                     <label className="text-xs font-medium text-zinc-500 mb-1 block">Nome *</label>
@@ -618,7 +641,6 @@ export default function AdminLojaPage() {
                   <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className={`${inputCls} resize-none`} rows={2} placeholder="Detalhes do produto..." />
                 </div>
               </div>
-            </div>
 
             {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
