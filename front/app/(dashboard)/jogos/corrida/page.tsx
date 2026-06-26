@@ -552,7 +552,7 @@ export default function CorridaPage() {
         e.preventDefault()
         if (phaseRef.current === 'playing') {
           if (!groundedRef.current) {
-            catVYRef.current = 10  // queda imediata no ar
+            catVYRef.current = Math.max(catVYRef.current, 4)
           } else {
             crouchRef.current = true
           }
@@ -622,7 +622,7 @@ export default function CorridaPage() {
           type="button"
           onPointerDown={() => {
             if (phaseRef.current !== 'playing') return
-            if (!groundedRef.current) { catVYRef.current = 10 } else { crouchRef.current = true }
+            if (!groundedRef.current) { catVYRef.current = Math.max(catVYRef.current, 4) } else { crouchRef.current = true }
           }}
           onPointerUp={() => { crouchRef.current = false }}
           onPointerLeave={() => { crouchRef.current = false }}

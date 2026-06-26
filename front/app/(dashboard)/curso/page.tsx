@@ -37,7 +37,7 @@ type ProfessorRecord = {
   linkedin: string | null
   cnpq: string | null
   photo_credit_user_id: string | null
-  photo_credit_user: { id: string; name: string } | null
+  photo_credit_user: { id: string; name: string } | { id: string; name: string }[] | null
 }
 
 type UserProfileFallback = {
@@ -113,6 +113,9 @@ export default async function CursoPage({
       avatar_url: professor.avatar_url || userProfile?.avatar_url || null,
       bio: professor.bio || userProfile?.bio || null,
       linkedin: professor.linkedin || userProfile?.linkedin_url || null,
+      photo_credit_user: Array.isArray(professor.photo_credit_user)
+        ? professor.photo_credit_user[0] ?? null
+        : professor.photo_credit_user,
     }
   })
 

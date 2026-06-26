@@ -62,7 +62,7 @@ type WeeklyMission = {
 }
 
 type WeeklySetMissionRow = {
-  missions: WeeklyMission | null
+  missions: WeeklyMission | WeeklyMission[] | null
 }
 
 export default function OnboardingPage() {
@@ -147,7 +147,7 @@ export default function OnboardingPage() {
         .single()
       if (data) {
         setWeeklyMissions(((data.weekly_set_missions ?? []) as WeeklySetMissionRow[])
-          .map((w) => w.missions)
+          .map((w) => Array.isArray(w.missions) ? w.missions[0] ?? null : w.missions)
           .filter((mission): mission is WeeklyMission => Boolean(mission)))
         setWeeklyBonusXp(data.bonus_xp ?? 0)
       }
