@@ -156,7 +156,7 @@ export default function LojaProdutoPage() {
     if (!item || !user) return
     const phone = sp?.whatsapp?.replace(/\D/g, '')
     if (!phone) {
-      setMessage('Este vendedor ainda nao tem WhatsApp cadastrado.')
+      setMessage('Este responsável ainda não tem WhatsApp cadastrado.')
       return
     }
 
@@ -283,7 +283,7 @@ export default function LojaProdutoPage() {
                 {item.seller.avatar_url ? <Image src={item.seller.avatar_url} alt={item.seller.name} fill className="object-cover" /> : <div className="flex h-full items-center justify-center text-zinc-400"><IconUser /></div>}
               </div>
               <div>
-                <p className="text-xs text-zinc-400">Vendedor</p>
+                <p className="text-xs text-zinc-400">Responsável</p>
                 <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{item.seller.name}</p>
               </div>
             </div>
