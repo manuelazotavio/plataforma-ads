@@ -184,7 +184,13 @@ export default function NovoArtigoPage() {
       {cropperNode}
       <div className="w-full">
         <h1 className="text-2xl font-semibold text-zinc-900 mb-1">Novo artigo</h1>
-        <p className="text-sm text-zinc-500 mb-8">Escreva e publique seu conteúdo</p>
+        <p className="text-sm text-zinc-500">Compartilhe conhecimento com a comunidade ADS.</p>
+        <div className="mt-4 mb-8 rounded-xl border border-green-100 bg-green-50 px-4 py-3">
+          <p className="text-sm font-semibold text-green-800">Aqui “artigo” não significa só artigo científico.</p>
+          <p className="mt-1 text-xs leading-relaxed text-green-700">
+            Você pode publicar tutoriais, relatos de projeto, resumos de estudo, dicas de ferramentas, análises de tecnologia, aprendizados de estágio, explicações de código ou reflexões sobre carreira.
+          </p>
+        </div>
 
         <form ref={formRef} className="flex flex-col gap-6">
 
@@ -195,7 +201,7 @@ export default function NovoArtigoPage() {
               value={title}
               onChange={(e) => handleTitleChange(e.target.value)}
               className={submitted && !title.trim() ? inputErrorClass : inputClass}
-              placeholder="Título do artigo"
+              placeholder="Ex: Como usei Docker no meu primeiro projeto"
             />
           </Field>
 
@@ -222,7 +228,7 @@ export default function NovoArtigoPage() {
               value={summary}
               onChange={(e) => setSummary(e.target.value)}
               className={(submitted && !summary.trim() ? inputErrorClass : inputClass) + ' resize-none'}
-              placeholder="Breve descrição do artigo..."
+              placeholder="Conte em poucas linhas o que a pessoa vai aprender ou encontrar no texto."
             />
           </Field>
 
@@ -231,7 +237,7 @@ export default function NovoArtigoPage() {
               <RichTextEditor
                 value={content}
                 onChange={setContent}
-                placeholder="Escreva o conteúdo do artigo aqui..."
+                placeholder="Escreva como se estivesse explicando para outro aluno: contexto, o que você fez ou aprendeu, exemplos e links úteis."
               />
             </div>
           </Field>

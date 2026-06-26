@@ -192,7 +192,7 @@ export default function CorridaPage() {
     const BUTTERFLY_H  = 36
     const BUTTERFLY_FY = GROUND - 90
 
-    const CAT_CROUCH_W    = CAT_W    // mesma sprite, hitbox interno diferente
+    const CAT_CROUCH_W    = CAT_W   
     const CAT_CROUCH_H    = CAT_H
     const CAT_CROUCH_FOOT = CAT_FOOT
 

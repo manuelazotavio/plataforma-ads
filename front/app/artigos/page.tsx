@@ -68,7 +68,10 @@ export default async function ArtigosPage({
           <div>
             <h1 className="text-2xl font-semibold text-zinc-900">Artigos</h1>
             <p className="text-sm text-zinc-500 mt-0.5">
-              {totalCount ?? 0} artigo{(totalCount ?? 0) !== 1 ? 's' : ''} publicado{(totalCount ?? 0) !== 1 ? 's' : ''}
+              Tutoriais, relatos, resumos de estudo, guias e opiniões técnicas da comunidade.
+            </p>
+            <p className="text-xs text-zinc-400 mt-1">
+              Não precisa ser artigo científico: compartilhe algo útil que você aprendeu, testou ou pesquisou.
             </p>
           </div>
           <Link

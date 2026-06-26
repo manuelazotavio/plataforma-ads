@@ -4,6 +4,7 @@ import "./globals.css";
 import NavigationProgress from "@/app/components/NavigationProgress";
 import SuspendedUserGuard from "@/app/components/SuspendedUserGuard";
 import VLibrasWidget from "@/app/components/VLibrasWidget";
+import PageTracker from "@/app/components/PageTracker";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -42,6 +43,7 @@ export default function RootLayout({
           {children}
         </div>
         <VLibrasWidget />
+        <PageTracker />
       </body>
     </html>
   );

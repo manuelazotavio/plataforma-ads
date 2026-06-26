@@ -158,7 +158,7 @@ export default function MissionsCard() {
 
     if (!setData) { setLoading(false); return }
 
-    // Verifica se ainda está dentro dos 7 dias do set
+   
     const weekStart = new Date(setData.week_start + 'T12:00:00')
     const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000)
     if (new Date() >= weekEnd) { setLoading(false); return }
