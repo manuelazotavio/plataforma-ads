@@ -229,7 +229,7 @@ export default function LojaProdutoPage() {
     if (!error) {
       setMySignup({ size: selectedSize, status: nextStatus, details })
       if (isNew) setSignupCount(c => c + 1)
-      setMessage(sp?.pix_key && sp.whatsapp ? 'Inscrição salva. Envie o comprovante pelo WhatsApp do vendedor para confirmar.' : sp?.pix_key ? 'Inscrição salva. Envie o sinal pelo PIX para confirmar.' : 'Inscrição salva.')
+      setMessage(sp?.whatsapp ? 'Inscrição salva. Envie o comprovante pelo WhatsApp do vendedor para confirmar sua inscrição.' : sp?.pix_key ? 'Inscrição salva. Envie o sinal pelo PIX para confirmar.' : 'Inscrição salva.')
     }
     setSignupSaving(false)
   }
@@ -497,11 +497,11 @@ export default function LojaProdutoPage() {
                 )}
               </div>
 
-              {sp?.pix_key && sp.whatsapp && mySignup && (
+              {sp?.whatsapp && mySignup && (
                 <div className="mt-4 rounded-xl border border-green-200 bg-green-50 p-3">
                   <p className="text-sm font-bold text-green-800">Envie o comprovante pelo WhatsApp</p>
                   <p className="mt-1 text-xs leading-relaxed text-green-700">
-                    Depois de pagar o sinal, mande o comprovante para {item.seller?.name ?? 'o vendedor'} usando a mensagem abaixo.
+                    {sp.pix_key ? 'Depois de pagar o sinal' : 'Depois de fazer o pagamento'}, mande o comprovante para {item.seller?.name ?? 'o vendedor'} usando a mensagem abaixo.
                   </p>
                   <div className="mt-3 rounded-lg border border-green-200 bg-white p-2 text-[11px] leading-relaxed text-zinc-600 whitespace-pre-wrap">
                     {proofMessage}
