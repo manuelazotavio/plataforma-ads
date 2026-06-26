@@ -603,7 +603,7 @@ export default function CorridaPage() {
         <h1 className="text-base font-bold text-zinc-900 dark:text-zinc-100">Corrida da Gata</h1>
       </div>
 
-      <div className="flex min-h-0 flex-1 items-center justify-center">
+      <div className="hidden md:flex min-h-0 flex-1 items-center justify-center">
         <div
           className="cursor-pointer select-none overflow-hidden rounded-2xl border border-zinc-200 bg-[#fafafa] dark:border-zinc-800 dark:bg-zinc-900"
           style={{
@@ -616,38 +616,16 @@ export default function CorridaPage() {
         </div>
       </div>
 
-   
-      <div className="mt-2 shrink-0 flex items-center justify-center gap-3 md:hidden">
-        <button
-          type="button"
-          onPointerDown={() => {
-            if (phaseRef.current !== 'playing') return
-            if (!groundedRef.current) { catVYRef.current = Math.max(catVYRef.current, 4) } else { crouchRef.current = true }
-          }}
-          onPointerUp={() => { crouchRef.current = false }}
-          onPointerLeave={() => { crouchRef.current = false }}
-          style={{ touchAction: 'manipulation' }}
-          className="flex h-12 w-36 select-none items-center justify-center gap-2 rounded-2xl border-2 border-zinc-300 bg-zinc-100 text-sm font-bold text-zinc-600 active:scale-95 active:bg-zinc-200 transition-transform dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-          aria-label="Abaixar"
-        >
-          <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 5v14M5 12l7 7 7-7" />
-          </svg>
-          Abaixar
-        </button>
-        <button
-          type="button"
-          onClick={action}
-          style={{ touchAction: 'manipulation' }}
-          className="flex h-12 w-36 select-none items-center justify-center gap-2 rounded-2xl border-2 border-zinc-300 bg-zinc-100 text-sm font-bold text-zinc-600 active:scale-95 active:bg-zinc-200 transition-transform dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-          aria-label="Pular"
-        >
-          <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 19V5M5 12l7-7 7 7" />
-          </svg>
-          Pular
-        </button>
+      <div className="flex flex-1 items-center justify-center md:hidden">
+        <div className="flex flex-col items-center gap-4 rounded-2xl border border-zinc-200 bg-zinc-50 px-8 py-10 text-center dark:border-zinc-800 dark:bg-zinc-900">
+          <span className="text-4xl">💻</span>
+          <div>
+            <p className="text-base font-bold text-zinc-800 dark:text-zinc-100">Olá!</p>
+            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Acesse pelo desktop para jogar a Corrida da Gata.</p>
+          </div>
+        </div>
       </div>
+
 
       <p className="mt-2 shrink-0 text-center text-xs text-zinc-400 hidden md:block">
         ↑ Pular · ↓ Abaixar
