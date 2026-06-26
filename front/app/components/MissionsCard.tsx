@@ -31,14 +31,6 @@ type WeeklySetMissionRow = {
   missions: Mission | null
 }
 
-function getMonday(date = new Date()) {
-  const d = new Date(date)
-  const day = d.getDay()
-  d.setDate(d.getDate() - day + (day === 0 ? -6 : 1))
-  d.setHours(0, 0, 0, 0)
-  return d
-}
-
 function formatWeekEnd(weekStart: string) {
   const endDate = new Date(`${weekStart}T12:00:00`)
   endDate.setDate(endDate.getDate() + 6)
@@ -153,17 +145,23 @@ export default function MissionsCard() {
     const user = await getAuthUser()
     if (!user) { setLoading(false); return }
 
-    const monday = getMonday()
-    const weekStr = monday.toISOString().split('T')[0]
+    const todayStr = new Date().toISOString().split('T')[0]
 
     const { data: setData } = await supabase
       .from('weekly_mission_sets')
       .select('id, week_start, bonus_xp, weekly_set_missions(missions(*))')
-      .eq('week_start', weekStr)
+      .lte('week_start', todayStr)
       .eq('is_active', true)
-      .single()
+      .order('week_start', { ascending: false })
+      .limit(1)
+      .maybeSingle()
 
     if (!setData) { setLoading(false); return }
+
+    // Verifica se ainda está dentro dos 7 dias do set
+    const weekStart = new Date(setData.week_start + 'T12:00:00')
+    const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000)
+    if (new Date() >= weekEnd) { setLoading(false); return }
 
     const missions = ((setData.weekly_set_missions ?? []) as unknown as WeeklySetMissionRow[])
       .map((wsm) => wsm.missions)
@@ -173,7 +171,7 @@ export default function MissionsCard() {
     setSet(currentSet)
 
     const [prog, { data: comps }] = await Promise.all([
-      computeProgress(user.id, monday, missions),
+      computeProgress(user.id, weekStart, missions),
       supabase.from('mission_completions').select('mission_id, type').eq('user_id', user.id).eq('set_id', setData.id),
     ])
 
