@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 
 const DEFAULT_BOTTOM_OFFSET = 80
+const DESKTOP_BOTTOM_OFFSET = 24
 const FOOTER_GAP = 12
 
 export function useMobileFooterOffset() {
@@ -14,7 +15,7 @@ export function useMobileFooterOffset() {
 
     const updateOffset = (visibleFooterHeight = 0) => {
       if (window.innerWidth >= 768) {
-        setBottomOffset(24)
+        setBottomOffset(Math.max(DESKTOP_BOTTOM_OFFSET, Math.ceil(visibleFooterHeight) + FOOTER_GAP))
         return
       }
 

@@ -272,17 +272,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="flex-1">
               {children}
             </div>
-            <footer data-floating-actions-boundary className="border-t border-zinc-100 py-6 mt-8 px-4 md:pl-10 md:pr-28">
-              <div className="flex flex-col items-center gap-y-2 text-center text-xs text-zinc-400 md:flex-row md:flex-wrap md:text-left md:gap-x-5">
+            <footer data-floating-actions-boundary className="border-t border-zinc-100 py-5 mt-8 px-4 text-center text-xs text-zinc-400">
+              <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 mb-2">
                 <Link href="/regras" className="hover:text-zinc-700 transition">Regras do ADS Conecta</Link>
                 <Link href="/privacidade" className="hover:text-zinc-700 transition">Política de Privacidade</Link>
                 <Link href="/contrato" className="hover:text-zinc-700 transition">Contrato de Usuário</Link>
-                <span className="inline-flex items-center">
-                  <Link href="/acessibilidade" className="hover:text-zinc-700 transition">Acessibilidade</Link>
-                  <AccessibilityControls />
-                </span>
-                <span className="md:ml-auto">ADS Conecta, Inc. © 2026. Todos os direitos reservados.</span>
+                <Link href="/acessibilidade" className="hover:text-zinc-700 transition">Acessibilidade</Link>
               </div>
+              <div className="flex justify-center mb-2"><AccessibilityControls /></div>
+              <p>ADS Conecta, Inc. © 2026. Todos os direitos reservados.</p>
             </footer>
           </div>
         </main>
