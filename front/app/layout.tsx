@@ -6,6 +6,8 @@ import SuspendedUserGuard from "@/app/components/SuspendedUserGuard";
 import VLibrasWidget from "@/app/components/VLibrasWidget";
 import PageTracker from "@/app/components/PageTracker";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "http://localhost:3000";
+
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
@@ -13,8 +15,28 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "ADS Conecta",
-  description: "A plataforma dos alunos de ADS",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "ADS Conecta",
+    template: "%s | ADS Conecta",
+  },
+  description: "A plataforma da comunidade de Análise e Desenvolvimento de Sistemas.",
+  applicationName: "ADS Conecta",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "ADS Conecta",
+    description: "Projetos, artigos, eventos, oportunidades e comunidade para alunos de ADS.",
+    url: "/",
+    siteName: "ADS Conecta",
+    locale: "pt_BR",
+    type: "website",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export const viewport: Viewport = {
