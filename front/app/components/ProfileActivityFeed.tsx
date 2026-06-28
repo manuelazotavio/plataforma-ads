@@ -33,7 +33,7 @@ export default function ProfileActivityFeed({ items }: { items: ProfileActivityI
           <p className="text-sm text-zinc-400">Nenhuma publicação ainda.</p>
         </div>
       ) : (
-        <div className="mx-auto flex w-full max-w-2xl flex-col gap-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {items.map((item) => (
             <Link
               key={`${item.type}-${item.id}`}
