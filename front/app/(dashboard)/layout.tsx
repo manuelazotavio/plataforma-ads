@@ -166,7 +166,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="flex flex-col flex-1 ml-0 md:ml-56 min-w-0">
-        <header className="h-16 bg-white border-b border-zinc-100 flex items-center justify-end px-4 md:px-6 sticky top-0 z-10 shrink-0 gap-3 md:gap-4">
+        <header className="h-16 bg-white border-b border-zinc-100 flex items-center justify-end px-4 md:px-6 fixed top-0 left-0 right-0 z-10 shrink-0 gap-3 md:gap-4 md:static md:left-auto md:right-auto">
 
           <div className="flex shrink-0 items-center gap-1 md:hidden">
             <button
@@ -267,7 +267,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           />
         )}
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-white pb-16 md:pb-0">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-white pt-16 pb-16 md:pt-0 md:pb-0">
           <div className="flex flex-col min-h-full">
             <div className="flex-1">
               {children}
