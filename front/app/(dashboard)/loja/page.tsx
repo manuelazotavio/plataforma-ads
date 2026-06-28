@@ -90,12 +90,28 @@ export default function LojaPage() {
         { data: { user: authUser } },
       ] = await Promise.all([
         supabase.from('store_items')
-          .select('id, name, description, price, image_url, images, category, type, min_quantity, sizes, collective_deadline, seller_id, seller:users!seller_id(id, name, avatar_url, store_seller_profiles(whatsapp, pix_key, deposit_percent))')
+          .select('id, name, description, price, image_url, images, category, type, min_quantity, sizes, collective_deadline, seller_id, seller:users!seller_id(id, name, avatar_url)')
           .eq('is_visible', true).order('display_order').order('created_at'),
         supabase.auth.getUser(),
       ])
 
       const loadedItems = (itemsData ?? []) as unknown as StoreItem[]
+
+      const sellerIds = [...new Set(loadedItems.map(i => i.seller_id).filter(Boolean) as string[])]
+      if (sellerIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('store_seller_profiles')
+          .select('user_id, whatsapp, pix_key, deposit_percent')
+          .in('user_id', sellerIds)
+        const profileMap = Object.fromEntries((profiles ?? []).map(p => [p.user_id, p]))
+        for (const item of loadedItems) {
+          if (item.seller && item.seller_id) {
+            const p = profileMap[item.seller_id]
+            item.seller.store_seller_profiles = p ? [p] : []
+          }
+        }
+      }
+
       setItems(loadedItems)
       setUser(authUser)
 

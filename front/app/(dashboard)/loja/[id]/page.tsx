@@ -92,7 +92,7 @@ export default function LojaProdutoPage() {
         { data: { user: authUser } },
       ] = await Promise.all([
         supabase.from('store_items')
-          .select('id, name, description, price, image_url, images, category, type, min_quantity, sizes, collective_deadline, collective_fields, collective_info, seller_id, seller:users!seller_id(id, name, avatar_url, store_seller_profiles(whatsapp, pix_key, deposit_percent))')
+          .select('id, name, description, price, image_url, images, category, type, min_quantity, sizes, collective_deadline, collective_fields, collective_info, seller_id, seller:users!seller_id(id, name, avatar_url)')
           .eq('id', itemId)
           .eq('is_visible', true)
           .maybeSingle(),
@@ -100,6 +100,18 @@ export default function LojaProdutoPage() {
       ])
 
       const loadedItem = itemData as unknown as StoreItem | null
+
+      if (loadedItem?.seller_id) {
+        const { data: spData } = await supabase
+          .from('store_seller_profiles')
+          .select('whatsapp, pix_key, deposit_percent')
+          .eq('user_id', loadedItem.seller_id)
+          .maybeSingle()
+        if (loadedItem.seller) {
+          loadedItem.seller.store_seller_profiles = spData ? [spData] : []
+        }
+      }
+
       setItem(loadedItem)
       setUser(authUser)
       setSelectedSize(loadedItem?.sizes?.[0] ?? '')
