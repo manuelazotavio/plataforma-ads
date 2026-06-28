@@ -33,12 +33,12 @@ export default function ProfileActivityFeed({ items }: { items: ProfileActivityI
           <p className="text-sm text-zinc-400">Nenhuma publicação ainda.</p>
         </div>
       ) : (
-        <div className={items.length === 1 ? "flex justify-center" : "grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-start"}>
+        <div className={items.length === 1 ? "flex justify-center" : "sm:columns-2 sm:gap-4 space-y-4 sm:space-y-0"}>
           {items.map((item) => (
             <Link
               key={`${item.type}-${item.id}`}
               href={item.href}
-              className={`group overflow-hidden rounded-2xl border border-zinc-200 bg-white transition hover:border-zinc-300 hover:shadow-sm${items.length === 1 ? ' w-full max-w-sm' : ''}`}
+              className={`group overflow-hidden rounded-2xl border border-zinc-200 bg-white transition hover:border-zinc-300 hover:shadow-sm break-inside-avoid mb-4 sm:mb-0${items.length === 1 ? ' w-full max-w-sm' : ''}`}
             >
               {item.imageUrl && (
                 <div className="aspect-[16/9] w-full bg-zinc-100">
