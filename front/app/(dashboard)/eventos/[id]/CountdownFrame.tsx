@@ -42,14 +42,16 @@ function CountdownCrop({ src, settings, className = '' }: { src: string; setting
       <iframe
         src={src}
         title="Contagem regressiva do evento"
-        className="absolute left-0 top-0 border-0"
+        className="pointer-events-none absolute left-0 top-0 border-0"
         loading="lazy"
+        scrolling="no"
         sandbox="allow-scripts allow-same-origin"
         style={{
           width: `${100 / settings.cropScale}%`,
           height: settings.frameH,
           transform: `translate(${-settings.cropX}px, ${-settings.cropY}px) scale(${settings.cropScale})`,
           transformOrigin: 'top left',
+          overflow: 'hidden',
         }}
       />
     </div>
