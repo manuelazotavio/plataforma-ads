@@ -148,25 +148,24 @@ export default async function EventoPage({ params, searchParams }: { params: Pro
 
       {event.countdown_url && (
         <div className="mb-10">
+          <p className="mb-3 text-xs font-semibold text-zinc-400 uppercase tracking-wide">Contagem regressiva</p>
+          <div className="overflow-hidden rounded-2xl border border-zinc-100 bg-zinc-50">
+            <iframe
+              src={event.countdown_url}
+              title="Contagem regressiva do evento"
+              className="h-64 w-full border-0"
+              loading="lazy"
+              sandbox="allow-scripts allow-same-origin"
+            />
+          </div>
           <a
             href={event.countdown_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex items-center justify-between gap-4 rounded-2xl border border-zinc-200 bg-zinc-50 px-5 py-4 transition hover:border-[#2F9E41]/40 hover:bg-[#2F9E41]/5"
+            className="mt-2 inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition"
           >
-            <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#2F9E41]/10 text-[#2F9E41]">
-                <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx={12} cy={12} r={10}/>
-                  <polyline points="12 6 12 12 16 14"/>
-                </svg>
-              </span>
-              <div>
-                <p className="text-sm font-semibold text-zinc-900 group-hover:text-[#2F9E41] transition">Contagem regressiva</p>
-                <p className="text-xs text-zinc-400">Ver quanto tempo falta para o evento</p>
-              </div>
-            </div>
-            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-zinc-300 group-hover:text-[#2F9E41] transition">
+             Abrir contador em nova aba
+            <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
               <polyline points="15 3 21 3 21 9"/>
               <line x1="10" y1="14" x2="21" y2="3"/>
