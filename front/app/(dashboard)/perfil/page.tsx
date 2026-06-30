@@ -306,10 +306,6 @@ export default function PerfilPage() {
     setProfile((prev) => ({ ...prev, [field]: value }))
   }
 
-  function removeSkill(skill: string) {
-    setSkills((prev) => prev.filter((s) => s !== skill))
-  }
-
   function togglePreferredArea(area: string) {
     setPreferredAreas((prev) => (
       prev.includes(area) ? prev.filter((item) => item !== area) : [...prev, area]
@@ -409,6 +405,7 @@ export default function PerfilPage() {
       profile.linkedin_url ? { label: 'LinkedIn', url: profile.linkedin_url } : null,
       profile.portfolio_url ? { label: 'Portfolio', url: profile.portfolio_url } : null,
     ].filter(Boolean) as { label: string; url: string }[]
+    const selectedMascot = mascots.find((m) => m.id === selectedMascotId) ?? null
 
     return (
       <>
@@ -420,56 +417,133 @@ export default function PerfilPage() {
           </Link>
         </div>
 
-        <section className="border-b border-zinc-100 pb-8">
-          <div className="flex items-start gap-5">
-            <ProfileProgressRing progress={(stats?.levelProgress ?? 0) / 100} avatarSize={80}>
-              <UserAvatar src={profile.avatar_url} name={profile.name} className="h-20 w-20" sizes="80px" />
-            </ProfileProgressRing>
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-2xl font-bold text-zinc-900">{profile.name}</h1>
-                  <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-500">
-                    {isEgresso ? 'Egresso' : roleLabel(role)}
-                  </span>
+        <section className="grid gap-3 lg:grid-cols-[1.08fr_1fr_1.35fr]">
+          <div className="rounded-xl border border-zinc-200 bg-white p-4">
+            <div className="flex items-center gap-3">
+              <ProfileProgressRing progress={(stats?.levelProgress ?? 0) / 100} avatarSize={80}>
+                <UserAvatar src={profile.avatar_url} name={profile.name} className="h-20 w-20" sizes="80px" />
+              </ProfileProgressRing>
+              <div className="min-w-0 flex-1">
+                <span className="mb-2 inline-flex rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-500">
+                  {isEgresso ? 'Egresso' : roleLabel(role)}
+                </span>
+                <h1 className="text-xl font-bold leading-tight text-zinc-900">{profile.name}</h1>
+                {profile.semester && role !== 'professor' && (
+                  <p className="mt-1 text-sm text-zinc-400">{profile.semester}{String.fromCharCode(186)} semestre</p>
+                )}
+                {isEgresso && (
+                  <p className="mt-1 text-sm text-zinc-400">
+                    Ex-aluno{egressoForm.graduation_year ? ` ${egressoForm.graduation_year}` : ''}
+                    {egressoForm.role ? ` - ${egressoForm.role}` : ''}
+                    {egressoForm.company ? ` @ ${egressoForm.company}` : ''}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-4 flex flex-wrap gap-2 border-t border-zinc-100 pt-3">
+              <button
+                type="button"
+                onClick={() => setEditing(true)}
+                className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 hover:text-zinc-900"
+              >
+                <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                </svg>
+                Editar
+              </button>
+              <button
+                type="button"
+                onClick={async () => { await supabase.auth.signOut(); router.push('/login') }}
+                className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 hover:text-red-700"
+              >
+                Sair
+              </button>
+            </div>
+
+            {profile.bio && (
+              <p className="mt-4 whitespace-pre-wrap border-t border-zinc-100 pt-4 text-sm leading-relaxed text-zinc-600">{profile.bio}</p>
+            )}
+
+            <div className="mt-4 grid grid-cols-4 gap-2 border-t border-zinc-100 pt-3">
+              <div>
+                {xpBreakdown.length > 0 ? (
                   <button
                     type="button"
-                    onClick={() => setEditing(true)}
-                    className="ml-6 inline-flex shrink-0 items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 hover:text-zinc-900"
+                    onClick={() => setShowXpBreakdown(true)}
+                    className="text-lg font-bold text-zinc-900 underline decoration-dotted decoration-zinc-300 underline-offset-4 transition hover:decoration-zinc-500"
+                    aria-label="Como voce ganhou XP"
                   >
-                    <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 20h9" />
-                      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                    </svg>
-                    Editar
+                    {stats.xp.toLocaleString('pt-BR')}
                   </button>
-                  <button
-                    type="button"
-                    onClick={async () => { await supabase.auth.signOut(); router.push('/login') }}
-                    className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 hover:text-red-700"
+                ) : (
+                  <p className="text-lg font-bold text-zinc-900">{stats.xp.toLocaleString('pt-BR')}</p>
+                )}
+                <p className="text-xs text-zinc-400">XP</p>
+                {stats.levelName && <p className="mt-1 text-xs font-semibold text-[#2F9E41]">{stats.levelName}</p>}
+              </div>
+              <CompactMetric label="Projetos" value={stats.projectsCount} />
+              <CompactMetric label="Artigos" value={stats.articlesCount} />
+              <CompactMetric label="Topicos" value={stats.topicsCount} />
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-zinc-200 bg-white p-4">
+            <h2 className="mb-3 text-sm font-semibold text-zinc-900">Links</h2>
+            {socials.length > 0 ? (
+              <div className="flex flex-col gap-2">
+                {socials.map((social) => (
+                  <a
+                    key={social.url}
+                    href={social.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex min-w-0 items-center justify-between gap-3 rounded-lg border border-zinc-200 px-3 py-2.5 text-sm text-zinc-600 transition hover:border-zinc-300 hover:bg-zinc-50"
                   >
-                    Sair
-                  </button>
+                    <span className="shrink-0 font-semibold text-zinc-800">{social.label}</span>
+                    <span className="min-w-0 flex-1 truncate text-right text-xs text-zinc-400">{externalLabel(social.url)}</span>
+                    <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-zinc-400"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-zinc-400">Nenhum link cadastrado.</p>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-zinc-200 bg-white p-4">
+            <h2 className="mb-3 text-sm font-semibold text-zinc-900">Personagem escolhido</h2>
+            {selectedMascot ? (
+              <div className="flex items-center gap-4">
+                <div className="relative h-16 w-16 shrink-0">
+                  <Image src={selectedMascot.image_url} alt={selectedMascot.name} fill className="object-contain drop-shadow-sm" sizes="64px" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold text-zinc-900">{selectedMascot.name}</p>
+                  {selectedMascot.description && (
+                    <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-zinc-500">{selectedMascot.description}</p>
+                  )}
                 </div>
               </div>
-              {profile.semester && role !== 'professor' && (
-                <p className="mt-1 text-sm text-zinc-400">{profile.semester}{String.fromCharCode(186)} semestre</p>
-              )}
-              {isEgresso && (
-                <p className="mt-1 text-sm text-zinc-400">
-                  Ex-aluno{egressoForm.graduation_year ? ` ${egressoForm.graduation_year}` : ''}
-                  {egressoForm.role ? ` - ${egressoForm.role}` : ''}
-                  {egressoForm.company ? ` @ ${egressoForm.company}` : ''}
-                </p>
-              )}
-              {profile.bio && (
-                <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-zinc-600">{profile.bio}</p>
-              )}
-            </div>
+            ) : (
+              <p className="text-sm text-zinc-400">Nenhum personagem escolhido.</p>
+            )}
           </div>
         </section>
 
-        <section className="grid grid-cols-2 gap-3 py-6 border-b border-zinc-100 sm:grid-cols-4">
+        {(preferredAreas.length > 0 || skills.length > 0) && (
+          <section className="mt-3 grid gap-3 lg:grid-cols-2">
+            {preferredAreas.length > 0 && (
+              <CompactTagPanel title="Areas de interesse" items={preferredAreas.map(formatProfileArea)} variant="green" />
+            )}
+            {skills.length > 0 && (
+              <CompactTagPanel title="Habilidades" items={skills.map(formatProfileArea)} />
+            )}
+          </section>
+        )}
+
+        <section className="hidden">
           <div>
             {xpBreakdown.length > 0 ? (
               <button
@@ -492,7 +566,7 @@ export default function PerfilPage() {
         </section>
 
         {mascots.length > 0 && (
-          <section className="py-6 border-t border-zinc-100">
+          <section className="hidden">
             <h2 className="text-sm font-semibold text-zinc-900 mb-3">Meus personagens</h2>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {mascots.map((m) => {
@@ -526,7 +600,7 @@ export default function PerfilPage() {
         )}
 
         {(skills.length > 0 || preferredAreas.length > 0 || socials.length > 0) && (
-          <section className="py-6 flex flex-col gap-6">
+          <section className="hidden">
             {preferredAreas.length > 0 && (
               <div>
                 <h2 className="text-sm font-semibold text-zinc-900 mb-3">Áreas de interesse</h2>
@@ -997,6 +1071,35 @@ function formatProfileArea(value: string) {
     .split(/([\s/-]+)/)
     .map((part) => (/^[\s/-]+$/.test(part) ? part : part.charAt(0).toLocaleUpperCase('pt-BR') + part.slice(1)))
     .join('')
+}
+
+function CompactMetric({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div>
+      <p className="text-lg font-bold text-zinc-900">{value}</p>
+      <p className="text-xs text-zinc-400">{label}</p>
+    </div>
+  )
+}
+
+function CompactTagPanel({ title, items, variant = 'neutral' }: { title: string; items: string[]; variant?: 'neutral' | 'green' }) {
+  return (
+    <div className="rounded-xl border border-zinc-200 bg-white p-4">
+      <h2 className="mb-3 text-sm font-semibold text-zinc-900">{title}</h2>
+      <div className="flex flex-wrap gap-2">
+        {items.map((item) => (
+          <span
+            key={item}
+            className={`rounded-full px-3 py-1 text-xs font-medium ${
+              variant === 'green' ? 'bg-green-50 text-[#2F9E41]' : 'bg-zinc-100 text-zinc-600'
+            }`}
+          >
+            {item}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 function ProfileStat({ label, value, detail }: { label: string; value: string | number; detail?: string | null }) {

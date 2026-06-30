@@ -233,10 +233,10 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
         Voltar
       </Link>
 
-      <section className="grid gap-4 lg:grid-cols-[1.08fr_1fr_1.45fr]">
-        <div className="rounded-2xl border border-zinc-200 bg-white p-5">
-          <div className="flex items-center gap-4">
-            <UserAvatar src={displayAvatarUrl} name={user.name} className="h-24 w-24 shrink-0" sizes="96px" />
+      <section className="grid gap-3 lg:grid-cols-[1.08fr_1fr_1.35fr]">
+        <div className="rounded-xl border border-zinc-200 bg-white p-4">
+          <div className="flex items-center gap-3">
+            <UserAvatar src={displayAvatarUrl} name={user.name} className="h-20 w-20 shrink-0" sizes="80px" />
             <div className="min-w-0">
               <span className="mb-2 inline-flex rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-500">
                 {egresso ? 'Ex-aluno' : roleLabel(user.role)}
@@ -259,7 +259,7 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
             <p className="mt-5 border-t border-zinc-100 pt-4 text-sm leading-relaxed text-zinc-600 whitespace-pre-wrap">{displayBio}</p>
           )}
 
-          <div className="mt-5 grid grid-cols-4 gap-3 border-t border-zinc-100 pt-4">
+          <div className="mt-4 grid grid-cols-4 gap-2 border-t border-zinc-100 pt-3">
             <div>
               <p className="text-lg font-bold text-zinc-900">{xp.toLocaleString('pt-BR')}</p>
               <p className="text-xs text-zinc-400">XP</p>
@@ -271,17 +271,17 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
           </div>
         </div>
 
-        <div className="rounded-2xl border border-zinc-200 bg-white p-5">
-          <h2 className="mb-4 text-sm font-semibold text-zinc-900">Links</h2>
+        <div className="rounded-xl border border-zinc-200 bg-white p-4">
+          <h2 className="mb-3 text-sm font-semibold text-zinc-900">Links</h2>
           {socials.length > 0 ? (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
               {socials.map((social) => (
                 <a
                   key={social.url}
                   href={social.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex min-w-0 items-center gap-3 rounded-xl border border-zinc-200 px-3 py-3 text-zinc-600 transition hover:border-zinc-300 hover:bg-zinc-50"
+                  className="flex min-w-0 items-center gap-3 rounded-lg border border-zinc-200 px-3 py-2.5 text-zinc-600 transition hover:border-zinc-300 hover:bg-zinc-50"
                 >
                   <span className="shrink-0"><SocialIcon label={social.label} /></span>
                   <span className="shrink-0 text-sm font-semibold text-zinc-800">{social.label}</span>
@@ -295,12 +295,12 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
           )}
         </div>
 
-        <div className="rounded-2xl border border-zinc-200 bg-white p-5">
-          <h2 className="mb-4 text-sm font-semibold text-zinc-900">Personagem escolhido</h2>
+        <div className="rounded-xl border border-zinc-200 bg-white p-4">
+          <h2 className="mb-3 text-sm font-semibold text-zinc-900">Personagem escolhido</h2>
           {mascot ? (
-            <div className="flex items-center gap-5">
-              <div className="relative h-20 w-20 shrink-0">
-                <Image src={mascot.image_url} alt={mascot.name} fill className="object-contain drop-shadow-sm" sizes="80px" />
+            <div className="flex items-center gap-4">
+              <div className="relative h-16 w-16 shrink-0">
+                <Image src={mascot.image_url} alt={mascot.name} fill className="object-contain drop-shadow-sm" sizes="64px" />
               </div>
               <div className="min-w-0">
                 <p className="font-semibold text-zinc-900">{mascot.name}</p>
@@ -316,7 +316,7 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
       </section>
 
       {(preferredAreas.length > 0 || skillNames.length > 0) && (
-        <section className="mt-4 grid gap-4 lg:grid-cols-2">
+        <section className="mt-3 grid gap-3 lg:grid-cols-2">
           {preferredAreas.length > 0 && (
             <TagPanel title="Áreas de interesse" items={preferredAreas.map(formatProfileArea)} variant="green" />
           )}

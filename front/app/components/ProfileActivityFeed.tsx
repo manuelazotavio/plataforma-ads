@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 
 export type ProfileActivityItem = {
   id: string
@@ -36,18 +37,18 @@ function ItemCard({ item, className = '' }: { item: ProfileActivityItem; classNa
   return (
     <Link
       href={item.href}
-      className={`group overflow-hidden rounded-2xl border border-zinc-200 bg-white transition hover:border-zinc-300 hover:shadow-sm ${className}`}
+      className={`group overflow-hidden rounded-xl border border-zinc-200 bg-white transition hover:border-zinc-300 hover:shadow-sm ${className}`}
     >
       {item.imageUrl && (
-        <div className="aspect-video w-full bg-zinc-100">
+        <div className="relative aspect-video w-full bg-zinc-100">
           {isVideoMedia(item) ? (
             <video src={item.imageUrl} className="h-full w-full object-cover" autoPlay muted loop playsInline preload="metadata" />
           ) : (
-            <img src={item.imageUrl} alt={item.title} className="h-full w-full object-cover" />
+            <Image src={item.imageUrl} alt={item.title} fill className="object-cover" sizes="(min-width: 768px) 50vw, 100vw" />
           )}
         </div>
       )}
-      <div className="min-w-0 p-4">
+      <div className="min-w-0 p-3">
         <div className="mb-1 flex flex-wrap items-center gap-2">
           <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-semibold text-zinc-500">
             {typeLabels[item.type]}
@@ -66,16 +67,16 @@ function ItemCard({ item, className = '' }: { item: ProfileActivityItem; classNa
           )}
           <span className="text-xs text-zinc-400">{formatDate(item.date)}</span>
         </div>
-        <h3 className="text-sm font-semibold text-zinc-900 transition group-hover:text-[#2F9E41]">
+        <h3 className="text-[13px] font-semibold text-zinc-900 transition group-hover:text-[#2F9E41]">
           {item.title}
         </h3>
         {item.description && (
-          <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-zinc-500">
+          <p className="mt-1.5 line-clamp-3 text-xs leading-relaxed text-zinc-500">
             {item.description}
           </p>
         )}
         {item.meta && (
-          <span className="mt-4 block text-xs text-zinc-400">{item.meta}</span>
+          <span className="mt-3 block text-xs text-zinc-400">{item.meta}</span>
         )}
       </div>
     </Link>
@@ -84,13 +85,13 @@ function ItemCard({ item, className = '' }: { item: ProfileActivityItem; classNa
 
 export default function ProfileActivityFeed({ items }: { items: ProfileActivityItem[] }) {
   return (
-    <section className="border-t border-zinc-100 py-6">
-      <div className="mb-4 flex items-center justify-between gap-4">
+    <section className="border-t border-zinc-100 py-5">
+      <div className="mb-3 flex items-center justify-between gap-4">
         <h2 className="text-sm font-semibold text-zinc-900">Publicações</h2>
       </div>
 
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-zinc-200 p-8 text-center">
+        <div className="rounded-xl border border-dashed border-zinc-200 p-8 text-center">
           <p className="text-sm text-zinc-400">Nenhuma publicação ainda.</p>
         </div>
       ) : items.length === 1 ? (
@@ -98,17 +99,10 @@ export default function ProfileActivityFeed({ items }: { items: ProfileActivityI
           <ItemCard item={items[0]} className="w-full max-w-sm" />
         </div>
       ) : (
-        <div className="flex gap-4">
-          <div className="flex flex-1 flex-col gap-4">
-            {items.filter((_, i) => i % 2 === 0).map((item) => (
-              <ItemCard key={`${item.type}-${item.id}`} item={item} />
-            ))}
-          </div>
-          <div className="flex flex-1 flex-col gap-4">
-            {items.filter((_, i) => i % 2 === 1).map((item) => (
-              <ItemCard key={`${item.type}-${item.id}`} item={item} />
-            ))}
-          </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          {items.map((item) => (
+            <ItemCard key={`${item.type}-${item.id}`} item={item} />
+          ))}
         </div>
       )}
     </section>
