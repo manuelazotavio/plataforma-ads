@@ -23,7 +23,7 @@ export default async function EventoPage({ params, searchParams }: { params: Pro
   const backLabel = from === 'calendario' ? 'Calendário' : 'Eventos'
 
   const [{ data: event }, { data: categoriesData }, { data: contributorsData }] = await Promise.all([
-    supabase.from('events').select('*, speaker:speaker_user_id(id, name, avatar_url)').eq('id', id).single(),
+    supabase.from('events').select('*, speaker:speaker_user_id(id, name, avatar_url), countdown_user:countdown_user_id(id, name, avatar_url)').eq('id', id).single(),
     supabase.from('event_categories').select('value, label'),
     supabase
       .from('event_contributors')
@@ -149,7 +149,16 @@ export default async function EventoPage({ params, searchParams }: { params: Pro
 
       {event.countdown_url && (
         <div className="mb-10">
-          <p className="mb-3 text-xs font-semibold text-zinc-400 uppercase tracking-wide">Contagem regressiva</p>
+          <p className="mb-3 text-xs font-semibold text-zinc-400">
+            Contagem regressiva{event.countdown_user ? (
+              <>
+                {' '}feita por{' '}
+                <Link href={`/usuarios/${event.countdown_user.id}`} className="text-[#2F9E41] transition hover:opacity-75">
+                  {event.countdown_user.name}
+                </Link>
+              </>
+            ) : ''}
+          </p>
           <CountdownFrame src={event.countdown_url} />
           <a
             href={event.countdown_url}

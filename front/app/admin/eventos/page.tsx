@@ -32,6 +32,8 @@ type Event = {
   is_active: boolean
   speaker_name: string | null
   speaker_user_id: string | null
+  countdown_user_id: string | null
+  countdown_user?: { id: string; name: string; avatar_url: string | null } | null
 }
 
 type UserResult = { id: string; name: string; avatar_url: string | null }
@@ -51,6 +53,7 @@ const empty = (): Omit<Event, 'id'> => ({
   is_active: true,
   speaker_name: null,
   speaker_user_id: null,
+  countdown_user_id: null,
 })
 
 export default function AdminEventosPage() {
@@ -67,7 +70,11 @@ export default function AdminEventosPage() {
   const [speakerQuery, setSpeakerQuery] = useState('')
   const [speakerResults, setSpeakerResults] = useState<UserResult[]>([])
   const [showSpeakerDrop, setShowSpeakerDrop] = useState(false)
+  const [countdownUserQuery, setCountdownUserQuery] = useState('')
+  const [countdownUserResults, setCountdownUserResults] = useState<UserResult[]>([])
+  const [showCountdownUserDrop, setShowCountdownUserDrop] = useState(false)
   const speakerRef = useRef<HTMLDivElement>(null)
+  const countdownUserRef = useRef<HTMLDivElement>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const [draggingBanner, setDraggingBanner] = useState(false)
@@ -76,6 +83,7 @@ export default function AdminEventosPage() {
   useEffect(() => {
     function close(e: MouseEvent) {
       if (speakerRef.current && !speakerRef.current.contains(e.target as Node)) setShowSpeakerDrop(false)
+      if (countdownUserRef.current && !countdownUserRef.current.contains(e.target as Node)) setShowCountdownUserDrop(false)
     }
     document.addEventListener('mousedown', close)
     return () => document.removeEventListener('mousedown', close)
@@ -96,9 +104,24 @@ export default function AdminEventosPage() {
     return () => clearTimeout(timeout)
   }, [speakerQuery])
 
+  useEffect(() => {
+    const q = countdownUserQuery.trim()
+    const timeout = setTimeout(async () => {
+      if (q.length < 2) {
+        setCountdownUserResults([])
+        setShowCountdownUserDrop(false)
+        return
+      }
+      const { data } = await supabase.from('users').select('id, name, avatar_url').ilike('name', `%${q}%`).limit(5)
+      setCountdownUserResults((data as UserResult[]) ?? [])
+      setShowCountdownUserDrop(true)
+    }, q.length < 2 ? 0 : 300)
+    return () => clearTimeout(timeout)
+  }, [countdownUserQuery])
+
   async function load() {
     const [{ data: eventsData }, { data: catsData }] = await Promise.all([
-      supabase.from('events').select('*').order('start_date', { ascending: false }),
+      supabase.from('events').select('*, countdown_user:countdown_user_id(id, name, avatar_url)').order('start_date', { ascending: false }),
       supabase.from('event_categories').select('*').order('order', { ascending: true }),
     ])
     setEvents((eventsData as Event[]) ?? [])
@@ -146,6 +169,7 @@ export default function AdminEventosPage() {
       is_active: form.is_active,
       speaker_name: form.speaker_name || null,
       speaker_user_id: form.speaker_user_id || null,
+      countdown_user_id: form.countdown_user_id || null,
     }
     if (editing) {
       await supabase.from('events').update(payload).eq('id', editing.id)
@@ -338,8 +362,55 @@ export default function AdminEventosPage() {
                   placeholder="https://..."
                 />
                 <p className="mt-1 text-[11px] text-zinc-400">
-                  Para recortar só o relógio, ajuste no fim da URL: ?cropY=120&cropH=180&cropScale=1.2
+                  Desktop: ?cropY=120&cropH=180&cropScale=1.2. Mobile: adicione &mCropY=80&mCropH=160&mCropScale=1.
                 </p>
+              </Field>
+
+              <Field label="Contagem regressiva feita por">
+                {form.countdown_user_id ? (
+                  <div className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2">
+                    <span className="flex-1 text-sm text-zinc-800">
+                      {form.countdown_user?.name ?? 'Usuário vinculado'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => { setForm({ ...form, countdown_user_id: null, countdown_user: null }); setCountdownUserQuery('') }}
+                      className="text-zinc-400 hover:text-zinc-700 transition text-base leading-none"
+                    >×</button>
+                  </div>
+                ) : (
+                  <div ref={countdownUserRef} className="relative">
+                    <input
+                      type="text"
+                      value={countdownUserQuery}
+                      onChange={(e) => setCountdownUserQuery(e.target.value)}
+                      onFocus={() => { if (countdownUserResults.length > 0) setShowCountdownUserDrop(true) }}
+                      className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200 transition"
+                      placeholder="Buscar usuário da plataforma..."
+                    />
+                    {showCountdownUserDrop && countdownUserResults.length > 0 && (
+                      <div className="absolute top-full mt-1 left-0 right-0 z-20 rounded-xl border border-zinc-200 bg-white shadow-lg overflow-hidden">
+                        {countdownUserResults.map((u) => (
+                          <button
+                            key={u.id}
+                            type="button"
+                            onClick={() => { setForm({ ...form, countdown_user_id: u.id, countdown_user: u }); setCountdownUserQuery(''); setShowCountdownUserDrop(false) }}
+                            className="flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-zinc-50 transition"
+                          >
+                            <span className="shrink-0 w-7 h-7 rounded-full bg-zinc-200 overflow-hidden flex items-center justify-center text-xs font-medium text-zinc-600">
+                              {u.avatar_url
+                                ? <img src={u.avatar_url} alt={u.name} className="w-full h-full object-cover" />
+                                : u.name.charAt(0).toUpperCase()
+                              }
+                            </span>
+                            <span className="flex-1 text-sm text-zinc-800">{u.name}</span>
+                            <span className="text-xs text-[#2F9E41] font-medium">Vincular</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </Field>
 
               <Field label="Foto do evento">
