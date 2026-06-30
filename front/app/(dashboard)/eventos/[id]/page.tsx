@@ -6,6 +6,7 @@ import LikeButton from '@/app/components/LikeButton'
 import ShareProjectButton from '@/app/components/ShareProjectButton'
 import Comments from '@/app/components/Comments'
 import EventReminderButton from '@/app/components/EventReminderButton'
+import CountdownFrame from './CountdownFrame'
 
 export const dynamic = 'force-dynamic'
 
@@ -149,15 +150,7 @@ export default async function EventoPage({ params, searchParams }: { params: Pro
       {event.countdown_url && (
         <div className="mb-10">
           <p className="mb-3 text-xs font-semibold text-zinc-400 uppercase tracking-wide">Contagem regressiva</p>
-          <div className="overflow-hidden rounded-2xl border border-zinc-100 bg-zinc-50">
-            <iframe
-              src={event.countdown_url}
-              title="Contagem regressiva do evento"
-              className="h-64 w-full border-0"
-              loading="lazy"
-              sandbox="allow-scripts allow-same-origin"
-            />
-          </div>
+          <CountdownFrame src={event.countdown_url} />
           <a
             href={event.countdown_url}
             target="_blank"

@@ -26,6 +26,7 @@ type Event = {
   end_date: string | null
   start_time: string | null
   registration_url: string | null
+  countdown_url: string | null
   registration_open: boolean | null
   banner_url: string | null
   is_active: boolean
@@ -44,6 +45,7 @@ const empty = (): Omit<Event, 'id'> => ({
   end_date: '',
   start_time: '',
   registration_url: '',
+  countdown_url: '',
   registration_open: null,
   banner_url: '',
   is_active: true,
@@ -138,6 +140,7 @@ export default function AdminEventosPage() {
       end_date: form.end_date || null,
       start_time: form.start_time || null,
       registration_url: form.registration_url || null,
+      countdown_url: form.countdown_url || null,
       registration_open: form.registration_open,
       banner_url: form.banner_url || null,
       is_active: form.is_active,
@@ -325,6 +328,18 @@ export default function AdminEventosPage() {
                   className={input}
                   placeholder="https://..."
                 />
+              </Field>
+
+              <Field label="Link do contador">
+                <input
+                  value={form.countdown_url ?? ''}
+                  onChange={(e) => setForm({ ...form, countdown_url: e.target.value })}
+                  className={input}
+                  placeholder="https://..."
+                />
+                <p className="mt-1 text-[11px] text-zinc-400">
+                  Para recortar só o relógio, ajuste no fim da URL: ?cropY=120&cropH=180&cropScale=1.2
+                </p>
               </Field>
 
               <Field label="Foto do evento">
