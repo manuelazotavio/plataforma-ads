@@ -125,6 +125,11 @@ function ProfessorCard({ prof, onOpen }: { prof: Professor; onOpen: (professor: 
             {formatCargo(prof.cargo)}
           </p>
         )}
+        {prof.photo_credit_user && (
+          <p className="text-[10px] font-medium text-white/65">
+            Foto: {prof.photo_credit_user.name}
+          </p>
+        )}
       </div>
 
       <div
@@ -136,6 +141,11 @@ function ProfessorCard({ prof, onOpen }: { prof: Professor; onOpen: (professor: 
         }}
       >
         <p className="truncate text-sm font-semibold leading-tight text-white">{prof.name}</p>
+        {prof.photo_credit_user && (
+          <p className="mt-0.5 truncate text-[10px] font-medium text-white/65">
+            Foto: {prof.photo_credit_user.name}
+          </p>
+        )}
       </div>
     </div>
   )

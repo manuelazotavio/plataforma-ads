@@ -103,6 +103,37 @@ function formatProfileArea(value: string) {
     .join('')
 }
 
+function Metric({ value, label }: { value: number; label: string }) {
+  return (
+    <div>
+      <p className="text-lg font-bold text-zinc-900">{value}</p>
+      <p className="text-xs text-zinc-400">{label}</p>
+    </div>
+  )
+}
+
+function TagPanel({ title, items, variant = 'neutral' }: { title: string; items: string[]; variant?: 'neutral' | 'green' }) {
+  return (
+    <div className="rounded-2xl border border-zinc-200 bg-white p-5">
+      <h2 className="mb-3 text-sm font-semibold text-zinc-900">{title}</h2>
+      <div className="flex flex-wrap gap-2">
+        {items.map((item) => (
+          <span
+            key={item}
+            className={`rounded-full px-3 py-1 text-xs font-medium ${
+              variant === 'green'
+                ? 'bg-green-50 text-[#2F9E41]'
+                : 'bg-zinc-100 text-zinc-600'
+            }`}
+          >
+            {item}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default async function PublicUserProfile({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
@@ -196,130 +227,101 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
   return (
-    <div className="px-4 md:px-6 py-8 w-full">
-      <Link href="/" className="text-sm text-zinc-400 hover:text-zinc-700 transition mb-8 inline-flex items-center gap-1.5">
+    <div className="w-full px-4 py-8 md:px-6">
+      <Link href="/" className="mb-8 inline-flex items-center gap-1.5 text-sm font-semibold text-zinc-400 transition hover:text-zinc-700">
         <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
         Voltar
       </Link>
 
-      <section className="border-b border-zinc-100 pb-8">
-        <div className="flex items-start gap-5">
-          <UserAvatar src={displayAvatarUrl} name={user.name} className="h-20 w-20" sizes="80px" />
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-bold text-zinc-900">{user.name}</h1>
-              <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-500">
+      <section className="grid gap-4 lg:grid-cols-[1.08fr_1fr_1.45fr]">
+        <div className="rounded-2xl border border-zinc-200 bg-white p-5">
+          <div className="flex items-center gap-4">
+            <UserAvatar src={displayAvatarUrl} name={user.name} className="h-24 w-24 shrink-0" sizes="96px" />
+            <div className="min-w-0">
+              <span className="mb-2 inline-flex rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-500">
                 {egresso ? 'Ex-aluno' : roleLabel(user.role)}
               </span>
-            </div>
-            {user.semester && user.role !== 'professor' && (
-              <p className="mt-1 text-sm text-zinc-400">{user.semester}{String.fromCharCode(186)} semestre</p>
-            )}
-            {egresso && (
-              <p className="mt-1 text-sm text-zinc-400">
-                Ex-aluno{egresso.graduation_year ? ` ${egresso.graduation_year}` : ''}
-                {egresso.role ? ` - ${egresso.role}` : ''}
-                {egresso.company ? ` @ ${egresso.company}` : ''}
-              </p>
-            )}
-            {displayBio && (
-              <p className="mt-4 text-sm leading-relaxed text-zinc-600 whitespace-pre-wrap">{displayBio}</p>
-            )}
-          </div>
-        </div>
-      </section>
-
-      <section className="grid grid-cols-2 gap-3 py-6 border-b border-zinc-100 sm:grid-cols-4">
-        <div>
-          <p className="text-xl font-bold text-zinc-900">{xp.toLocaleString('pt-BR')}</p>
-          <p className="text-xs text-zinc-400">XP</p>
-          {level && <p className="mt-1 text-xs font-semibold text-[#2F9E41]">{level.name}</p>}
-        </div>
-        <div>
-          <p className="text-xl font-bold text-zinc-900">{projectsCount ?? 0}</p>
-          <p className="text-xs text-zinc-400">Projetos</p>
-        </div>
-        <div>
-          <p className="text-xl font-bold text-zinc-900">{articlesCount ?? 0}</p>
-          <p className="text-xs text-zinc-400">Artigos</p>
-        </div>
-        <div>
-          <p className="text-xl font-bold text-zinc-900">{topicsCount ?? 0}</p>
-          <p className="text-xs text-zinc-400">Tópicos</p>
-        </div>
-      </section>
-
-      {mascot && (
-        <section className="border-b border-zinc-100 py-6">
-          <h2 className="mb-3 text-sm font-semibold text-zinc-900">Personagem escolhido</h2>
-          <div className="flex items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-4">
-            <div className="relative h-20 w-20 shrink-0">
-              <Image
-                src={mascot.image_url}
-                alt={mascot.name}
-                fill
-                className="object-contain drop-shadow-sm"
-                sizes="80px"
-              />
-            </div>
-            <div className="min-w-0">
-              <p className="font-semibold text-zinc-900">{mascot.name}</p>
-              {mascot.description && (
-                <p className="mt-1 text-sm leading-relaxed text-zinc-500">
-                  {mascot.description}
+              <h1 className="text-xl font-bold leading-tight text-zinc-900">{user.name}</h1>
+              {user.semester && user.role !== 'professor' && (
+                <p className="mt-1 text-sm text-zinc-400">{user.semester}{String.fromCharCode(186)} semestre</p>
+              )}
+              {egresso && (
+                <p className="mt-1 text-sm text-zinc-400">
+                  {egresso.graduation_year ? `Turma ${egresso.graduation_year}` : 'Ex-aluno'}
+                  {egresso.role ? ` - ${egresso.role}` : ''}
+                  {egresso.company ? ` @ ${egresso.company}` : ''}
                 </p>
               )}
             </div>
           </div>
-        </section>
-      )}
 
-      {(preferredAreas.length > 0 || skillNames.length > 0 || socials.length > 0) && (
-        <section className="py-6 flex flex-col gap-6">
+          {displayBio && (
+            <p className="mt-5 border-t border-zinc-100 pt-4 text-sm leading-relaxed text-zinc-600 whitespace-pre-wrap">{displayBio}</p>
+          )}
+
+          <div className="mt-5 grid grid-cols-4 gap-3 border-t border-zinc-100 pt-4">
+            <div>
+              <p className="text-lg font-bold text-zinc-900">{xp.toLocaleString('pt-BR')}</p>
+              <p className="text-xs text-zinc-400">XP</p>
+              {level && <p className="mt-1 text-xs font-semibold text-[#2F9E41]">{level.name}</p>}
+            </div>
+            <Metric value={projectsCount ?? 0} label="Projetos" />
+            <Metric value={articlesCount ?? 0} label="Artigos" />
+            <Metric value={topicsCount ?? 0} label="Tópicos" />
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-zinc-200 bg-white p-5">
+          <h2 className="mb-4 text-sm font-semibold text-zinc-900">Links</h2>
+          {socials.length > 0 ? (
+            <div className="flex flex-col gap-3">
+              {socials.map((social) => (
+                <a
+                  key={social.url}
+                  href={social.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex min-w-0 items-center gap-3 rounded-xl border border-zinc-200 px-3 py-3 text-zinc-600 transition hover:border-zinc-300 hover:bg-zinc-50"
+                >
+                  <span className="shrink-0"><SocialIcon label={social.label} /></span>
+                  <span className="shrink-0 text-sm font-semibold text-zinc-800">{social.label}</span>
+                  <span className="min-w-0 flex-1 truncate text-xs text-zinc-400">{externalLabel(social.url)}</span>
+                  <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-zinc-400"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-zinc-400">Nenhum link público cadastrado.</p>
+          )}
+        </div>
+
+        <div className="rounded-2xl border border-zinc-200 bg-white p-5">
+          <h2 className="mb-4 text-sm font-semibold text-zinc-900">Personagem escolhido</h2>
+          {mascot ? (
+            <div className="flex items-center gap-5">
+              <div className="relative h-20 w-20 shrink-0">
+                <Image src={mascot.image_url} alt={mascot.name} fill className="object-contain drop-shadow-sm" sizes="80px" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-semibold text-zinc-900">{mascot.name}</p>
+                {mascot.description && (
+                  <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-zinc-500">{mascot.description}</p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-zinc-400">Nenhum personagem escolhido.</p>
+          )}
+        </div>
+      </section>
+
+      {(preferredAreas.length > 0 || skillNames.length > 0) && (
+        <section className="mt-4 grid gap-4 lg:grid-cols-2">
           {preferredAreas.length > 0 && (
-            <div>
-              <h2 className="text-sm font-semibold text-zinc-900 mb-3">Áreas de interesse</h2>
-              <div className="flex flex-wrap gap-2">
-                {preferredAreas.map((area) => (
-                  <span key={area} className="rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-[#2F9E41]">
-                    {formatProfileArea(area)}
-                  </span>
-                ))}
-              </div>
-            </div>
+            <TagPanel title="Áreas de interesse" items={preferredAreas.map(formatProfileArea)} variant="green" />
           )}
-
           {skillNames.length > 0 && (
-            <div>
-              <h2 className="text-sm font-semibold text-zinc-900 mb-3">Habilidades</h2>
-              <div className="flex flex-wrap gap-2">
-                {skillNames.map((skill) => (
-                  <span key={skill} className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium capitalize text-zinc-600">
-                    {formatProfileArea(skill)}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {socials.length > 0 && (
-            <div>
-              <h2 className="text-sm font-semibold text-zinc-900 mb-3">Links</h2>
-              <div className="grid grid-cols-3 gap-2">
-                {socials.map((social) => (
-                  <a
-                    key={social.url}
-                    href={social.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex flex-col items-center gap-2 rounded-xl border border-zinc-200 px-3 py-3 text-zinc-600 hover:bg-zinc-50 hover:border-zinc-300 transition"
-                  >
-                    <SocialIcon label={social.label} />
-                    <span className="text-xs font-medium text-zinc-700">{social.label}</span>
-                  </a>
-                ))}
-              </div>
-            </div>
+            <TagPanel title="Habilidades" items={skillNames.map(formatProfileArea)} />
           )}
         </section>
       )}
