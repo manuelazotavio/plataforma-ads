@@ -37,10 +37,10 @@ function ItemCard({ item, className = '' }: { item: ProfileActivityItem; classNa
   return (
     <Link
       href={item.href}
-      className={`group overflow-hidden rounded-xl border border-zinc-200 bg-white transition hover:border-zinc-300 hover:shadow-sm ${className}`}
+      className={`group overflow-hidden rounded-lg border border-zinc-300 bg-zinc-100 transition hover:border-zinc-400 hover:bg-zinc-200 ${className}`}
     >
       {item.imageUrl && (
-        <div className="relative aspect-video w-full bg-zinc-100">
+        <div className="relative aspect-video w-full bg-zinc-200">
           {isVideoMedia(item) ? (
             <video src={item.imageUrl} className="h-full w-full object-cover" autoPlay muted loop playsInline preload="metadata" />
           ) : (
@@ -50,7 +50,7 @@ function ItemCard({ item, className = '' }: { item: ProfileActivityItem; classNa
       )}
       <div className="min-w-0 p-3">
         <div className="mb-1 flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-semibold text-zinc-500">
+          <span className="rounded-full bg-zinc-200 px-2.5 py-1 text-[11px] font-semibold text-zinc-600">
             {typeLabels[item.type]}
           </span>
           {item.isPinned && (
@@ -85,13 +85,13 @@ function ItemCard({ item, className = '' }: { item: ProfileActivityItem; classNa
 
 export default function ProfileActivityFeed({ items }: { items: ProfileActivityItem[] }) {
   return (
-    <section className="border-t border-zinc-100 py-5">
+    <section className="mt-5 rounded-xl border border-zinc-200 bg-white p-4">
       <div className="mb-3 flex items-center justify-between gap-4">
         <h2 className="text-sm font-semibold text-zinc-900">Publicações</h2>
       </div>
 
       {items.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-zinc-200 p-8 text-center">
+        <div className="rounded-lg border border-dashed border-zinc-200 p-8 text-center">
           <p className="text-sm text-zinc-400">Nenhuma publicação ainda.</p>
         </div>
       ) : items.length === 1 ? (
@@ -99,7 +99,7 @@ export default function ProfileActivityFeed({ items }: { items: ProfileActivityI
           <ItemCard item={items[0]} className="w-full max-w-sm" />
         </div>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {items.map((item) => (
             <ItemCard key={`${item.type}-${item.id}`} item={item} />
           ))}
