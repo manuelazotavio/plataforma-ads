@@ -146,6 +146,34 @@ export default async function EventoPage({ params, searchParams }: { params: Pro
         </div>
       </div>
 
+      {event.countdown_url && (
+        <div className="mb-10">
+          <p className="mb-3 text-xs font-semibold text-zinc-400 uppercase tracking-wide">Contagem regressiva</p>
+          <div className="overflow-hidden rounded-2xl border border-zinc-100 bg-zinc-50">
+            <iframe
+              src={event.countdown_url}
+              title="Contagem regressiva do evento"
+              className="h-64 w-full border-0"
+              loading="lazy"
+              sandbox="allow-scripts allow-same-origin"
+            />
+          </div>
+          <a
+            href={event.countdown_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition"
+          >
+            Abrir contador em nova aba
+            <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+              <polyline points="15 3 21 3 21 9"/>
+              <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+          </a>
+        </div>
+      )}
+
       {event.speaker_name && (() => {
         const linkedUser = event.speaker as { id: string; name: string; avatar_url: string | null } | null
         return (
