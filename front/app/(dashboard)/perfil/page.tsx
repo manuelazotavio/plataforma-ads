@@ -417,11 +417,11 @@ export default function PerfilPage() {
           </Link>
         </div>
 
-        <section className="grid gap-3 lg:grid-cols-[1.08fr_1fr_1.35fr]">
+        <section className="grid gap-3 lg:grid-cols-[1.35fr_1fr_0.85fr]">
           <div className="rounded-xl border border-zinc-200 bg-white p-4">
             <div className="flex items-center gap-3">
-              <ProfileProgressRing progress={(stats?.levelProgress ?? 0) / 100} avatarSize={80}>
-                <UserAvatar src={profile.avatar_url} name={profile.name} className="h-20 w-20" sizes="80px" />
+              <ProfileProgressRing progress={(stats?.levelProgress ?? 0) / 100} avatarSize={96}>
+                <UserAvatar src={profile.avatar_url} name={profile.name} className="h-24 w-24" sizes="96px" />
               </ProfileProgressRing>
               <div className="min-w-0 flex-1">
                 <span className="mb-2 inline-flex rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-500">
@@ -467,7 +467,7 @@ export default function PerfilPage() {
             )}
 
             <div className="mt-4 grid grid-cols-4 gap-2 border-t border-zinc-100 pt-3">
-              <div>
+              <div className="text-center">
                 {xpBreakdown.length > 0 ? (
                   <button
                     type="button"
@@ -475,12 +475,13 @@ export default function PerfilPage() {
                     className="text-lg font-bold text-zinc-900 underline decoration-dotted decoration-zinc-300 underline-offset-4 transition hover:decoration-zinc-500"
                     aria-label="Como voce ganhou XP"
                   >
-                    {stats.xp.toLocaleString('pt-BR')}
+                    {stats.xp.toLocaleString('pt-BR')} <span className="text-xs font-medium text-zinc-400">XP</span>
                   </button>
                 ) : (
-                  <p className="text-lg font-bold text-zinc-900">{stats.xp.toLocaleString('pt-BR')}</p>
+                  <p className="text-lg font-bold text-zinc-900">
+                    {stats.xp.toLocaleString('pt-BR')} <span className="text-xs font-medium text-zinc-400">XP</span>
+                  </p>
                 )}
-                <p className="text-xs text-zinc-400">XP</p>
                 {stats.levelName && <p className="mt-1 text-xs font-semibold text-[#2F9E41]">{stats.levelName}</p>}
               </div>
               <CompactMetric label="Projetos" value={stats.projectsCount} />
@@ -535,7 +536,7 @@ export default function PerfilPage() {
         {(preferredAreas.length > 0 || skills.length > 0) && (
           <section className="mt-3 grid gap-3 lg:grid-cols-2">
             {preferredAreas.length > 0 && (
-              <CompactTagPanel title="Areas de interesse" items={preferredAreas.map(formatProfileArea)} variant="green" />
+              <CompactTagPanel title="Áreas de interesse" items={preferredAreas.map(formatProfileArea)} variant="green" />
             )}
             {skills.length > 0 && (
               <CompactTagPanel title="Habilidades" items={skills.map(formatProfileArea)} />
@@ -1075,7 +1076,7 @@ function formatProfileArea(value: string) {
 
 function CompactMetric({ label, value }: { label: string; value: string | number }) {
   return (
-    <div>
+    <div className="text-center">
       <p className="text-lg font-bold text-zinc-900">{value}</p>
       <p className="text-xs text-zinc-400">{label}</p>
     </div>

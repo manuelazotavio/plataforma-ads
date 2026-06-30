@@ -105,7 +105,7 @@ function formatProfileArea(value: string) {
 
 function Metric({ value, label }: { value: number; label: string }) {
   return (
-    <div>
+    <div className="text-center">
       <p className="text-lg font-bold text-zinc-900">{value}</p>
       <p className="text-xs text-zinc-400">{label}</p>
     </div>
@@ -233,10 +233,10 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
         Voltar
       </Link>
 
-      <section className="grid gap-3 lg:grid-cols-[1.08fr_1fr_1.35fr]">
+      <section className="grid gap-3 lg:grid-cols-[1.35fr_1fr_0.85fr]">
         <div className="rounded-xl border border-zinc-200 bg-white p-4">
           <div className="flex items-center gap-3">
-            <UserAvatar src={displayAvatarUrl} name={user.name} className="h-20 w-20 shrink-0" sizes="80px" />
+            <UserAvatar src={displayAvatarUrl} name={user.name} className="h-24 w-24 shrink-0" sizes="96px" />
             <div className="min-w-0">
               <span className="mb-2 inline-flex rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-500">
                 {egresso ? 'Ex-aluno' : roleLabel(user.role)}
@@ -260,9 +260,10 @@ export default async function PublicUserProfile({ params }: { params: Promise<{ 
           )}
 
           <div className="mt-4 grid grid-cols-4 gap-2 border-t border-zinc-100 pt-3">
-            <div>
-              <p className="text-lg font-bold text-zinc-900">{xp.toLocaleString('pt-BR')}</p>
-              <p className="text-xs text-zinc-400">XP</p>
+            <div className="text-center">
+              <p className="text-lg font-bold text-zinc-900">
+                {xp.toLocaleString('pt-BR')} <span className="text-xs font-medium text-zinc-400">XP</span>
+              </p>
               {level && <p className="mt-1 text-xs font-semibold text-[#2F9E41]">{level.name}</p>}
             </div>
             <Metric value={projectsCount ?? 0} label="Projetos" />
