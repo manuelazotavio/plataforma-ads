@@ -37,10 +37,10 @@ function ItemCard({ item, className = '' }: { item: ProfileActivityItem; classNa
   return (
     <Link
       href={item.href}
-      className={`group overflow-hidden rounded-lg border border-zinc-300 bg-zinc-100 transition hover:border-zinc-400 hover:bg-zinc-200 ${className}`}
+      className={`group block break-inside-avoid overflow-hidden rounded-xl border border-zinc-200 bg-white transition hover:border-zinc-300 hover:shadow-sm ${className}`}
     >
       {item.imageUrl && (
-        <div className="relative aspect-video w-full bg-zinc-200">
+        <div className="relative aspect-video w-full bg-zinc-100">
           {isVideoMedia(item) ? (
             <video src={item.imageUrl} className="h-full w-full object-cover" autoPlay muted loop playsInline preload="metadata" />
           ) : (
@@ -50,7 +50,7 @@ function ItemCard({ item, className = '' }: { item: ProfileActivityItem; classNa
       )}
       <div className="min-w-0 p-3">
         <div className="mb-1 flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-zinc-200 px-2.5 py-1 text-[11px] font-semibold text-zinc-600">
+          <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-semibold text-zinc-500">
             {typeLabels[item.type]}
           </span>
           {item.isPinned && (
@@ -99,9 +99,9 @@ export default function ProfileActivityFeed({ items }: { items: ProfileActivityI
           <ItemCard item={items[0]} className="w-full max-w-sm" />
         </div>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div className="columns-1 gap-3 md:columns-2 xl:columns-3">
           {items.map((item) => (
-            <ItemCard key={`${item.type}-${item.id}`} item={item} />
+            <ItemCard key={`${item.type}-${item.id}`} item={item} className="mb-3" />
           ))}
         </div>
       )}
