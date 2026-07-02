@@ -204,7 +204,7 @@ export default function AdminArtigosPage() {
                       </button>
                     )}
                     <a
-                      href={`/artigos/${article.id}`}
+                      href={article.status === 'publicado' ? `/artigos/${article.id}` : `/admin/artigos/${article.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs text-center font-medium text-zinc-500 hover:bg-zinc-50 transition"
