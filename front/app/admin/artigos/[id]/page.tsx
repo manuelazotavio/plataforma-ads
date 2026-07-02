@@ -1,38 +1,78 @@
+'use client'
+
 import Image from 'next/image'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
 import { supabase } from '@/app/lib/supabase'
 import { injectMentionsIntoHtml } from '@/app/lib/mentions'
+import { LoadingState } from '@/app/components/LoadingScreen'
 
-export const dynamic = 'force-dynamic'
+type Article = {
+  id: string
+  title: string
+  summary: string | null
+  content: string
+  cover_image_url: string | null
+  status: string
+  rejection_message: string | null
+  users: { id: string; name: string; avatar_url: string | null } | null
+  article_tags: { tag_name: string }[]
+}
 
 const statusLabel: Record<string, string> = {
   pendente:  'Pendente de revisão',
   rejeitado: 'Rejeitado',
   rascunho:  'Rascunho',
-  publicado:  'Publicado',
+  publicado: 'Publicado',
 }
 
 const statusClass: Record<string, string> = {
   pendente:  'bg-amber-50 border-amber-200 text-amber-800',
   rejeitado: 'bg-red-50 border-red-200 text-red-800',
   rascunho:  'bg-zinc-100 border-zinc-200 text-zinc-600',
-  publicado:  'bg-green-50 border-green-200 text-green-800',
+  publicado: 'bg-green-50 border-green-200 text-green-800',
 }
 
-export default async function AdminArtigoPreview({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
+export default function AdminArtigoPreview() {
+  const { id } = useParams<{ id: string }>()
+  const [article, setArticle] = useState<Article | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [notFound, setNotFound] = useState(false)
 
-  const { data: article } = await supabase
-    .from('articles')
-    .select('id, title, summary, content, cover_image_url, published_at, status, rejection_message, users(id, name, avatar_url), article_tags(tag_name)')
-    .eq('id', id)
-    .single()
+  useEffect(() => {
+    async function load() {
+      const { data } = await supabase
+        .from('articles')
+        .select('id, title, summary, content, cover_image_url, status, rejection_message, users(id, name, avatar_url), article_tags(tag_name)')
+        .eq('id', id)
+        .single()
 
-  if (!article) notFound()
+      if (!data) {
+        setNotFound(true)
+      } else {
+        setArticle(data as unknown as Article)
+      }
+      setLoading(false)
+    }
+    load()
+  }, [id])
 
-  const author = article.users as unknown as { id: string; name: string; avatar_url: string | null } | null
-  const tags = article.article_tags as { tag_name: string }[]
+  if (loading) return <LoadingState message="Carregando artigo" />
+
+  if (notFound || !article) {
+    return (
+      <div className="py-16 text-center">
+        <p className="text-zinc-400">Artigo não encontrado ou sem permissão para visualizar.</p>
+        <Link href="/admin/artigos" className="mt-4 inline-block text-sm text-[#2F9E41] hover:underline">
+          Voltar para artigos
+        </Link>
+      </div>
+    )
+  }
+
+  const author = article.users
+  const tags = article.article_tags
   const cfg = statusClass[article.status] ?? statusClass.rascunho
 
   return (
