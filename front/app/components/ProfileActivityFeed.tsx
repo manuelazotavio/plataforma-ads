@@ -99,7 +99,7 @@ export default function ProfileActivityFeed({ items }: { items: ProfileActivityI
           <ItemCard item={items[0]} className="w-full md:max-w-3xl" />
         </div>
       ) : items.length === 2 ? (
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid gap-3 md:grid-cols-2 md:items-start">
           {items.map((item) => (
             <ItemCard key={`${item.type}-${item.id}`} item={item} />
           ))}
