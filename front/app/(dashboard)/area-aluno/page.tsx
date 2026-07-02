@@ -17,15 +17,30 @@ const materials = [
 const guidance = [
   {
     title: 'Passe escolar',
-    description: 'Entenda quais dados reunir, onde acompanhar a solicitação e o que conferir antes de enviar.',
-    videoTitle: 'Como solicitar o passe escolar',
+    description: 'Passo a passo para solicitar o passe escolar no SUAP e concluir o cadastro na EMTU.',
+    videoTitle: null,
     videoEmbedUrl: null,
-    steps: [
-      'Confira se seus dados pessoais e acadêmicos estão atualizados nos sistemas institucionais.',
-      'Separe os documentos solicitados para comprovar matrícula e vínculo com o campus.',
-      'Acesse o canal indicado pela instituição ou empresa responsável pelo transporte.',
-      'Preencha a solicitação com atenção e salve comprovantes, protocolos ou prints importantes.',
-      'Acompanhe o andamento e procure o setor responsável caso a análise demore ou retorne com pendência.',
+    steps: [],
+    sections: [
+      {
+        title: 'Como solicitar',
+        content: [
+          'Abra um requerimento no SUAP com o Tipo de Requerimento "Solicitação de Passe Escolar".',
+          'Preencha o formulário "Passe_Escolar" disponível no link abaixo e anexe ao requerimento em formato pdf. Insira o seu contato de e-mail e telefone na descrição do seu requerimento pois o Campus pode precisar entrar em contato.',
+          'https://drive.ifsp.edu.br/s/Telw2fiYl0dDG9n',
+          'Acompanhe o requerimento e o campo de observação para saber a situação em que se encontra. Acompanhe também o campo de "Processos Eletrônicos" no SUAP, pois esse requerimento também poderá gerar a abertura de um processo eletrônico.',
+          'Caso o(a) aluno(a) seja menor de idade, inclua no formulário "Autorização do Responsável", com a assinatura do responsável, disponível no link acima, e a cópia do RG do responsável. Nos requerimentos que já possuem formulário próprio para preenchimento, já existe o campo para assinatura do responsável.',
+          'Na obrigatoriedade do envio de formulários ou documentos, clique em "Salvar" apenas após a inclusão desses documentos no requerimento.',
+        ],
+        note: 'Todos os documentos precisam estar no formato pdf. Caso não seja possível o envio nesse formato, envie o documento via e-mail da Coordenadoria de Registros Acadêmicos do Campus, disponível no link acima. No e-mail deve ser informado o n.º do requerimento aberto no SUAP.',
+      },
+      {
+        title: 'Conclusão do cadastro na EMTU',
+        content: [
+          'Após a devolutiva no SUAP, conclua o cadastro no site da EMTU e siga os demais procedimentos:',
+          'https://www.emtu.sp.gov.br/passe/index.htm?regiao=256',
+        ],
+      },
     ],
   },
   {
