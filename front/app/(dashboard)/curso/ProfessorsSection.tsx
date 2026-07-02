@@ -248,16 +248,17 @@ function ProfessorDetailsModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 md:items-center md:px-4 md:py-6"
       role="dialog"
       aria-modal="true"
       aria-label={`Detalhes de ${professor.name}`}
       onClick={onClose}
     >
       <div
-        className="relative max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white dark:bg-zinc-900 p-6 shadow-2xl"
+        className="relative max-h-[88vh] w-full overflow-y-auto rounded-t-2xl bg-white dark:bg-zinc-900 p-6 shadow-2xl md:max-w-xl md:rounded-2xl"
         onClick={(event) => event.stopPropagation()}
       >
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-zinc-200 dark:bg-zinc-700 md:hidden" />
         <button
           type="button"
           onClick={onClose}
