@@ -125,11 +125,6 @@ function ProfessorCard({ prof, onOpen }: { prof: Professor; onOpen: (professor: 
             {formatCargo(prof.cargo)}
           </p>
         )}
-        {prof.photo_credit_user && (
-          <p className="text-[10px] font-medium text-white/65">
-            Foto: {prof.photo_credit_user.name}
-          </p>
-        )}
       </div>
 
       <div
@@ -141,11 +136,6 @@ function ProfessorCard({ prof, onOpen }: { prof: Professor; onOpen: (professor: 
         }}
       >
         <p className="truncate text-sm font-semibold leading-tight text-white">{prof.name}</p>
-        {prof.photo_credit_user && (
-          <p className="mt-0.5 truncate text-[10px] font-medium text-white/65">
-            Foto: {prof.photo_credit_user.name}
-          </p>
-        )}
       </div>
     </div>
   )
@@ -280,8 +270,8 @@ function ProfessorDetailsModal({
         </button>
 
         <div className="flex items-start gap-4 pr-8">
-          <div className="flex shrink-0 flex-col items-center gap-1">
-            <div className="relative h-36 w-26 overflow-hidden rounded-2xl bg-zinc-100 dark:bg-zinc-800">
+          <div className="flex shrink-0 flex-col items-center gap-1.5">
+            <div className="relative h-48 w-36 overflow-hidden rounded-2xl bg-zinc-100 dark:bg-zinc-800">
               {professor.avatar_url ? (
                 <Image src={professor.avatar_url} alt={professor.name} fill className="object-cover" />
               ) : (
@@ -293,10 +283,10 @@ function ProfessorDetailsModal({
             {professor.photo_credit_user && (
               <a
                 href={`/usuarios/${professor.photo_credit_user.id}`}
-                className="text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition"
+                className="text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition text-center leading-snug"
                 onClick={(e) => e.stopPropagation()}
               >
-                Foto: {professor.photo_credit_user.name}
+                Foto tirada por:<br />{professor.photo_credit_user.name}
               </a>
             )}
           </div>
