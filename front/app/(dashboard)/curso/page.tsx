@@ -13,7 +13,6 @@ import {
   groupCurriculumSubjects,
 } from '@/app/lib/curriculum'
 import {
-  CLASS_SCHEDULE_PDF_KEY,
   COURSE_DESCRIPTION_KEY,
   COURSE_INFO_CARDS_KEY,
   COURSE_LEARNING_ITEMS_KEY,
@@ -57,7 +56,7 @@ export default async function CursoPage({
   const requestedProfessor = (await searchParams).professor
   const initialProfessorId = Array.isArray(requestedProfessor) ? requestedProfessor[0] : requestedProfessor
 
-  const [{ data: professors }, { data: rawSubjects, error: subjectsError }, { data: courseSettings }, { data: versions }, { data: ppcDocs }, { data: equivalencyGroups }] = await Promise.all([
+  const [{ data: professors }, { data: rawSubjects, error: subjectsError }, { data: courseSettings }, { data: versions }, { data: ppcDocs }, { data: equivalencyGroups }, { data: scheduleDocs }] = await Promise.all([
     supabase
       .from('professors')
       .select('id, user_id, name, avatar_url, bio, cargo, years_at_if, email, whatsapp, linkedin, cnpq, photo_credit_user_id, photo_credit_user:photo_credit_user_id(id, name)')
@@ -73,7 +72,7 @@ export default async function CursoPage({
     supabase
       .from(COURSE_SETTINGS_TABLE)
       .select('key, value')
-      .in('key', [CLASS_SCHEDULE_PDF_KEY, COURSE_DESCRIPTION_KEY, COURSE_INFO_CARDS_KEY, COURSE_LEARNING_ITEMS_KEY]),
+      .in('key', [COURSE_DESCRIPTION_KEY, COURSE_INFO_CARDS_KEY, COURSE_LEARNING_ITEMS_KEY]),
     supabase
       .from('curriculum_versions')
       .select('id, name, year, is_current')
@@ -85,6 +84,11 @@ export default async function CursoPage({
     supabase
       .from('curriculum_equivalency_groups')
       .select('id, note, from_subject_id, curriculum_equivalency_members(id, to_subject_id)'),
+    supabase
+      .from('course_schedule_documents')
+      .select('id, label, url')
+      .eq('is_active', true)
+      .order('display_order', { ascending: false }),
   ])
 
   const professorList = (professors ?? []) as ProfessorRecord[]
@@ -147,11 +151,11 @@ export default async function CursoPage({
     }
   }
   const settingsMap = Object.fromEntries(((courseSettings ?? []) as { key: string; value: string | null }[]).map((s) => [s.key, s.value]))
-  const classSchedulePdfUrl = settingsMap[CLASS_SCHEDULE_PDF_KEY] ?? null
   const courseDescription = settingsMap[COURSE_DESCRIPTION_KEY] ?? DEFAULT_COURSE_DESCRIPTION
   const infoCards: InfoCard[] = settingsMap[COURSE_INFO_CARDS_KEY] ? (() => { try { return JSON.parse(settingsMap[COURSE_INFO_CARDS_KEY]!) } catch { return DEFAULT_INFO_CARDS } })() : DEFAULT_INFO_CARDS
   const learningItems: string[] = settingsMap[COURSE_LEARNING_ITEMS_KEY] ? (() => { try { return JSON.parse(settingsMap[COURSE_LEARNING_ITEMS_KEY]!) } catch { return DEFAULT_LEARNING_ITEMS } })() : DEFAULT_LEARNING_ITEMS
   const ppcs = (ppcDocs ?? []) as { id: string; label: string; url: string }[]
+  const activeSchedules = (scheduleDocs ?? []) as { id: string; label: string; url: string }[]
   const equivalencies = buildEquivalencyViewData(
     (equivalencyGroups ?? []) as RawEquivalencyGroup[],
     subjects ?? [],
@@ -193,13 +197,14 @@ export default async function CursoPage({
           )}
 
           <div className="flex flex-col gap-3">
-            {classSchedulePdfUrl && (
+            {activeSchedules.map((schedule) => (
               <CourseDocumentLink
-                title="Horário de aulas"
+                key={schedule.id}
+                title={`Horário de aulas — ${schedule.label}`}
                 description="Consulte o documento oficial com os horários das turmas."
-                href={classSchedulePdfUrl}
+                href={schedule.url}
               />
-            )}
+            ))}
 
             {ppcs.length > 0 && (
               <div className="rounded-xl border border-zinc-100 bg-zinc-50 p-4">
