@@ -274,10 +274,12 @@ export default function PerfilPage() {
     setError(null)
     const ext = file.name.split('.').pop()
     const path = `${userId}/avatar.${ext}`
-    const { error: uploadError } = await supabase.storage.from('avatars').upload(path, file, { upsert: true })
+    const { error: uploadError } = await supabase.storage.from('avatars').upload(path, file, { contentType: file.type, upsert: true })
     if (uploadError) { setError('Erro ao enviar imagem: ' + uploadError.message); setUploadingAvatar(false); return }
     const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
-    setProfile((prev) => ({ ...prev, avatar_url: publicUrl }))
+    await supabase.from('users').update({ avatar_url: publicUrl }).eq('id', userId)
+    // Cache-buster so Next.js Image recarrega mesmo que a URL seja igual à anterior
+    setProfile((prev) => ({ ...prev, avatar_url: `${publicUrl}?t=${Date.now()}` }))
     setUploadingAvatar(false)
   }
 
@@ -339,7 +341,7 @@ export default function PerfilPage() {
       github_url: profile.github_url || null,
       linkedin_url: profile.linkedin_url || null,
       portfolio_url: profile.portfolio_url || null,
-      avatar_url: profile.avatar_url || null,
+      avatar_url: profile.avatar_url ? profile.avatar_url.split('?')[0] : null,
       preferred_area: preferredAreas.length > 0 ? preferredAreas.join(',') : null,
       updated_at: new Date().toISOString(),
     }
