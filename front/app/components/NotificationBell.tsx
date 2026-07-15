@@ -8,10 +8,12 @@ import UserAvatar from '@/app/components/UserAvatar'
 
 type Notification = {
   id: string
-  type: 'comment' | 'reply' | 'comment_reply' | 'reaction' | 'comment_reaction' | 'event_reminder' | 'mention' | 'review_request' | 'content_approved' | 'content_rejected'
-  target_type: 'article' | 'project' | 'forum_topic' | 'event'
-  target_id: string
+  type: 'comment' | 'reply' | 'comment_reply' | 'reaction' | 'comment_reaction' | 'event_reminder' | 'mention' | 'review_request' | 'content_approved' | 'content_rejected' | 'admin_announcement'
+  target_type: 'article' | 'project' | 'forum_topic' | 'event' | 'announcement' | null
+  target_id: string | null
   target_title: string | null
+  message: string | null
+  link_url: string | null
   read: boolean
   created_at: string
   actor: { name: string; avatar_url: string | null } | null
@@ -35,6 +37,10 @@ function truncate(s: string, n: number) {
 
 function notifText(n: Notification): string {
   const title = n.target_title ? `"${truncate(n.target_title, 32)}"` : ''
+
+  if (n.type === 'admin_announcement') {
+    return n.target_title ? truncate(n.target_title, 60) : 'Comunicado da administração'
+  }
 
   if (n.type === 'event_reminder') {
     return `Lembrete: o evento ${title} está chegando`
@@ -72,7 +78,8 @@ function notifText(n: Notification): string {
   }
 }
 
-function notifUrl(n: Notification): string {
+function notifUrl(n: Notification): string | null {
+  if (n.type === 'admin_announcement') return n.link_url ?? null
   if (n.type === 'review_request') {
     return n.target_type === 'article' ? '/admin/artigos' : '/admin/projetos'
   }
@@ -84,7 +91,8 @@ function notifUrl(n: Notification): string {
   if (n.target_type === 'event')       return `/eventos/${n.target_id}`
   if (n.target_type === 'forum_topic') return `/forum/${n.target_id}`
   if (n.target_type === 'article')     return `/artigos/${n.target_id}`
-  return `/projetos/${n.target_id}`
+  if (n.target_id) return `/projetos/${n.target_id}`
+  return null
 }
 
 export default function NotificationBell({ userId }: { userId: string | null }) {
@@ -99,7 +107,7 @@ export default function NotificationBell({ userId }: { userId: string | null }) 
 
     const { data } = await supabase
       .from('notifications')
-      .select('id, type, target_type, target_id, target_title, read, created_at, users!notifications_actor_id_fkey(name, avatar_url)')
+      .select('id, type, target_type, target_id, target_title, message, link_url, read, created_at, users!notifications_actor_id_fkey(name, avatar_url)')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(25)
@@ -111,6 +119,8 @@ export default function NotificationBell({ userId }: { userId: string | null }) 
       target_type: n.target_type as Notification['target_type'],
       target_id: n.target_id,
       target_title: n.target_title,
+      message: n.message ?? null,
+      link_url: n.link_url ?? null,
       read: n.read,
       created_at: n.created_at,
       actor: n.users as unknown as { name: string; avatar_url: string | null } | null,
@@ -163,7 +173,8 @@ export default function NotificationBell({ userId }: { userId: string | null }) 
 
   function handleClick(n: Notification) {
     setOpen(false)
-    router.push(notifUrl(n))
+    const url = notifUrl(n)
+    if (url) router.push(url)
   }
 
   if (!userId) {
@@ -218,7 +229,13 @@ export default function NotificationBell({ userId }: { userId: string | null }) 
                   onClick={() => handleClick(n)}
                   className={`flex w-full items-start gap-3 px-4 py-3 text-left transition hover:bg-zinc-50 dark:hover:bg-zinc-900 ${!n.read ? 'bg-green-50/40 dark:bg-green-950/20' : ''}`}
                 >
-                  {n.type === 'event_reminder' ? (
+                  {n.type === 'admin_announcement' ? (
+                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+                      <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 11l19-9-9 19-2-8-8-2z" />
+                      </svg>
+                    </div>
+                  ) : n.type === 'event_reminder' ? (
                     <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#2F9E41]/10 text-[#2F9E41]">
                       <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                         <path d="M8 2v4M16 2v4M3 10h18" />

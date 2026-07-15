@@ -45,7 +45,7 @@ Deno.serve(async (req: Request) => {
     const notification = payload.record
 
     
-    if (['event_reminder', 'review_request', 'content_approved', 'content_rejected'].includes(notification.type)) {
+    if (['event_reminder', 'review_request', 'content_approved', 'content_rejected', 'admin_announcement'].includes(notification.type)) {
       return json({ skipped: 'handled separately' }, 200)
     }
 
