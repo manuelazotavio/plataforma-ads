@@ -66,7 +66,7 @@ export default function NotificacoesAdminPage() {
       recipient_type: row.recipient_type as 'all' | 'user',
       recipient_count: row.recipient_count,
       sent_at: row.sent_at,
-      recipient: row.users as { name: string } | null,
+      recipient: row.users as unknown as { name: string } | null,
     })))
   }
 
