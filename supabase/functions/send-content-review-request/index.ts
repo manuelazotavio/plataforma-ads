@@ -1,7 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 
-type ContentType = 'project' | 'article'
+type ContentType = 'project' | 'article' | 'game'
 
 type ReviewContent = {
   id: string
@@ -19,7 +19,7 @@ Deno.serve(async (req: Request) => {
       content_type?: ContentType
       content_id?: string
     }
-    if (!content_id || !['project', 'article'].includes(content_type ?? '')) {
+    if (!content_id || !['project', 'article', 'game'].includes(content_type ?? '')) {
       return json({ error: 'content_type e content_id são obrigatórios' }, 400)
     }
 
@@ -71,10 +71,9 @@ Deno.serve(async (req: Request) => {
       return json({ error: 'Configure RESEND_API_KEY e NOTIFICATION_FROM_EMAIL.' }, 500)
     }
 
-    const adminUrl = siteUrl
-      ? `${siteUrl}/admin/${content_type === 'project' ? 'projetos' : 'artigos'}`
-      : null
-    const label = content_type === 'project' ? 'projeto' : 'artigo'
+    const adminSection = { project: 'projetos', article: 'artigos', game: 'jogos' }[content_type as ContentType]
+    const adminUrl = siteUrl ? `${siteUrl}/admin/${adminSection}` : null
+    const label = { project: 'projeto', article: 'artigo', game: 'jogo' }[content_type as ContentType]
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -115,6 +114,17 @@ async function loadContent(
   if (contentType === 'project') {
     const { data } = await adminClient
       .from('projects')
+      .select('id, title, user_id')
+      .eq('id', contentId)
+      .eq('approved', false)
+      .is('rejection_message', null)
+      .maybeSingle()
+    return data as ReviewContent | null
+  }
+
+  if (contentType === 'game') {
+    const { data } = await adminClient
+      .from('community_games')
       .select('id, title, user_id')
       .eq('id', contentId)
       .eq('approved', false)

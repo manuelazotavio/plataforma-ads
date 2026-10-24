@@ -1,6 +1,7 @@
 'use client'
 
 import { Suspense, useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
@@ -104,6 +105,18 @@ function NovoProjetoContent() {
       <div className="w-full">
         <h1 className="text-2xl font-semibold text-zinc-900 mb-1">Novo projeto</h1>
         <p className="text-sm text-zinc-500 mb-8">Adicione um projeto ao seu portfólio</p>
+
+        <div className="mb-8 flex flex-col gap-3 rounded-xl border border-[#2F9E41]/30 bg-[#2F9E41]/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-zinc-700">
+            <strong className="text-zinc-900">Está cadastrando um jogo?</strong> Jogos têm uma aba específica na plataforma, com campos próprios para instruções de uso e executável. Cadastre-o em <strong className="text-zinc-900">Jogos</strong>, não aqui.
+          </p>
+          <Link
+            href="/jogos/novo"
+            className="shrink-0 rounded-lg bg-[#2F9E41] px-4 py-2 text-center text-sm font-medium text-white transition hover:opacity-90"
+          >
+            Cadastrar jogo
+          </Link>
+        </div>
 
         {error && (
           <p className="mb-6 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>

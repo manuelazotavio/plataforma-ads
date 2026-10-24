@@ -10,7 +10,7 @@ import BrandLogo from '@/app/components/BrandLogo'
 import { DEFAULT_PROJECT_TAGS, PROJECT_TAG_OPTIONS_TABLE, uniqueTagNames } from '@/app/lib/projectTags'
 import { useImageCropper } from '@/app/components/ImageCropper'
 
-const TOTAL = 10
+const TOTAL = 11
 
 const AREAS = [
   { value: 'front-end', label: 'Front-end' },
@@ -51,6 +51,7 @@ const STEP_LABELS = [
   'Eventos',
   'Discussões',
   'Artigos',
+  'Jogos',
   'Sobre o Curso',
 ]
 
@@ -513,6 +514,9 @@ export default function OnboardingPage() {
                     </div>
                   ))}
                 </div>
+                <p className="rounded-xl border border-[#2F9E41]/30 bg-[#2F9E41]/5 px-3 py-2 text-xs text-zinc-600">
+                  <strong className="text-zinc-800">Fez um jogo?</strong> Jogos não são cadastrados aqui: eles têm uma aba própria, <strong className="text-zinc-800">Jogos</strong>, que você conhece no passo &quot;Jogos&quot; mais à frente.
+                </p>
                 <Link
                   href="/projetos/novo?returnTo=/onboarding&nextStep=3"
                   className="mt-1 inline-flex items-center gap-2 rounded-xl bg-[#2F9E41] px-4 py-2.5 text-sm font-medium text-white hover:opacity-90 transition w-fit"
@@ -693,6 +697,40 @@ export default function OnboardingPage() {
           )}
 
           {step === 9 && (
+            <InfoStep
+              title="Publique seus jogos"
+              description="Fez um jogo? Ele não vai em Projetos: a plataforma tem uma aba própria, Jogos, onde a comunidade pode baixar e jogar o que você criou."
+            >
+              <div className="mt-6 rounded-2xl bg-zinc-50 border border-zinc-200 p-5 flex flex-col gap-4">
+                <p className="text-sm font-semibold text-zinc-700">Ao cadastrar um jogo você informa</p>
+                <div className="flex flex-col gap-2.5">
+                  {[
+                    'Título e sobre o jogo',
+                    'Instruções de uso (como instalar e jogar)',
+                    'O executável para download',
+                    'Uma foto ou vídeo de gameplay',
+                  ].map((item) => (
+                    <div key={item} className="flex items-start gap-2.5 text-sm text-zinc-600">
+                      <span className="mt-0.5 shrink-0 w-4 h-4 rounded-full bg-[#2F9E41]/15 flex items-center justify-center">
+                        <svg width={9} height={9} viewBox="0 0 24 24" fill="none" stroke="#2F9E41" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      </span>
+                      {item}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-zinc-400">Todo jogo é revisado por um administrador antes de aparecer para a comunidade.</p>
+                <Link
+                  href={`/jogos/novo?returnTo=/onboarding&nextStep=${step + 1}`}
+                  className="mt-1 inline-flex items-center gap-2 rounded-xl bg-[#2F9E41] px-4 py-2.5 text-sm font-medium text-white hover:opacity-90 transition w-fit"
+                >
+                  <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                  Cadastrar jogo agora
+                </Link>
+              </div>
+            </InfoStep>
+          )}
+
+          {step === 10 && (
             <div className="flex flex-col gap-8">
               <div className="text-center flex flex-col items-center">
                 <h1 className="text-2xl font-bold text-zinc-900">Bem-vindo ao ADS Conecta!</h1>
