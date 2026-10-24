@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
+import { GAME_MEDIA_SELECT, sortGameMedia, type GameMedia } from '@/app/lib/gameMedia'
 
 const games = [
   {
@@ -20,8 +21,7 @@ type CommunityGame = {
   user_id: string
   title: string
   about: string
-  media_url: string | null
-  media_type: 'image' | 'video' | null
+  community_game_media: GameMedia[]
   approved: boolean
   rejection_message: string | null
   users: { name: string } | null
@@ -39,10 +39,12 @@ export default function JogosPage() {
       setJustSent(new URLSearchParams(window.location.search).get('enviado') === '1')
       const { data } = await supabase
         .from('community_games')
-        .select('id, user_id, title, about, media_url, media_type, approved, rejection_message, users(name)')
+        .select(`id, user_id, title, about, ${GAME_MEDIA_SELECT}, approved, rejection_message, users(name)`)
         .order('created_at', { ascending: false })
       setCommunityGames(
-        ((data as unknown as CommunityGame[]) ?? []).filter((g) => g.approved || g.user_id === user?.id)
+        ((data as unknown as CommunityGame[]) ?? [])
+          .filter((g) => g.approved || g.user_id === user?.id)
+          .map((g) => ({ ...g, community_game_media: sortGameMedia(g.community_game_media) }))
       )
     }
     void load()
@@ -105,10 +107,10 @@ export default function JogosPage() {
                   className="group flex flex-col overflow-hidden rounded-2xl border border-zinc-100 bg-white transition hover:border-zinc-200 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700 dark:hover:bg-zinc-900"
                 >
                   <div className="relative aspect-video w-full bg-zinc-100 dark:bg-zinc-900">
-                    {g.media_url && g.media_type === 'video' ? (
-                      <video src={g.media_url} className="h-full w-full object-cover" muted loop playsInline />
-                    ) : g.media_url ? (
-                      <Image src={g.media_url} alt={g.title} fill className="object-cover" />
+                    {g.community_game_media[0]?.media_type === 'video' ? (
+                      <video src={g.community_game_media[0].url} className="h-full w-full object-cover" muted loop playsInline />
+                    ) : g.community_game_media[0] ? (
+                      <Image src={g.community_game_media[0].url} alt={g.title} fill className="object-cover" />
                     ) : (
                       <div className="flex h-full items-center justify-center text-xs text-zinc-300">sem imagem</div>
                     )}

@@ -11,6 +11,7 @@ import { useImageCropper } from '@/app/components/ImageCropper'
 const GAMES_BUCKET = 'games'
 const MAX_EXECUTABLE_BYTES = 50 * 1024 * 1024
 const MAX_MEDIA_BYTES = 50 * 1024 * 1024
+const MAX_MEDIA_ITEMS = 8
 
 type Media = { file: File; type: 'image' | 'video'; previewUrl: string }
 
@@ -25,7 +26,8 @@ export default function NovoJogoPage() {
   const [about, setAbout] = useState('')
   const [instructions, setInstructions] = useState('')
   const [executable, setExecutable] = useState<File | null>(null)
-  const [media, setMedia] = useState<Media | null>(null)
+  const [media, setMedia] = useState<Media[]>([])
+  const mediaRef = useRef<Media[]>([])
   const [submitted, setSubmitted] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -38,8 +40,12 @@ export default function NovoJogoPage() {
   }, [router])
 
   useEffect(() => {
-    return () => { if (media) URL.revokeObjectURL(media.previewUrl) }
+    mediaRef.current = media
   }, [media])
+
+  useEffect(() => {
+    return () => mediaRef.current.forEach((item) => URL.revokeObjectURL(item.previewUrl))
+  }, [])
 
   function handleExecutableChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -54,24 +60,41 @@ export default function NovoJogoPage() {
   }
 
   async function handleMediaChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
+    const files = Array.from(e.target.files ?? [])
     e.target.value = ''
-    if (!file) return
+    if (files.length === 0) return
 
-    const kind = fileKind(file)
-    if (kind === 'file') {
-      setError('Envie uma foto ou um vídeo como mídia do jogo.')
-      return
-    }
-    if (file.size > MAX_MEDIA_BYTES) {
-      setError(`A mídia tem ${formatFileSize(file.size)}. O limite é ${formatFileSize(MAX_MEDIA_BYTES)}.`)
-      return
-    }
-
-    const ready = kind === 'image' ? await cropImage(file) : file
-    if (!ready) return
     setError(null)
-    setMedia({ file: ready, type: kind, previewUrl: URL.createObjectURL(ready) })
+    const added: Media[] = []
+    for (const file of files) {
+      if (mediaRef.current.length + added.length >= MAX_MEDIA_ITEMS) {
+        setError(`Você pode adicionar no máximo ${MAX_MEDIA_ITEMS} fotos e vídeos.`)
+        break
+      }
+
+      const kind = fileKind(file)
+      if (kind === 'file') {
+        setError('Envie apenas fotos ou vídeos como mídia do jogo.')
+        continue
+      }
+      if (file.size > MAX_MEDIA_BYTES) {
+        setError(`"${file.name}" tem ${formatFileSize(file.size)}. O limite é ${formatFileSize(MAX_MEDIA_BYTES)}.`)
+        continue
+      }
+
+      const ready = kind === 'image' ? await cropImage(file) : file
+      if (!ready) continue
+      added.push({ file: ready, type: kind, previewUrl: URL.createObjectURL(ready) })
+    }
+
+    if (added.length > 0) setMedia((prev) => [...prev, ...added])
+  }
+
+  function removeMedia(index: number) {
+    setMedia((prev) => {
+      URL.revokeObjectURL(prev[index].previewUrl)
+      return prev.filter((_, i) => i !== index)
+    })
   }
 
   async function upload(file: File) {
@@ -95,7 +118,8 @@ export default function NovoJogoPage() {
       const isAdmin = userRow?.role === 'admin'
 
       const executableUrl = await upload(executable)
-      const mediaUrl = media ? await upload(media.file) : null
+      const mediaUrls: string[] = []
+      for (const item of media) mediaUrls.push(await upload(item.file))
 
       const { data: game, error: insertError } = await supabase
         .from('community_games')
@@ -107,13 +131,18 @@ export default function NovoJogoPage() {
           executable_url: executableUrl,
           executable_name: executable.name,
           executable_size: executable.size,
-          media_url: mediaUrl,
-          media_type: media?.type ?? null,
           approved: isAdmin,
         })
         .select('id')
         .single()
       if (insertError) throw insertError
+
+      if (media.length > 0) {
+        const { error: mediaError } = await supabase.from('community_game_media').insert(
+          media.map((item, i) => ({ game_id: game.id, url: mediaUrls[i], media_type: item.type, display_order: i }))
+        )
+        if (mediaError) throw mediaError
+      }
 
       if (!isAdmin) {
         await supabase.functions.invoke('send-content-review-request', {
@@ -215,34 +244,44 @@ export default function NovoJogoPage() {
             <input ref={executableInputRef} type="file" className="hidden" onChange={handleExecutableChange} />
           </Field>
 
-          <Field label="Foto ou vídeo" hint="Uma imagem ou um vídeo curto de gameplay para a capa do jogo (opcional).">
-            {media ? (
-              <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-900">
-                {media.type === 'video' ? (
-                  <video src={media.previewUrl} className="h-full w-full object-cover" controls muted playsInline />
-                ) : (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={media.previewUrl} alt="" className="h-full w-full object-cover" />
-                )}
+          <Field
+            label="Fotos e vídeos"
+            hint={`Adicione quantas quiser (até ${MAX_MEDIA_ITEMS}): prints e vídeos curtos de gameplay. O primeiro é a capa do jogo. Opcional.`}
+          >
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {media.map((item, i) => (
+                <div key={item.previewUrl} className="group relative aspect-video overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-900">
+                  {item.type === 'video' ? (
+                    <video src={item.previewUrl} className="h-full w-full object-cover" muted playsInline />
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={item.previewUrl} alt="" className="h-full w-full object-cover" />
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => removeMedia(i)}
+                    aria-label="Remover"
+                    className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-xs text-white transition hover:bg-black/80"
+                  >
+                    ×
+                  </button>
+                  <span className="absolute bottom-1 left-1 rounded-full bg-black/60 px-1.5 py-0.5 text-xs text-white">
+                    {i === 0 ? 'Capa' : item.type === 'video' ? '▶ Vídeo' : 'Foto'}
+                  </span>
+                </div>
+              ))}
+              {media.length < MAX_MEDIA_ITEMS && (
                 <button
                   type="button"
-                  onClick={() => setMedia(null)}
-                  className="absolute right-2 top-2 rounded-full bg-black/60 px-2.5 py-1 text-xs text-white transition hover:bg-black/80"
+                  onClick={() => mediaInputRef.current?.click()}
+                  className="flex aspect-video flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-zinc-300 text-xs text-zinc-400 transition hover:border-zinc-400 hover:text-zinc-600 dark:border-zinc-700 dark:hover:border-zinc-600"
                 >
-                  Remover
+                  <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14" /><path d="M5 12h14" /></svg>
+                  Adicionar
                 </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => mediaInputRef.current?.click()}
-                className="flex aspect-video w-full flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-zinc-300 text-xs text-zinc-400 transition hover:border-zinc-400 hover:text-zinc-600 dark:border-zinc-700 dark:hover:border-zinc-600"
-              >
-                <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14" /><path d="M5 12h14" /></svg>
-                Adicionar foto ou vídeo
-              </button>
-            )}
-            <input ref={mediaInputRef} type="file" accept="image/*,video/*" className="hidden" onChange={handleMediaChange} />
+              )}
+            </div>
+            <input ref={mediaInputRef} type="file" accept="image/*,video/*" multiple className="hidden" onChange={handleMediaChange} />
           </Field>
 
           <div className="flex items-center justify-between pt-2">

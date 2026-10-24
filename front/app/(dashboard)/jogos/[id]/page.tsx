@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 import { getAuthUser } from '@/app/lib/auth'
 import { formatFileSize } from '@/app/lib/files'
+import { GAME_MEDIA_SELECT, sortGameMedia, type GameMedia } from '@/app/lib/gameMedia'
 import { LoadingState } from '@/app/components/LoadingScreen'
 
 const GAMES_BUCKET = 'games'
@@ -20,8 +21,7 @@ type Game = {
   executable_url: string
   executable_name: string | null
   executable_size: number | null
-  media_url: string | null
-  media_type: 'image' | 'video' | null
+  community_game_media: GameMedia[]
   approved: boolean
   rejection_message: string | null
   created_at: string
@@ -35,6 +35,7 @@ export default function JogoDetalhePage() {
   const [loading, setLoading] = useState(true)
   const [canManage, setCanManage] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [selected, setSelected] = useState(0)
 
   useEffect(() => {
     async function load() {
@@ -42,11 +43,12 @@ export default function JogoDetalhePage() {
         getAuthUser(),
         supabase
           .from('community_games')
-          .select('id, user_id, title, about, instructions, executable_url, executable_name, executable_size, media_url, media_type, approved, rejection_message, created_at, users(name)')
+          .select(`id, user_id, title, about, instructions, executable_url, executable_name, executable_size, ${GAME_MEDIA_SELECT}, approved, rejection_message, created_at, users(name)`)
           .eq('id', id)
           .maybeSingle(),
       ])
-      setGame((data as unknown as Game | null) ?? null)
+      const loaded = data as unknown as Game | null
+      setGame(loaded && { ...loaded, community_game_media: sortGameMedia(loaded.community_game_media) })
       if (user && data) {
         const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single()
         setCanManage(data.user_id === user.id || profile?.role === 'admin')
@@ -64,14 +66,17 @@ export default function JogoDetalhePage() {
       setDeleting(false)
       return
     }
-    const paths = [game.executable_url, game.media_url]
-      .map((url) => url?.split(`/object/public/${GAMES_BUCKET}/`)[1])
+    const paths = [game.executable_url, ...game.community_game_media.map((m) => m.url)]
+      .map((url) => url.split(`/object/public/${GAMES_BUCKET}/`)[1])
       .filter((path): path is string => Boolean(path))
     if (paths.length > 0) await supabase.storage.from(GAMES_BUCKET).remove(paths)
     router.push('/jogos')
   }
 
   if (loading) return <LoadingState message="Carregando jogo" />
+
+  const media = game?.community_game_media ?? []
+  const current = media[selected] ?? media[0]
 
   if (!game) {
     return (
@@ -101,12 +106,38 @@ export default function JogoDetalhePage() {
           </p>
         )}
 
-        {game.media_url && (
-          <div className="relative mt-6 aspect-video w-full overflow-hidden rounded-2xl bg-zinc-100 dark:bg-zinc-900">
-            {game.media_type === 'video' ? (
-              <video src={game.media_url} className="h-full w-full object-cover" controls playsInline />
-            ) : (
-              <Image src={game.media_url} alt={game.title} fill className="object-cover" />
+        {current && (
+          <div className="mt-6">
+            <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-zinc-100 dark:bg-zinc-900">
+              {current.media_type === 'video' ? (
+                <video key={current.url} src={current.url} className="h-full w-full bg-black object-contain" controls playsInline />
+              ) : (
+                <Image src={current.url} alt={game.title} fill className="object-cover" />
+              )}
+            </div>
+            {media.length > 1 && (
+              <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-6">
+                {media.map((item, i) => (
+                  <button
+                    key={item.url}
+                    type="button"
+                    onClick={() => setSelected(i)}
+                    aria-label={`Ver mídia ${i + 1}`}
+                    className={`relative aspect-video overflow-hidden rounded-lg bg-zinc-100 ring-2 transition dark:bg-zinc-900 ${
+                      i === selected ? 'ring-[#2F9E41]' : 'ring-transparent opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    {item.media_type === 'video' ? (
+                      <>
+                        <video src={item.url} className="h-full w-full object-cover" muted playsInline preload="metadata" />
+                        <span className="absolute inset-0 flex items-center justify-center bg-black/30 text-sm text-white">▶</span>
+                      </>
+                    ) : (
+                      <Image src={item.url} alt="" fill className="object-cover" />
+                    )}
+                  </button>
+                ))}
+              </div>
             )}
           </div>
         )}

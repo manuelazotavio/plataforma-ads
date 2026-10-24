@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { supabase } from '@/app/lib/supabase'
 import { LoadingState } from '@/app/components/LoadingScreen'
 import { formatFileSize } from '@/app/lib/files'
+import { GAME_MEDIA_SELECT, sortGameMedia, type GameMedia } from '@/app/lib/gameMedia'
 
 type Game = {
   id: string
@@ -13,8 +14,7 @@ type Game = {
   executable_url: string
   executable_name: string | null
   executable_size: number | null
-  media_url: string | null
-  media_type: 'image' | 'video' | null
+  community_game_media: GameMedia[]
   approved: boolean
   rejection_message: string | null
   created_at: string
@@ -42,9 +42,11 @@ export default function AdminJogosPage() {
     async function load() {
       const { data } = await supabase
         .from('community_games')
-        .select('id, title, about, executable_url, executable_name, executable_size, media_url, media_type, approved, rejection_message, created_at, users(name)')
+        .select(`id, title, about, executable_url, executable_name, executable_size, ${GAME_MEDIA_SELECT}, approved, rejection_message, created_at, users(name)`)
         .order('created_at', { ascending: false })
-      setGames((data as unknown as Game[]) ?? [])
+      setGames(
+        ((data as unknown as Game[]) ?? []).map((g) => ({ ...g, community_game_media: sortGameMedia(g.community_game_media) }))
+      )
       setLoading(false)
     }
     load()
@@ -161,10 +163,10 @@ export default function AdminJogosPage() {
               >
                 <div className="flex flex-col gap-4 sm:flex-row">
                   <div className="relative h-36 w-full overflow-hidden rounded-lg bg-zinc-100 sm:h-16 sm:w-28 sm:shrink-0">
-                    {game.media_url && game.media_type === 'video' ? (
-                      <video src={game.media_url} className="h-full w-full object-cover" muted playsInline />
-                    ) : game.media_url ? (
-                      <Image src={game.media_url} alt={game.title} fill className="object-cover" />
+                    {game.community_game_media[0]?.media_type === 'video' ? (
+                      <video src={game.community_game_media[0].url} className="h-full w-full object-cover" muted playsInline />
+                    ) : game.community_game_media[0] ? (
+                      <Image src={game.community_game_media[0].url} alt={game.title} fill className="object-cover" />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center text-xs text-zinc-300">sem mídia</div>
                     )}
