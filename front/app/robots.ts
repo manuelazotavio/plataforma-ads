@@ -24,6 +24,7 @@ export default function robots(): MetadataRoute.Robots {
           '/meus-artigos',
           '/meus-projetos',
           '/artigos/novo',
+          '/jogos/novo',
           '/projetos/novo',
           '/*/editar',
         ],

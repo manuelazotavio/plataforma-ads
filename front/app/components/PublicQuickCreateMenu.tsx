@@ -8,6 +8,7 @@ import { useMobileFooterOffset } from '@/app/hooks/useMobileFooterOffset'
 const quickCreateItems = [
   { href: '/cadastro', label: 'Novo projeto' },
   { href: '/cadastro', label: 'Novo artigo' },
+  { href: '/cadastro', label: 'Novo jogo' },
   { href: '/login', label: 'Novo tópico' },
 ]
 
@@ -24,6 +25,7 @@ export default function PublicQuickCreateMenu() {
     ? [
         { href: '/projetos/novo', label: 'Novo projeto' },
         { href: '/artigos/novo', label: 'Novo artigo' },
+        { href: '/jogos/novo', label: 'Novo jogo' },
         { href: '/forum/novo', label: 'Novo tópico' },
       ]
     : quickCreateItems

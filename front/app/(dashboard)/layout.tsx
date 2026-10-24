@@ -295,6 +295,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 const quickCreateItems = [
   { href: '/projetos/novo', label: 'Novo projeto' },
   { href: '/artigos/novo', label: 'Novo artigo' },
+  { href: '/jogos/novo', label: 'Novo jogo' },
   { href: '/forum/novo', label: 'Novo tópico' },
 ]
 
@@ -304,6 +305,7 @@ const protectedPathPrefixes = [
   '/meus-projetos',
   '/projetos/novo',
   '/artigos/novo',
+  '/jogos/novo',
   '/forum/novo',
 ]
 
@@ -311,7 +313,7 @@ function isProtectedPath(pathname: string) {
   return protectedPathPrefixes.some((path) => pathname === path || pathname.startsWith(`${path}/`))
 }
 
-const ONBOARDING_ALLOWED = ['/projetos/novo', '/artigos/novo']
+const ONBOARDING_ALLOWED = ['/projetos/novo', '/artigos/novo', '/jogos/novo']
 
 function isOnboardingAllowedPath(pathname: string) {
   return ONBOARDING_ALLOWED.some((p) => pathname === p || pathname.startsWith(`${p}/`))
